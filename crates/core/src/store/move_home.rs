@@ -70,7 +70,7 @@ fn keep(file: &Path, spot: &Path) { if fs::hard_link(file, spot).is_err() { let 
 fn copy_all(from: &Path, to: &Path) -> std::io::Result<()> {
     if fs::symlink_metadata(from)?.is_dir() { fs::create_dir_all(to)?; for e in fs::read_dir(from)? { let e = e?; copy_all(&e.path(), &to.join(e.file_name()))?; } Ok(()) } else { fs::copy(from, to).map(|_| ()) }
 }
-fn mtime(m: &fs::Metadata) -> f64 { use std::os::unix::fs::MetadataExt; m.mtime() as f64 * 1000.0 + m.mtime_nsec() as f64 / 1e6 }
+fn mtime(m: &fs::Metadata) -> f64 { crate::platform::meta::mtime_ms(m) }
 /// What the new place holds goes into the old one (the one in use); then the folder moves as one. Of a file both
 /// have, the newer one stays in use and the other goes to the set-aside folder. Returns how many were set aside.
 pub fn merge_into(from: &Path, to: &Path, aside: &Path) -> std::io::Result<usize> {
@@ -107,7 +107,7 @@ pub fn swap_now(a: &Path, b: &Path) -> bool {
     #[cfg(not(any(target_os = "linux", target_os = "macos")))]
     { let _ = (ca, cb); false }
 }
-fn same_disk(a: &Path, b: &Path) -> bool { use std::os::unix::fs::MetadataExt; matches!((fs::metadata(a), fs::metadata(b)), (Ok(x), Ok(y)) if x.dev() == y.dev()) }
+fn same_disk(a: &Path, b: &Path) -> bool { crate::platform::meta::same_disk(a, b) }
 fn link(target: &Path, at: &Path) -> std::io::Result<()> { std::os::unix::fs::symlink(target, at) }
 /// One folder, in three steps each whole or not done (`<old>.moving` is the spare name the steps use):
 ///   1. two links are made: <old>.moving -> new, and new -> <old>.moving

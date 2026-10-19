@@ -51,9 +51,8 @@ pub struct Mine { pub you: Obj, pub repos: BTreeMap<String, Obj>, pub problems: 
 static LAST: Mutex<Option<(String, Arc<Mine>)>> = Mutex::new(None);
 /// Your settings. Asked for every setting that is looked up: the file is read again only when it changed on disk.
 pub fn yours() -> Arc<Mine> {
-    use std::os::unix::fs::MetadataExt;
     let f = config_file();
-    let mark = std::fs::metadata(&f).map(|m| format!("{}|{}|{}|{}.{}|{}.{}", f.display(), m.ino(), m.size(), m.mtime(), m.mtime_nsec(), m.ctime(), m.ctime_nsec())).unwrap_or_default();
+    let mark = std::fs::metadata(&f).map(|m| { let (mt, mn) = crate::platform::meta::mtime_parts(&m); let (ct, cn) = crate::platform::meta::ctime_parts(&m); format!("{}|{}|{}|{}.{}|{}.{}", f.display(), crate::platform::meta::file_id(&f).map(|i| i.1).unwrap_or(0), m.len(), mt, mn, ct, cn) }).unwrap_or_default();
     if let Some((m, out)) = LAST.lock().unwrap().as_ref() { if !mark.is_empty() && *m == mark { return out.clone(); } }
     let out = Arc::new(read_yours());
     *LAST.lock().unwrap() = Some((mark, out.clone()));

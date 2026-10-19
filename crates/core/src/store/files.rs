@@ -6,7 +6,6 @@ use std::cell::RefCell;
 use std::collections::HashSet;
 use std::fs::{self, File, OpenOptions};
 use std::io::Write;
-use std::os::unix::fs::MetadataExt;
 use std::path::{Path, PathBuf};
 
 /// Every stage a task can be in. The board's five states are derived from these in state.rs.
@@ -126,7 +125,7 @@ pub fn base64url(bytes: &[u8]) -> String {
     out
 }
 fn same_file(f: &File, path: &Path) -> bool {
-    match (f.metadata(), fs::metadata(path)) { (Ok(a), Ok(b)) => a.ino() == b.ino() && a.dev() == b.dev(), _ => false }
+    match (crate::platform::meta::file_id_of(f), crate::platform::meta::file_id(path)) { (Some(a), Some(b)) => a == b, _ => false }
 }
 /// A lock taken: it is let go when this is dropped.
 pub struct Held { file: Option<File>, path: PathBuf }
