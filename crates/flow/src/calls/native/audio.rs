@@ -23,10 +23,11 @@ pub trait Audio: Send {
     fn how(&self) -> String;
     fn stop(&mut self);
 }
-fn has(prog: &str) -> bool { Command::new("sh").args(["-c", &format!("command -v {prog}")]).stdout(Stdio::null()).stderr(Stdio::null()).status().map(|s| s.success()).unwrap_or(false) }
+fn has(prog: &str) -> bool { crate::platform::shell::has_program(prog) }
 fn quiet(prog: &str, args: &[&str]) -> Option<String> { let o = Command::new(prog).args(args).stdin(Stdio::null()).stderr(Stdio::null()).output().ok()?; o.status.success().then(|| String::from_utf8_lossy(&o.stdout).trim().to_string()) }
 /// The sound of this computer, or why there is none.
 pub fn open() -> Result<Box<dyn Audio>, String> {
+    if cfg!(windows) { return Err("Voice calls are off on Windows in v1: `herdr-projects voice` says so.".into()); }
     if cfg!(target_os = "macos") { return super::mac::open(); }
     Linux::open().map(|l| Box::new(l) as Box<dyn Audio>)
 }
