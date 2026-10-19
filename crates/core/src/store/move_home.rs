@@ -63,8 +63,7 @@ fn free(file: &Path) -> PathBuf {
 /// Takes a lock file for a moment. None when a running process holds it.
 fn grab_now(file: &Path) -> Option<Option<fs::File>> {
     let Ok(f) = fs::File::open(file) else { return Some(None) };
-    use std::os::fd::AsRawFd;
-    if unsafe { libc::flock(f.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0 { Some(Some(f)) } else { None }
+    if crate::platform::lock::try_lock(&f) { Some(Some(f)) } else { None }
 }
 fn is_lock(file: &Path) -> bool { file.extension().map(|e| e == "lock").unwrap_or(false) && file.parent().and_then(|p| p.file_name()).map(|n| n == "locks").unwrap_or(false) }
 fn keep(file: &Path, spot: &Path) { if fs::hard_link(file, spot).is_err() { let _ = copy_all(file, spot); } }

@@ -128,10 +128,6 @@ pub fn base64url(bytes: &[u8]) -> String {
 fn same_file(f: &File, path: &Path) -> bool {
     match (f.metadata(), fs::metadata(path)) { (Ok(a), Ok(b)) => a.ino() == b.ino() && a.dev() == b.dev(), _ => false }
 }
-fn flock(f: &File, wait: bool) -> bool {
-    use std::os::fd::AsRawFd;
-    unsafe { libc::flock(f.as_raw_fd(), libc::LOCK_EX | if wait { 0 } else { libc::LOCK_NB }) == 0 }
-}
 /// A lock taken: it is let go when this is dropped.
 pub struct Held { file: Option<File>, path: PathBuf }
 impl Drop for Held {
@@ -142,10 +138,10 @@ fn take_lock(name: &str, path: &Path, wait_ms: i64) -> Res<File> {
     let until = now() + wait_ms.max(0);
     loop {
         let f = OpenOptions::new().create(true).append(true).open(path)?;
-        let mut got = flock(&f, false);
+        let mut got = crate::platform::lock::try_lock(&f);
         while !got && now() < until && same_file(&f, path) {
             std::thread::sleep(std::time::Duration::from_millis(15));
-            got = flock(&f, false);
+            got = crate::platform::lock::try_lock(&f);
         }
         if !got {
             if !same_file(&f, path) && now() < until { continue; }
@@ -177,7 +173,7 @@ pub fn hold_lock(name: &str, wait_ms: i64) -> Res<Held> {
 /// Whether somebody holds the lock of this name right now (a lock taken and let go at once).
 pub fn lock_free(name: &str) -> bool {
     let path = lock_file(name);
-    match OpenOptions::new().create(true).append(true).open(&path) { Ok(f) => flock(&f, false), Err(_) => true }
+    match OpenOptions::new().create(true).append(true).open(&path) { Ok(f) => crate::platform::lock::try_lock(&f), Err(_) => true }
 }
 /// A task's lock: an attempt (`repo/12b`) shares its own id's.
 pub fn task_key(id: &str) -> String { id.split('/').take(2).collect::<Vec<_>>().join("/") }
@@ -189,7 +185,7 @@ pub fn wait_lock(name: &str) -> Res<Held> {
     let path = lock_file(name);
     if let Some(d) = path.parent() { fs::create_dir_all(d)?; }
     let f = OpenOptions::new().create(true).append(true).open(&path)?;
-    if !flock(&f, true) { return Err(Error::busy(format!("{name} is busy"))); }
+    if !crate::platform::lock::lock(&f) { return Err(Error::busy(format!("{name} is busy"))); }
     HELD.with(|h| h.borrow_mut().insert(path.clone()));
     Ok(Held { file: Some(f), path })
 }
