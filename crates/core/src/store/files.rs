@@ -96,17 +96,9 @@ pub fn read_lines(file: &Path) -> Vec<Value> {
     out
 }
 
-pub fn pid_alive(pid: i64) -> bool {
-    if pid <= 0 { return false; }
-    let r = unsafe { libc::kill(pid as libc::pid_t, 0) };
-    r == 0 || std::io::Error::last_os_error().raw_os_error() == Some(libc::EPERM)
-}
+pub fn pid_alive(pid: i64) -> bool { crate::platform::proc::alive(pid) }
 /// A process marker is a pid plus that process's start time, so a pid reused after a reboot is not mistaken for it.
-pub fn proc_start(pid: i64) -> Option<String> {
-    let s = fs::read_to_string(format!("/proc/{pid}/stat")).ok()?;
-    let rest = &s[s.rfind(')')? + 2..];
-    rest.split(' ').nth(19).map(|x| x.to_string())
-}
+pub fn proc_start(pid: i64) -> Option<String> { crate::platform::proc::start_time(pid) }
 pub fn marker() -> Obj {
     let pid = std::process::id() as i64;
     obj(json!({ "pid": pid, "start": proc_start(pid), "started": now() }))
