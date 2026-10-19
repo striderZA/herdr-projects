@@ -112,8 +112,8 @@ pub fn rearm(t: &mut Task, keep_intent: bool, live: bool, chat: bool) -> Res<()>
 fn kill_runner(t: &Task) {
     let r = t.at("runner");
     if r.is_object() && r.i("pid") != std::process::id() as i64 && marker_alive(r) {
-        let pid = r.i("pid") as i32;
-        unsafe { if libc::kill(-pid, libc::SIGTERM) != 0 { libc::kill(pid, libc::SIGTERM); } }
+        let pid = r.i("pid");
+        if !crate::platform::proc::signal_group(pid, false) { crate::platform::proc::signal(pid, false); }
     }
 }
 /// Stop: the stage is set first and the pane's state_change_seq recorded, then the interrupt key is sent, so a late

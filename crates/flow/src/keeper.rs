@@ -52,8 +52,7 @@ pub fn keeper_main() {
     beat();
     log(&format!("started (plugin {VERSION})"));
     static ENDING: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
-    extern "C" fn on_signal(_: i32) { ENDING.store(true, std::sync::atomic::Ordering::SeqCst); }
-    unsafe { for s in [libc::SIGTERM, libc::SIGINT, libc::SIGHUP] { libc::signal(s, on_signal as *const () as usize); } }
+    crate::platform::signal::on_end(&ENDING);
     let mut child: Option<std::process::Child> = None;
     let mut restart_at = 0i64;
     let why: Option<String>;
@@ -105,11 +104,12 @@ pub fn keeper_main() {
     if held.is_some() { let _ = std::fs::remove_file(beat_file()); }
     drop(held);
 }
-fn stop(child: &mut Option<std::process::Child>) { if let Some(mut ch) = child.take() { unsafe { libc::kill(ch.id() as i32, libc::SIGTERM); } let _ = ch.wait(); } }
+fn stop(child: &mut Option<std::process::Child>) { if let Some(mut ch) = child.take() { crate::platform::proc::signal(ch.id() as i64, false); let _ = ch.wait(); } }
 /// Starts the keeper on the new program and waits for its heartbeat. A program that cannot be started (still being
 /// written: "text file busy"; half written: "exec format error") or that ends at once is said, and nothing runs it.
 fn handover(own: i64) -> Result<(), String> {
     let mut c = loose(&["keeper"]).spawn().map_err(|e| e.to_string())?;
+    crate::platform::proc::join_group(c.id() as i64);
     let until = now() + 15000;
     while now() < until {
         // Its own beat, or that of a keeper a hook started meanwhile (this one then gives up waiting for the lock).
