@@ -31,6 +31,7 @@ impl Tool {
     }
     /// None when a mount can be made here now; else why not, in a few words.
     pub fn why_not(self, probe: &Path) -> Option<String> {
+        if cfg!(windows) { return Some("the read-only mount is not available on Windows: `plan.approve none` is the way on".into()); }
         let d = probe.display().to_string();
         let mut c = Command::new(self.name());
         match self {
@@ -49,6 +50,7 @@ impl Tool {
     }
     /// The task cannot start: its plan's writer would have no mount.
     pub fn no_mount(self, id: &str) -> String {
+        if cfg!(windows) { return format!("This task starts with a plan (plan.approve), and its writer needs a read-only mount, which is not available on Windows. Nothing was started. Take the plan off for this task: herdr-projects set plan.approve none --task {id}."); }
         let (needs, fix) = match self {
             Tool::Bwrap => ("bubblewrap (the `bwrap` program, with user namespaces allowed), which is missing or not usable on this machine", "Install it (for example: sudo apt install bubblewrap), or take"),
             Tool::SandboxExec => ("macOS's own sandbox (the `sandbox-exec` program), which could not be used here: macOS allows no sandbox inside another, so it fails when Herdr itself was started inside one", "Start Herdr outside any sandbox, or take"),
@@ -88,8 +90,7 @@ fn sandbox_off(given: &str) -> String {
     let out = Value::Object(o).to_string();
     if inline { return out; }
     let file = PathBuf::from(format!("{}.sandbox-off.json", given.trim_end_matches(".json")));
-    use std::os::unix::fs::OpenOptionsExt;
-    let wrote = std::fs::OpenOptions::new().write(true).create(true).truncate(true).mode(0o600).open(&file).and_then(|mut f| std::io::Write::write_all(&mut f, out.as_bytes()));
+    let wrote = crate::platform::perms::write_private(&file, &out);
     if wrote.is_ok() { file.display().to_string() } else { out }
 }
 /// A Seatbelt profile that allows everything but a write under the guarded folders, each by its real path (macOS

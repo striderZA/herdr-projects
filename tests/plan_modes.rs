@@ -109,3 +109,15 @@ fn plan_agent_a_planner_in_a_tab_of_its_own_and_after_the_yes_the_worker_builds_
     b.load();
     assert!(b.text().contains("Planner used"), "{}", b.text());
 }
+
+/// On Windows there is no read-only mount for a plan's writer, so `plan.approve you` refuses the start and says why.
+#[cfg(windows)]
+#[test]
+fn plan_approval_you_is_refused_on_windows_with_its_reason() {
+    let w = world_with(Opts { repo: true, settings: json!({ "plan.approve": "you", "review.when": "never" }), ..Default::default() });
+    unsafe { std::env::remove_var("HERDR_PROJECTS_SANDBOX") };
+    let id = w.add("Work");
+    let err = sw::actions::start::delegate(&id, vec![]).err().expect("the start is refused on Windows");
+    assert!(err.msg.contains("read-only mount is not available on Windows"), "{}", err.msg);
+    assert_ne!(task(&id).s("stage"), "working", "nothing was started");
+}
