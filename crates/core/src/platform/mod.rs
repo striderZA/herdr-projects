@@ -2,4 +2,5 @@
 //! today's code and a windows half. Callers use these areas, never libc or std::os::unix directly.
 pub mod lock;
 pub mod meta;
+pub mod perms;
 pub mod proc;

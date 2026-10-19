@@ -17,12 +17,7 @@ fn hook_command(h: &Hook) -> Vec<String> {
     if h.role == "reviewer" { c.extend(["--round".to_string(), h.round.to_string()]); }
     c
 }
-fn write_private(file: &Path, text: &str) -> Res<()> {
-    use std::os::unix::fs::OpenOptionsExt;
-    let mut f = fs::OpenOptions::new().write(true).create(true).truncate(true).mode(0o600).open(file)?;
-    std::io::Write::write_all(&mut f, text.as_bytes())?;
-    Ok(())
-}
+fn write_private(file: &Path, text: &str) -> Res<()> { Ok(crate::platform::perms::write_private(file, text)?) }
 /// Launch arguments that make the program call `turn-ended` at every turn end. None: no hook for it here.
 pub fn hook_args(kind: &str, h: &Hook) -> Res<Option<Vec<String>>> {
     match kind {
