@@ -27,7 +27,7 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 // has a variable of its own too. The XDG_* variables only say where an older version kept things (move_home.rs).
 pub const HOME_NAME: &str = ".herdr-projects";
 fn env(k: &str) -> Option<String> { std::env::var(k).ok().filter(|v| !v.is_empty()) }
-pub fn user_home() -> PathBuf { env("HOME").map(PathBuf::from).unwrap_or_else(|| PathBuf::from("/")) }
+pub fn user_home() -> PathBuf { crate::platform::shell::user_home() }
 pub fn home_dir() -> PathBuf { env("HERDR_PROJECTS_HOME").map(PathBuf::from).unwrap_or_else(|| user_home().join(HOME_NAME)) }
 pub fn data_dir() -> PathBuf { env("HERDR_PROJECTS_DATA_DIR").map(PathBuf::from).unwrap_or_else(|| home_dir().join("data")) }
 pub fn config_dir() -> PathBuf { env("HERDR_PROJECTS_CONFIG_DIR").map(PathBuf::from).unwrap_or_else(|| home_dir().join("settings")) }
@@ -46,19 +46,12 @@ pub fn artifacts_dir(id: &str) -> PathBuf { dir_of(id).join("artifacts") }
 /// This program, by its full path: what agents and hooks are handed, and what a process starts its successors from.
 /// Once an update put a new file at that path, Linux names the running one "… (deleted)", a file nothing can be started
 /// from: the path is the one without it, where the new program is.
-pub fn bin() -> PathBuf {
-    use std::os::unix::ffi::OsStrExt;
-    let Ok(p) = std::env::current_exe() else { return PathBuf::from("herdr-projects") };
-    match p.as_os_str().as_bytes().strip_suffix(b" (deleted)") { Some(b) => PathBuf::from(std::ffi::OsStr::from_bytes(b)), None => p }
-}
+pub fn bin() -> PathBuf { crate::platform::shell::own_path() }
 pub fn absolute(p: &Path) -> PathBuf { if p.is_absolute() { p.to_path_buf() } else { std::env::current_dir().map(|d| d.join(p)).unwrap_or_else(|_| p.to_path_buf()) } }
 
 /// The user's name, as the owner of a task.
 pub fn me() -> String {
-    let name = unsafe {
-        let pw = libc::getpwuid(libc::getuid());
-        if pw.is_null() { String::new() } else { std::ffi::CStr::from_ptr((*pw).pw_name).to_string_lossy().into_owned() }
-    };
+    let name = crate::platform::shell::user_name();
     let name = if name.is_empty() { env("USER").unwrap_or_default() } else { name };
     let clean: String = name.chars().filter(|c| c.is_ascii_alphanumeric() || "_.+-".contains(*c)).take(32).collect();
     if clean.is_empty() { "you".into() } else { clean }
