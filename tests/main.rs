@@ -182,6 +182,7 @@ mod plan_rest;
 mod plan_sandbox;
 mod plan_steps;
 mod plan_untouched;
+mod platform_links;
 mod platform_lock;
 mod platform_meta;
 mod platform_perms;

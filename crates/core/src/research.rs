@@ -213,7 +213,7 @@ pub fn keep_report(t: &Task, base: impl FnOnce() -> String) -> Option<Value> {
     let there = fs::read_link(&to).ok();
     let ok = if there.as_deref() != Some(from.as_path()) {
         let _ = fs::remove_dir_all(&to); let _ = fs::remove_file(&to);
-        to.parent().map(|p| fs::create_dir_all(p).is_ok()).unwrap_or(false) && std::os::unix::fs::symlink(&from, &to).is_ok()
+        to.parent().map(|p| fs::create_dir_all(p).is_ok()).unwrap_or(false) && crate::platform::links::make_link(&from, &to).is_ok()
     } else { true };
     if ok { root = base(); }
     let link = if root.is_empty() { from.join(&file).display().to_string() } else { format!("{root}/{REPORT}/{}", crate::util::url_encode(&file)) };

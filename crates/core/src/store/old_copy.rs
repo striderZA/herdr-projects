@@ -25,7 +25,7 @@ pub fn copy_place(data: &Path, version: &str) -> PathBuf { PathBuf::from(format!
 /// Files, folders and links as they are (a link stays a link); anything else (a socket) is left out.
 fn copy_tree(from: &Path, to: &Path) -> std::io::Result<()> {
     let m = fs::symlink_metadata(from)?;
-    if m.file_type().is_symlink() { return std::os::unix::fs::symlink(fs::read_link(from)?, to); }
+    if crate::platform::meta::is_link(&m) { return crate::platform::links::make_link(&fs::read_link(from)?, to); }
     if m.is_dir() {
         fs::create_dir(to)?;
         for e in fs::read_dir(from)? { let e = e?; copy_tree(&e.path(), &to.join(e.file_name()))?; }

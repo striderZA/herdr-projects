@@ -54,7 +54,7 @@ fn others_board(p: &Plan, bin: &Path, linked: bool) -> bool {
     if linked { return true; }
     let Some(text) = read_text(&p.parts[0].from.join("bin").join(OLD_NAME)) else { return false };
     let named = text.lines().find_map(|l| launcher_target(l)).unwrap_or_default();
-    !named.is_empty() && Path::new(&named).exists() && real(Path::new(&named)) != real(bin) && !named.ends_with(".js")
+    !named.is_empty() && Path::new(&named).exists() && !crate::platform::links::same_place(Path::new(&named), bin) && !named.ends_with(".js")
 }
 fn free(file: &Path) -> PathBuf {
     if lstat(file).is_none() { return file.to_path_buf(); }
@@ -96,19 +96,9 @@ pub fn merge_into(from: &Path, to: &Path, aside: &Path) -> std::io::Result<usize
     Ok(kept)
 }
 /// Two paths change places in one step: there is no moment at which either is missing. False: not possible here.
-pub fn swap_now(a: &Path, b: &Path) -> bool {
-    use std::ffi::CString;
-    use std::os::unix::ffi::OsStrExt;
-    let (Ok(ca), Ok(cb)) = (CString::new(a.as_os_str().as_bytes()), CString::new(b.as_os_str().as_bytes())) else { return false };
-    #[cfg(target_os = "linux")]
-    unsafe { libc::syscall(libc::SYS_renameat2, libc::AT_FDCWD, ca.as_ptr(), libc::AT_FDCWD, cb.as_ptr(), 2u32) == 0 }
-    #[cfg(target_os = "macos")]
-    unsafe { libc::renamex_np(ca.as_ptr(), cb.as_ptr(), libc::RENAME_SWAP) == 0 }
-    #[cfg(not(any(target_os = "linux", target_os = "macos")))]
-    { let _ = (ca, cb); false }
-}
+pub fn swap_now(a: &Path, b: &Path) -> bool { crate::platform::links::swap(a, b) }
 fn same_disk(a: &Path, b: &Path) -> bool { crate::platform::meta::same_disk(a, b) }
-fn link(target: &Path, at: &Path) -> std::io::Result<()> { std::os::unix::fs::symlink(target, at) }
+fn link(target: &Path, at: &Path) -> std::io::Result<()> { crate::platform::links::make_link(target, at) }
 /// One folder, in three steps each whole or not done (`<old>.moving` is the spare name the steps use):
 ///   1. two links are made: <old>.moving -> new, and new -> <old>.moving
 ///   2. <old> and <old>.moving change places: old -> new -> <old>.moving, which is now the folder
@@ -122,28 +112,28 @@ pub fn move_one(p: &Part, rec: &mut Obj, file: &Path, aside: &Path, swap: &dyn F
     for _ in 0..6 {
         let (f, t, m) = (lstat(&p.from), lstat(&p.to), lstat(&tmp));
         let cur = rec.o(p.what).cloned().unwrap_or_default();
-        if f.as_ref().map(|x| x.file_type().is_symlink()).unwrap_or(false) {
-            if t.as_ref().map(|x| x.file_type().is_symlink()).unwrap_or(false) && m.as_ref().map(|x| x.is_dir()).unwrap_or(false) && points(&p.to, &tmp) {
+        if f.as_ref().map(crate::platform::meta::is_link).unwrap_or(false) {
+            if t.as_ref().map(crate::platform::meta::is_link).unwrap_or(false) && m.as_ref().map(|x| x.is_dir()).unwrap_or(false) && points(&p.to, &tmp) {
                 if !swap(&p.to, &tmp) { return Ok(how); }
                 continue; // step 3
             }
             if !t.as_ref().map(|x| x.is_dir()).unwrap_or(false) || cur.s("state") != "moving" { return Ok(None); }
-            if m.as_ref().map(|x| x.file_type().is_symlink()).unwrap_or(false) { fs::remove_file(&tmp)?; }
+            if m.as_ref().map(crate::platform::meta::is_link).unwrap_or(false) { fs::remove_file(&tmp)?; }
             let h = how.clone().or_else(|| cur.so("how").map(String::from)).unwrap_or_else(|| "moved".into());
             let mut done = cur.clone(); done.put("state", "done"); done.put("how", h.as_str()); done.put("at", now());
             save(rec, done);
             return Ok(Some(h));
         }
         if !f.as_ref().map(|x| x.is_dir()).unwrap_or(false) { return Ok(None); }
-        let begun = t.as_ref().map(|x| x.file_type().is_symlink()).unwrap_or(false) && points(&p.to, &tmp);
-        if !begun && real(&p.from) == real(&p.to) { return Ok(None); } // the new place is a link to this one already
+        let begun = t.as_ref().map(crate::platform::meta::is_link).unwrap_or(false) && points(&p.to, &tmp);
+        if !begun && crate::platform::links::same_place(&p.from, &p.to) { return Ok(None); } // the new place is a link to this one already
         if t.as_ref().map(|x| !x.is_dir()).unwrap_or(false) && !begun { return Ok(None); } // something not ours sits there
         let mut moving = cur.clone();
         moving.put("from", p.from.display().to_string()); moving.put("to", p.to.display().to_string()); moving.put("state", "moving");
         if let Some(h) = &how { moving.put("how", h.as_str()); }
         save(rec, moving); // written first: a cut-off run is known for what it is
         if let Some(d) = p.to.parent() { fs::create_dir_all(d)?; }
-        if t.as_ref().map(|x| x.is_dir() && !x.file_type().is_symlink()).unwrap_or(false) {
+        if t.as_ref().map(|x| x.is_dir() && !crate::platform::meta::is_link(x)).unwrap_or(false) {
             let kept = merge_into(&p.to, &p.from, &aside.join(p.what))?;
             fs::remove_dir(&p.to)?;
             how = Some("merged".into());
@@ -153,14 +143,14 @@ pub fn move_one(p: &Part, rec: &mut Obj, file: &Path, aside: &Path, swap: &dyn F
             continue;
         }
         let stay = |rec: &mut Obj| -> std::io::Result<Option<String>> {
-            for l in [&p.to, &tmp] { if lstat(l).map(|x| x.file_type().is_symlink()).unwrap_or(false) { let _ = fs::remove_file(l); } }
+            for l in [&p.to, &tmp] { if lstat(l).map(|x| crate::platform::meta::is_link(&x)).unwrap_or(false) { let _ = fs::remove_file(l); } }
             link(&p.from, &p.to)?;
             let mut done = rec.o(p.what).cloned().unwrap_or_default(); done.put("state", "done"); done.put("how", "linked"); done.put("at", now());
             save(rec, done);
             Ok(Some("linked".into()))
         };
         if !same_disk(&p.from, p.to.parent().unwrap_or(Path::new("/"))) { return stay(rec); }
-        if m.as_ref().map(|x| !x.file_type().is_symlink()).unwrap_or(false) { return Ok(None); } // the spare name is taken
+        if m.as_ref().map(|x| !crate::platform::meta::is_link(x)).unwrap_or(false) { return Ok(None); } // the spare name is taken
         if m.is_none() { link(&p.to, &tmp)?; }
         if t.is_none() { link(&tmp, &p.to)?; }
         if !swap(&tmp, &p.from) { return stay(rec); } // step 2
