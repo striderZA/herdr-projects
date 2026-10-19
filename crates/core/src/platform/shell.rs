@@ -112,4 +112,8 @@ pub fn own_path() -> PathBuf {
 }
 
 #[cfg(windows)]
-pub fn own_path() -> PathBuf { std::env::current_exe().unwrap_or_else(|_| PathBuf::from("herdr-projects.exe")) }
+pub fn own_path() -> PathBuf {
+    let p = std::env::current_exe().unwrap_or_else(|_| PathBuf::from("herdr-projects.exe"));
+    // An update moved this running program aside as `X.exe.old`: the program at `X.exe` is the new one, the one to start.
+    match p.to_str().and_then(|s| s.strip_suffix(".old")) { Some(s) if s.ends_with(".exe") && Path::new(s).exists() => PathBuf::from(s), _ => p }
+}

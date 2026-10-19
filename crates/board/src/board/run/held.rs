@@ -21,7 +21,7 @@ pub fn held_size(cols: u16, rows: u16, layout: &Value, pane: &str) -> Option<(u1
 pub fn holders(terminal: &str) -> Vec<(i64, i64)> {
     if terminal.is_empty() { return vec![]; }
     // `etime`, not `etimes`: macOS's ps has no `etimes` and fails outright, and then no view was ever seen.
-    let out = std::process::Command::new("ps").args(["-eo", "pid=,etime=,args="]).output().ok().filter(|o| o.status.success()).map(|o| String::from_utf8_lossy(&o.stdout).into_owned()).unwrap_or_default();
+    let out = crate::platform::proc::process_table();
     holders_in(terminal, &out)
 }
 /// The same, from what `ps -eo pid=,etime=,args=` printed.

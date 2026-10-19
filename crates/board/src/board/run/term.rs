@@ -47,16 +47,11 @@ pub fn colours_told(asked: bool, ms: u64) -> crate::board::theme::Seen {
     let fgbg = std::env::var("COLORFGBG").ok().and_then(|v| v.rsplit(';').next().and_then(|x| x.parse::<u8>().ok())).map(|n| n == 7 || n == 15);
     let mut seen = crate::board::theme::Seen { light: fgbg, fg: None, bg: None };
     if !asked { return seen; }
-    let fd = 0;
     let mut buf = Vec::new();
     let until = std::time::Instant::now() + std::time::Duration::from_millis(ms);
     let done = |b: &[u8]| crate::board::theme::answers::read_answers(&String::from_utf8_lossy(b)).1;
     while std::time::Instant::now() < until && !done(&buf) {
-        let mut p = libc::pollfd { fd, events: libc::POLLIN, revents: 0 };
-        let left = until.saturating_duration_since(std::time::Instant::now()).as_millis() as i32;
-        if unsafe { libc::poll(&mut p, 1, left.max(1)) } <= 0 { break; }
-        let mut chunk = [0u8; 256];
-        match std::io::stdin().read(&mut chunk) { Ok(n) if n > 0 => buf.extend_from_slice(&chunk[..n]), _ => break }
+        if !read_until(until, &mut buf) { break; }
     }
     let _ = terminal::disable_raw_mode();
     let (told, _) = crate::board::theme::answers::read_answers(&String::from_utf8_lossy(&buf));
@@ -64,4 +59,45 @@ pub fn colours_told(asked: bool, ms: u64) -> crate::board::theme::Seen {
     seen.bg = told.bg;
     if told.light.is_some() { seen.light = told.light; }
     seen
+}
+/// Unix: the terminal's bytes are waited for with poll(2) until the deadline, then read. False when none came.
+#[cfg(unix)]
+fn read_until(until: std::time::Instant, buf: &mut Vec<u8>) -> bool {
+    let mut p = libc::pollfd { fd: 0, events: libc::POLLIN, revents: 0 };
+    let left = until.saturating_duration_since(std::time::Instant::now()).as_millis() as i32;
+    if unsafe { libc::poll(&mut p, 1, left.max(1)) } <= 0 { return false; }
+    let mut chunk = [0u8; 256];
+    match std::io::stdin().read(&mut chunk) { Ok(n) if n > 0 => { buf.extend_from_slice(&chunk[..n]); true } _ => false }
+}
+/// Windows: a console read cannot be polled. It runs on a thread of its own, and at the deadline that read is cancelled
+/// (CancelSynchronousIo, as spike S2 showed), so no byte after the deadline is taken from the board.
+#[cfg(windows)]
+fn read_until(until: std::time::Instant, buf: &mut Vec<u8>) -> bool {
+    use std::sync::mpsc::{channel, RecvTimeoutError};
+    use windows_sys::Win32::Foundation::{CloseHandle, DuplicateHandle, DUPLICATE_SAME_ACCESS, HANDLE};
+    use windows_sys::Win32::System::IO::CancelSynchronousIo;
+    use windows_sys::Win32::System::Threading::{GetCurrentProcess, GetCurrentThread};
+    let (htx, hrx) = channel::<usize>();
+    let (tx, rx) = channel::<Option<Vec<u8>>>();
+    std::thread::spawn(move || {
+        // The thread's own handle, through which the board cancels this read; the board closes it.
+        let mut real: HANDLE = std::ptr::null_mut();
+        unsafe { DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &mut real, 0, 0, DUPLICATE_SAME_ACCESS) };
+        let _ = htx.send(real as usize);
+        let mut chunk = [0u8; 256];
+        let got = match std::io::stdin().read(&mut chunk) { Ok(n) if n > 0 => Some(chunk[..n].to_vec()), _ => None };
+        let _ = tx.send(got);
+    });
+    let Ok(handle) = hrx.recv() else { return false };
+    let real = handle as HANDLE;
+    let got = match rx.recv_timeout(until.saturating_duration_since(std::time::Instant::now())) {
+        Ok(got) => got,
+        Err(RecvTimeoutError::Timeout) => {
+            unsafe { CancelSynchronousIo(real) };
+            rx.recv_timeout(std::time::Duration::from_millis(500)).ok().flatten()
+        }
+        Err(RecvTimeoutError::Disconnected) => None,
+    };
+    unsafe { CloseHandle(real) };
+    match got { Some(bytes) => { buf.extend_from_slice(&bytes); true } None => false }
 }
