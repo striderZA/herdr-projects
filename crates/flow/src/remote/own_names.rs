@@ -17,21 +17,4 @@ pub fn host_names(host: &str) -> Vec<String> {
     match h.strip_suffix(".local").filter(|b| !b.is_empty() && !b.contains('.')) { Some(b) => vec![h.clone(), b.to_string()], None => vec![h] }
 }
 /// The addresses of this machine's network interfaces, loopback ones left out.
-fn addresses() -> Vec<IpAddr> {
-    let mut out = vec![];
-    let mut list: *mut libc::ifaddrs = std::ptr::null_mut();
-    if unsafe { libc::getifaddrs(&mut list) } != 0 { return out; }
-    let mut at = list;
-    while !at.is_null() {
-        let a = unsafe { &*at };
-        if !a.ifa_addr.is_null() {
-            let family = unsafe { (*a.ifa_addr).sa_family } as i32;
-            let ip = if family == libc::AF_INET { Some(IpAddr::from(u32::from_be(unsafe { (*(a.ifa_addr as *const libc::sockaddr_in)).sin_addr.s_addr }).to_be_bytes())) }
-                else if family == libc::AF_INET6 { Some(IpAddr::from(unsafe { (*(a.ifa_addr as *const libc::sockaddr_in6)).sin6_addr.s6_addr })) } else { None };
-            if let Some(ip) = ip.filter(|ip| !ip.is_loopback() && !ip.is_unspecified()) { if !out.contains(&ip) { out.push(ip); } }
-        }
-        at = a.ifa_next;
-    }
-    unsafe { libc::freeifaddrs(list) };
-    out
-}
+fn addresses() -> Vec<IpAddr> { crate::platform::net::local_addrs() }

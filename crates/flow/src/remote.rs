@@ -29,6 +29,7 @@ fn clean(s: &str, extra: &str) -> String { s.chars().filter(|c| c.is_ascii_alpha
 /// The board's name for a machine herdr names `raw`: no user, no domain, nothing but letters, digits, `_.-`.
 pub fn short_label(raw: &str) -> String { raw.rsplit('@').next().unwrap_or("").split('.').next().unwrap_or("").chars().map(|c| if c.is_ascii_alphanumeric() || "_.-".contains(c) { c } else { '-' }).collect() }
 pub fn machines() -> Vec<Machine> {
+    if cfg!(windows) { return vec![]; } // SSH machines are not in v1 on Windows (design §4): none is listed, none is asked.
     let want = setting("board.machines", None).as_str().unwrap_or("auto").to_string();
     let user = std::env::var("USER").unwrap_or_default();
     if want == "none" { return vec![]; }
