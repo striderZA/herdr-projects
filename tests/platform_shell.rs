@@ -53,3 +53,10 @@ fn a_program_on_the_path_is_found_by_its_name() {
     assert_eq!(shell::find_in(&path, "hp-missing"), None);
     let _ = fs::remove_file(&file);
 }
+
+#[test]
+fn a_runner_command_in_the_shell_returns_its_output() {
+    let out = sw::runner::sh("echo ok", &std::env::temp_dir(), &[], 1.0, None, None);
+    assert!(out.ok, "the command failed: {}", out.out);
+    assert_eq!(out.out.trim(), "ok");
+}
