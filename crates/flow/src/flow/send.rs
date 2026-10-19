@@ -9,12 +9,11 @@ use crate::clock::now;
 use crate::err::Res;
 use crate::json::*;
 use crate::research::is_research;
-use crate::store::files::{board_env, data_dir, marker_alive, bin};
+use crate::store::files::{data_dir, marker_alive, bin};
 use crate::store::inbox::queue_text;
 use crate::store::retries::waiting_of;
 use crate::store::tasks::{get, one_line, update_wait, Change, Task};
 use crate::submit::{hand, note_sent};
-use crate::util::shq;
 use std::path::PathBuf;
 
 /// "sent": typed, with enter pressed (whether the agent then started on it is looked at again: submit.rs); "queued".
@@ -42,25 +41,44 @@ pub fn prompt_tail(t: &Task) -> String {
 }
 pub fn with_tail(t: &Task, text: &str) -> String { [text.to_string(), prompt_tail(t)].into_iter().filter(|s| !s.is_empty()).collect::<Vec<_>>().join("\n\n") }
 /// Where the launcher is, without writing it (`doctor` looks at it as it is).
-pub fn launcher_file() -> PathBuf { data_dir().join("bin").join("herdr-projects") }
+pub fn launcher_file() -> PathBuf { data_dir().join("bin").join(if cfg!(windows) { "herdr-projects.exe" } else { "herdr-projects" }) }
 /// The absolute path of the command, kept in the data folder, so agents and hooks find it without anything on their
 /// PATH. It names its own board: herdr cannot hand a worktree's space any environment.
 pub fn shim() -> PathBuf {
     let file = launcher_file();
+    if crate::herdr::cli::fake().is_none() { write_launcher(&file); }
+    file
+}
+/// Unix: a shell script that exports the board's folders and runs this program. Written only when its text changed.
+#[cfg(unix)]
+fn write_launcher(file: &std::path::Path) {
     let dir = data_dir().join("bin");
     let mut text = "#!/bin/sh\n".to_string();
-    for (k, v) in board_env() { text.push_str(&format!("export {k}={}\n", shq(&v))); }
-    text.push_str(&format!("exec {} \"$@\"\n", shq(&bin().display().to_string())));
-    let is_link = std::fs::symlink_metadata(&file).map(|m| m.file_type().is_symlink()).unwrap_or(false);
-    let have = if is_link { None } else { std::fs::read_to_string(&file).ok() };
-    if have.as_deref() != Some(text.as_str()) && crate::herdr::cli::fake().is_none() {
-        use std::os::unix::fs::OpenOptionsExt;
-        let _ = std::fs::create_dir_all(&dir);
-        let tmp = dir.join(format!("herdr-projects.{}", std::process::id()));
-        let ok = std::fs::OpenOptions::new().write(true).create(true).truncate(true).mode(0o755).open(&tmp).and_then(|mut f| std::io::Write::write_all(&mut f, text.as_bytes())).is_ok();
-        if ok { let _ = std::fs::rename(&tmp, &file); }
+    for (k, v) in crate::store::files::board_env() { text.push_str(&format!("export {k}={}\n", crate::util::shq(&v))); }
+    text.push_str(&format!("exec {} \"$@\"\n", crate::util::shq(&bin().display().to_string())));
+    let is_link = std::fs::symlink_metadata(file).map(|m| m.file_type().is_symlink()).unwrap_or(false);
+    let have = if is_link { None } else { std::fs::read_to_string(file).ok() };
+    if have.as_deref() == Some(text.as_str()) { return; }
+    let _ = std::fs::create_dir_all(&dir);
+    let tmp = dir.join(format!("herdr-projects.{}", std::process::id()));
+    if std::fs::write(&tmp, text.as_bytes()).is_ok() && crate::platform::perms::make_executable(&tmp).is_ok() { let _ = std::fs::rename(&tmp, file); }
+    let _ = std::fs::remove_file(&tmp);
+}
+/// Windows: a copy of this program, named .exe, since Windows starts a program by its name only when it is an .exe. A copy
+/// carries no environment, so it cannot export board_env: it finds the board's folders by their defaults.
+#[cfg(windows)]
+fn write_launcher(file: &std::path::Path) {
+    let Ok(src) = std::fs::metadata(bin()) else { return };
+    let same = std::fs::metadata(file).map(|m| m.len() == src.len() && crate::platform::meta::mtime_ms(&m) == crate::platform::meta::mtime_ms(&src)).unwrap_or(false);
+    if same { return; }
+    let dir = data_dir().join("bin");
+    let _ = std::fs::create_dir_all(&dir);
+    let tmp = dir.join(format!("herdr-projects-{}.tmp", std::process::id()));
+    if std::fs::copy(bin(), &tmp).is_ok() {
+        if let (Ok(f), Ok(t)) = (std::fs::OpenOptions::new().write(true).open(&tmp), src.modified()) { let _ = f.set_modified(t); }
+        let _ = std::fs::rename(&tmp, file);
     }
-    file
+    let _ = std::fs::remove_file(&tmp);
 }
 pub fn note_rule(t: &Task) -> String { format!("Before you stop, write your closing summary (or your question to the human, if you cannot continue) to {} (the board's own folder for this task, not the folder you work in).", note_file(t).display()) }
 /// A prompt the plugin itself sends (check output, review findings, conflict or pull-request repair). It writes

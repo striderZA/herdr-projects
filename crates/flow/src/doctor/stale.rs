@@ -23,13 +23,12 @@ pub fn cache_dir() -> PathBuf {
 }
 /// The bytes a folder takes on disk, links not followed; `more` when the walk ran out of time first.
 fn size(dir: &Path, until: Instant) -> (u64, bool) {
-    use std::os::unix::fs::MetadataExt;
     let (mut n, mut todo) = (0u64, vec![dir.to_path_buf()]);
     while let Some(d) = todo.pop() {
         if Instant::now() > until { return (n, true); }
         for e in std::fs::read_dir(&d).into_iter().flatten().flatten() {
             let Ok(m) = e.metadata() else { continue };
-            n += m.blocks() * 512;
+            n += crate::platform::meta::bytes_on_disk(&m);
             if m.is_dir() { todo.push(e.path()); }
         }
     }

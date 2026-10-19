@@ -33,7 +33,7 @@ fn how(h: &Here) -> &'static str {
     let downloaded = platform().map(|p| h.exe.file_name().map(|n| n == asset_name(p).as_str()).unwrap_or(false)).unwrap_or(false);
     if built_from_source(&h.exe) { "built from source" } else if downloaded { "downloaded" } else { "installed by hand" }
 }
-fn is_program(p: &Path) -> bool { use std::os::unix::fs::PermissionsExt; std::fs::metadata(p).map(|m| m.is_file() && m.permissions().mode() & 0o111 != 0).unwrap_or(false) }
+fn is_program(p: &Path) -> bool { crate::platform::perms::is_program(p) }
 
 pub fn check(h: &Here) -> Vec<Found> {
     let mut out = vec![Found::ok(format!("herdr-projects {}, {}: {}", h.version, how(h), t(&h.exe)))];

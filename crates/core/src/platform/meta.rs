@@ -121,3 +121,13 @@ pub fn is_link(m: &Metadata) -> bool {
     const FILE_ATTRIBUTE_REPARSE_POINT: u32 = 0x400;
     m.file_type().is_symlink() || (m.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT) != 0
 }
+
+/// The bytes a file takes on disk. Unix: the blocks allocated to it. Windows: its length (the cluster allocation is not read).
+#[cfg(unix)]
+pub fn bytes_on_disk(m: &Metadata) -> u64 {
+    use std::os::unix::fs::MetadataExt;
+    m.blocks() * 512
+}
+
+#[cfg(windows)]
+pub fn bytes_on_disk(m: &Metadata) -> u64 { m.len() }
