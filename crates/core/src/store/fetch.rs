@@ -42,7 +42,8 @@ fn locked(said: &str) -> bool { moved(said) || has(said, &["cannot lock ref", "u
 /// Another fetch moved the ref while this one ran: the copy here is as new as that fetch made it.
 pub fn moved(said: &str) -> bool { has(said, &["but expected"]) }
 /// The lock file git said is held, when it did: another git command's now, or one a git that stopped left behind.
-fn lock_file(said: &str) -> Option<String> { crate::re!(r"Unable to create '([^']+\.lock)'").captures(said).map(|c| c[1].to_string()) }
+// git prints forward slashes on Windows; the path is named the way Windows writes it.
+fn lock_file(said: &str) -> Option<String> { crate::re!(r"Unable to create '([^']+\.lock)'").captures(said).map(|c| c[1].replace('/', std::path::MAIN_SEPARATOR_STR)) }
 /// git 2.53 says a held lock file only as "fetching ref <ref> failed: reference already exists", as it says a real
 /// conflict: it is the lock when that ref's `.lock` file is there in the repo's common git dir (whatever worktree asks).
 fn lock_left(dir: &Path, said: &str) -> Option<String> {
@@ -122,7 +123,8 @@ mod tests {
     fn plain_words() {
         assert!(locked("error: cannot lock ref 'refs/remotes/origin/main': is at 27 but expected 68") && moved("is at 27 but expected 68"));
         let held = "error: cannot lock ref 'refs/remotes/origin/main': Unable to create '/r/.git/refs/remotes/origin/main.lock': File exists.";
-        assert!(locked(held) && !moved(held) && plain(held, "main").starts_with("git's lock file /r/.git/refs/remotes/origin/main.lock stayed"), "{}", plain(held, "main"));
+        let shown = "/r/.git/refs/remotes/origin/main.lock".replace('/', std::path::MAIN_SEPARATOR_STR);
+        assert!(locked(held) && !moved(held) && plain(held, "main").starts_with(&format!("git's lock file {shown} stayed")), "{}", plain(held, "main"));
         assert!(plain("error: cannot lock ref 'refs/remotes/origin/main': is at 27 but expected 68", "main").starts_with("another fetch"));
         assert!(plain("fatal: couldn't find remote ref trunk", "trunk").starts_with("origin has no branch trunk"));
         assert!(plain("git@github.com: Permission denied (publickey).\nfatal: Could not read from remote repository.", "main").starts_with("origin asked for a login"));
@@ -145,5 +147,14 @@ mod tests {
         assert!(plain_held(exists, "main", Some(named.clone())).starts_with(&format!("git's lock file {named} stayed")));
         assert!(lock_left(&dir, "error: fetching ref refs/remotes/origin/main failed: something else").is_none());
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn plain_names_the_lock_file_in_the_platform_separator() {
+        // git prints a lock file with forward slashes on Windows (C:/Users/...); the board names it the way Windows writes it
+        let said = "error: cannot lock ref 'refs/remotes/origin/main': Unable to create 'C:/Users/me/proj/.git/refs/remotes/origin/main.lock': File exists.";
+        let s = std::path::MAIN_SEPARATOR;
+        let want = format!("git's lock file C:{s}Users{s}me{s}proj{s}.git{s}refs{s}remotes{s}origin{s}main.lock stayed in the way on every try");
+        assert!(plain(said, "main").starts_with(&want), "{}", plain(said, "main"));
     }
 }
