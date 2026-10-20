@@ -6,8 +6,7 @@ $name = 'herdr-projects-windows-x86_64.exe'
 $program = Join-Path $here $name
 $launcher = Join-Path $here 'herdr-projects.exe'
 $repoRoot = Split-Path -Parent $here
-$versionFile = Join-Path (Split-Path -Parent $repoRoot) 'Cargo.toml'
-if (-not (Test-Path -LiteralPath $versionFile)) { $versionFile = Join-Path $repoRoot 'Cargo.toml' }
+$versionFile = Join-Path $repoRoot 'Cargo.toml'
 $versionMatch = Select-String -LiteralPath $versionFile -Pattern '^version\s*=\s*"([^"]+)"' | Select-Object -First 1
 $version = if ($versionMatch) { $versionMatch.Matches[0].Groups[1].Value } else { '' }
 $base = $env:HERDR_PROJECTS_RELEASES
