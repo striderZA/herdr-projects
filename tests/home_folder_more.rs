@@ -50,7 +50,7 @@ fn what_is_not_the_boards_to_move_stays_a_folder_you_named_another_copys_board_o
     assert_eq!(r.moved.iter().map(|(p, _)| p.what).collect::<Vec<_>>(), vec!["reports"]); assert!(!is_link(&h.data) && !is_link(&h.settings));
     // The old data folder's command names another copy of the program that is still there (the installed one, seen
     // from a worktree): this copy moves nothing, and is told so that it works on that board where it is.
-    let sh = sw::platform::shell::sh().get_program().to_string_lossy().into_owned();
+    let sh = if cfg!(windows) { sw::platform::shell::sh().get_program().to_string_lossy().into_owned() } else { "/bin/sh".to_string() };
     let h = old_home(&w.base, Some(&sh));
     let r = h.run();
     assert!(r.other && r.moved.is_empty() && !is_link(&h.data)); assert_eq!(names(&h.to), vec!["closing-1.md"]);
