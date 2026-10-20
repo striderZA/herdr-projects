@@ -80,7 +80,8 @@ fn ensure(api: &Herdr, co: &Co) -> Res<(Obj, bool)> {
     std::fs::create_dir_all(home(co))?;
     // Its standing rules are files in its folder, brought up to date before every message.
     let who = c.o("run").cloned().or_else(|| c.o("pick").cloned()).or_else(choice);
-    let text = rules_of(co, &crate::flow::send::shim().display().to_string());
+    let _launcher = crate::flow::send::shim();
+    let text = rules_of(co, &crate::flow::send::launcher_file().display().to_string());
     if let Some(w) = &who { let _ = put_rules(co, w.s("kind"), &text); }
     let mut pane = if c.b("pane") { api.pane_get(c.s("pane")) } else { None };
     if c.b("workspace") { match move_over(api, co, false) { Ok(p) => pane = p, Err(_) => { close_place(api, &c); let _ = change(co, |c| { nowhere(c); true }); pane = None; } } }
@@ -88,6 +89,7 @@ fn ensure(api: &Herdr, co: &Co) -> Res<(Obj, bool)> {
     let env: Vec<(String, String)> = ["HERDR_PROJECTS_DATA_DIR", "HERDR_PROJECTS_CONFIG_DIR"].iter().filter_map(|k| std::env::var(k).ok().filter(|v| !v.is_empty()).map(|v| (k.to_string(), v))).collect();
     let pane = match pane { Some(p) => p, None => open_tab(api, co, &env)? };
     c = get(co).unwrap_or_default();
+    if c.b("run") { active(co, &c); c = get(co).unwrap_or_default(); }
     if api.agent_get(pane.s("pane_id"))?.is_some() { return Ok((c, false)); }
     // Its program is not running: start it. The same conversation when there was one and the program can reopen it.
     let run = match c.o("run").cloned().or_else(|| c.o("pick").cloned().map(|mut p| { p.put("oneOff", true); p })).or_else(choice) { Some(r) => r, None => crate::fail!("{OFF_WORDS}") };
