@@ -35,9 +35,20 @@ pub struct Away { pub text: String, pub to: String, pub cwd: String, pub warned:
 /// What the archive view put aside, to come back to.
 #[derive(Clone, Debug, Default)]
 pub struct Back { pub sel: String, pub top: usize, pub filter: String, pub mode: Option<Mode>, pub value: String }
-/// The settings page: whose (a task, or an automation's row), the picked row, and the setting being typed for.
+/// Whose settings the page shows: a task's, an automation's, yours (what every task starts from, as `set` changes
+/// them), or your entry for a repo (`set --repo`).
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub enum Whose { #[default] Task, Auto, You, Repo(String) }
+impl Whose {
+    /// Yours or your entry for a repo: no task's or automation's.
+    pub fn mine(&self) -> bool { matches!(self, Whose::You | Whose::Repo(_)) }
+    /// The repo of your entry for a repo ("" for every other).
+    pub fn repo(&self) -> &str { if let Whose::Repo(r) = self { r } else { "" } }
+}
+/// The settings page: whose (a task, an automation's row, or a heading for yours), the picked row, and the setting
+/// being typed for.
 #[derive(Clone, Debug, Default)]
-pub struct Editing { pub id: String, pub at: usize, pub typing: String, pub auto: bool }
+pub struct Editing { pub id: String, pub at: usize, pub typing: String, pub whose: Whose }
 /// The first run's one screen.
 #[derive(Clone, Debug, Default)]
 pub struct Setup { pub file: String, pub typing: bool, pub key: Option<(bool, String, String)>, pub sidebar: Option<bool> }
@@ -88,6 +99,9 @@ pub struct State {
     pub web: Web,
     pub data: Data,
     pub remotes: BTreeMap<String, Remote>,
+    /// When herdr last said which machines there are (None: not yet), and whether the scope key is waiting for that
+    /// answer (with no other machine known it asks first, and shows every machine only once there is one).
+    pub listed_at: Option<i64>, pub seeking: bool,
     /// The machines ("" this one) in the order of herdr's sidebar (remote/sidebar.rs), the other machine whose sidebar
     /// was followed last (kept with the view), and herdr's own list here (None: named by hand in board.machines); the
     /// name that sidebar shows each machine by (none for one it does not show).
@@ -144,7 +158,7 @@ pub struct State {
 impl State {
     pub fn new(ctx: Ctx, data: Data) -> State {
         State {
-            ctx, web: Web::default(), data, remotes: BTreeMap::new(), order: vec![], sidebar_from: None, own_order: None, sidebar_names: BTreeMap::new(), items: vec![], rows: vec![], grouped: vec![], whole: false, autos: vec![], jobs: vec![], steps: vec![],
+            ctx, web: Web::default(), data, remotes: BTreeMap::new(), listed_at: None, seeking: false, order: vec![], sidebar_from: None, own_order: None, sidebar_names: BTreeMap::new(), items: vec![], rows: vec![], grouped: vec![], whole: false, autos: vec![], jobs: vec![], steps: vec![],
             selection_rows: vec![], selection_layout: String::new(), sel: String::new(), top: 0, stick: String::new(), top_free: false,
             all_done: false, archive_view: false, archive_back: None, archive_undo: None, reply: false, reply_id: String::new(),
             side: false, full: false, panel_top: 0, panel_height: 1, panel_length: 0, width: 120,

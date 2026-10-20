@@ -1,4 +1,4 @@
-//! What a file may be: private to its user, a program, writable or not, and whether a folder can be written. Unix: the mode
+//! What a file or folder may be: private to its user, a program, writable or not, and whether a folder can be written. Unix: the mode
 //! bits, as the program sets them (0600 for a private file, 0755 for a program, the owner's write bit set or cleared), and
 //! access(2). Windows: there are no mode bits, so a private file takes its folder's ACL like any other file; a program has
 //! a program's extension (exe, cmd, bat, com); the read-only flag stands for the write bit; a folder is writable when a
@@ -36,6 +36,35 @@ pub fn create_new_private(path: &Path) -> io::Result<File> {
 #[cfg(windows)]
 pub fn create_new_private(path: &Path) -> io::Result<File> {
     OpenOptions::new().write(true).create_new(true).open(path)
+}
+
+/// Makes a folder private to its user: mode 0700 on Unix. Windows: nothing is done, a new folder takes its profile's ACL.
+#[cfg(unix)]
+pub fn make_private_dir(path: &Path) -> io::Result<()> {
+    use std::os::unix::fs::PermissionsExt;
+    fs::set_permissions(path, fs::Permissions::from_mode(0o700))
+}
+
+#[cfg(windows)]
+pub fn make_private_dir(_path: &Path) -> io::Result<()> { Ok(()) }
+
+/// Lets its owner change and remove what is in a folder, for a removal the board makes. Unix: a folder gets the owner's
+/// rwx bits (a file keeps its mode). Windows: the read-only flag goes, for a file or a folder; a link is left alone.
+#[cfg(unix)]
+pub fn make_removable(path: &Path) -> io::Result<()> {
+    use std::os::unix::fs::PermissionsExt;
+    let m = fs::symlink_metadata(path)?;
+    if !m.is_dir() { return Ok(()); }
+    fs::set_permissions(path, fs::Permissions::from_mode(m.permissions().mode() | 0o700))
+}
+
+#[cfg(windows)]
+pub fn make_removable(path: &Path) -> io::Result<()> {
+    let m = fs::symlink_metadata(path)?;
+    if crate::platform::meta::is_link(&m) || !m.permissions().readonly() { return Ok(()); }
+    let mut p = m.permissions();
+    p.set_readonly(false);
+    fs::set_permissions(path, p)
 }
 
 /// Makes a file a program that can be run: mode 0755 on Unix. Windows runs a program by its extension, so nothing is done.

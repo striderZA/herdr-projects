@@ -1,12 +1,9 @@
-//! The one test program: every file in tests/ is a module of it, one `mod` line each in its place in the list,
-//! so cargo compiles and links the tests once. A new test file is a new line here (the guard fails a file left out).
-//! What the files share is declared once, at the top. Running one area alone: `npm run check board-panel`.
+//! The one test program: every file in tests/ is a module of it, one `mod` line each in its place in the list (the guard fails a file left out).
 mod common;
 mod far;
 mod move_home;
 mod review_kit;
 mod takeover_kit;
-
 mod after;
 mod after_far;
 mod after_more;
@@ -70,6 +67,7 @@ mod board_list_rest;
 mod board_more;
 mod board_needs;
 mod board_needs_rest;
+mod board_one_machine;
 mod board_panel;
 mod board_pending;
 mod board_panel_form;
@@ -93,6 +91,7 @@ mod board_rows_two;
 mod board_rows_waits;
 mod board_rows_wrap;
 mod board_rows_wrap_list;
+mod board_settings_yours;
 mod board_setup;
 mod board_size;
 mod board_size_held;
@@ -106,6 +105,7 @@ mod board_textbox;
 mod board_widths;
 mod board_widths_rest;
 mod calls_windows;
+mod chat_only;
 mod chat_review;
 mod check_again;
 mod check_progress;
@@ -131,6 +131,9 @@ mod coordinator_rules;
 mod coordinator_sessions;
 mod coordinator_stop;
 mod detached_jobs;
+mod disk_space;
+mod disk_space_kept;
+mod disk_space_sweep;
 mod doctor;
 mod doctor_leftovers;
 mod doctor_settings;
@@ -277,6 +280,7 @@ mod web_chat;
 mod web_chat_box;
 mod web_dock;
 mod web_door;
+mod web_door_keep;
 mod web_door_more;
 mod web_door_rest;
 mod web_far;

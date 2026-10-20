@@ -35,6 +35,8 @@ Open a new PowerShell window and check it with `herdr-projects doctor`.
 
 Windows v1 targets Claude Code, pi and omp. Codex is not tested. SSH machines, voice calls and plan approval are off in Windows v1; plan approval needs a read-only worktree guard, which this release does not provide. Windows does not turn that guard into a weaker promise.
 
+Stopping programs before a task's temporary folder is removed does not work on Windows in v1. The board cannot list the programs that run from a folder there, so it stops none, and a folder one of them still has open stays until that program ends.
+
 The default reviewer remains `codex`, but Codex is not installed in the Windows validation environment. `herdr-projects doctor` warns when the configured reviewer is missing. Choose an installed reviewer with `reviewer.agent` in the board settings (for example, Claude Code, pi or omp), or install Codex before relying on the default. A review can otherwise wait or use a configured reviewer fallback.
 
 ## Tests not run on Windows
@@ -51,3 +53,6 @@ These tests are gated with `#[cfg(unix)]`; their reasons are specific platform f
 - `tests/linking.rs`: uses Linux and macOS link flags.
 - `tests/lifecycle_popups.rs`: uses Unix-only configuration links.
 - `tests/settings_move.rs`: uses libc account lookup on Unix.
+- `tests/board_settings_yours.rs` (two tests) and `tests/board_coordinators_inks.rs` (one test): show other machines, which are not available in v1.
+- `tests/plan_steps.rs` (two tests), `tests/plan_untouched.rs` and `tests/disk_space_kept.rs` (one test each): plan approval, which needs a read-only mount that Windows v1 does not have. `tests/plan_modes.rs` tests the refusal on Windows instead.
+- `tests/disk_space_sweep.rs` (one test): stops the programs that run from a task's temporary folder, which Windows v1 cannot list (see [Windows v1 scope](#windows-v1-scope)).

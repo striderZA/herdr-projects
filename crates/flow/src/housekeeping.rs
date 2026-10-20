@@ -1,8 +1,8 @@
 //! The housekeeping pass. It rides on every hook run (for any pane, in any task), every board tick and the startup
 //! hook, rate-limited by timestamps in the data folder, so nothing important depends on the board being open:
-//! start queued tasks when a slot is free (and the ones that wait for others, once those are done: after.rs),
-//! reconcile each linked task with herdr, bring waiting tasks up to date when main moved, and poll open pull requests
-//! (housekeeping/prs.rs).
+//! start the jobs asked for from inside a sandbox (runner/outside.rs), start queued tasks when a slot is free (and the
+//! ones that wait for others, once those are done: after.rs), reconcile each linked task with herdr, bring waiting
+//! tasks up to date when main moved, and poll open pull requests (housekeeping/prs.rs).
 mod prs;
 pub use prs::poll_prs;
 
@@ -23,6 +23,7 @@ pub enum Force { No, Yes, Pr }
 
 pub fn housekeeping(socket: &str, force: Force) {
     if !has_tasks() { return; }
+    crate::runner::outside::start_asked(); // jobs asked for from inside a plan writer's sandbox, started out here
     if force == Force::No && !due(&format!("housekeep-{}", key(socket)), 2000) { return; }
     // What an older version kept of suggested tasks is written down and taken off the tasks, once (store/old_suggestions.rs).
     let _ = save_old_suggestions();
@@ -61,6 +62,7 @@ pub fn housekeeping(socket: &str, force: Force) {
             if let Some(w) = waiting_of(t) { if w.s("who") == "agent" && t.at("link").s("socket") == socket && now() >= w.i("until") && !runner_alive(t) { resume_cut(t.s("id")); } }
         }
     }
+    crate::leftovers::sweep::daily(); // what ended tasks left behind, once a day
     let watch = tasks.iter().any(|t| (t.b("pr") && !t.b("prMerged")) || (resyncable(t) && t.b("worktree")));
     if watch && (force == Force::Pr || due("prpoll", 120000)) {
         if inline() { JOBS.with(|j| j.borrow_mut().push(("prpoll".into(), "-".into(), vec![]))); } else { spawn_loose(&["run", "prpoll", "-"]); }

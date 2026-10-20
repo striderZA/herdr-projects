@@ -11,7 +11,7 @@ use crate::json::*;
 use crate::shown::ink::Ink;
 use crate::shown::states::{can_send_error, failed_review, failure_for, in_review, is_agent, stuck_finishing};
 
-/// `lit`: words of `words` drawn in `tint` (a heading's coordinator's name, in its heading's colour).
+/// `lit`: words of `words` drawn in `tint` (a heading's coordinator's name, in its colour).
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Hint { pub key: String, pub words: String, pub stays: bool, pub short: String, pub shortest: String, pub lit: String, pub tint: Ink }
 fn h(p: (String, String)) -> Hint { Hint { key: p.0, words: p.1, ..Default::default() } }
@@ -42,7 +42,7 @@ pub fn hints(s: &State, r: Option<&Obj>, who: Option<&Who>) -> (Vec<Hint>, Optio
     }
     if s.menu.is_some() { return (vec![plain(arrows, "pick a key"), plain(enter, "press it"), plain(esc, "close the menu")], chat_key); }
     if let Some(e) = &s.editing {
-        return (if !e.typing.is_empty() { vec![plain(enter, "save this value"), plain(esc, "leave it as it is")] } else { vec![plain(pair(K::Up), "move"), plain(enter, "change"), plain(name(K::PutBack), "put back"), plain(esc, "back to the task")] }, chat_key);
+        return (if !e.typing.is_empty() { vec![plain(enter, "save this value"), plain(esc, "leave it as it is")] } else { vec![plain(pair(K::Up), "move"), plain(enter, "change"), plain(name(K::PutBack), "put back"), plain(esc, if e.whose.mine() { "back to the list" } else { "back to the task" })] }, chat_key);
     }
     if s.mode == Mode::Find { return (vec![plain(enter, "keep the filter"), plain(esc, "cancel")], chat_key); }
     let agent_on = r.map(is_agent).unwrap_or(false);
@@ -103,6 +103,7 @@ pub fn hints(s: &State, r: Option<&Obj>, who: Option<&Who>) -> (Vec<Hint>, Optio
         else if r.s("state") == "error" && can_send_error(r) { vec![Some(fix.clone()), opt(st("failed"), as_is.clone()), Some(reply.clone())] }
         else if st("plan") && r.s("state") == "blocked" { vec![Some(Hint { short: "approve the plan".into(), ..hk(K::Yes, "approve this task's plan") }), Some(hk(K::Talk, "send the plan back with your words")), Some(hk(K::Panel, "read the whole plan"))] }
         else if agent_on && r.s("state") == "blocked" && r.s("kind") == "permission" { vec![Some(hk(K::Yes, "say yes to this task's agent")), Some(reply.clone()), Some(open.clone())] }
+        else if agent_on && r.s("state") == "blocked" && st("asks") && r.s("kind") != "auth" && crate::chat_only::is_chat(r) { vec![Some(hk(K::Talk, "answer this task's agent")), Some(Hint { short: "end the chat".into(), ..hk(K::Yes, "end the chat, as it is") }), Some(open.clone())] }
         else if agent_on && r.s("state") == "blocked" { vec![Some(if r.s("kind") == "question" { hk(K::Talk, "answer this task's agent") } else { reply.clone() }), Some(open.clone())] }
         else if stuck_finishing(r) { vec![Some(hk(K::Yes, "finish with what its agent said last")), Some(open.clone()), Some(reply.clone())] }
         else if agent_on && r.s("state") == "working" { vec![Some(open.clone()), Some(reply.clone()), Some(stop.clone())] }

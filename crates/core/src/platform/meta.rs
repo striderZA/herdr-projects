@@ -131,3 +131,14 @@ pub fn bytes_on_disk(m: &Metadata) -> u64 {
 
 #[cfg(windows)]
 pub fn bytes_on_disk(m: &Metadata) -> u64 { m.len() }
+
+/// The owner of a file as the board compares it: the Unix uid, as text. Windows: empty, since no owner is read there, so
+/// nothing is attributed to a user, and a file that cannot be attributed is never acted on.
+#[cfg(unix)]
+pub fn owner(m: &Metadata) -> String {
+    use std::os::unix::fs::MetadataExt;
+    m.uid().to_string()
+}
+
+#[cfg(windows)]
+pub fn owner(_m: &Metadata) -> String { String::new() }

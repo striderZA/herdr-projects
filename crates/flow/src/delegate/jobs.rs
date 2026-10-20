@@ -71,15 +71,22 @@ fn delegate_steps(id: &str, g: &mut Guard, mut t: Task) -> Res<()> {
     let label = flow::sidebar::space_label(&t);
     // The plan has its yes: this start is the build's (plan/build.rs).
     if plan::approved(&t) && !t.at("plan").b("built") { return plan::build::start_build(id, g); }
+    // The plan was taken off while its step was open: the plan written is built as it stands (with none, the work starts).
+    if plan::open(&t) && plan::wanted(&t).is_empty() { return plan::build::start_build_by(id, g, "nobody"); }
+    // The step goes on: its worktree read-only again, where a stop made it writable.
+    if plan::open(&t) && !t.at("plan").b("locked") { plan::lock::set_locked(id, true); t = g.check()?; }
     // 1. A place to work, unless the task still has a live pane from an earlier run.
     let live_pane = if t.at("link").b("pane") { api.pane_get(t.at("link").s("pane")) } else { None };
     if live_pane.is_some() && api.agent_get(t.at("link").s("pane"))?.is_some() { // delegate again on a task whose agent is still there: just continue it
         t = g.set(|t| { let _ = r::starts_as(t); })?;
         let turned = turned_words(&t);
-        t = g.set(|t| { t.put("stage", "working"); t.put("armedAt", now()); t.put("turnOpen", true); t.put("turnBy", "start"); t.del("researchTurned"); })?;
+        t = g.set(|t| { t.put("stage", "working"); t.put("armedAt", now()); t.put("turnOpen", true); t.put("turnBy", "start"); t.del("researchTurned"); t.del("chatTurned"); })?;
         flow::send::deliver(&t, &flow::send::with_tail(&t, &[turned, "Continue this task.".into()].into_iter().filter(|s| !s.is_empty()).collect::<Vec<_>>().join("\n\n")), None, false)?;
         return Ok(());
     }
+    // Room on the disk first: on a nearly full one the task waits in the queue, not fails half-way (leftovers/room.rs).
+    if let Err(line) = crate::leftovers::room::make_room(&t) { g.set(|t| crate::leftovers::room::wait(t, &line))?; return Ok(()); }
+    if t.b("diskWait") { t = g.set(|t| { t.del("diskWait"); })?; }
     if live_pane.is_none() {
         let mut copy = false;
         let (res, mut patch): (Value, Obj);
@@ -158,7 +165,7 @@ fn delegate_steps(id: &str, g: &mut Guard, mut t: Task) -> Res<()> {
     let (resume, prompt) = if t.b("startedAgentAt") { again_prompt(&t, &[turned].into_iter().filter(|s| !s.is_empty()).chain(waiting.iter().cloned()).collect::<Vec<_>>()) }
         else { (None, std::iter::once(first_prompt(&t)).chain(waiting.iter().cloned()).collect::<Vec<_>>().join("\n\n")) };
     if let Err(e) = start_agent(id, g, &prompt, resume.as_deref()) { if !waiting.is_empty() { untake_text(id, waiting.len())?; } return Err(e); }
-    if t.b("researchTurned") { g.set(|t| t.del("researchTurned"))?; }
+    if t.b("researchTurned") || t.b("chatTurned") { g.set(|t| { t.del("researchTurned"); t.del("chatTurned"); })?; }
     Ok(())
 }
 /// Restarting an exited agent: the same pane (or a new one in the task's workspace, reopened from the worktree if the

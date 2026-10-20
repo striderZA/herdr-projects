@@ -102,6 +102,13 @@ pub fn user_name() -> String {
 #[cfg(windows)]
 pub fn user_name() -> String { std::env::var("USERNAME").unwrap_or_default() }
 
+/// The user's id in the names of the board's folders (`hp-<id>`, `claude-<id>`): the Unix uid, or the user's name on Windows.
+#[cfg(unix)]
+pub fn user_id() -> String { let uid = unsafe { libc::getuid() }; uid.to_string() }
+
+#[cfg(windows)]
+pub fn user_id() -> String { user_name() }
+
 /// This program, by its full path. Unix: once an update put a new file at that path, Linux names the running one
 /// "… (deleted)", and the path without that suffix is where the new program is.
 #[cfg(unix)]
