@@ -28,6 +28,16 @@ function Get-ReleaseAsset([string]$asset) {
     $url = if ($base -match '^https?://') { "$base/download/v$version/$asset" } else { Join-Path (Join-Path (Join-Path $base 'download') "v$version") $asset }
     return $url
 }
+if (-not (Get-Command Get-FileHash -ErrorAction SilentlyContinue)) {
+    function Get-FileHash {
+        param([string]$LiteralPath, [string]$Algorithm)
+        $sha = [System.Security.Cryptography.SHA256]::Create()
+        try {
+            $hex = [BitConverter]::ToString($sha.ComputeHash([IO.File]::ReadAllBytes($LiteralPath))).Replace('-', '').ToLowerInvariant()
+            New-Object PSObject -Property @{ Hash = $hex }
+        } finally { $sha.Dispose() }
+    }
+}
 function Install-Release {
     if (-not $version) { throw "Cannot read version in $versionFile" }
     $temporary = Join-Path $here ('.' + $name + '.' + [guid]::NewGuid().ToString('N') + '.download')

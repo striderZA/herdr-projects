@@ -29,7 +29,7 @@ fn install_fetches_local_release_and_writes_launcher() {
     let asset = assets.join("herdr-projects-windows-x86_64.exe");
     std::fs::copy(executable, &asset).unwrap();
     let hash = Command::new("powershell").args(["-NoProfile", "-Command"])
-        .arg(format!("(Get-FileHash -LiteralPath '{}' -Algorithm SHA256).Hash.ToLowerInvariant()", asset.display()))
+        .arg(format!("$h=[System.Security.Cryptography.SHA256]::Create(); [BitConverter]::ToString($h.ComputeHash([IO.File]::ReadAllBytes('{}'))).Replace('-', '').ToLowerInvariant()", asset.display()))
         .output().expect("hash release executable");
     assert!(hash.status.success(), "{}", String::from_utf8_lossy(&hash.stderr));
     let checksum = String::from_utf8_lossy(&hash.stdout).trim().to_owned();
