@@ -19,7 +19,7 @@ fn run(script: &Path, args: &[&str], release: &Path, data: &Path) -> std::proces
 }
 
 #[test]
-fn install_fetches_local_release_and_writes_launcher() {
+fn real_programs_install_fetches_local_release_and_writes_launcher() {
     let (root, _guard) = scratch();
     let release = root.join("release");
     let version = env!("CARGO_PKG_VERSION");
@@ -36,7 +36,14 @@ fn install_fetches_local_release_and_writes_launcher() {
     std::fs::write(assets.join("herdr-projects-windows-x86_64.exe.sha256"),
         format!("{checksum}  herdr-projects-windows-x86_64.exe\n")).unwrap();
 
-    let plugin = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("bin/run.ps1");
+    // The plugin is a scratch copy of its script and version: the program it installs goes beside the script, and must
+    // not land in the repo's own bin/, where a stale copy would be found by the next run.
+    let manifest = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let plugin_root = root.join("plugin");
+    std::fs::create_dir_all(plugin_root.join("bin")).unwrap();
+    std::fs::copy(manifest.join("Cargo.toml"), plugin_root.join("Cargo.toml")).unwrap();
+    std::fs::copy(manifest.join("bin/run.ps1"), plugin_root.join("bin/run.ps1")).unwrap();
+    let plugin = plugin_root.join("bin/run.ps1");
     let data = root.join("data");
     let install = run(&plugin, &["install"], &release, &data);
     assert!(install.status.success(), "stdout: {}\nstderr: {}", String::from_utf8_lossy(&install.stdout), String::from_utf8_lossy(&install.stderr));
