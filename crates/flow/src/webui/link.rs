@@ -10,7 +10,7 @@ use crate::json::*;
 #[derive(Clone, Debug)]
 pub struct Entry { pub host: String, pub https: u16, pub to: u16, pub funnel: bool, pub url: String }
 fn tailscale(a: &[&str]) -> Option<String> {
-    let o = std::process::Command::new("tailscale").args(a).stdin(std::process::Stdio::null()).output().ok()?;
+    let o = crate::platform::shell::program("tailscale")?.args(a).stdin(std::process::Stdio::null()).output().ok()?;
     o.status.success().then(|| String::from_utf8_lossy(&o.stdout).into_owned())
 }
 pub fn address_of(port: u16) -> String { format!("http://127.0.0.1:{port}") }

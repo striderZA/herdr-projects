@@ -54,7 +54,7 @@ pub fn valid(k: &str) -> bool {
 pub fn choices(name: &str, folder: &Path, home: &Path) -> Vec<String> {
     let mut out: Vec<String> = vec![];
     if folder == home { out.push("HOME".into()); }
-    if folder == Path::new("/") { out.push("ROOT".into()); }
+    if folder.has_root() && folder.parent().is_none() { out.push("ROOT".into()); }
     let (w, digits) = words(name);
     let room = 5usize.saturating_sub(digits.len()).max(1);
     let initials: String = w.iter().filter_map(|x| x.chars().next()).collect();

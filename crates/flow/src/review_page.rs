@@ -30,7 +30,7 @@ pub fn ensure_server() -> Value {
     read_json(&serve_file()).unwrap_or(Value::Null)
 }
 fn tailscale(a: &[&str]) -> Option<String> {
-    let o = std::process::Command::new("tailscale").args(a).stdin(std::process::Stdio::null()).output().ok()?;
+    let o = crate::platform::shell::program("tailscale")?.args(a).stdin(std::process::Stdio::null()).output().ok()?;
     o.status.success().then(|| String::from_utf8_lossy(&o.stdout).into_owned())
 }
 /// Share the local server on the tailnet, on an https port nothing else uses. Existing shares are never replaced.
