@@ -82,10 +82,10 @@ pub fn world_with(o: Opts) -> World {
     let base = std::env::temp_dir().join(format!("sw-test-{}-{}", std::process::id(), N.fetch_add(1, std::sync::atomic::Ordering::SeqCst)));
     let _ = std::fs::remove_dir_all(&base);
     std::fs::create_dir_all(base.join("home")).unwrap();
-    // Unix: the folder by its real path (a link to it resolved). Windows keeps the path as it is: a canonical path there
-    // carries a \\?\ prefix that PATH entries and pipe names do not take.
-    #[cfg(unix)]
+    // The folder by its real path: a link to it resolved, and on Windows an 8.3 short name in TEMP expanded, as the
+    // product reports it. On Windows canonicalize adds a \\?\ prefix that PATH entries and pipe names do not take.
     let base = std::fs::canonicalize(&base).unwrap();
+    let base = std::path::PathBuf::from(base.display().to_string().trim_start_matches(r"\\?\"));
     let b = |p: &str| base.join(p).display().to_string();
     for k in ["HERDR_PANE_ID", "HERDR_TAB_ID", "HERDR_WORKSPACE_ID", "HERDR_PLUGIN_ID", "HERDR_PLUGIN_CONTEXT_JSON", "HERDR_ENV", "HERDR_SESSION", "TMUX", "NO_COLOR", "HERDR_PROJECTS_DATA_DIR", "HERDR_PROJECTS_CONFIG_DIR", "HERDR_PROJECTS_REPORTS_DIR", "HERDR_PROJECTS_WEBUI", "HERDR_PROJECTS_PROGRESS", "HERDR_PROJECTS_SANDBOX", "HERDR_PROJECTS_RETRY_MS", "HERDR_PROJECTS_ENDED_MS", "HERDR_PROJECTS_QUIET_MS", "HERDR_PROJECTS_READY_MS", "HERDR_PROJECTS_SUBMIT_MS", "HERDR_PROJECTS_TICK_MS", "ELEVENLABS_API_KEY"] { unsafe { std::env::remove_var(k) } }
     let socket = b("herdr.sock");
