@@ -41,6 +41,9 @@ pub fn uuid() -> String {
 }
 /// A word quoted for a POSIX shell: `'it'\''s'`.
 pub fn shq(s: &str) -> String { format!("'{}'", s.replace('\'', "'\\''")) }
+/// A word quoted for PowerShell's single-quoted string syntax.
+#[cfg(windows)]
+pub fn psq(s: &str) -> String { format!("'{}'", s.replace('\'', "''")) }
 /// A folder copied whole into another (made where it is missing).
 pub fn copy_dir(from: &std::path::Path, to: &std::path::Path) -> std::io::Result<()> {
     std::fs::create_dir_all(to)?;

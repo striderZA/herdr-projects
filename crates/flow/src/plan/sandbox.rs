@@ -5,6 +5,7 @@
 //! started again the usual way. Where no such mount can be made, no plan is written in a repo at all.
 pub mod tool;
 
+#[cfg(unix)]
 use super::lock::git_dir_of;
 use super::open;
 use crate::herdr::{cli::HerdrError, Herdr};
@@ -33,6 +34,7 @@ pub fn tool() -> Option<Tool> {
 }
 /// Can a read-only mount be made here?
 pub fn sandbox_ok() -> bool { tool().is_some() }
+#[cfg(unix)]
 fn q(s: &str) -> String { if !s.is_empty() && s.chars().all(|c| c.is_ascii_alphanumeric() || "_@%+=:,./-".contains(c)) { s.to_string() } else { crate::util::shq(s) } }
 /// The folder that may not change: the task's own worktree, or the checkout it works in. None for a folder no repo.
 pub fn guarded(t: &Obj) -> Option<PathBuf> { let dir = cwd_of(t); (dir.exists() && is_repo(&dir)).then_some(dir) }
@@ -41,6 +43,7 @@ pub fn boxed(t: &Obj) -> bool { open(t) && guarded(t).is_some() && sandbox_ok() 
 /// Why the task cannot start where no mount can be made, naming this platform's tool.
 pub fn no_mount(id: &str) -> String { tool().unwrap_or(Tool::native()).no_mount(id) }
 /// The command that starts a program there. The name it would have had from `agent start` rides along.
+#[cfg(unix)]
 pub fn boxed_command(t: &Obj, name: &str, kind: &str, args: &[String]) -> String {
     let tool = tool().unwrap_or(Tool::native());
     let tree = guarded(t).unwrap_or_default();
@@ -51,6 +54,15 @@ pub fn boxed_command(t: &Obj, name: &str, kind: &str, args: &[String]) -> String
     all.push(crate::agents::kinds::program(kind).into());
     all.extend(tool.unnested(kind, args));
     all.iter().map(|s| q(s)).collect::<Vec<_>>().join(" ")
+}
+#[cfg(windows)]
+pub fn boxed_command(_t: &Obj, name: &str, kind: &str, args: &[String]) -> String {
+    let program = crate::agents::kinds::program(kind);
+    let invoke = if program.contains(['\\', '/']) || program.contains(' ') { format!("& {}", crate::util::psq(&program)) } else { program.to_string() };
+    std::iter::once(format!("$env:HERDR_PROJECTS_AGENT={};", crate::util::psq(name)))
+        .chain(std::iter::once(invoke))
+        .chain(args.iter().map(|a| crate::util::psq(a)))
+        .collect::<Vec<_>>().join(" ")
 }
 fn herr(code: &str, msg: String) -> HerdrError { HerdrError { code: code.into(), message: msg } }
 /// Start an agent program in a pane: in the read-only mount while the task's plan waits, else as herdr starts one.
