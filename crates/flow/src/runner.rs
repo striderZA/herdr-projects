@@ -153,7 +153,10 @@ pub fn sh(cmd: &str, cwd: &std::path::Path, env: &[(String, String)], timeout_mi
     use std::io::Read;
     user_env();
     let mut c = crate::platform::shell::sh();
-    c.args(["-lc", cmd]).current_dir(cwd).stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::piped());
+    // A login shell reads the user's profile: on Windows Git Bash's first login prints a set-up banner into the output, and
+    // Windows keeps no login environment to read (shell.rs), so Windows runs the command in a plain shell.
+    let login = if cfg!(windows) { "-c" } else { "-lc" };
+    c.args([login, cmd]).current_dir(cwd).stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::piped());
     for (k, v) in env { c.env(k, v); }
     detach(&mut c);
     let mut child = match c.spawn() { Ok(ch) => ch, Err(e) => return ShOut { ok: false, out: e.to_string(), aborted: false } };
