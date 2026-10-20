@@ -38,11 +38,22 @@ pub fn quiet_git(dir: &Path, args: &[&str], ms: u64) -> Result<String, String> {
 }
 fn has(said: &str, any: &[&str]) -> bool { let s = said.to_lowercase(); any.iter().any(|w| s.contains(w)) }
 /// Another fetch held or wrote the same ref at that moment (an agent's own, yours, an editor's): over by the next try.
-fn locked(said: &str) -> bool { moved(said) || has(said, &["cannot lock ref", "unable to update local ref", ".lock': file exists"]) }
+fn locked(said: &str) -> bool { moved(said) || has(said, &["cannot lock ref", "unable to update local ref", ".lock': file exists", "reference already exists"]) }
 /// Another fetch moved the ref while this one ran: the copy here is as new as that fetch made it.
 pub fn moved(said: &str) -> bool { has(said, &["but expected"]) }
 /// The lock file git said is held, when it did: another git command's now, or one a git that stopped left behind.
 fn lock_file(said: &str) -> Option<String> { crate::re!(r"Unable to create '([^']+\.lock)'").captures(said).map(|c| c[1].to_string()) }
+fn ref_lock_file(dir: &Path, b: &str) -> Option<PathBuf> {
+    let ref_path = format!("refs/remotes/origin/{b}.lock");
+    let path = git_out(dir, &["rev-parse", "--git-path", &ref_path]).ok()?;
+    let path = PathBuf::from(path.trim());
+    Some(if path.is_absolute() { path } else { dir.join(path) })
+}
+fn locked_ref_words(path: &Path, b: &str) -> String {
+    let path = path.display().to_string();
+    let path = if cfg!(windows) { path.replace('/', "\\") } else { path };
+    format!("git's lock file {path} stayed in the way on every try: another git command is writing origin's copy of {b}, or one that stopped left it behind. If no git command runs in this repo, delete that file; the board tries again by itself")
+}
 fn network(said: &str) -> bool {
     has(said, &["could not resolve host", "temporary failure in name resolution", "connection timed out", "connection reset", "connection refused", "network is unreachable", "early eof", "remote end hung up", "rpc failed", "operation timed out", "returned error: 5", "kex_exchange_identification", "connection closed by", "gnutls", "ssl_"])
 }
@@ -87,7 +98,9 @@ pub fn fetch_branch(dir: &Path, b: &str) -> Res<()> {
             if i == TRIES || !(locked(&said) || network(&said)) { break; }
             pause(i);
         }
-        Err(Error::new(format!("{}.\n\nWhat git said (git fetch origin {b}):\n{}", plain(&said, b), if said.is_empty() { "nothing" } else { &said })))
+        let lock = ref_lock_file(dir, b).filter(|p| p.exists());
+        let words = lock.as_deref().map(|p| locked_ref_words(p, b)).unwrap_or_else(|| plain(&said, b));
+        Err(Error::new(format!("{words}.\n\nWhat git said (git fetch origin {b}):\n{}", if said.is_empty() { "nothing" } else { &said })))
     }).map_err(|e| if e.kind == crate::err::Kind::Busy { Error::new(format!("another fetch of this repo has been running for over {} minutes. The board tries again by itself.", WAIT_MS / 60000)) } else { e })
 }
 /// origin's own main branch was never named here (no `origin/HEAD`, as after `git remote add`): asked of origin once,

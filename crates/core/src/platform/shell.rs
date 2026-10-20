@@ -20,6 +20,9 @@ pub fn sh() -> Command { Command::new(resolve("sh").unwrap_or_else(|| PathBuf::f
 /// The file a program of this name runs from, searched along PATH. Windows also tries the program extensions (exe, cmd,
 /// bat, com); a name that has an extension of its own is looked for as it is.
 pub fn resolve(name: &str) -> Option<PathBuf> { find_in(&std::env::var_os("PATH")?, name) }
+/// The program a name runs, for a spawn: the file found for it along PATH (on Windows with its program extension, so a
+/// `.cmd` shim runs as the program it is), or the name itself when none is found, so the spawn says it could not run it.
+pub fn program_file(name: &str) -> PathBuf { resolve(name).unwrap_or_else(|| PathBuf::from(name)) }
 
 /// The first program of this name along the given PATH: the search `resolve` makes.
 pub fn find_in(path: &OsStr, name: &str) -> Option<PathBuf> {

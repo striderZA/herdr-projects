@@ -18,10 +18,18 @@ pub fn due(name: &str, ms: i64) -> bool {
     if let Ok(f) = fs::File::options().write(true).open(&file) { let _ = f.set_modified(at); }
     true
 }
-/// A path as a person reads it: `~` for the home folder.
+/// A path as a person reads it: `~` for the home folder and `~/...` below it, with forward slashes after the `~` on
+/// every platform. The verbatim `\\?\` prefix of a canonical path is left out.
 pub fn tilde(p: &str) -> String {
-    let home = user_home().display().to_string();
-    if p == home { "~".into() } else if let Some(rest) = p.strip_prefix(&format!("{home}/")) { format!("~/{rest}") } else { p.to_string() }
+    let home = if cfg!(windows) { std::env::var_os("HOME").map(PathBuf::from).unwrap_or_else(user_home) } else { user_home() };
+    tilde_under(p, &home)
+}
+/// A path as a person reads it, relative to an explicit home folder.
+pub fn tilde_under(p: &str, home: &std::path::Path) -> String {
+    let p = crate::platform::links::strip_verbatim(PathBuf::from(p)).display().to_string();
+    let home = crate::platform::links::strip_verbatim(home.to_path_buf()).display().to_string();
+    let (shown, home) = if cfg!(windows) { (p.replace('\\', "/"), home.replace('\\', "/")) } else { (p.clone(), home) };
+    if shown == home { "~".into() } else if let Some(rest) = shown.strip_prefix(&format!("{home}/")) { format!("~/{rest}") } else { p }
 }
 
 // ---- per-launch hook tokens: beside the task, never in its record, so no listing, snapshot or log prints them --------

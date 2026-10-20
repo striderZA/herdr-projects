@@ -12,7 +12,20 @@ pub fn make_link(target: &Path, at: &Path) -> std::io::Result<()> { std::os::uni
 #[cfg(windows)]
 pub fn make_link(target: &Path, at: &Path) -> std::io::Result<()> {
     let full = if target.is_absolute() { target.to_path_buf() } else { at.parent().unwrap_or(Path::new(".")).join(target) };
-    if full.is_dir() { junction::create(&full, at) } else { std::fs::copy(&full, at).map(|_| ()) }
+    if full.is_dir() || !full.exists() { junction::create(&full, at) } else { std::fs::copy(&full, at).map(|_| ()) }
+}
+
+/// Reads a symbolic-link or junction target.
+pub fn read_link(at: &Path) -> std::io::Result<PathBuf> { std::fs::read_link(at) }
+
+/// Removes a directory link using the Windows directory operation; Unix symlinks use remove_file.
+#[cfg(unix)]
+pub fn remove_link(at: &Path) -> std::io::Result<()> { std::fs::remove_file(at) }
+
+#[cfg(windows)]
+pub fn remove_link(at: &Path) -> std::io::Result<()> {
+    let m = std::fs::symlink_metadata(at)?;
+    if m.is_dir() || crate::platform::meta::is_link(&m) { std::fs::remove_dir(at) } else { std::fs::remove_file(at) }
 }
 
 /// Two paths change places in one step, so neither is missing at any moment: renameat2 on Linux, renamex_np on macOS.
@@ -37,7 +50,9 @@ pub fn swap(_a: &Path, _b: &Path) -> bool { false }
 /// its absolute form, as the store always did.
 pub fn same_place(a: &Path, b: &Path) -> bool { place(a) == place(b) }
 
-fn place(p: &Path) -> PathBuf {
+/// The canonical form of a path, as a person reads it: no `\\?\` prefix on Windows; the absolute form when it cannot be
+/// canonicalised.
+pub fn place(p: &Path) -> PathBuf {
     let full = std::fs::canonicalize(p).unwrap_or_else(|_| {
         if p.is_absolute() { p.to_path_buf() } else { std::env::current_dir().map(|d| d.join(p)).unwrap_or_else(|_| p.to_path_buf()) }
     });
@@ -46,10 +61,10 @@ fn place(p: &Path) -> PathBuf {
 
 /// Windows: `\\?\C:\x` is `C:\x`, and `\\?\UNC\s\x` is `\\s\x`. Unix paths are left as they are.
 #[cfg(unix)]
-fn strip_verbatim(p: PathBuf) -> PathBuf { p }
+pub fn strip_verbatim(p: PathBuf) -> PathBuf { p }
 
 #[cfg(windows)]
-fn strip_verbatim(p: PathBuf) -> PathBuf {
+pub fn strip_verbatim(p: PathBuf) -> PathBuf {
     let s = p.to_string_lossy().into_owned();
     if let Some(rest) = s.strip_prefix(r"\\?\UNC\") { PathBuf::from(format!(r"\\{rest}")) }
     else if let Some(rest) = s.strip_prefix(r"\\?\") { PathBuf::from(rest) }

@@ -1,6 +1,6 @@
 //! Exclusive file locks, taken without waiting or with it, and let go when the file's handle is dropped. Unix: flock(2),
-//! as the program has always taken them. Windows: LockFileEx over the whole file, with LOCKFILE_FAIL_IMMEDIATELY when it
-//! must not wait.
+//! as the program has always taken them. Windows: LockFileEx over a byte past end-of-file, with LOCKFILE_FAIL_IMMEDIATELY
+//! when it must not wait; lock contents remain readable.
 use std::fs::File;
 
 /// Takes the exclusive lock of an open file without waiting. False when another handle holds it.
@@ -22,6 +22,8 @@ fn take(f: &File, wait: bool) -> bool {
     use windows_sys::Win32::System::IO::OVERLAPPED;
     let flags = LOCKFILE_EXCLUSIVE_LOCK | if wait { 0 } else { LOCKFILE_FAIL_IMMEDIATELY };
     let mut at: OVERLAPPED = unsafe { std::mem::zeroed() };
-    // The whole file: every byte from offset 0, the low and high halves of the length all ones.
-    unsafe { LockFileEx(f.as_raw_handle(), flags, 0, u32::MAX, u32::MAX, &mut at) != 0 }
+    // Lock byte 0x7FFF_FFFF_FFFF_FFFF: lock metadata stays readable through a different handle.
+    at.Anonymous.Anonymous.Offset = u32::MAX;
+    at.Anonymous.Anonymous.OffsetHigh = 0x7FFF_FFFF;
+    unsafe { LockFileEx(f.as_raw_handle(), flags, 0, 1, 0, &mut at) != 0 }
 }

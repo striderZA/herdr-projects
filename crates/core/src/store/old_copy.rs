@@ -57,10 +57,7 @@ pub fn keep_old_copy(data: &Path) -> Result<Option<String>, String> {
     let older = if v == "node" { "the older (Node) version".to_string() } else { format!("version {v}") };
     Ok(Some(format!("herdr-projects {VERSION} uses the data {older} kept, unchanged; a copy of it as it was is in {}.", short(&to))))
 }
-fn short(p: &Path) -> String {
-    let home = user_home();
-    match p.strip_prefix(&home) { Ok(rest) if home != Path::new("/") => format!("~/{}", rest.display()), _ => p.display().to_string() }
-}
+fn short(p: &Path) -> String { crate::store::marks::tilde(&p.display().to_string()) }
 /// Commands run with nobody reading their error output (as in move_home.rs): the line waits for a human.
 const QUIET: [&str; 8] = ["board", "hook", "turn-ended", "keeper", "keeper-work", "run", "serve", "remote"];
 /// At the start of every run, after the move into the home folder: the copy, and its one line, added to the move's

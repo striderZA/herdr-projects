@@ -129,7 +129,8 @@ fn take_lock(name: &str, path: &Path, wait_ms: i64) -> Res<File> {
     if let Some(d) = path.parent() { fs::create_dir_all(d)?; }
     let until = now() + wait_ms.max(0);
     loop {
-        let f = OpenOptions::new().create(true).append(true).open(path)?;
+        // Read access too: Windows' LockFileEx refuses a handle that has only append access, so the lock is never taken.
+        let f = OpenOptions::new().create(true).read(true).append(true).open(path)?;
         let mut got = crate::platform::lock::try_lock(&f);
         while !got && now() < until && same_file(&f, path) {
             std::thread::sleep(std::time::Duration::from_millis(15));
@@ -165,7 +166,7 @@ pub fn hold_lock(name: &str, wait_ms: i64) -> Res<Held> {
 /// Whether somebody holds the lock of this name right now (a lock taken and let go at once).
 pub fn lock_free(name: &str) -> bool {
     let path = lock_file(name);
-    match OpenOptions::new().create(true).append(true).open(&path) { Ok(f) => crate::platform::lock::try_lock(&f), Err(_) => true }
+    match OpenOptions::new().create(true).read(true).append(true).open(&path) { Ok(f) => crate::platform::lock::try_lock(&f), Err(_) => true }
 }
 /// A task's lock: an attempt (`repo/12b`) shares its own id's.
 pub fn task_key(id: &str) -> String { id.split('/').take(2).collect::<Vec<_>>().join("/") }
@@ -176,7 +177,7 @@ pub fn with_task_lock<T>(id: &str, wait_ms: i64, f: impl FnOnce() -> Res<T>) -> 
 pub fn wait_lock(name: &str) -> Res<Held> {
     let path = lock_file(name);
     if let Some(d) = path.parent() { fs::create_dir_all(d)?; }
-    let f = OpenOptions::new().create(true).append(true).open(&path)?;
+    let f = OpenOptions::new().create(true).read(true).append(true).open(&path)?;
     if !crate::platform::lock::lock(&f) { return Err(Error::busy(format!("{name} is busy"))); }
     HELD.with(|h| h.borrow_mut().insert(path.clone()));
     Ok(Held { file: Some(f), path })

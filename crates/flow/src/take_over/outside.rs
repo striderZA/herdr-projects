@@ -60,15 +60,30 @@ pub fn undo_hooks(p: &Places, env: &Env) -> (Vec<String>, Vec<String>) {
 }
 /// The old version's skill: a link named `autoproject` to its plugin's `skill/autoproject`. And the link it put on
 /// the PATH, when it points into herdr's plugins and not at this program. Returns what was removed.
+fn plugin_launcher(p: &Places, env: &Env) -> Option<PathBuf> {
+    let skill = dir_of(p, env, "CLAUDE_CONFIG_DIR", ".claude").join("skills/autoproject");
+    let target = crate::platform::links::read_link(&skill).ok()?;
+    if !target.ends_with(Path::new("skill").join("autoproject")) { return None; }
+    let root = target.parent()?.parent()?;
+    ["herdr-projects", "herdr-projects.exe"].iter().map(|n| root.join("target/release").join(n)).find(|f| f.is_file())
+}
+fn plugin_path(p: &Path) -> bool { p.components().any(|c| c.as_os_str() == "plugins") }
 pub fn undo_links(p: &Places, env: &Env, this: &Path) -> Vec<String> {
     let mut gone = vec![];
+    let binary = plugin_launcher(p, env);
     for l in [dir_of(p, env, "CLAUDE_CONFIG_DIR", ".claude").join("skills/autoproject"), p.home.join(".agents/skills/autoproject")] {
-        if fs::read_link(&l).map(|t| t.ends_with("skill/autoproject")).unwrap_or(false) && fs::remove_file(&l).is_ok() { gone.push(l.display().to_string()); }
+        let target = crate::platform::links::read_link(&l).ok();
+        if lstat(&l).map(|m| crate::platform::meta::is_link(&m)).unwrap_or(false)
+            && target.as_ref().map(|t| t.ends_with(Path::new("skill").join("autoproject"))).unwrap_or(false)
+            && crate::platform::links::remove_link(&l).is_ok() {
+            gone.push(l.display().to_string());
+        }
     }
     let on_path = dir_of(p, env, "XDG_BIN_HOME", ".local/bin").join("herdr-projects");
-    if let Ok(t) = fs::read_link(&on_path) {
-        let ours = fs::canonicalize(&on_path).ok().zip(fs::canonicalize(this).ok()).map(|(a, b)| a == b).unwrap_or(false);
-        if t.to_string_lossy().contains("/plugins/") && !ours && fs::remove_file(&on_path).is_ok() { gone.push(on_path.display().to_string()); }
+    if let Ok(t) = crate::platform::links::read_link(&on_path) {
+        if plugin_path(&t) && !crate::platform::links::same_place(&on_path, this) && crate::platform::links::remove_link(&on_path).is_ok() { gone.push(on_path.display().to_string()); }
+    } else if cfg!(windows) && binary.as_ref().and_then(|src| Some((fs::read(src).ok()?, fs::read(&on_path).ok()?))).map(|(a, b)| a == b).unwrap_or(false) {
+        if fs::remove_file(&on_path).is_ok() { gone.push(on_path.display().to_string()); }
     }
     gone
 }
@@ -83,7 +98,7 @@ pub fn undo_superwork_skill(p: &Places, skill_dirs: &[PathBuf]) -> Vec<String> {
     let mut rec = read_obj(&file).unwrap_or_default();
     let listed = strings(rec.at("skillPaths"));
     // Only inside this home folder: a path written down on another machine (a copied board) is not this one's.
-    let mut dirs: Vec<PathBuf> = listed.iter().filter(|d| d.ends_with("/herdr-superwork")).map(PathBuf::from).filter(|d| d.starts_with(&p.home)).collect();
+    let mut dirs: Vec<PathBuf> = listed.iter().filter(|d| Path::new(d).ends_with("herdr-superwork")).map(PathBuf::from).filter(|d| d.starts_with(&p.home)).collect();
     dirs.extend(skill_dirs.iter().map(|d| d.join("herdr-superwork")));
     let mut gone = vec![];
     for d in dirs {
@@ -92,7 +107,7 @@ pub fn undo_superwork_skill(p: &Places, skill_dirs: &[PathBuf]) -> Vec<String> {
         let named = fs::read_to_string(d.join("SKILL.md")).map(|t| t.contains("name: herdr-superwork")).unwrap_or(false);
         if only && named && fs::remove_dir_all(&d).is_ok() { gone.push(d.display().to_string()); }
     }
-    let keep: Vec<String> = listed.into_iter().filter(|d| !d.ends_with("/herdr-superwork")).collect();
+    let keep: Vec<String> = listed.into_iter().filter(|d| !Path::new(d).ends_with("herdr-superwork")).collect();
     if rec.b("skillPaths") && keep.len() != strings(rec.at("skillPaths")).len() { rec.put("skillPaths", json!(keep)); let _ = crate::store::files::write_json(&file, &Value::Object(rec)); }
     gone
 }

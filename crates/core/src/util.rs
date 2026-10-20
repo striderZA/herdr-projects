@@ -1,5 +1,4 @@
 //! Small tools the parts share: a link's escaping, a random id, quoting for a shell, versions compared.
-use std::io::Read;
 
 /// A text as one part of a link (JavaScript's encodeURIComponent).
 pub fn url_encode(s: &str) -> String {
@@ -25,7 +24,7 @@ pub fn url_decode(s: &str) -> String {
 /// `n` random bytes as hex.
 pub fn random_hex(n: usize) -> String {
     let mut buf = vec![0u8; n];
-    if std::fs::File::open("/dev/urandom").and_then(|mut f| f.read_exact(&mut buf)).is_err() {
+    if !crate::platform::random::fill(&mut buf) {
         let t = crate::clock::now() as u64 ^ (std::process::id() as u64) << 32;
         for (i, b) in buf.iter_mut().enumerate() { *b = (t >> ((i % 8) * 8)) as u8 ^ i as u8; }
     }

@@ -8,5 +8,6 @@ pub mod meta;
 pub mod net;
 pub mod perms;
 pub mod proc;
+pub mod random;
 pub mod shell;
 pub mod signal;

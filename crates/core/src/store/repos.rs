@@ -31,7 +31,8 @@ pub fn primary_root(folder: &Path) -> PathBuf {
     let root = git_root(folder);
     if fs::metadata(root.join(".git")).map(|m| m.is_file()).unwrap_or(false) {
         if let Ok(common) = git_out(&root, &["rev-parse", "--path-format=absolute", "--git-common-dir"]) {
-            let common = PathBuf::from(common);
+            // Git prints forward slashes on Windows; the folder is kept as Windows writes it, so it matches every other cwd.
+            let common = PathBuf::from(common.replace('/', std::path::MAIN_SEPARATOR_STR));
             if common.file_name().map(|n| n == ".git").unwrap_or(false) { if let Some(p) = common.parent() { return p.to_path_buf(); } }
         }
     }
@@ -68,7 +69,7 @@ pub fn known_repos() -> Obj {
     *seen = Some((key, o.clone()));
     o
 }
-fn real(p: &Path) -> PathBuf { fs::canonicalize(p).unwrap_or_else(|_| p.to_path_buf()) }
+fn real(p: &Path) -> PathBuf { crate::platform::links::place(p) }
 /// The repo a folder belongs to, named on first sight, with its short key given then (store/keys_given.rs).
 pub fn repo_of(folder: &Path) -> Res<(String, PathBuf)> {
     let root = primary_root(folder);
