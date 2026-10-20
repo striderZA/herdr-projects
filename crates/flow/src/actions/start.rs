@@ -73,6 +73,10 @@ pub fn delegate(id: &str, asked: Vec<(String, Value)>) -> Res<Task> { delegate_w
 /// and one that waits already is only started early with `now`.
 pub fn delegate_with(id: &str, asked: Vec<(String, Value)>, w: Wait) -> Res<Task> {
     let cur = find(id)?;
+    // Windows has no read-only mount for a plan's writer: a task that asks for a plan is refused before anything is made.
+    if cfg!(windows) && !crate::plan::wanted(&cur).is_empty() {
+        if let Some(why) = crate::plan::sandbox::tool::Tool::native().why_not(&crate::store::files::data_dir()) { crate::fail!("{}. Nothing was started.", why); }
+    }
     if cur.s("stage") == after::STAGE && !w.now && w.after.is_none() && asked.is_empty() { crate::fail!("{}", after::still_waits(&cur)); }
     let deps = match &w.after { Some(r) => Some(after::checked(Some(cur.s("id")), r)?), None => None };
     let asked: Vec<(String, Value)> = asked.into_iter().filter(|(_, v)| !(v.is_null() || *v == json!(""))).collect();
