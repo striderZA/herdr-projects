@@ -1,3 +1,7 @@
 *.sh text eol=lf
 docs/keys.md text eol=lf
 docs/settings.md text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+*.toml text eol=lf
+tests/frames/* text eol=lf
