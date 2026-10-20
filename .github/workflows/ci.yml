@@ -68,9 +68,6 @@ jobs:
           key: check-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
           restore-keys: check-${{ runner.os }}-
 
-      - name: Put Git for Windows' bash first on PATH, as on a user's machine
-        run: echo 'C:\Program Files\Git\bin' >> "$GITHUB_PATH"
-
       - name: The check
         env:
           GIT_AUTHOR_NAME: ci
