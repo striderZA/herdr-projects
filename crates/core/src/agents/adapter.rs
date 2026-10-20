@@ -104,7 +104,7 @@ fn same_folder(recorded: &str, folder: &Path) -> bool {
         recorded.eq_ignore_ascii_case(&folder)
     }
     #[cfg(unix)]
-    { recorded == folder.display().to_string() || crate::platform::links::same_place(Path::new(recorded), folder) }
+    { recorded == folder.display().to_string() }
 }
 fn dashed(p: &Path) -> String { p.display().to_string().chars().map(|c| if c.is_ascii_alphanumeric() { c } else { '-' }).collect() }
 /// Where a conversation is saved.
@@ -160,7 +160,7 @@ pub fn latest_session(kind: &str, cwd: &Path, since: i64, was: Option<&Path>) ->
                 if mtime_ms(&f).map(|m| m < since).unwrap_or(true) { return None; }
                 let head = head_of(&f, 8192);
                 let Ok(meta) = serde_json::from_str::<Value>(first_line(&head)) else { continue };
-                let cwd_ok = same_folder(meta.s("cwd"), recorded_folder) || was.map(|w| same_folder(meta.s("cwd"), w)).unwrap_or(false);
+                let cwd_ok = same_folder(meta.s("cwd"), recorded_folder) || same_folder(meta.s("cwd"), cwd) || was.map(|w| same_folder(meta.s("cwd"), w)).unwrap_or(false);
                 if meta.s("type") == "session" && meta.b("id") && !meta.b("parentSession") && cwd_ok { return Some(meta.t("id")); }
             }
             None
