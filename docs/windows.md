@@ -6,8 +6,8 @@ Herdr Projects v1 runs natively on 64-bit Windows with Herdr for Windows. It is 
 
 - Herdr 0.9.4 or newer for Windows.
 - Git for Windows, including its `sh.exe`/Git Bash tools. Herdr Projects uses this shell for checks and other user-configured commands.
-- PowerShell 7 or Windows PowerShell 5.1. Herdr starts pane commands through its configured default shell; PowerShell must be available.
-- An installed agent CLI. Windows v1 has been exercised with Claude Code, pi and omp. See [agents](agents.md) for agent-specific setup.
+- PowerShell 7. Herdr starts pane commands through its configured default shell; PowerShell must be available. Windows PowerShell 5.1 is not tested in v1.
+- An installed agent CLI. Windows v1 targets Claude Code, pi and omp. See [agents](agents.md) for agent-specific setup.
 
 ## Set Herdr's pane shell
 
@@ -21,7 +21,7 @@ If you use Windows PowerShell 5.1, use its actual executable path instead, commo
 
 ## Launcher and PATH
 
-The plugin installs a copy of `herdr-projects.exe` under `%USERPROFILE%\\.herdr-projects\\data\\bin`. Herdr and its agents invoke that launcher by its full path, so adding it to PATH is not required for the plugin itself. To run `herdr-projects` by name in PowerShell, add this folder to your user PATH:
+The board places a copy of `herdr-projects.exe` under `%USERPROFILE%\\.herdr-projects\\data\\bin` when it opens. Herdr and its agents invoke that launcher by its full path, so adding it to PATH is not required for the plugin itself. To run `herdr-projects` by name in PowerShell, add this folder to your user PATH:
 
 ```powershell
 $launcherDir = Join-Path $env:USERPROFILE '.herdr-projects\data\bin'
@@ -33,7 +33,7 @@ Open a new PowerShell window and check it with `herdr-projects doctor`.
 
 ## Windows v1 scope
 
-Claude Code, pi and omp are the tested agent choices. Codex is not tested. SSH machines, voice calls and plan approval are off in Windows v1; plan approval needs a read-only worktree guard, which this release does not provide. Windows does not turn that guard into a weaker promise.
+Windows v1 targets Claude Code, pi and omp. Codex is not tested. SSH machines, voice calls and plan approval are off in Windows v1; plan approval needs a read-only worktree guard, which this release does not provide. Windows does not turn that guard into a weaker promise.
 
 The default reviewer remains `codex`, but Codex is not installed in the Windows validation environment. `herdr-projects doctor` warns when the configured reviewer is missing. Choose an installed reviewer with `reviewer.agent` in the board settings (for example, Claude Code, pi or omp), or install Codex before relying on the default. A review can otherwise wait or use a configured reviewer fallback.
 
