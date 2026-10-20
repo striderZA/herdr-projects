@@ -20,6 +20,7 @@ static KNOWN: Mutex<Option<(Option<Tool>, i64)>> = Mutex::new(None);
 /// The tool that makes the read-only mount here, None where none can. `HERDR_PROJECTS_SANDBOX` says it outright
 /// (`bwrap`, `sandbox-exec`, `none`); else this platform's own is tried, and what it found is kept for ten minutes.
 pub fn tool() -> Option<Tool> {
+    if cfg!(windows) { return None; } // no read-only mount is made on Windows, whatever HERDR_PROJECTS_SANDBOX says
     if let Ok(said) = std::env::var("HERDR_PROJECTS_SANDBOX") { if !said.is_empty() { return if said == "none" { None } else { Some(Tool::of(&said).unwrap_or(Tool::native())) }; } }
     let now = crate::clock::now();
     if let Some((found, at)) = *KNOWN.lock().unwrap() { if now - at < 600000 { return found; } }
