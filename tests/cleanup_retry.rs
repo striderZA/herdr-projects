@@ -1,6 +1,8 @@
 //! A clean-up put off because the task's space was in use (a command of yours, a tool the agent started, an agent herdr
 //! cannot place, a turn in its own terminal) is tried again by the housekeeping pass once the space is free. The helpers an
 //! agent keeps in its own process group (an MCP server) are part of it, not a command in use.
+//! Unix only, gated on Windows: it wires child processes through UnixStream socket pairs and ends them with `kill`.
+#![cfg(unix)]
 use crate::common;
 use common::*;
 use serde_json::{json, Value};

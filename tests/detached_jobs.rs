@@ -1,5 +1,7 @@
 //! [real programs] A job the board starts and leaves to run is waited for when it ends: it does not stay a zombie of
 //! the long-lived keeper or board that started it until that ends, and its marker reads as gone (#212).
+//! Unix only, gated on Windows: it reads a zombie's state from /proc and reaps it with libc::waitpid.
+#![cfg(unix)]
 use crate::common;
 use common::*;
 use std::time::{Duration, Instant};

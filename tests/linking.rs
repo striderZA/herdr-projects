@@ -1,5 +1,7 @@
 //! [real programs] The linker of the builds (`scripts/linker.sh`, which the C compiler runs as `scripts/ld/ld`): mold
 //! when it is installed; the linker Rust uses by itself when it is not, for a release build and when turned off.
+//! Unix only, gated on Windows: it runs scripts/linker.sh with shell stand-ins for ld and mold; Windows links with MSVC.
+#![cfg(unix)]
 use std::path::{Path, PathBuf};
 
 /// A home with a cache folder, and a `rust-lld`, an `ld` and (once installed) a mold that write down their name and

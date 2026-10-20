@@ -27,6 +27,8 @@ fn go(s: &mut Board, id: &str) { for _ in 0..40 { if s.s.sel == id { return; } s
 fn machine(host: &str) -> String { format!("head:machine\t{host}") }
 fn repo(host: &str, name: &str) -> String { format!("head:repo\t{host}\t{name}") }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn every_machine_a_heading_its_repos_under_it_and_rows_with_the_number_alone() {
     let (_w, mut s) = two_machines();
@@ -47,6 +49,8 @@ fn every_machine_a_heading_its_repos_under_it_and_rows_with_the_number_alone() {
     assert!(!t.contains(" ─────") && t.contains("\n ▾ to do\n"), "{t}");
 }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn enter_on_a_heading_folds_it_to_one_line_with_how_many_it_holds_and_unfolds_it_at_both_levels() {
     let (_w, mut s) = two_machines();

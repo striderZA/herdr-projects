@@ -27,6 +27,8 @@ fn groups(s: &Board) -> Vec<(String, Value, Vec<String>)> {
     l.arr("groups").iter().map(|g| (g.t("name"), g.at("count").clone(), g.arr("rows").iter().map(|r| r.t("id")).collect())).collect()
 }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn each_machines_automations_stand_in_its_own_part_and_fold_with_it_by_status_and_by_repo() {
     let w = world_with(Opts { repo: true, settings: json!({ "board.machines": "vm-b" }), ..Default::default() });
@@ -83,6 +85,8 @@ fn each_machines_automations_stand_in_its_own_part_and_fold_with_it_by_status_an
     like(&t(&mut s, 120), r"\n ▾ to do\n[ ▌]○ #7 +Their task +0s ago\n\n ▾ automations\n[ ▌]⟳ on {2}Theirs nightly {2}every 5m · far +next in {2}4m\n");
 }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn another_machines_repo_with_only_automations_never_takes_this_machines_key() {
     let w = world_with(Opts { repo: true, settings: json!({ "board.machines": "vm-b" }), ..Default::default() });

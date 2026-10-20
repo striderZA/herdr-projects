@@ -17,6 +17,8 @@ fn a_keeper_started_without_an_ssh_agent_takes_the_login_shells_and_a_process_wi
     assert!(ssh_agent("PATH=/x\nSSH_AUTH_SOCK=\n", |_| false).is_empty());
 }
 
+// Unix only: its SSH agent socket is a Unix socket, and SSH is not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn an_ssh_agent_whose_socket_is_not_there_is_not_taken() {
     let w = world();

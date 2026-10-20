@@ -21,6 +21,9 @@ fn has(text: &str, re: &str) -> bool { regex::Regex::new(re).unwrap().is_match(t
 fn from(name: &str, t: &Obj) -> String { lookup(name, &Scope::task(t), &sw::store::settings::places::yours()).unwrap().from }
 
 #[test]
+// Unix only: plan approval needs a read-only mount for the plan's writer, which Windows does not have. The start is
+// refused there: plan_modes::plan_approval_you_is_refused_on_windows_with_its_reason.
+#[cfg(unix)]
 fn the_two_settings_nearest_first_delegate_show_an_automation_and_never_from_a_repos_own_file() {
     let w = world_with(Opts { repo: true, repo_settings: Some(json!({ "plan": { "approve": "you", "agent": "codex" }, "check": { "command": "true" } })), ..Default::default() });
     let id = w.add("Work");

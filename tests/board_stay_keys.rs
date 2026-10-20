@@ -29,7 +29,7 @@ fn close(b: &Board) { sw::board::run::prefs::save(&b.s); }
 /// herdr's socket, for the subscription and the one question the board asks once herdr has taken it: each connection
 /// is answered in turn, then the tabs that come to show are told on the first.
 fn herdr_socket(path: &std::path::Path, shows: Value, tabs: &'static [&'static str]) -> std::thread::JoinHandle<Vec<Value>> {
-    let l = std::os::unix::net::UnixListener::bind(path).unwrap();
+    let l = common::pipe::Listener::bind(path).unwrap();
     std::thread::spawn(move || {
         let mut asked = vec![];
         let (mut sub, _) = l.accept().unwrap();
@@ -72,7 +72,7 @@ fn the_popup_is_never_left_behind_its_board_closes_the_moment_herdr_shows_anothe
     assert_eq!(closes(&w, 3, "w9:t1", json!({ "tab": { "tab_id": "w9:t1", "focused": true } }), &[]).0, 0, "its tab shows: it stays");
     assert_eq!(closes(&w, 4, "w9:t1", Value::Null, &["w9:t1"]).0, 0, "herdr did not say: it stays, and the next tab that shows closes it");
     // A board that was not told its tab watches nothing: nothing is asked of herdr.
-    let path = w.base.join("events-5.sock"); let l = std::os::unix::net::UnixListener::bind(&path).unwrap(); l.set_nonblocking(true).unwrap();
+    let path = w.base.join("events-5.sock"); let l = common::pipe::Listener::bind(&path).unwrap(); l.set_nonblocking(true).unwrap();
     sw::board::run::start::watch_tab(Some(path.display().to_string()), "", || panic!("never"));
     assert!(l.accept().is_err());
 }

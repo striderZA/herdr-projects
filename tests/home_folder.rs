@@ -10,6 +10,7 @@ use sw::json::*;
 use sw::store::files::{board_env, config_dir, data_dir, home_dir, reports_dir};
 use sw::store::move_home::{move_note, move_told, moved_from, swap_now};
 use util::*;
+fn is_link(p: &Path) -> bool { std::fs::symlink_metadata(p).map(|m| sw::platform::meta::is_link(&m)).unwrap_or(false) }
 
 #[test]
 fn a_new_install_keeps_everything_in_the_home_folder_and_the_xdg_variables_choose_nothing() {
@@ -39,15 +40,25 @@ fn an_older_versions_folders_are_moved_by_the_first_run_nothing_lost_the_old_pat
     let h = old_home(&w.base, None);
     let before = [all(&h.data), all(&h.settings), all(&h.reports)];
     let r = h.run();
-    assert_eq!(hows(&r), vec![("data", "moved"), ("settings", "moved"), ("reports", "moved")]);
-    assert_eq!(r.line, "Moved the board's files into ~/.herdr-projects: data (from ~/.local/state/herdr-superwork), settings (from ~/.config/herdr-superwork), reports (from ~/.local/share/herdr-superwork-reports). The old places are links to the new ones, so whatever is running carries on.");
+    let how = if cfg!(windows) { "linked" } else { "moved" };
+    assert_eq!(hows(&r), vec![("data", how), ("settings", how), ("reports", how)]);
+    let line = if cfg!(windows) {
+        "Moved the board's files into ~/.herdr-projects: data stays in ~/.local/state/herdr-superwork and is linked from there, settings stays in ~/.config/herdr-superwork and is linked from there, reports stays in ~/.local/share/herdr-superwork-reports and is linked from there."
+    } else {
+        "Moved the board's files into ~/.herdr-projects: data (from ~/.local/state/herdr-superwork), settings (from ~/.config/herdr-superwork), reports (from ~/.local/share/herdr-superwork-reports). The old places are links to the new ones, so whatever is running carries on."
+    };
+    assert_eq!(r.line, line);
     assert_eq!(r.line.lines().count(), 1);
     // The new layout holds everything, as real folders.
-    for (n, what) in ["data", "settings", "reports"].iter().enumerate() { assert!(is_dir(&h.to.join(what))); assert_eq!(all(&h.to.join(what)), before[n]); }
+    for (n, what) in ["data", "settings", "reports"].iter().enumerate() { assert!(h.to.join(what).is_dir()); assert_eq!(all(&h.to.join(what)), before[n]); }
     assert_eq!(names(&h.to), vec!["closing-1.md", "data", "moved.json", "reports", "settings"]);
     assert_eq!(read(&h.to.join("closing-1.md")), "a home task's closing note"); // a home task's own files are left alone
     // Every old path still reaches the same files: the command agents were handed, a lock, the Coordinator's folder.
-    for (old, what) in [(&h.data, "data"), (&h.settings, "settings"), (&h.reports, "reports")] { assert!(is_link(old)); assert_eq!(std::fs::canonicalize(old).unwrap(), h.to.join(what)); }
+    for (old, what) in [(&h.data, "data"), (&h.settings, "settings"), (&h.reports, "reports")] {
+        assert_eq!(is_link(old), !cfg!(windows));
+        assert_eq!(is_link(&h.to.join(what)), cfg!(windows));
+        assert_eq!(std::fs::canonicalize(old).unwrap(), std::fs::canonicalize(h.to.join(what)).unwrap());
+    }
     assert!(read(&h.data.join("bin").join(OLD_NAME)).starts_with("#!/bin/sh"));
     assert_eq!(ino(&h.data.join("locks").join("dGFzaw.lock")), ino(&h.to.join("data").join("locks").join("dGFzaw.lock")));
     std::fs::write(h.data.join("tasks/proj/1/task.json"), r#"{"n":1,"by":"a board still on the old path"}"#).unwrap();
@@ -78,7 +89,7 @@ fn the_coordinators_conversation_is_found_again_after_its_folder_moved_for_every
     for (_, f) in &files { put(f, "{}\n", None); }
     h.run();
     let now = h.to.join("data/coordinator/default/chat");
-    assert_eq!(read(&now.join("note.txt")), "its folder"); assert_eq!(std::fs::canonicalize(&was).unwrap(), now);
+    assert_eq!(read(&now.join("note.txt")), "its folder"); assert_eq!(std::fs::canonicalize(&was).unwrap(), std::fs::canonicalize(&now).unwrap());
     // Found by its id from the new folder, so a restart reopens the same conversation (pump.rs resumes what it finds).
     for (kind, f) in &files { assert_eq!(sw::agents::adapter::transcript(kind, "abc", &now).as_ref(), Some(f), "{kind}"); }
     // A Coordinator started before the move still knows its folder by the old path: a new chat it begins there is
@@ -94,6 +105,8 @@ fn the_coordinators_conversation_is_found_again_after_its_folder_moved_for_every
     assert_eq!(["claude", "codex", "pi"].map(|k| latest_session(k, &now, 0, None)), [None, None, None]);
 }
 
+// Windows links the new path to the old folder instead of performing the Unix-only injected swap.
+#[cfg(unix)]
 #[test]
 fn a_move_that_was_cut_off_is_finished_by_the_next_run_wherever_it_stopped_and_the_old_paths_work_in_between() {
     let w = world_with(Opts::default());
@@ -153,15 +166,17 @@ fn with_data_in_the_new_place_already_nothing_is_written_over_the_newer_file_sta
     put(&h.to.join("data/tasks/proj/1/task.json"), r#"{"n":1,"older":"new place"}"#, Some(t - 60000));
     put(&h.to.join("data/tasks/proj/5/task.json"), r#"{"n":5}"#, None);
     let r = h.run();
-    assert_eq!(hows(&r), vec![("data", "merged"), ("settings", "merged"), ("reports", "moved")]);
+    let how = if cfg!(windows) { "linked" } else { "merged" };
+    assert_eq!(hows(&r), vec![("data", how), ("settings", how), ("reports", if cfg!(windows) { "linked" } else { "moved" })]);
     assert_eq!(read(&h.to.join("settings/config.json")), r#"{"max":9}"#); // newer in the new place: kept
     assert_eq!(read(&h.to.join("data/tasks/proj/1/task.json")), r#"{"n":1,"newer":"old place"}"#); // newer in the old place: it wins
     assert_eq!(read(&h.to.join("data/tasks/proj/5/task.json")), r#"{"n":5}"#);
     assert_eq!(read(&h.to.join("data/coordinator/default/state.json")), r#"{"session":"abc"}"#);
     // The two that lost are kept, and the line says where.
-    let aside: std::collections::BTreeMap<String, String> = [("settings/config.json".to_string(), r#"{"max":7}"#.to_string()), ("data/tasks/proj/1/task.json".to_string(), r#"{"n":1,"older":"new place"}"#.to_string())].into();
+    let native = |parts: &[&str]| parts.iter().fold(PathBuf::new(), |p, part| p.join(part)).display().to_string();
+    let aside: std::collections::BTreeMap<String, String> = [(native(&["settings", "config.json"]), r#"{"max":7}"#.to_string()), (native(&["data", "tasks", "proj", "1", "task.json"]), r#"{"n":1,"older":"new place"}"#.to_string())].into();
     assert_eq!(all(&h.to.join("set-aside")), aside);
     assert!(r.line.ends_with("2 files that were in both places are kept in ~/.herdr-projects/set-aside."), "{}", r.line);
-    assert!(is_link(&h.data) && is_link(&h.settings));
+    assert_eq!((is_link(&h.data), is_link(&h.to.join("data")), is_link(&h.settings), is_link(&h.to.join("settings"))), (!cfg!(windows), cfg!(windows), !cfg!(windows), cfg!(windows)));
     assert!(nothing(&h.run()));
 }

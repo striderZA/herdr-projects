@@ -69,7 +69,7 @@ mod pipe {
     use std::sync::mpsc::Receiver;
 
     #[link(name = "kernel32")]
-    extern "system" {
+    unsafe extern "system" {
         fn CreateNamedPipeW(name: *const u16, open_mode: u32, pipe_mode: u32, instances: u32, out_size: u32, in_size: u32, timeout: u32, security: *const c_void) -> *mut c_void;
         fn ConnectNamedPipe(pipe: *mut c_void, overlapped: *mut c_void) -> i32;
         fn WriteFile(file: *mut c_void, buf: *const u8, len: u32, written: *mut u32, overlapped: *mut c_void) -> i32;

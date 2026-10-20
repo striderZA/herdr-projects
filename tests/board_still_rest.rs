@@ -2,6 +2,8 @@
 //! not the full-screen view, and the new one draws over the old frame without entering or clearing it (recorded on a
 //! real terminal: the board stood a line off, then the screen was empty, then the board was back). The new version that
 //! never comes up gives the terminal its plain screen and its cursor back.
+//! Unix only, gated on Windows: it needs a pseudo-terminal (openpty, ioctl, fcntl); ConPTY is not built in v1.
+#![cfg(unix)]
 use crate::common;
 use common::*;
 use std::io::{Read, Write};

@@ -25,6 +25,8 @@ fn far_world() -> (World, Far) {
     (w, far)
 }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn a_task_waits_for_one_of_another_machine_and_starts_when_that_is_done_told_what_it_did() {
     let (w, far) = far_world();
@@ -56,6 +58,8 @@ fn a_task_waits_for_one_of_another_machine_and_starts_when_that_is_done_told_wha
     assert_eq!(t.at("afterDone").get(0).map(|d| d.s("id").to_string()), Some("vm-str:ela/3".into()));
 }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn a_machine_that_does_not_answer_keeps_it_waiting_and_says_since_when() {
     let (w, far) = far_world();
@@ -81,6 +85,8 @@ fn a_machine_that_does_not_answer_keeps_it_waiting_and_says_since_when() {
     assert_eq!(task(&id).s("msg"), "queued after vm-str:ELA-3");
 }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn a_task_there_that_went_wrong_or_was_removed_makes_it_wait_for_you_with_the_reason() {
     let (w, far) = far_world();
@@ -106,6 +112,8 @@ fn a_task_there_that_went_wrong_or_was_removed_makes_it_wait_for_you_with_the_re
     assert!(starts(&w).is_empty());
 }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn unknown_machines_and_tasks_a_machine_that_does_not_answer_and_a_circle_across_machines_are_refused() {
     let (w, far) = far_world();
@@ -169,6 +177,8 @@ fn chain_link(far: &Far, i: usize, waits: Value) {
     far.answers(&format!("vm{i}"), "after", &json!({ "ok": true, "host": format!("vm{i}"), "tasks": [a] }));
 }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn a_circle_through_many_machines_is_followed_to_its_end_and_one_that_cannot_be_is_refused() {
     let names: Vec<String> = (0..10).map(|i| format!("vm{i}")).collect();

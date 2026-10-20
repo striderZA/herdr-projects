@@ -29,7 +29,7 @@ fn node_data(data: &Path, version: Option<&str>) {
     write(&data.join("tasks/proj/1/inbox.jsonl"), "{\"a\":1}\n");
     write(&data.join("bin").join(OLD_NAME), NODE_LAUNCHER);
     if let Some(v) = version { write(&data.join("keeper.json"), &format!("{{\"pid\":1,\"version\":\"{v}\"}}")); }
-    std::os::unix::fs::symlink("tasks/proj", data.join("latest")).unwrap();
+    sw::platform::links::make_link(Path::new("tasks/proj"), &data.join("latest")).unwrap();
 }
 /// Every path under a folder with what it holds (a link: where it points), to compare two folders.
 fn tree(dir: &Path) -> Vec<(String, String)> {
@@ -38,7 +38,7 @@ fn tree(dir: &Path) -> Vec<(String, String)> {
         for e in std::fs::read_dir(d).unwrap().flatten() {
             let (p, m) = (e.path(), std::fs::symlink_metadata(e.path()).unwrap());
             let rel = p.strip_prefix(root).unwrap().display().to_string();
-            if m.file_type().is_symlink() { out.push((rel, format!("-> {}", std::fs::read_link(&p).unwrap().display()))); }
+            if sw::platform::meta::is_link(&m) { out.push((rel, format!("-> {}", std::fs::read_link(&p).unwrap().display()))); }
             else if m.is_dir() { out.push((rel.clone(), "/".into())); walk(&p, root, out); }
             else { out.push((rel, std::fs::read_to_string(&p).unwrap())); }
         }
@@ -75,7 +75,7 @@ fn the_copy_is_the_data_as_it_was_and_made_once() {
     let copy = data.parent().unwrap().join("data-0.2.0");
     assert_eq!(tree(&copy), before, "every file, folder and link as it was");
     assert_eq!(tree(&data), before, "the data itself is not changed");
-    assert!(std::fs::symlink_metadata(copy.join("latest")).unwrap().file_type().is_symlink(), "a link stays a link");
+    assert!(sw::platform::meta::is_link(&std::fs::symlink_metadata(copy.join("latest")).unwrap()), "a link stays a link");
     let mut names: Vec<String> = std::fs::read_dir(data.parent().unwrap()).unwrap().flatten().map(|e| e.file_name().to_string_lossy().into_owned()).collect();
     names.sort();
     assert_eq!(names, vec!["data", "data-0.2.0"], "no spare copy left");

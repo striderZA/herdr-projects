@@ -8,10 +8,12 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use sw::store::move_home::{move_home, swap_now};
 use util::*;
+fn is_link(p: &Path) -> bool { std::fs::symlink_metadata(p).map(|m| sw::platform::meta::is_link(&m)).unwrap_or(false) }
 
-fn hold(f: &Path) -> std::fs::File { use std::os::fd::AsRawFd; let h = std::fs::File::open(f).unwrap(); assert_eq!(unsafe { libc::flock(h.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) }, 0); h }
+
+fn hold(f: &Path) -> std::fs::File { let h = std::fs::File::open(f).unwrap(); assert!(sw::platform::lock::try_lock(&h), "the lock is free to take"); h }
 /// Whether another program finds the file locked.
-fn taken(f: &Path) -> bool { Command::new("flock").args(["--exclusive", "--nonblock"]).arg(f).arg("true").status().unwrap().code() == Some(1) }
+fn taken(f: &Path) -> bool { !sw::platform::lock::try_lock(&std::fs::File::open(f).unwrap()) }
 
 #[test]
 fn the_lock_file_in_the_place_in_use_is_never_replaced_or_removed_and_the_new_places_copy_goes_only_while_nobody_holds_it() {
@@ -22,7 +24,7 @@ fn the_lock_file_in_the_place_in_use_is_never_replaced_or_removed_and_the_new_pl
     // grab_now, a real flock, which a test cannot watch from outside.)
     let (h, old, now) = both();
     let mine = ino(&old);
-    assert_eq!(h.run().moved.iter().map(|(_, how)| how.as_str()).collect::<Vec<_>>(), vec!["merged", "moved", "moved"]);
+    assert_eq!(h.run().moved.iter().map(|(_, how)| how.as_str()).collect::<Vec<_>>(), if cfg!(windows) { vec!["linked"; 3] } else { vec!["merged", "moved", "moved"] });
     assert_eq!((ino(&now), ino(&old)), (mine, mine)); assert!(!h.to.join("set-aside").exists());
     // The new place's copy is held by a running process: nothing of the data is moved now, the run stays on the old
     // place, both files are as they were, and a later run moves it.
@@ -31,9 +33,11 @@ fn the_lock_file_in_the_place_in_use_is_never_replaced_or_removed_and_the_new_pl
     let held = hold(&now);
     let r = h.run();
     assert_eq!(r.moved.iter().map(|(p, _)| p.what).collect::<Vec<_>>(), vec!["settings", "reports"]); assert_eq!(r.stay.iter().map(|p| p.what).collect::<Vec<_>>(), vec!["data"]);
-    assert_eq!((ino(&old), ino(&now)), (mine, other)); assert!(!is_link(&h.data));
+    assert_eq!((ino(&old), ino(&now)), (mine, other)); assert_eq!(is_link(&h.data), false);
     drop(held);
-    assert_eq!(hows(&h.run()), vec![("data", "merged")]); assert!(is_link(&h.data)); assert_eq!(ino(&now), mine);
+    assert_eq!(hows(&h.run()), vec![("data", if cfg!(windows) { "linked" } else { "merged" })]);
+    assert_eq!((is_link(&h.data), is_link(&h.to.join("data"))), (!cfg!(windows), cfg!(windows)));
+    assert_eq!(ino(&now), mine);
 }
 
 #[test]
@@ -46,7 +50,8 @@ fn what_is_not_the_boards_to_move_stays_a_folder_you_named_another_copys_board_o
     assert_eq!(r.moved.iter().map(|(p, _)| p.what).collect::<Vec<_>>(), vec!["reports"]); assert!(!is_link(&h.data) && !is_link(&h.settings));
     // The old data folder's command names another copy of the program that is still there (the installed one, seen
     // from a worktree): this copy moves nothing, and is told so that it works on that board where it is.
-    let h = old_home(&w.base, Some("/bin/sh"));
+    let sh = sw::platform::shell::sh().get_program().to_string_lossy().into_owned();
+    let h = old_home(&w.base, Some(&sh));
     let r = h.run();
     assert!(r.other && r.moved.is_empty() && !is_link(&h.data)); assert_eq!(names(&h.to), vec!["closing-1.md"]);
     assert_eq!(r.stay.iter().map(|p| (p.key, p.from.clone())).collect::<Vec<_>>(), vec![("HERDR_PROJECTS_DATA_DIR", h.data.clone()), ("HERDR_PROJECTS_CONFIG_DIR", h.settings.clone()), ("HERDR_PROJECTS_REPORTS_DIR", h.reports.clone())]);
@@ -63,10 +68,12 @@ fn what_is_not_the_boards_to_move_stays_a_folder_you_named_another_copys_board_o
     put(&x.join("state/herdr-superwork/tasks/a/1/task.json"), "{}", None); put(&x.join("config/herdr-superwork/config.json"), r#"{"max":3}"#, None);
     let r = run_with(&h.home, &env(&[("XDG_STATE_HOME", x.join("state").to_str().unwrap()), ("XDG_CONFIG_HOME", x.join("config").to_str().unwrap())]), &swap_now);
     assert_eq!(r.moved.iter().map(|(p, _)| p.from.clone()).collect::<Vec<_>>(), vec![x.join("state/herdr-superwork"), x.join("config/herdr-superwork"), h.reports.clone()]);
-    assert_eq!(read(&h.to.join("settings/config.json")), r#"{"max":3}"#); assert!(is_link(&x.join("state/herdr-superwork")));
+    assert_eq!((is_link(&x.join("state/herdr-superwork")), is_link(&h.to.join("data")), is_link(&x.join("config/herdr-superwork")), is_link(&h.to.join("settings"))), (!cfg!(windows), cfg!(windows), !cfg!(windows), cfg!(windows)));
     assert!(!is_link(&h.data)); // the folders in the usual old places were not the ones in use: left alone
 }
 
+// Windows cannot rename over a file while another handle holds it open; this exercises that Unix replacement race.
+#[cfg(unix)]
 #[test]
 fn real_programs_a_lock_file_that_was_replaced_between_opening_it_and_locking_it_is_not_taken_for_the_lock() {
     let w = world_with(Opts::default());
@@ -89,20 +96,30 @@ fn real_programs_a_lock_file_that_was_replaced_between_opening_it_and_locking_it
 fn real_programs_the_old_command_runs_at_every_moment_of_a_real_move_and_a_lock_held_through_it_stays_held() {
     let w = world_with(Opts::default());
     let h = old_home(&w.base, None);
+    common::fake_program(&h.data.join("bin"), OLD_NAME, "echo ran");
     let launcher = h.data.join("bin").join(OLD_NAME);
-    put(&launcher, "#!/bin/sh\necho ran\n", None);
-    use std::os::unix::fs::PermissionsExt; std::fs::set_permissions(&launcher, std::fs::Permissions::from_mode(0o755)).unwrap();
     let lock = h.data.join("locks/dGFzaw.lock");
-    let mut holder = Command::new("flock").arg("--exclusive").arg(&lock).args(["sleep", "30"]).spawn().unwrap();
+    let holder = hold(&lock);
     for _ in 0..200 { if taken(&lock) { break; } std::thread::sleep(std::time::Duration::from_millis(10)); }
-    // At each of the two steps in which paths change places, before and after it, the old command is started.
+    // Unix starts the old command at each swap boundary; Windows leaves the old folder in place and checks both paths.
     let ran = std::cell::RefCell::new(vec![]);
-    let old = || ran.borrow_mut().push(String::from_utf8_lossy(&Command::new(&launcher).output().map(|o| o.stdout).unwrap_or_default()).into_owned());
+    let old = || {
+        let output = if cfg!(windows) {
+            let path = sw::platform::links::strip_verbatim(launcher.clone()).display().to_string();
+            let drive = path.chars().next().unwrap_or('C').to_ascii_lowercase();
+            let unix = format!("/{drive}/{}", path.get(3..).unwrap_or("").replace('\\', "/"));
+            sw::platform::shell::sh().arg(unix).output()
+        } else { Command::new(&launcher).output() }.unwrap();
+        assert!(output.status.success(), "old command stderr: {}", String::from_utf8_lossy(&output.stderr));
+        ran.borrow_mut().push(String::from_utf8_lossy(&output.stdout).into_owned());
+    };
     let own = h.home.join("own").display().to_string();
+    if cfg!(windows) { old(); }
     let r = run_with(&h.home, &env(&[("HERDR_PROJECTS_CONFIG_DIR", &own), ("HERDR_PROJECTS_REPORTS_DIR", &own)]), &|a: &Path, b: &Path| { old(); let ok = swap_now(a, b); old(); ok });
-    assert_eq!(hows(&r), vec![("data", "moved")]);
-    assert_eq!(*ran.borrow(), vec!["ran\n"; 4]);
-    assert!(is_link(&h.data) && is_dir(&h.to.join("data")));
+    if cfg!(windows) { old(); }
+    assert_eq!(hows(&r), vec![("data", if cfg!(windows) { "linked" } else { "moved" })]);
+    assert_eq!(*ran.borrow(), vec!["ran\n"; if cfg!(windows) { 2 } else { 4 }]);
+    assert_eq!((is_link(&h.data), is_link(&h.to.join("data"))), (!cfg!(windows), cfg!(windows)));
     assert!(taken(&lock) && taken(&PathBuf::from(&h.to).join("data/locks/dGFzaw.lock"))); // still the holder's, by either path
-    let _ = holder.kill(); let _ = holder.wait();
+    drop(holder);
 }

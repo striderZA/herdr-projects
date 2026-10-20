@@ -25,6 +25,8 @@ fn web_world() -> (World, Far) {
     (w, far)
 }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn each_machine_has_its_board_in_the_section_named_as_the_web_ui_names_it_with_how_it_stands_and_all_machines_add_up() {
     let (w, far) = web_world();
@@ -63,6 +65,8 @@ fn a_board_with_nothing_going_on_is_all_quiet_its_archive_left_out_and_all_machi
     assert_eq!(boards(None).s("scope"), "*");
 }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn a_machine_that_cannot_be_reached_says_so_on_its_entry_and_a_machine_without_a_pc_keeps_the_boards_name() {
     let (_w, far) = web_world();
@@ -76,6 +80,8 @@ fn a_machine_that_cannot_be_reached_says_so_on_its_entry_and_a_machine_without_a
     assert_eq!(b.arr("boards")[0].s("line"), "all quiet · 1 not reachable");
 }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn all_machines_stands_first_then_the_machines_in_the_order_of_herdrs_sidebar_not_in_the_web_uis_order_of_its_pcs() {
     let w = world_with(Opts { repo: true, settings: json!({ "board.machines": "vm-a, vm-b" }), ..Default::default() });
@@ -92,6 +98,8 @@ fn all_machines_stands_first_then_the_machines_in_the_order_of_herdrs_sidebar_no
     assert_eq!(order, vec!["All machines", "box-b", "box-a", "Mac"], "this machine where herdr's sidebar puts it");
 }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn picking_an_entry_shows_that_machines_board_as_other_machines_does_and_the_two_stay_in_step() {
     let (_w, far) = web_world();
@@ -113,6 +121,8 @@ fn picking_an_entry_shows_that_machines_board_as_other_machines_does_and_the_two
     assert_eq!(boards(None).s("scope"), "*", "nothing changed");
 }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn a_new_page_shows_whose_board_the_terminal_board_shows_until_a_board_is_picked_on_the_web() {
     // The terminal board shows every machine; the tasks are all on another machine; the web board was last left on
@@ -143,6 +153,8 @@ fn a_new_page_shows_whose_board_the_terminal_board_shows_until_a_board_is_picked
     assert_eq!(call("board", json!({}), None).unwrap().at("flags").s("scope"), "");
 }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn only_a_board_picked_on_the_web_is_kept_another_change_leaves_the_web_following_the_terminal_board() {
     // A page opened while the terminal board showed this machine; the terminal board then went to every machine; a

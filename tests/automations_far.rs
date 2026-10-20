@@ -79,6 +79,8 @@ fn the_machine_that_has_an_automation_answers_for_it() {
     assert!(automation_do(&json!({ "action": "auto-turn", "id": "ffffffff", "on": true })).unwrap_err().msg.contains("No automation \"ffffffff\""));
 }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn other_machines_automations_are_in_the_list_with_their_machine_named_and_are_changed_on_the_machine_that_has_them() {
     let w = world_with(Opts { repo: true, settings: json!({ "board.machines": "vm-b" }), ..Default::default() });

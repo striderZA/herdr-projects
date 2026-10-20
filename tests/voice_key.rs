@@ -23,7 +23,7 @@ fn the_key_is_found_in_the_environment_then_the_settings_file_and_never_said() {
     assert!(sw::voice::key::find().is_none());
     put_key();
     let k = sw::voice::key::find().unwrap();
-    assert_eq!(k.key, "sk_test_0123456789abcdef"); assert!(k.from.ends_with("settings/elevenlabs.json") && !k.from.contains("sk_"), "{}", k.from);
+    assert_eq!(k.key, "sk_test_0123456789abcdef"); assert!(std::path::Path::new(&k.from).ends_with("settings/elevenlabs.json") && !k.from.contains("sk_"), "{}", k.from);
     // the environment comes first; empty, it is not there
     unsafe { std::env::set_var("ELEVENLABS_API_KEY", " sk_env_0123456789abcdef \n") };
     assert_eq!(sw::voice::key::find().unwrap(), sw::voice::key::Key { key: "sk_env_0123456789abcdef".into(), from: "ELEVENLABS_API_KEY in the environment".into() });
@@ -40,7 +40,7 @@ fn with_no_key_a_call_says_where_to_make_one_its_permission_and_the_two_places_i
     let _w = world();
     let said = sw::voice::key::missing();
     assert_eq!(said, format!("No ElevenLabs API key on this machine. Make one at https://elevenlabs.io/app/developers/api-keys (Developers, API Keys) with the ElevenAgents permission set to Write (and Voices set to Write, so the call's built-in voice can be added to your account), then put it in {} as {{\"api_key\": \"…\"}}, or set ELEVENLABS_API_KEY in the environment herdr-projects runs in, and call again.", sw::store::marks::tilde(&sw::voice::key::own_file().display().to_string())));
-    assert!(said.contains("settings/elevenlabs.json"));
+    assert!(said.contains(&sw::store::marks::tilde(&sw::voice::key::own_file().display().to_string())));
     // `herdr-projects voice` says it too, and a call from either board refuses with it
     let (v, out) = sw::calls::command::main(&[]);
     assert!(out.starts_with(&format!("ElevenLabs key: none. {said}")) && v.at("key").is_null(), "{out}");

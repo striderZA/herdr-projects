@@ -6,8 +6,11 @@ use serde_json::json;
 use std::path::{Path, PathBuf};
 use sw::doctor::{agents, disk, machines, plugin, program, problems, say, Found};
 
-fn program_file(p: &Path) { std::fs::create_dir_all(p.parent().unwrap()).unwrap(); std::fs::write(p, "#!/bin/sh\n").unwrap(); use std::os::unix::fs::PermissionsExt; std::fs::set_permissions(p, std::fs::Permissions::from_mode(0o755)).unwrap(); }
+fn program_file(p: &Path) { std::fs::create_dir_all(p.parent().unwrap()).unwrap(); std::fs::write(p, "#!/bin/sh\n").unwrap(); sw::platform::perms::make_executable(p).unwrap(); }
+#[cfg(unix)]
 fn launcher_for(p: &Path) -> String { format!("#!/bin/sh\nexport HERDR_PROJECTS_DATA_DIR='/d'\nexec {} \"$@\"\n", sw::util::shq(&p.display().to_string())) }
+#[cfg(windows)]
+fn launcher_for(_: &Path) -> String { String::new() }
 /// A plugin folder with its downloaded program, the launcher beside the data, and a PATH folder.
 struct Setup { root: PathBuf, prog: PathBuf, launcher: PathBuf, path: PathBuf }
 fn setup(w: &World) -> Setup {
@@ -15,7 +18,7 @@ fn setup(w: &World) -> Setup {
     let prog = root.join("bin").join(sw::install::asset_name(sw::install::platform().unwrap()));
     program_file(&prog);
     std::fs::write(root.join("Cargo.toml"), "[package]\nname = \"herdr-projects\"\nversion = \"1.1.0\"\n").unwrap();
-    let launcher = w.base.join("data/bin/herdr-projects");
+    let launcher = w.base.join("data/bin").join(if cfg!(windows) { "herdr-projects.exe" } else { "herdr-projects" });
     let path = w.base.join("path");
     std::fs::create_dir_all(&path).unwrap();
     Setup { root, prog, launcher, path }
@@ -38,6 +41,8 @@ fn each_problem_is_one_line_with_what_to_do_and_the_count_ends_it() {
     assert!(old[1].problem);
 }
 
+// This asserts a Unix shell-script launcher shape, not the Windows copied executable.
+#[cfg(unix)]
 #[test]
 fn the_launcher_must_name_the_plugin_s_own_program() {
     let w = world();
@@ -62,7 +67,8 @@ fn the_launcher_must_name_the_plugin_s_own_program() {
     program_file(&built);
     assert!(!bad(&program::check(&here(&s, Some(launcher_for(&built)), true))).iter().any(|l| l.contains("launcher")));
 }
-
+// This asserts Unix shell-script execution, executable bits and symlink lookup.
+#[cfg(unix)]
 #[test]
 fn a_shell_must_find_the_launcher_on_the_path() {
     let w = world();
@@ -74,21 +80,38 @@ fn a_shell_must_find_the_launcher_on_the_path() {
     assert_eq!(f.len(), 1, "{f:?}");
     assert!(f[0].starts_with("herdr-projects is not on your PATH → To type herdr-projects in any shell"), "{f:?}");
     // A link to the launcher (~/.local/bin/herdr-projects) is the launcher.
-    std::os::unix::fs::symlink(&s.launcher, s.path.join("herdr-projects")).unwrap();
+    sw::platform::links::make_link(&s.launcher, &s.path.join("herdr-projects")).unwrap();
     let f = program::check(&here(&s, Some(launcher_for(&s.prog)), true));
     assert_eq!(bad(&f), Vec::<String>::new());
     assert!(f[1].what.ends_with("and a shell finds it on the PATH"), "{:?}", f[1]);
     // A launcher that cannot be run: agents and hooks cannot use it, and a shell does not find it.
+    #[cfg(unix)] {
     use std::os::unix::fs::PermissionsExt;
     std::fs::set_permissions(&s.launcher, std::fs::Permissions::from_mode(0o644)).unwrap();
     let f = bad(&program::check(&here(&s, Some(launcher_for(&s.prog)), true)));
     assert_eq!(f.len(), 1, "{f:?}");
     assert!(f[0].contains("cannot be run: it is not executable → Run: sh "), "{f:?}");
     std::fs::set_permissions(&s.launcher, std::fs::Permissions::from_mode(0o755)).unwrap();
+    }
     // Something else of that name first.
     std::fs::remove_file(s.path.join("herdr-projects")).unwrap();
     program_file(&s.path.join("herdr-projects"));
     assert!(bad(&program::check(&here(&s, Some(launcher_for(&s.prog)), true)))[0].contains("comes first on your PATH"));
+}
+
+#[cfg(windows)]
+#[test]
+fn a_windows_launcher_is_a_present_program() {
+    let w = world();
+    let s = setup(&w);
+    let mut h = here(&s, Some(String::new()), true);
+    h.path = s.launcher.parent().unwrap().display().to_string();
+    assert!(bad(&program::check(&h))[0].contains("is missing"), "{:?}", program::check(&h));
+    std::fs::create_dir_all(s.launcher.parent().unwrap()).unwrap();
+    program_file(&s.launcher);
+    let f = program::check(&h);
+    assert!(bad(&f).is_empty(), "{f:?}");
+    assert!(f.iter().any(|line| line.what.contains("launcher") && line.what.contains("PATH")), "{f:?}");
 }
 
 #[test]

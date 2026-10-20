@@ -37,13 +37,10 @@ fn tailnet(base: &Path, sites: &[(u16, &str)], funnel: &[u16]) -> Tailnet {
     for d in ["web", "funnel", "bin"] { std::fs::create_dir_all(dir.join(d)).unwrap(); }
     for (p, t) in sites { std::fs::write(dir.join("web").join(p.to_string()), t).unwrap(); }
     for p in funnel { std::fs::write(dir.join("funnel").join(p.to_string()), "").unwrap(); }
-    let script = dir.join("bin/tailscale");
-    std::fs::write(&script, SCRIPT.replace("@DIR@", &dir.display().to_string()).replace("@HOST@", HOST)).unwrap();
-    use std::os::unix::fs::PermissionsExt;
-    std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o755)).unwrap();
-    let path = std::env::var("PATH").unwrap_or_default();
-    let path = path.split(':').filter(|p| !p.ends_with("tailscale/bin")).collect::<Vec<_>>().join(":");
-    unsafe { std::env::set_var("PATH", format!("{}:{path}", dir.join("bin").display())) };
+    // sh reads the folder with forward slashes (Git's sh on Windows does not read backslash paths).
+    fake_program(&dir.join("bin"), "tailscale", SCRIPT.replace("@DIR@", &dir.display().to_string().replace('\\', "/")).replace("@HOST@", HOST).trim_start_matches("#!/bin/sh\n"));
+    let path: Vec<PathBuf> = std::env::split_paths(&std::env::var_os("PATH").unwrap_or_default()).filter(|p| !p.ends_with("tailscale/bin")).collect();
+    unsafe { std::env::set_var("PATH", std::env::join_paths(std::iter::once(dir.join("bin")).chain(path)).unwrap()) };
     Tailnet { dir }
 }
 impl Tailnet {

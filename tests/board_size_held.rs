@@ -2,6 +2,8 @@
 //! the key that ends that view (never a process to kill), and stops when the size is its own again. A view somebody
 //! looks through (seen live on herdr-web-ui 0.4.8: disconnected and reattached every four seconds) keeps the terminal:
 //! the board is drawn for it, drops the enter its input line adds, and never turns its terminal into an agent.
+//! Unix only, gated on Windows: it ends a fake remote view with SIGTERM (ExitStatusExt) and runs `sleep`.
+#![cfg(unix)]
 use crate::common;
 use common::board::{open, Board};
 use common::*;

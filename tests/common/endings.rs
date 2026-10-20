@@ -14,7 +14,7 @@ fn env_path(k: &str) -> PathBuf { PathBuf::from(std::env::var(k).unwrap_or_defau
 pub fn end_turn(f: &F, pi: usize, prompt: &str, step: &Value) {
     let (a, cwd, pane) = { let st = f.st.borrow(); (st["panes"][pi]["agent"].clone(), st["panes"][pi].t("cwd"), st["panes"][pi].t("pane_id")) };
     let kind = a.t("kind");
-    let real = std::fs::canonicalize(&cwd).unwrap_or_else(|_| PathBuf::from(&cwd)).display().to_string();
+    let real = sw::platform::links::place(std::path::Path::new(&cwd)).display().to_string();
     let args: Vec<String> = a.arr("args").iter().map(text).collect();
     let arg = |names: &[&str]| args.iter().position(|x| names.contains(&x.as_str())).and_then(|i| args.get(i + 1)).cloned().unwrap_or_default();
     let now = sw::clock::now();
@@ -59,7 +59,7 @@ pub fn end_turn(f: &F, pi: usize, prompt: &str, step: &Value) {
 /// `codex-helper-running-made` ending started.
 pub fn helper_ends(f: &F, pi: usize, running: bool) {
     let (a, cwd, seq) = { let st = f.st.borrow(); (st["panes"][pi]["agent"].clone(), st["panes"][pi].t("cwd"), st.i("seq")) };
-    let real = std::fs::canonicalize(&cwd).unwrap_or_else(|_| PathBuf::from(&cwd)).display().to_string();
+    let real = sw::platform::links::place(std::path::Path::new(&cwd)).display().to_string();
     let first = a.arr("prompts").first().map(text).unwrap_or_default();
     let root = if a.b("thread") { a.t("thread") } else { format!("root-{seq}") };
     let id = if running { "check-plans-running".to_string() } else { format!("helper-{seq}") };

@@ -2,15 +2,22 @@
 //! is taken out, and the sidebar rows an older version wrote are brought up to this version's.
 use crate::common;
 use common::*;
+#[cfg(unix)]
 use serde_json::json;
+#[cfg(unix)]
 use std::cell::Cell;
+#[cfg(unix)]
 use std::rc::Rc;
+#[cfg(unix)]
 use sw::herdr::cli::{Fake, Ran};
+#[cfg(unix)]
 use sw::json::*;
 
 /// herdr's own `config check`, which rejects a candidate holding `rejects` (the old fake's `configRejects`); every
 /// other command goes to the world's fake herdr.
+#[cfg(unix)]
 struct Rejecting { inner: Rc<herdr::FakeHerdr>, rejects: Rc<Cell<bool>> }
+#[cfg(unix)]
 impl Fake for Rejecting {
     fn run(&self, args: &[String], input: &str) -> Ran {
         if args.first().map(|s| s.as_str()) == Some("config") && args.get(1).map(|s| s.as_str()) == Some("check") && self.rejects.get() {
@@ -21,9 +28,13 @@ impl Fake for Rejecting {
     }
 }
 /// HERDR_CONFIG_PATH is this test's only while it runs, even when it fails.
+#[cfg(unix)]
 struct ConfigPath;
+#[cfg(unix)]
 impl Drop for ConfigPath { fn drop(&mut self) { unsafe { std::env::remove_var("HERDR_CONFIG_PATH") } } }
 
+// Unix only: its last part links a config file, and on Windows a link to a file is a copy.
+#[cfg(unix)]
 #[test]
 fn no_notifications_a_task_that_needs_you_raises_nothing_and_the_popup_block_an_older_version_wrote_is_taken_out() {
     let w = world();

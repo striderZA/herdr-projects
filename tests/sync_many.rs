@@ -138,13 +138,15 @@ fn a_merge_that_cannot_fetch_main_waits_as_behind_main_and_is_not_failed_and_goe
 fn a_lock_file_left_in_the_way_is_named_in_plain_words_and_the_work_waits_behind_main_until_it_is_gone() {
     let w = world_with(Opts { repo: true, origin: true, settings: json!({ "review.when": "never" }), ..Default::default() });
     let id = to_approval(&w, "Locked");
-    let lock = w.root.join(".git/refs/remotes/origin/main.lock");
+    let lock = w.root.join(".git").join("refs").join("remotes").join("origin").join("main.lock");
     std::fs::write(&lock, "").unwrap();
     they_push(&w, "main", "theirs.txt");
     let t = task(&id);
     let r = sw::sync::sync_main(&t, t.s("worktree"));
     assert_eq!(r.status, "error");
-    assert!(r.detail.starts_with(&format!("git's lock file {} stayed in the way on every try", lock.display())), "{}", r.detail);
+    let shown_lock = sw::platform::links::strip_verbatim(lock.clone());
+    let expected = format!("git's lock file {} stayed in the way on every try", shown_lock.display());
+    assert!(r.detail.starts_with(&expected), "expected {expected:?}\nactual: {}", r.detail);
     assert!(sw::sync::held_why(&r).starts_with("main could not be fetched (git's lock file"), "{}", sw::sync::held_why(&r));
     std::fs::remove_file(&lock).unwrap();
     assert_eq!(sw::sync::sync_main(&t, t.s("worktree")).status, "merged");

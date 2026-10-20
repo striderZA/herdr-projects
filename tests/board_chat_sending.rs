@@ -78,6 +78,8 @@ fn a_repos_coordinator_here_shows_your_words_at_once_until_its_own_conversation_
     assert!(s.s.just_sent.is_empty(), "its conversation has your words now: {:?}", s.s.just_sent);
 }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn another_machines_coordinators_show_your_words_at_once_with_no_row_on_its_way_over_the_chat() {
     let w = coord_world(json!({ "board.machines": "otherbox" }));
@@ -133,6 +135,8 @@ fn another_machines_coordinators_show_your_words_at_once_with_no_row_on_its_way_
     assert!(!s.chat(120).boxed.iter().any(|l| l == "and the crm repo?") && s.s.just_sent.is_empty(), "{t}");
 }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn a_task_agent_on_another_machine_shows_your_words_at_once_until_it_answers() {
     let w = coord_world(json!({ "board.machines": "otherbox" }));

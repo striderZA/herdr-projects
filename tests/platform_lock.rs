@@ -11,9 +11,10 @@ fn lock_path(name: &str) -> PathBuf {
     dir.join(name)
 }
 
-/// Opened the way the program opens its lock files: created if missing, for appending.
+/// Opened the way the program opens its lock files: created if missing, for reading and appending. A lock needs a handle
+/// that can read or write (Windows' LockFileEx refuses one that only appends).
 fn open(path: &Path) -> File {
-    OpenOptions::new().create(true).append(true).open(path).unwrap()
+    OpenOptions::new().create(true).read(true).append(true).open(path).unwrap()
 }
 
 #[test]

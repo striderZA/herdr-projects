@@ -15,7 +15,19 @@ fn worktree(w: &World, branch: &str, dir: &str) -> String {
     p.display().to_string()
 }
 fn whys(left: &[Left]) -> Vec<Why> { left.iter().map(|l| l.why.clone()).collect() }
-fn aged(p: &Path, secs: u64) { std::fs::File::open(p).unwrap().set_modified(std::time::SystemTime::now() - std::time::Duration::from_secs(secs)).unwrap(); }
+fn aged(p: &Path, secs: u64) {
+    #[cfg(unix)]
+    std::fs::File::open(p).unwrap().set_modified(std::time::SystemTime::now() - std::time::Duration::from_secs(secs)).unwrap();
+    #[cfg(windows)]
+    {
+        let _ = secs;
+        let old = p.to_string_lossy().into_owned();
+        let status = std::process::Command::new("sh")
+            .args(["-c", "touch -t 200001010000 -- \"$1\"", "sh", &old])
+            .status().unwrap();
+        assert!(status.success(), "could not age {}", p.display());
+    }
+}
 
 #[test]
 fn a_done_task_s_worktree_is_a_leftover_unless_its_clean_up_is_to_come_or_off() {

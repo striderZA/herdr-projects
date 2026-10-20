@@ -20,6 +20,8 @@ fn web_world() -> (World, Far) {
     (w, far)
 }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn other_machines_tasks_show_with_the_machines_name_and_an_action_goes_to_the_machine_that_owns_the_task() {
     let (_w, far) = web_world();
@@ -44,6 +46,8 @@ fn other_machines_tasks_show_with_the_machines_name_and_an_action_goes_to_the_ma
     assert_eq!(s.at("msg").s("text"), "far/1: archived.");
 }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn another_machines_agent_opens_in_the_web_uis_view_of_that_machines_pane_and_what_is_missing_is_said_plainly() {
     let (_w, far) = web_world();

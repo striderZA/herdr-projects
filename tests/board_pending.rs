@@ -126,6 +126,8 @@ fn a_job_that_fails_says_so_in_red_on_its_row_and_in_its_panel() {
     assert!(s.s.pending.is_empty() && !s.screen(120).join("\n").contains("Could not start"), "{}", s.text());
 }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn another_machines_row_waits_for_that_machine_to_show_what_was_done() {
     let w = world_with(Opts { repo: true, settings: json!({ "board.machines": "otherbox" }), ..Default::default() });

@@ -209,6 +209,7 @@ mod remote_board;
 mod remote_more;
 mod remote_open;
 mod remote_why;
+mod remote_windows;
 mod research;
 mod research_more;
 mod research_rest;

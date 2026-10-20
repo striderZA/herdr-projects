@@ -29,7 +29,7 @@ impl Repo {
     }
     /// The pick from `since` for the folder as it stands, as one line, and what it said on stderr.
     fn pick(&self, since: &str) -> (String, String) {
-        let o = std::process::Command::new("/bin/sh").args(["scripts/changed-tests.sh", since]).current_dir(&self.dir).output().unwrap();
+        let o = sw::platform::shell::sh().args(["scripts/changed-tests.sh", since]).current_dir(&self.dir).output().unwrap();
         assert!(o.status.success());
         (String::from_utf8_lossy(&o.stdout).split_whitespace().collect::<Vec<_>>().join(" "), String::from_utf8_lossy(&o.stderr).trim().to_string())
     }

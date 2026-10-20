@@ -65,6 +65,8 @@ fn headings(b: &common::board::Board) -> Vec<String> {
     b.s.rows.iter().filter_map(|r| match r { sw::board::state::Row::Head { name, machine: true, .. } => Some(name.clone()), _ => None }).collect()
 }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn the_board_finds_itself_in_the_m1s_sidebar_by_the_address_its_tailscale_name_stands_for_and_lists_every_machine_so() {
     let w = world();

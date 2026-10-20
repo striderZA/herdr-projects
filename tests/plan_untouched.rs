@@ -14,6 +14,8 @@ const PLAN: &str = "# Plan\n\n1. Add f.txt with one line.\n2. Run the check.\n";
 fn approve(id: &str) { sw::actions::finish_line::approve(id, None, false).unwrap(); }
 fn file(tree: &str, rel: &str) -> Option<String> { std::fs::read_to_string(Path::new(tree).join(rel)).ok() }
 
+// Unix only: a plan writer needs a read-only mount, which Windows does not have.
+#[cfg(unix)]
 #[test]
 fn nothing_is_changed_before_the_yes_what_gets_in_is_put_back_and_a_change_the_board_may_not_undo_holds_the_build() {
     let w = world_with(Opts { repo: true, settings: json!({ "plan.approve": "you", "worker.agent": "codex", "review.when": "never" }), ..Default::default() });

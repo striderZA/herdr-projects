@@ -3,6 +3,8 @@
 //! board says where no mount can be made (no apt advice on a Mac), doctor's line, and a plan step started that way. And
 //! the real thing: a write into the guarded folders is refused while one elsewhere works (on macOS always; on Linux
 //! where bubblewrap can be used).
+//! Unix only, gated on Windows: it runs the Linux and macOS sandbox tools and makes a symbolic link.
+#![cfg(unix)]
 use crate::common;
 use common::*;
 use serde_json::json;

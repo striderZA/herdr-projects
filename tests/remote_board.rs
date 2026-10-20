@@ -20,6 +20,8 @@ fn answer(b: &mut common::board::Board, label: &str, a: Result<Value, Value>) { 
 fn list(tasks: Value) -> Result<Value, Value> { Ok(json!({ "host": "x", "version": "0.2.0", "tasks": tasks })) }
 fn bash_why(label: &str) -> Value { why_not(&end(127, BASH), label, &format!("me@{label}")) }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn the_board_never_shows_a_machine_that_did_not_answer_as_an_empty_one() {
     let w = world_with(Opts { repo: true, settings: json!({ "board.machines": "vm-a, vm-b, vm-c" }), ..Default::default() });
@@ -93,6 +95,8 @@ fn the_board_never_shows_a_machine_that_did_not_answer_as_an_empty_one() {
     assert_eq!(far.asked().last().map(|a| (a.0.clone(), a.1.clone(), a.2.s("action").to_string())), Some(("vm-b".into(), "do".into(), "pin".into())));
 }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn the_web_board_says_the_same_an_unread_machine_is_a_line_with_its_reason_behind_it() {
     let w = world_with(Opts { repo: true, settings: json!({ "board.machines": "vm-a, vm-b" }), ..Default::default() });

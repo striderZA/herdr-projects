@@ -20,6 +20,8 @@ fn plan_world(settings: serde_json::Value) -> World {
 fn has(text: &str, re: &str) -> bool { regex::Regex::new(re).unwrap().is_match(text) }
 fn last(w: &World, t: &Obj) -> String { prompts(w, t.at("link").s("pane")).last().cloned().unwrap_or_default() }
 
+// Unix only: a plan writer needs a read-only mount, which Windows does not have.
+#[cfg(unix)]
 #[test]
 fn plan_ready_is_said_everywhere_the_worktree_stays_untouched_and_the_work_is_reviewed_against_the_plan() {
     let w = plan_world(json!({ "plan.approve": "you", "worker.agent": "codex" }));
@@ -83,6 +85,9 @@ fn plan_ready_is_said_everywhere_the_worktree_stays_untouched_and_the_work_is_re
 }
 
 #[test]
+// Unix only: plan approval needs a read-only mount for the plan's writer, which Windows does not have. The start is
+// refused there: plan_modes::plan_approval_you_is_refused_on_windows_with_its_reason.
+#[cfg(unix)]
 fn the_reviewers_look_at_a_plan_is_shown_runs_in_tabs_of_its_own_and_is_no_round_of_the_tasks_reviews() {
     let w = plan_world(json!({ "plan.approve": "reviewer", "worker.agent": "codex", "review.rounds": 1, "review.when": "never" }));
     let bad = |subject: &str| json!({ "verdict": { "meets": true, "findings": [{ "severity": "major", "subject": subject, "where": "step 1", "proof": "read the plan" }], "text": "Not yet." } });

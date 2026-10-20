@@ -9,6 +9,7 @@ pub mod fixtures;
 pub mod gh;
 pub mod herdr;
 pub mod panes;
+pub mod pipe;
 pub mod worktrees;
 
 use serde_json::{json, Value};
@@ -22,11 +23,58 @@ use sw::json::*;
 static ONE: Mutex<()> = Mutex::new(());
 pub fn one_at_a_time() -> MutexGuard<'static, ()> { ONE.lock().unwrap_or_else(|e| e.into_inner()) }
 static N: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
-pub struct World { pub base: PathBuf, pub root: PathBuf, pub fake: Rc<herdr::FakeHerdr>, pub gh: Rc<gh::FakeGh>, pub socket: String, _listen: std::os::unix::net::UnixListener, _one: MutexGuard<'static, ()> }
+#[cfg(unix)]
+type Listen = std::os::unix::net::UnixListener;
+/// On Windows herdr's endpoint is a regular file (what endpoint::exists looks for), so the world makes one.
+#[cfg(windows)]
+type Listen = std::fs::File;
+pub struct World { pub base: PathBuf, pub root: PathBuf, pub fake: Rc<herdr::FakeHerdr>, pub gh: Rc<gh::FakeGh>, pub socket: String, _listen: Listen, _one: MutexGuard<'static, ()> }
 #[derive(Default)]
 pub struct Opts { pub repo: bool, pub settings: Value, pub repo_settings: Option<Value>, pub origin: bool }
 pub fn git(cwd: &Path, a: &[&str]) -> String { worktrees::git(cwd, a).unwrap_or_else(|e| panic!("git {a:?}: {e}")) }
 fn set(k: &str, v: &str) { unsafe { std::env::set_var(k, v) } }
+/// A fake program `name` in `dir`: a shell script running `body`. On Windows a program is found by its extension, so
+/// there is also `name.cmd`, which runs the script through Git's sh; the path returned is the one to give herdr.
+pub fn fake_program(dir: &Path, name: &str, body: &str) -> PathBuf {
+    std::fs::create_dir_all(dir).unwrap();
+    let file = dir.join(name);
+    std::fs::write(&file, format!("#!/bin/sh\n{body}\n")).unwrap();
+    sw::platform::perms::make_executable(&file).unwrap();
+    if cfg!(windows) {
+        let cmd = dir.join(format!("{name}.cmd"));
+        std::fs::write(&cmd, format!("@sh \"%~dp0{name}\" %*\r\n")).unwrap();
+        return cmd;
+    }
+    file
+}
+/// Windows: the folder of Git for Windows' own tools (awk, getconf, basename ...), found from the sh the tests run
+/// scripts with; none when that sh is not where Git puts it.
+#[cfg(windows)]
+pub fn git_tools() -> Option<PathBuf> {
+    let sh = PathBuf::from(sw::platform::shell::sh().get_program());
+    sh.parent()?.parent().map(|git| git.join("usr").join("bin")).filter(|d| d.is_dir())
+}
+/// A PATH with `dir` first, then the folders a child process of a test gets: on Windows Git's tools and then this
+/// machine's PATH; on Unix the system's folders, as they were written.
+#[cfg(windows)]
+pub fn path_with_first(dir: &Path) -> std::ffi::OsString {
+    let mut dirs = vec![dir.to_path_buf()];
+    dirs.extend(git_tools());
+    dirs.extend(std::env::split_paths(&std::env::var_os("PATH").unwrap_or_default()));
+    std::env::join_paths(dirs).unwrap()
+}
+#[cfg(unix)]
+pub fn path_with_first(dir: &Path) -> std::ffi::OsString { format!("{}:/usr/bin:/bin", dir.display()).into() }
+/// Windows: `dir` first, then Git's tools, then the folders of this machine's PATH that hold git, sh, cmd or PowerShell
+/// and nothing else, so that no agent installed on this machine is found.
+#[cfg(windows)]
+fn tool_path(dir: &Path) -> std::ffi::OsString {
+    let have = std::env::var_os("PATH").unwrap_or_default();
+    let mut dirs = vec![dir.to_path_buf()];
+    dirs.extend(git_tools());
+    dirs.extend(std::env::split_paths(&have).filter(|d| ["git.exe", "sh.exe", "cmd.exe", "powershell.exe"].iter().any(|f| d.join(f).is_file())));
+    std::env::join_paths(dirs).unwrap()
+}
 pub fn world() -> World { world_with(Opts { repo: true, ..Default::default() }) }
 pub fn world_with(o: Opts) -> World {
     let one = one_at_a_time();
@@ -34,17 +82,30 @@ pub fn world_with(o: Opts) -> World {
     let base = std::env::temp_dir().join(format!("sw-test-{}-{}", std::process::id(), N.fetch_add(1, std::sync::atomic::Ordering::SeqCst)));
     let _ = std::fs::remove_dir_all(&base);
     std::fs::create_dir_all(base.join("home")).unwrap();
+    // Unix: the folder by its real path (a link to it resolved). Windows keeps the path as it is: a canonical path there
+    // carries a \\?\ prefix that PATH entries and pipe names do not take.
+    #[cfg(unix)]
     let base = std::fs::canonicalize(&base).unwrap();
     let b = |p: &str| base.join(p).display().to_string();
     for k in ["HERDR_PANE_ID", "HERDR_TAB_ID", "HERDR_WORKSPACE_ID", "HERDR_PLUGIN_ID", "HERDR_PLUGIN_CONTEXT_JSON", "HERDR_ENV", "HERDR_SESSION", "TMUX", "NO_COLOR", "HERDR_PROJECTS_DATA_DIR", "HERDR_PROJECTS_CONFIG_DIR", "HERDR_PROJECTS_REPORTS_DIR", "HERDR_PROJECTS_WEBUI", "HERDR_PROJECTS_PROGRESS", "HERDR_PROJECTS_SANDBOX", "HERDR_PROJECTS_RETRY_MS", "HERDR_PROJECTS_ENDED_MS", "HERDR_PROJECTS_QUIET_MS", "HERDR_PROJECTS_READY_MS", "HERDR_PROJECTS_SUBMIT_MS", "HERDR_PROJECTS_TICK_MS", "ELEVENLABS_API_KEY"] { unsafe { std::env::remove_var(k) } }
     let socket = b("herdr.sock");
     // herdr's socket is there (the fake answers for herdr itself): what looks for a running herdr finds one.
-    let listen = std::os::unix::net::UnixListener::bind(&socket).unwrap();
+    #[cfg(unix)]
+    let listen: Listen = std::os::unix::net::UnixListener::bind(&socket).unwrap();
+    #[cfg(windows)]
+    let listen: Listen = std::fs::File::create(&socket).unwrap();
     for (k, v) in [("HOME", b("home")), ("HERDR_PROJECTS_HOME", b("sw")), ("HERDR_SOCKET_PATH", socket.clone()), ("XDG_CONFIG_HOME", b("home/.config")), ("XDG_STATE_HOME", b("home/.state")),
         ("CLAUDE_CONFIG_DIR", b("claude")), ("CODEX_HOME", b("codex")), ("PI_CODING_AGENT_DIR", b("pi")), ("HERDR_PROJECTS_CLAUDE_JSON", b("claude.json")), ("HERDR_PROJECTS_CODEX_TOML", b("codex.toml"))] { set(k, &v); }
     for (k, v) in [("HERDR_PROJECTS_INLINE", "1"), ("HERDR_PROJECTS_SETTLE_MS", "0"), ("HERDR_PROJECTS_PR_LAG_MS", "0"), ("HERDR_PROJECTS_FETCH_PAUSE_MS", "0"), ("HERDR_PROJECTS_READY_STEP_MS", "0"), ("HERDR_PROJECTS_POLL_MS", "20"),
         ("HERDR_PROJECTS_NO_KEEPER", "1"), ("HERDR_PROJECTS_NO_HOOK", "1"), ("HERDR_PROJECTS_NO_MODEL_LIST", "1"), ("HERDR_PROJECTS_READ_MS", "0"), ("HERDR_PROJECTS_NO_SERVER", "1"), ("HERDR_PROJECTS_LINKS", "local"),
         ("HERDR_BIN_PATH", "/bin/false"), ("GIT_AUTHOR_NAME", "tester"), ("GIT_AUTHOR_EMAIL", "t@test"), ("GIT_COMMITTER_NAME", "tester"), ("GIT_COMMITTER_EMAIL", "t@test"), ("GIT_CONFIG_GLOBAL", "/dev/null"), ("GIT_CONFIG_NOSYSTEM", "1")] { set(k, v); }
+    // Windows: this world's PATH holds its folder for fake programs and the folders of git and sh; no agent installed on
+    // this machine is found, so the board starts only the fake ones a test puts there, as on a CI machine.
+    #[cfg(windows)]
+    set("PATH", &tool_path(&base.join("bin")).to_string_lossy());
+    // The product's home on Windows is USERPROFILE: the world's own home, so that no test reaches the real one.
+    #[cfg(windows)]
+    set("USERPROFILE", &b("home"));
     let data = sw::store::files::data_dir();
     let config = sw::store::files::config_dir();
     std::fs::create_dir_all(&data).unwrap(); std::fs::create_dir_all(&config).unwrap();
@@ -73,10 +134,21 @@ pub fn world_with(o: Opts) -> World {
     { let g = gh.clone(); sw::flow::git::set_fake_gh(Some(Rc::new(move |a: &[String]| g.run(a)))); }
     World { base, root, fake, gh, socket, _listen: listen, _one: one }
 }
+/// Every file and folder under `p` writable again, so that the folder can go: what `chmod -R u+w` did.
+fn writable_again(p: &Path) {
+    let _ = sw::platform::perms::set_writable(p, true);
+    let Ok(rd) = std::fs::read_dir(p) else { return };
+    for e in rd.flatten() {
+        let q = e.path();
+        let Ok(m) = std::fs::symlink_metadata(&q) else { continue };
+        if sw::platform::meta::is_link(&m) { continue; }
+        if m.is_dir() { writable_again(&q); } else { let _ = sw::platform::perms::set_writable(&q, true); }
+    }
+}
 impl Drop for World {
     // Out of the world's folder before it goes (a test may have gone into it): the other tests run in this same
     // process, and a program they start would find its folder gone.
-    fn drop(&mut self) { let _ = std::env::set_current_dir(env!("CARGO_MANIFEST_DIR")); FAKE.with(|f| *f.borrow_mut() = None); sw::webui::web::forget(); sw::herdr::cli::set_fake(None); sw::flow::git::set_fake_gh(None); sw::clock::set(None); sw::runner::JOBS.with(|j| j.borrow_mut().clear()); let _ = std::process::Command::new("chmod").args(["-R", "u+w"]).arg(&self.base).status(); let _ = std::fs::remove_dir_all(&self.base); }
+    fn drop(&mut self) { let _ = std::env::set_current_dir(env!("CARGO_MANIFEST_DIR")); FAKE.with(|f| *f.borrow_mut() = None); sw::webui::web::forget(); sw::herdr::cli::set_fake(None); sw::flow::git::set_fake_gh(None); sw::clock::set(None); sw::runner::JOBS.with(|j| j.borrow_mut().clear()); writable_again(&self.base); let _ = std::fs::remove_dir_all(&self.base); }
 }
 impl World {
     /// The scripted turns, by role: { "worker": [step, …], "reviewer": […], "picker": […], "coordinator": […] }.

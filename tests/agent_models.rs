@@ -13,6 +13,23 @@ use sw::store::settings::lookup::{setting_text, Scope};
 fn has(text: &str, re: &str) -> bool { regex::Regex::new(re).unwrap().is_match(text) }
 fn refused(name: &str, value: &str, re: &str) { let e = set_value(name, &json!(value), &Scope::you()).unwrap_err(); assert!(has(&e.msg, re), "{name} {value}: {re}: {}", e.msg); }
 fn taken(name: &str, value: &str) { set_value(name, &json!(value), &Scope::you()).unwrap_or_else(|e| panic!("{name} {value}: {}", e.msg)); assert_eq!(setting_text(name, None), value); }
+fn windows_codex(bin: &std::path::Path, body: &str) {
+    #[cfg(windows)]
+    std::fs::write(bin.join("codex.cmd"), format!("@echo off\r\n{body}\r\n")).unwrap();
+    #[cfg(not(windows))]
+    let _ = (bin, body);
+}
+fn agent_path(dir: &std::path::Path) -> std::ffi::OsString {
+    #[cfg(windows)]
+    {
+        let mut dirs = vec![dir.to_path_buf()];
+        dirs.extend(common::git_tools());
+        if let Ok(root) = std::env::var("SystemRoot") { dirs.push(std::path::PathBuf::from(root).join("System32")); }
+        return std::env::join_paths(dirs).unwrap();
+    }
+    #[cfg(not(windows))]
+    { path_with_first(dir) }
+}
 /// The lists the programs gave, as the board keeps them (the tests never run a real program for them).
 fn lists(v: serde_json::Value) {
     let now = sw::clock::now();
@@ -127,21 +144,24 @@ fn real_programs_the_list_is_asked_of_the_program_and_kept() {
     let bin = w.base.join("bin");
     std::fs::create_dir_all(&bin).unwrap();
     let count = w.base.join("asked");
+    let fallback_bin = w.base.join("fallback-bin");
+    std::fs::create_dir_all(&fallback_bin).unwrap();
+    let use_fallback = std::cell::Cell::new(false);
     // Its app-server answers for a ChatGPT sign-in, as `codex app-server` does: JSON-RPC, one line each way.
     let page = r#"{"id":1,"result":{"data":[{"id":"gpt-6.1-sol","model":"gpt-6.1-sol","hidden":false},{"id":"gpt-6-luna","model":"gpt-6-luna","hidden":false},{"id":"codex-auto-review","model":"codex-auto-review","hidden":true}],"nextCursor":null}}"#;
     let account = r#"{"id":2,"result":{"account":{"type":"chatgpt","email":"x@y","planType":"pro"},"requiresOpenaiAuth":true}}"#;
-    std::fs::write(bin.join("codex"), format!("#!/bin/sh\necho \"$1\" >> {}\nif [ \"$1\" = app-server ]; then\n  while read l; do case \"$l\" in *'\"model/list\"'*) printf '%s\\n' '{page}';; *'\"account/read\"'*) printf '%s\\n' '{account}';; esac; done\n  exit 0\nfi\nprintf '%s' '{CODEX}'\n", count.display())).unwrap();
-    use std::os::unix::fs::PermissionsExt;
-    std::fs::set_permissions(bin.join("codex"), std::fs::Permissions::from_mode(0o755)).unwrap();
-    let run = |args: &[&str]| { let o = std::process::Command::new(env!("CARGO_BIN_EXE_herdr-projects")).args(args).current_dir(&w.root)
-        .env("PATH", format!("{}:/usr/bin:/bin", bin.display())).env_remove("HERDR_PROJECTS_NO_MODEL_LIST").env("HERDR_SOCKET_PATH", "/nonexistent").env("HERDR_BIN_PATH", "/bin/false").output().unwrap();
+    fake_program(&bin, "codex", &format!("echo \"$1\" >> '{}'\nif [ \"$1\" = app-server ]; then\n  while read l; do case \"$l\" in *'\"model/list\"'*) printf '%s\\n' '{page}';; *'\"account/read\"'*) printf '%s\\n' '{account}';; esac; done\n  exit 0\nfi\nprintf '%s' '{CODEX}'", count.display()));
+    windows_codex(&bin, &format!("echo %1>>\"%~dp0..\\asked\"\nif \"%1\"==\"app-server\" (\n echo {page}\n echo {account}\n exit /b 0\n)\nexit /b 1"));
+    let run = |args: &[&str]| { let bin = if use_fallback.get() { &fallback_bin } else { &bin }; let o = std::process::Command::new(env!("CARGO_BIN_EXE_herdr-projects")).args(args).current_dir(&w.root)
+        .env("PATH", agent_path(bin)).env("HERDR_PROJECTS_HOME", sw::store::files::home_dir()).env("HERDR_PROJECTS_DATA_DIR", sw::store::files::data_dir()).env("HERDR_PROJECTS_CONFIG_DIR", sw::store::files::config_dir())
+        .env_remove("HERDR_PROJECTS_NO_MODEL_LIST").env("HERDR_SOCKET_PATH", "/nonexistent").env("HERDR_BIN_PATH", "/bin/false").output().unwrap();
         (o.status.code().unwrap_or(-1), String::from_utf8_lossy(&o.stdout).into_owned(), String::from_utf8_lossy(&o.stderr).into_owned()) };
     let asked = || std::fs::read_to_string(&count).unwrap_or_default().lines().count();
     let (code, _, err) = run(&["set", "worker.agent", "codex/gpt-5.5"]);
     assert_eq!(code, 1);
     assert!(err.contains("codex has no model \"gpt-5.5\" for your ChatGPT sign-in (pro plan). It takes gpt-6.1-sol, gpt-6-luna (codex's own list for that sign-in)"), "{err}");
     assert_eq!(asked(), 1, "asked once: the list it gave is under a minute old");
-    assert_eq!(std::fs::read_to_string(&count).unwrap(), "app-server\n", "its app-server, for the account it is signed in with");
+    assert_eq!(std::fs::read_to_string(&count).unwrap().lines().collect::<Vec<_>>(), vec!["app-server"], "its app-server, for the account it is signed in with");
     let (code, out, err) = run(&["set", "worker.agent", "codex/gpt-6-luna"]);
     assert_eq!(code, 0, "{err}");
     assert!(out.contains("codex/gpt-6-luna"));
@@ -151,14 +171,17 @@ fn real_programs_the_list_is_asked_of_the_program_and_kept() {
     assert!(out.contains("(here: your ChatGPT sign-in (pro plan))"), "{out}");
     // An app-server that gives no list (an older codex): its list command instead, with no sign-in to name.
     std::fs::remove_file(sw::store::files::data_dir().join("models.json")).unwrap();
-    std::fs::write(bin.join("codex"), format!("#!/bin/sh\necho \"$1\" >> {}\n[ \"$1\" = app-server ] && exit 1\nprintf '%s' '{CODEX}'\n", count.display())).unwrap();
+    use_fallback.set(true);
+    fake_program(&fallback_bin, "codex", &format!("echo \"$1\" >> '{}'\n[ \"$1\" = app-server ] && exit 1\nprintf '%s' '{CODEX}'", count.display()));
+    windows_codex(&fallback_bin, &format!("echo %1>>\"%~dp0..\\asked\"\nif \"%1\"==\"app-server\" echo {{\"id\":1,\"error\":{{\"message\":\"no model list\"}}}}\nif \"%1\"==\"app-server\" exit /b 0\necho {CODEX}\nexit /b 0"));
     let (code, _, err) = run(&["set", "worker.agent", "codex/gpt-5.5"]);
     assert_eq!(code, 1);
-    assert!(err.contains("codex has no model \"gpt-5.5\". It takes gpt-6.1-sol, gpt-6-luna (from `codex debug models`)"), "{err}");
+    assert!(err.contains("codex has no model \"gpt-5.5\". It takes gpt-6.1-sol, gpt-6-luna (from `codex debug models`)"), "{err}; commands: {}; cache: {}", std::fs::read_to_string(&count).unwrap_or_default(), std::fs::read_to_string(sw::store::files::data_dir().join("models.json")).unwrap_or_default());
     // Installed, but its list cannot be read (not logged in, offline, broken): refused, with why, not let through
     // unchecked; and not kept, so the next try asks again.
     std::fs::remove_file(sw::store::files::data_dir().join("models.json")).unwrap();
-    std::fs::write(bin.join("codex"), "#!/bin/sh\necho 'error: not logged in' >&2\nexit 2\n").unwrap();
+    fake_program(&fallback_bin, "codex", "echo 'error: not logged in' >&2\nexit 2");
+    windows_codex(&fallback_bin, "echo %1>>\"%~dp0..\\asked\"\necho error: not logged in 1>&2\nexit /b 2");
     let (code, _, err) = run(&["set", "worker.agent", "codex/this-model-does-not-exist"]);
     assert_eq!(code, 1);
     assert!(err.contains("codex's list of models could not be read, so \"this-model-does-not-exist\" cannot be checked: `codex debug models` failed (exit 2): error: not logged in. Run `codex debug models` in a terminal here"), "{err}");
@@ -168,7 +191,8 @@ fn real_programs_the_list_is_asked_of_the_program_and_kept() {
     let (_, out, _) = run(&["models"]);
     assert!(has(&out, r"(?m)^codex +its list could not be read: `codex debug models` failed \(exit 2\)"), "{out}");
     // Not installed here: not checked.
-    std::fs::remove_file(bin.join("codex")).unwrap();
+    std::fs::remove_file(fallback_bin.join("codex")).unwrap();
+    let _ = std::fs::remove_file(fallback_bin.join("codex.cmd"));
     let (code, _, err) = run(&["set", "worker.agent", "codex/gpt-5.5"]);
     assert_eq!(code, 0, "{err}");
 }

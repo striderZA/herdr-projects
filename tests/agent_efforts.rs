@@ -132,11 +132,10 @@ fn real_programs_the_levels_are_asked_of_the_program_and_kept() {
     let bin = w.base.join("bin");
     std::fs::create_dir_all(&bin).unwrap();
     let count = w.base.join("asked");
-    std::fs::write(bin.join("codex"), format!("#!/bin/sh\necho x >> {}\nprintf '%s' '{}'\n", count.display(), codex_catalog())).unwrap();
-    use std::os::unix::fs::PermissionsExt;
-    std::fs::set_permissions(bin.join("codex"), std::fs::Permissions::from_mode(0o755)).unwrap();
+    // sh reads the count file with forward slashes (Git's sh on Windows does not read backslash paths).
+    fake_program(&bin, "codex", &format!("echo x >> {}\nprintf '%s' '{}'", count.display().to_string().replace('\\', "/"), codex_catalog()));
     let run = |args: &[&str]| { let o = std::process::Command::new(env!("CARGO_BIN_EXE_herdr-projects")).args(args).current_dir(&w.root)
-        .env("PATH", format!("{}:/usr/bin:/bin", bin.display())).env_remove("HERDR_PROJECTS_NO_MODEL_LIST").env("HERDR_SOCKET_PATH", "/nonexistent").env("HERDR_BIN_PATH", "/bin/false").output().unwrap();
+        .env("PATH", path_with_first(&bin)).env_remove("HERDR_PROJECTS_NO_MODEL_LIST").env("HERDR_SOCKET_PATH", "/nonexistent").env("HERDR_BIN_PATH", "/bin/false").output().unwrap();
         (o.status.code().unwrap_or(-1), String::from_utf8_lossy(&o.stdout).into_owned(), String::from_utf8_lossy(&o.stderr).into_owned()) };
     let asked = || std::fs::read_to_string(&count).unwrap_or_default().lines().count();
     let (code, _, err) = run(&["set", "worker.agent", "codex"]);
@@ -151,7 +150,7 @@ fn real_programs_the_levels_are_asked_of_the_program_and_kept() {
     assert_eq!(asked(), before + 1, "kept: a list under a minute old is not asked again");
     // Installed, but it says nothing (not logged in): the table's levels, never a refusal of every level.
     std::fs::remove_file(sw::store::files::data_dir().join("efforts.json")).unwrap();
-    std::fs::write(bin.join("codex"), "#!/bin/sh\necho 'error: not logged in' >&2\nexit 2\n").unwrap();
+    fake_program(&bin, "codex", "echo 'error: not logged in' >&2\nexit 2");
     let (code, _, err) = run(&["set", "worker.effort", "high"]);
     assert_eq!(code, 0, "{err}");
     assert!(!sw::store::files::data_dir().join("efforts.json").exists(), "nothing said, nothing kept");

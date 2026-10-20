@@ -116,6 +116,8 @@ fn headings(b: &mut common::board::Board) -> Vec<String> {
     b.s.rows.iter().filter_map(|r| match r { sw::board::state::Row::Head { name, machine: true, .. } => Some(name.clone()), _ => None }).collect()
 }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn every_list_of_machines_on_the_board_is_in_the_sidebars_order_and_follows_it_when_it_changes() {
     let w = world();
@@ -155,6 +157,8 @@ fn every_list_of_machines_on_the_board_is_in_the_sidebars_order_and_follows_it_w
     assert_eq!(sw::board::run::prefs::read(false).s("sidebarFrom"), "vm-b");
 }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn machines_named_by_hand_keep_the_old_order_and_this_machine_sends_its_own_herdr_list() {
     let w = world_with(Opts { repo: true, settings: json!({ "board.machines": "vm-c, vm-a, vm-b" }), ..Default::default() });
@@ -174,6 +178,8 @@ fn machines_named_by_hand_keep_the_old_order_and_this_machine_sends_its_own_herd
     assert_eq!(got, vec![("vm-c".to_string(), true, false), ("vm-a".to_string(), false, true)]);
 }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn the_sidebar_followed_before_holds_while_its_machine_has_not_answered_yet() {
     let w = world();
@@ -207,6 +213,8 @@ fn ask_all(b: &mut common::board::Board) {
     for m in sw::remote::machines() { let label = m.label.clone(); let a = sw::remote::ask_list(&m, 20000); update(&mut b.s, Event::Remote { label, answer: a }); }
 }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn a_machine_on_an_older_program_still_has_its_sidebar_followed_through_its_herdr_as_on_the_mac_mini_of_the_task() {
     let w = world();

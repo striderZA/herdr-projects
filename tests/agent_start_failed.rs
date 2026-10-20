@@ -28,7 +28,8 @@ fn a_codex_worker_with_long_rules_starts_while_its_shell_is_still_starting() {
     assert_eq!(s.len(), 1, "{s:?}");
     assert!(s[0].len() < 2500, "the start command stays short: {} bytes", s[0].len());
     let rules = sw::store::files::dir_of(&id).join("rules.md");
-    assert!(s[0].contains(&format!("Your standing rules are in the file {}", rules.display())), "{}", s[0]);
+    let rules_arg = serde_json::to_string(&format!("Your standing rules are in the file {}. Read all of that file now, before anything else, and follow it for the whole session; read it again whenever you are unsure of them.", rules.display())).unwrap();
+    assert!(s[0].contains(&format!("developer_instructions={rules_arg}")), "{}", s[0]);
     let kept = read(&rules);
     assert!(kept.contains("Rules for this task") && kept.contains(&mine), "{kept}");
 }
