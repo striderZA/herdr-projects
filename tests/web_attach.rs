@@ -37,8 +37,10 @@ fn a_file_for_the_new_task_box_is_kept_in_the_boards_folder_under_a_name_of_its_
     assert!(an.starts_with("my_notes__v2_-") && an.ends_with(".txt"), "{an}");
     assert_ne!(a, b);
     assert_eq!((std::fs::read(&a).unwrap(), std::fs::read(&b).unwrap()), (b"hello".to_vec(), b"again".to_vec()));
-    use std::os::unix::fs::PermissionsExt;
-    assert_eq!(std::fs::metadata(&a).unwrap().permissions().mode() & 0o777, 0o600, "readable only by you");
+    #[cfg(unix)] {
+        use std::os::unix::fs::PermissionsExt;
+        assert_eq!(std::fs::metadata(&a).unwrap().permissions().mode() & 0o777, 0o600, "readable only by you");
+    }
 }
 
 #[test]

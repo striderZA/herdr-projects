@@ -26,7 +26,7 @@ fn tell(w: &World, t: &str) { send(&w.root, t, false, "", &w.socket).unwrap(); d
 fn again(w: &World) { restart(&w.socket).unwrap(); drain(); }
 fn unstamp(name: &str) { let _ = std::fs::remove_file(sw::store::marks::stamp_file(name)); }
 fn real_home(w: &World) -> String { std::fs::canonicalize(state::home(&w.socket)).unwrap().display().to_string() }
-fn touch(f: &Path, ms: i64) { let at = std::time::UNIX_EPOCH + std::time::Duration::from_millis(ms as u64); std::fs::File::options().write(true).open(f).unwrap().set_modified(at).unwrap(); }
+fn touch(f: &Path, ms: i64) { if !f.exists() { std::fs::create_dir_all(f.parent().unwrap()).unwrap(); std::fs::write(f, "").unwrap(); } let at = std::time::UNIX_EPOCH + std::time::Duration::from_millis(ms as u64); std::fs::File::options().write(true).open(f).unwrap().set_modified(at).unwrap(); }
 fn write(f: &Path, text: &str, ms: i64) { std::fs::create_dir_all(f.parent().unwrap()).unwrap(); std::fs::write(f, text).unwrap(); touch(f, ms); }
 fn now() -> i64 { sw::clock::now() }
 
@@ -73,11 +73,13 @@ fn the_agents_own_new_chat_command_is_followed_the_chat_shows_the_new_conversati
     let first = get(&w).t("session");
     assert_eq!(look(&w.socket).said, "pineapple");
     // You type /clear in its chat: Claude Code starts another conversation file beside the first.
-    let dir = PathBuf::from(std::env::var("CLAUDE_CONFIG_DIR").unwrap()).join("projects").join(real_home(&w).chars().map(|c| if c.is_ascii_alphanumeric() { c } else { '-' }).collect::<String>());
+    let dir = PathBuf::from(std::env::var("CLAUDE_CONFIG_DIR").unwrap()).join("projects").join(sw::platform::links::place(&state::home(&w.socket)).display().to_string().chars().map(|c| if c.is_ascii_alphanumeric() { c } else { '-' }).collect::<String>());
     let (later, earlier) = (now(), now() - 1500);
     touch(&dir.join(format!("{first}.jsonl")), earlier);
     let new_id = "22222222-2222-4222-8222-222222222222";
     write(&dir.join(format!("{new_id}.jsonl")), &format!("{}\n", json!({ "type": "assistant", "uuid": "u9", "message": { "id": "msg_new", "role": "assistant", "content": [{ "type": "text", "text": "watermelon" }], "stop_reason": "end_turn" }, "timestamp": sw::clock::iso(later) })), later);
+    let discovered = sw::agents::adapter::latest_session("claude", &state::home(&w.socket), get(&w).i("since"), None);
+    assert_eq!(discovered.as_deref(), Some(new_id), "Claude discovery from transcript timestamp");
     unstamp("coordinator-session-default");
     let v = look(&w.socket);
     assert_eq!(v.said, "watermelon"); assert_eq!(v.unseen, "msg_new"); assert_eq!(get(&w).s("session"), new_id);

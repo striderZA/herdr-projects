@@ -86,9 +86,8 @@ thread_local! {
 pub fn as_built<T>(f: impl FnOnce() -> T) -> T { let was = AS_BUILT.with(|b| b.replace(true)); let out = f(); AS_BUILT.with(|b| b.set(was)); out }
 /// herdr's config.toml as it is on disk now: where it is and when it last changed.
 fn config_mark() -> String {
-    use std::os::unix::fs::MetadataExt;
     let f = crate::extras::herdr_config();
-    let m = std::fs::metadata(&f).map(|m| format!("{}|{}|{}.{}", m.ino(), m.size(), m.mtime(), m.mtime_nsec())).unwrap_or_default();
+    let m = std::fs::metadata(&f).map(|m| { let (s, n) = crate::platform::meta::mtime_parts(&m); format!("{:?}|{}|{s}.{n}", crate::platform::meta::file_id(&f), m.len()) }).unwrap_or_default();
     format!("{}|{m}", f.display())
 }
 /// The keys your settings move, as `show` counts them (the key that opens the board included), read again only when

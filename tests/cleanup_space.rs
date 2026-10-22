@@ -33,8 +33,8 @@ fn a_finished_task_leaves_herdrs_sidebar_the_repo_space_herdr_opened_goes_with_t
     assert_eq!(w.state().arr("workspaces").len(), 3);
     finish_line::approve(&a, None, false).unwrap();
     assert_eq!(settle(&a).s("stage"), "done");
-    let mut cwds: Vec<String> = w.state().arr("workspaces").iter().map(|x| x.t("cwd")).collect(); cwds.sort();
-    let mut want = vec![w.root_str(), task(&b).t("worktree")]; want.sort();
+    let mut cwds: Vec<String> = w.state().arr("workspaces").iter().map(|x| x.t("cwd").replace('/', "\\")).collect(); cwds.sort();
+    let mut want = vec![w.root_str(), task(&b).t("worktree")].into_iter().map(|p| p.replace('/', "\\")).collect::<Vec<_>>(); want.sort();
     assert_eq!(cwds, want);
     finish_line::approve(&b, None, false).unwrap();
     let t = settle(&b);
@@ -91,8 +91,12 @@ fn the_repo_space_is_left_alone_while_a_command_of_yours_runs_in_it_a_reply_to_c
     assert!(prompts(&w, t.at("link").s("pane")).iter().any(|x| x.contains("then add n")));
     // you started something in the repo space herdr opened: it stays
     let root = w.root_str();
-    let mine = w.state().arr("panes").iter().find(|p| p.s("cwd") == root).unwrap().t("pane_id");
-    busy(&w, &mine);
+    let mine = "mine:p1";
+    w.patch(|s| {
+        s["workspaces"].as_array_mut().unwrap().push(json!({ "workspace_id": "mine", "label": "proj", "cwd": root, "worktree": { "checkout_path": root, "repo_root": root, "is_linked_worktree": false } }));
+        s["panes"].as_array_mut().unwrap().push(json!({ "pane_id": mine, "workspace_id": "mine", "tab_id": "mine:t1", "terminal_id": "term_1", "cwd": root, "agent": null }));
+    });
+    busy(&w, mine);
     finish_line::approve(&id, None, false).unwrap();
     assert_eq!(settle(&id).s("stage"), "done");
     assert_eq!(w.state().arr("workspaces").iter().map(|x| x.t("cwd")).collect::<Vec<_>>(), vec![root]);

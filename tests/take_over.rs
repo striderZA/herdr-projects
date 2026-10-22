@@ -7,6 +7,7 @@ use serde_json::json;
 use sw::json::*;
 use sw::store::files::read_obj;
 use sw::store::old_installs::{legacy, superwork};
+use std::path::PathBuf;
 
 #[test]
 fn a_fresh_machine_has_nothing_to_take_over_and_no_folder_is_made() {
@@ -78,8 +79,8 @@ fn herdr_superwork_alone_moves_into_the_new_home_with_its_paths_fixed_and_its_ex
     let r = m.run(&f);
     let to = m.at(".herdr-projects");
     // The folder itself moved; the old name is a link to it, so an old path still reaches every file.
-    assert!(is_link(&s) && std::fs::canonicalize(&s).unwrap() == to);
-    assert!(!is_link(&to) && to.is_dir());
+    assert_eq!((is_link(&s), is_link(&to)), (!cfg!(windows), cfg!(windows)));
+    assert!(sw::platform::links::same_place(&s, &to) && s.is_dir() && to.is_dir());
     assert_eq!(all(&s).keys().collect::<Vec<_>>(), all(&to).keys().collect::<Vec<_>>());
     // The paths the board reads back are the new ones; the repo's name in a task's id stays; another folder's path
     // that only starts the same stays.
@@ -87,12 +88,15 @@ fn herdr_superwork_alone_moves_into_the_new_home_with_its_paths_fixed_and_its_ex
     assert_eq!(t, format!(r#"{{"id":"herdr-superwork/7","repo":"herdr-superwork","note":"{new}/data/tasks/herdr-superwork/7/closing-note.md","report":"~/.herdr-projects/reports/herdr-superwork/7/","other":"{old}-elsewhere/x"}}"#));
     assert!(read(&to.join("data/tasks/herdr-superwork/7/hook-agent.json")).contains(&format!("'{new}/data/bin/herdr-projects' turn-ended")));
     // What is kept as it was stays so: an artifact, the Coordinator's chat folder, a report, an older copy.
-    for f in ["data/tasks/herdr-superwork/7/artifacts/check.txt", "data/coordinator/default/chat/notes.md", "reports/herdr-superwork/7/report.md", "data-0.2.0/keeper.json"] { assert_eq!(read(&to.join(f)), before[f], "{f}"); }
+    for f in ["data/tasks/herdr-superwork/7/artifacts/check.txt", "data/coordinator/default/chat/notes.md", "reports/herdr-superwork/7/report.md", "data-0.2.0/keeper.json"] {
+        let key = f.split('/').fold(PathBuf::new(), |p, part| p.join(part)).display().to_string();
+        assert_eq!(read(&to.join(f)), before[&key], "{f}");
+    }
     // The launcher agents were handed by the old name runs this version.
     assert_eq!(read(&to.join("data/bin/herdr-superwork")), LAUNCHER);
     // Its processes: stopped, and this version's started last, once the record says all is done (what they start
     // finds nothing left to take over); its plugin switched off.
-    assert_eq!(*f.calls.borrow(), vec![format!("stop {new}/data"), "config".into(), "start keeper,page server".into()]);
+    assert_eq!(*f.calls.borrow(), vec![format!("stop {}", to.join("data").display()), "config".into(), "start keeper,page server".into()]);
     // herdr's config: its blocks are this version's, with the same key; a binding of one of its actions names ours.
     let c = read(&m.p.herdr_config);
     assert!(!c.contains("herdr-superwork"), "{c}");
@@ -107,7 +111,7 @@ fn herdr_superwork_alone_moves_into_the_new_home_with_its_paths_fixed_and_its_ex
     assert!(!exists(&m.p.plugin_config.join("herdr-superwork")) && !exists(&m.p.plugin_state.join("herdr-superwork")));
     // The record: the old moves stay as they were, this one beside them, and the Coordinator's old folder is found.
     let rec = read_obj(&to.join("moved.json")).unwrap();
-    assert_eq!(rec.at("data").s("to"), format!("{old}/data"));
+    assert_eq!(rec.at("data").s("to"), s.join("data").display().to_string());
     assert_eq!((rec.at("home").s("from"), rec.at("home").s("to"), rec.at("home").s("state")), (old.as_str(), new.as_str(), "done"));
     assert_eq!(rec.at("takeOver").s("superwork"), "done");
     assert!(r.said[0].starts_with("herdr-superwork is herdr-projects now: everything in ~/.herdr-superwork (tasks, settings, reports, the Coordinator's chat) moved into ~/.herdr-projects"), "{:?}", r.said);

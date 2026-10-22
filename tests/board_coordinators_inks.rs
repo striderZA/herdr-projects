@@ -39,6 +39,7 @@ fn all(b: &mut Board, needle: &str, ink: Ink, bold: bool) {
 }
 
 #[test]
+#[cfg(unix)]
 fn a_repos_coordinator_is_drawn_in_the_brighter_grey_and_a_machines_in_its_headings_accent() {
     let w = coord_world();
     w.add("Fix the login");

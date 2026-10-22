@@ -11,14 +11,14 @@ use sw::take_over::{take_over, Report, Sys};
 
 pub fn put(file: &Path, text: &str) { std::fs::create_dir_all(file.parent().unwrap()).unwrap(); std::fs::write(file, text).unwrap(); }
 pub fn read(f: &Path) -> String { std::fs::read_to_string(f).unwrap_or_default() }
-pub fn is_link(p: &Path) -> bool { std::fs::symlink_metadata(p).map(|m| m.file_type().is_symlink()).unwrap_or(false) }
+pub fn is_link(p: &Path) -> bool { std::fs::symlink_metadata(p).map(|m| sw::platform::meta::is_link(&m)).unwrap_or(false) } // a junction is a link on Windows
 pub fn exists(p: &Path) -> bool { std::fs::symlink_metadata(p).is_ok() }
 /// Every file under a folder with its text, links followed: what "nothing lost, nothing changed" is checked against.
 pub fn all(dir: &Path) -> BTreeMap<String, String> {
     fn walk(d: &Path, base: &Path, out: &mut BTreeMap<String, String>) {
         for e in std::fs::read_dir(d).unwrap() {
             let f = e.unwrap().path();
-            if std::fs::symlink_metadata(&f).unwrap().file_type().is_symlink() { out.insert(f.strip_prefix(base).unwrap().display().to_string(), format!("-> {}", std::fs::read_link(&f).unwrap().display())); continue; }
+            if is_link(&f) { out.insert(f.strip_prefix(base).unwrap().display().to_string(), format!("-> {}", std::fs::read_link(&f).unwrap().display())); continue; }
             if f.is_dir() { walk(&f, base, out) } else { out.insert(f.strip_prefix(base).unwrap().display().to_string(), read(&f)); }
         }
     }
@@ -98,9 +98,12 @@ impl Machine {
         let hook = serde_json::json!({ "matcher": "*", "hooks": [{ "type": "command", "command": OLD_HOOK, "timeout": 10 }] });
         put(&self.at(".claude/settings.json"), &serde_json::to_string_pretty(&serde_json::json!({ "theme": "dark", "hooks": { "SessionStart": [hook.clone()], "PostToolUse": [hook.clone(), { "matcher": "Bash", "hooks": [{ "type": "command", "command": "my-own-hook" }] }] } })).unwrap());
         std::fs::create_dir_all(self.at(".claude/skills")).unwrap();
-        std::os::unix::fs::symlink(self.at(".config/herdr/plugins/github/herdr-projects-b1278ffb803c/skill/autoproject"), self.at(".claude/skills/autoproject")).unwrap();
+        // A junction needs its target to be there (a link to a file on Windows is a copy of it): Unix links may point at nothing.
+        if cfg!(windows) { std::fs::create_dir_all(self.at(".config/herdr/plugins/github/herdr-projects-b1278ffb803c/skill/autoproject")).unwrap(); }
+        sw::platform::links::make_link(&self.at(".config/herdr/plugins/github/herdr-projects-b1278ffb803c/skill/autoproject"), &self.at(".claude/skills/autoproject")).unwrap();
         std::fs::create_dir_all(self.at(".local/bin")).unwrap();
-        std::os::unix::fs::symlink(self.at(".config/herdr/plugins/github/herdr-projects-b1278ffb803c/target/release/herdr-projects"), self.at(".local/bin/herdr-projects")).unwrap();
+        if cfg!(windows) { put(&self.at(".config/herdr/plugins/github/herdr-projects-b1278ffb803c/target/release/herdr-projects"), "#!/bin/sh\n"); }
+        sw::platform::links::make_link(&self.at(".config/herdr/plugins/github/herdr-projects-b1278ffb803c/target/release/herdr-projects"), &self.at(".local/bin/herdr-projects")).unwrap();
     }
     /// What herdr-superwork left: its home folder (a task, its agent's hook settings with the old launcher, the
     /// launcher, its how-to written down, its keeper's file, an artifact, an older copy, its settings and a report,
@@ -113,13 +116,15 @@ impl Machine {
         put(&s.join("data/tasks/herdr-superwork/7/hook-agent.json"), &format!(r#"{{"hooks":{{"Stop":[{{"hooks":[{{"type":"command","command":"'{launcher}' turn-ended --id herdr-superwork/7"}}]}}]}}}}"#));
         put(&s.join("data/tasks/herdr-superwork/7/artifacts/check.txt"), &format!("ran {launcher}\n"));
         put(&s.join("data/bin/herdr-superwork"), &format!("#!/bin/sh\nexport HERDR_SUPERWORK_DATA_DIR='{old}/data'\nexec '/old/herdr-superwork' \"$@\"\n"));
-        put(&s.join("data/extras.json"), &format!(r#"{{"skillPaths":["{h}/.claude/skills/herdr-superwork","{h}/elsewhere/mine"],"sidebar":true,"asked":true,"webUi":"yes","webUiLinks":[{{"https":8751,"now":"http://127.0.0.1:7327"}}]}}"#, h = self.home.display()));
+        let extras = serde_json::json!({ "skillPaths": [self.at(".claude/skills/herdr-superwork").display().to_string(), self.at("elsewhere/mine").display().to_string()], "sidebar": true, "asked": true, "webUi": "yes", "webUiLinks": [{ "https": 8751, "now": "http://127.0.0.1:7327" }] });
+        put(&s.join("data/extras.json"), &serde_json::to_string(&extras).unwrap());
         put(&s.join("data/keeper.json"), r#"{"pid":1,"version":"0.3.0"}"#);
         put(&s.join("data/coordinator/default/chat/notes.md"), &format!("saved in {old}/data/coordinator/default/chat\n"));
         put(&s.join("data-0.2.0/keeper.json"), &format!(r#"{{"was":"{old}"}}"#));
         put(&s.join("settings/config.json"), r#"{"repos":{"herdr-superwork":{"key":"HSW"}}}"#);
         put(&s.join("reports/herdr-superwork/7/report.md"), &format!("see {old}/reports\n"));
-        put(&s.join("moved.json"), &format!(r#"{{"data":{{"from":"{h}/.local/state/herdr-superwork","to":"{old}/data","state":"done","how":"moved"}},"told":true}}"#, h = self.home.display()));
+        let moved = serde_json::json!({ "data": { "from": self.home.join(".local/state/herdr-superwork").display().to_string(), "to": s.join("data").display().to_string(), "state": "done", "how": "moved" }, "told": true });
+        put(&s.join("moved.json"), &serde_json::to_string(&moved).unwrap());
         let cfg = read(&self.p.herdr_config);
         put(&self.p.herdr_config, &format!("{cfg}\n[[keys.command]]\nkey = \"prefix+w\"\ntype = \"plugin_action\"\ncommand = \"herdr-superwork.coordinator\"\n\n# >>> herdr-superwork sidebar (added by the herdr-superwork plugin; `herdr-superwork remove-extras` removes it)\n[ui.sidebar.agents]\nrows = [[\"agent\"]]\n# <<< herdr-superwork sidebar\n\n# >>> herdr-superwork key (added by the herdr-superwork plugin)\n[[keys.command]]\nkey = \"prefix+a\"\ntype = \"plugin_action\"\ncommand = \"herdr-superwork.open\"\n# <<< herdr-superwork key\n"));
         for d in [".claude/skills", ".codex/skills"] { put(&self.at(d).join("herdr-superwork/SKILL.md"), "---\nname: herdr-superwork\n---\nthe board\n"); }

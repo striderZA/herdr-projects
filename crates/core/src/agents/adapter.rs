@@ -17,12 +17,7 @@ fn hook_command(h: &Hook) -> Vec<String> {
     if h.role == "reviewer" { c.extend(["--round".to_string(), h.round.to_string()]); }
     c
 }
-fn write_private(file: &Path, text: &str) -> Res<()> {
-    use std::os::unix::fs::OpenOptionsExt;
-    let mut f = fs::OpenOptions::new().write(true).create(true).truncate(true).mode(0o600).open(file)?;
-    std::io::Write::write_all(&mut f, text.as_bytes())?;
-    Ok(())
-}
+fn write_private(file: &Path, text: &str) -> Res<()> { Ok(crate::platform::perms::write_private(file, text)?) }
 /// Launch arguments that make the program call `turn-ended` at every turn end. None: no hook for it here.
 pub fn hook_args(kind: &str, h: &Hook) -> Res<Option<Vec<String>>> {
     match kind {
@@ -98,7 +93,20 @@ pub fn standing(kind: &str, text: &str, dir: &Path) -> Res<Vec<String>> {
     Ok(fill(a.standing, &f.display().to_string()))
 }
 pub fn has_standing(kind: &str) -> bool { kind == "codex" || super::kinds::kind(kind).map(|a| !a.standing.is_empty()).unwrap_or(false) }
-fn real(p: &Path) -> PathBuf { fs::canonicalize(p).unwrap_or_else(|_| p.to_path_buf()) }
+fn real(p: &Path) -> PathBuf { crate::platform::links::place(p) }
+/// Whether a conversation's recorded folder is this one. Windows strips `\\?\` from canonical paths; a junction to a
+/// different logical folder is not a match unless the caller explicitly supplies that old folder as `was`.
+fn same_folder(recorded: &str, folder: &Path) -> bool {
+    if recorded.is_empty() { return false; }
+    #[cfg(windows)]
+    {
+        let recorded = crate::platform::links::strip_verbatim(PathBuf::from(recorded)).display().to_string();
+        let folder = crate::platform::links::strip_verbatim(folder.to_path_buf()).display().to_string();
+        recorded.eq_ignore_ascii_case(&folder)
+    }
+    #[cfg(unix)]
+    { recorded == folder.display().to_string() }
+}
 fn dashed(p: &Path) -> String { p.display().to_string().chars().map(|c| if c.is_ascii_alphanumeric() { c } else { '-' }).collect() }
 /// Where a conversation is saved.
 pub fn transcript(kind: &str, session: &str, cwd: &Path) -> Option<PathBuf> {
@@ -120,6 +128,7 @@ fn first_line(s: &str) -> &str { s.split('\n').next().unwrap_or("") }
 /// `was`: the path this folder had before it was moved; a program started back then still saves under that one.
 pub fn latest_session(kind: &str, cwd: &Path, since: i64, was: Option<&Path>) -> Option<String> {
     let real = real(cwd);
+    let recorded_folder = if cfg!(windows) { cwd } else { &real };
     match kind {
         "claude" => {
             // Only a chat of the interactive program itself: not a helper's side conversation and not a headless run.
@@ -127,7 +136,9 @@ pub fn latest_session(kind: &str, cwd: &Path, since: i64, was: Option<&Path>) ->
             let is_id = |n: &str| n.len() == 42 && n.ends_with(".jsonl") && n[..36].chars().all(|c| c.is_ascii_hexdigit() || c == '-') && n.as_bytes()[8] == b'-';
             for dir in [Some(real.as_path()), was].into_iter().flatten() {
                 for f in find_file(&claude_home().join("projects").join(dashed(dir)), &is_id, 0) {
-                    if mtime_ms(&f).map(|m| m < since).unwrap_or(true) { break; }
+                    let head = head_of(&f, 65536);
+                    let recorded = serde_json::from_str::<Value>(first_line(&head)).ok().map(|v| when(v.at("timestamp"))).unwrap_or_default();
+                    if mtime_ms(&f).map(|m| m < since).unwrap_or(true) && recorded < since { break; }
                     if own(&f) { return f.file_stem().map(|s| s.to_string_lossy().into_owned()); }
                 }
             }
@@ -139,7 +150,7 @@ pub fn latest_session(kind: &str, cwd: &Path, since: i64, was: Option<&Path>) ->
                 let head = head_of(&f, 400000);
                 let Ok(meta) = serde_json::from_str::<Value>(first_line(&head)) else { continue };
                 let p = meta.at("payload");
-                let cwd_ok = p.s("cwd") == real.display().to_string() || was.map(|w| p.s("cwd") == w.display().to_string()).unwrap_or(false);
+                let cwd_ok = same_folder(p.s("cwd"), recorded_folder) || was.map(|w| same_folder(p.s("cwd"), w)).unwrap_or(false);
                 let source_ok = p.at("source").is_null() || (p.at("source").is_string() && p.s("source") != "exec");
                 if cwd_ok && p.b("id") && !p.b("parent_thread_id") && source_ok { return Some(p.t("id")); }
             }
@@ -150,7 +161,7 @@ pub fn latest_session(kind: &str, cwd: &Path, since: i64, was: Option<&Path>) ->
                 if mtime_ms(&f).map(|m| m < since).unwrap_or(true) { return None; }
                 let head = head_of(&f, 8192);
                 let Ok(meta) = serde_json::from_str::<Value>(first_line(&head)) else { continue };
-                let cwd_ok = meta.s("cwd") == real.display().to_string() || meta.s("cwd") == cwd.display().to_string() || was.map(|w| meta.s("cwd") == w.display().to_string()).unwrap_or(false);
+                let cwd_ok = same_folder(meta.s("cwd"), recorded_folder) || same_folder(meta.s("cwd"), cwd) || was.map(|w| same_folder(meta.s("cwd"), w)).unwrap_or(false);
                 if meta.s("type") == "session" && meta.b("id") && !meta.b("parentSession") && cwd_ok { return Some(meta.t("id")); }
             }
             None
@@ -165,11 +176,11 @@ pub fn find_session(kind: &str, cwd: &Path, since: i64, needle: &str) -> Option<
 /// The same, leaving out a conversation already known to be another's (`but`: the one a review started again had).
 pub fn find_session_but(kind: &str, cwd: &Path, since: i64, needle: &str, but: &str) -> Option<String> {
     if kind != "codex" { return None; }
-    let real = real(cwd).display().to_string();
+    let real = real(cwd);
     let hits: Vec<(i64, String)> = find_file(&codex_home().join("sessions"), &|n| n.ends_with(".jsonl"), 4).into_iter()
         .filter(|f| mtime_ms(f).map(|m| m >= since - 60000).unwrap_or(false))
         .filter(|f| !super::helpers::codex_helper_file(f)) // a helper's conversation carries the agent's first prompt along
-        .filter_map(|f| { let head = head_of(&f, 400000); let m = serde_json::from_str::<Value>(first_line(&head)).ok()?; let at = when(m.at("timestamp")); (m.at("payload").s("cwd") == real && at >= since - 5000 && head.contains(needle) && (but.is_empty() || m.at("payload").s("id") != but)).then(|| (at, m.at("payload").t("id"))) })
+        .filter_map(|f| { let head = head_of(&f, 400000); let m = serde_json::from_str::<Value>(first_line(&head)).ok()?; let at = when(m.at("timestamp")); (same_folder(m.at("payload").s("cwd"), &real) && at >= since - 5000 && head.contains(needle) && (but.is_empty() || m.at("payload").s("id") != but)).then(|| (at, m.at("payload").t("id"))) })
         .collect();
     let since_launch: Vec<&(i64, String)> = hits.iter().filter(|h| h.0 >= since).collect();
     match (hits.len(), since_launch.len()) { (1, _) => Some(hits[0].1.clone()), (_, 1) => Some(since_launch[0].1.clone()), _ => None }

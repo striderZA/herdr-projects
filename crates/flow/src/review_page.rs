@@ -22,6 +22,7 @@ pub fn ensure_server() -> Value {
     crate::runner::detach(&mut c);
     let Ok(child) = c.spawn() else { return Value::Null };
     let pid = child.id() as i64;
+    crate::platform::proc::join_group(pid);
     for _ in 0..40 {
         std::thread::sleep(std::time::Duration::from_millis(100));
         if let Some(i) = read_json(&serve_file()) { if i.i("pid") == pid && i.b("port") { return i; } }
@@ -29,7 +30,7 @@ pub fn ensure_server() -> Value {
     read_json(&serve_file()).unwrap_or(Value::Null)
 }
 fn tailscale(a: &[&str]) -> Option<String> {
-    let o = std::process::Command::new("tailscale").args(a).stdin(std::process::Stdio::null()).output().ok()?;
+    let o = crate::platform::shell::program("tailscale")?.args(a).stdin(std::process::Stdio::null()).output().ok()?;
     o.status.success().then(|| String::from_utf8_lossy(&o.stdout).into_owned())
 }
 /// Share the local server on the tailnet, on an https port nothing else uses. Existing shares are never replaced.
@@ -54,7 +55,7 @@ fn ensure_tailscale(info: &Value) -> Option<String> {
 pub fn link_mode() -> &'static str {
     static MODE: OnceLock<&'static str> = OnceLock::new();
     MODE.get_or_init(|| {
-        let has = std::process::Command::new("sh").args(["-c", "command -v tailscale"]).stdout(std::process::Stdio::null()).stderr(std::process::Stdio::null()).status().map(|s| s.success()).unwrap_or(false);
+        let has = crate::platform::shell::has_program("tailscale");
         if std::env::var("HERDR_PROJECTS_LINKS").as_deref() == Ok("local") || !has { "local" } else { "tailscale" }
     })
 }

@@ -76,7 +76,8 @@ pub fn list_command(k: &str) -> String { std::iter::once(program(k)).chain(kind(
 /// What the program printed; None when it is not installed here; Err: why it gave nothing.
 pub fn run(prog: &str, args: &[&str]) -> Result<Option<String>, String> {
     let cmd = std::iter::once(prog).chain(args.iter().copied()).collect::<Vec<_>>().join(" ");
-    let child = match Command::new(prog).args(args).stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::piped()).spawn() {
+    let mut command = crate::platform::shell::program(prog).unwrap_or_else(|| Command::new(crate::platform::shell::program_file(prog)));
+    let child = match command.args(args).stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::piped()).spawn() {
         Ok(c) => c,
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
         Err(e) => return Err(format!("`{cmd}` could not be run: {e}")),

@@ -44,7 +44,7 @@ pub fn take_home(p: &Places, swap: &dyn Fn(&Path, &Path) -> bool) -> Took {
 /// becomes the new one. Only whole names: `~/.herdr-superwork-x` is another folder and stays.
 pub fn fix_text(text: &str, p: &Places) -> String {
     let (from, to) = (p.superwork.display().to_string(), p.to.display().to_string());
-    let tilde = |x: &Path| x.strip_prefix(&p.home).ok().map(|r| format!("~/{}", r.display()));
+    let tilde = |x: &Path| x.strip_prefix(&p.home).ok().map(|_| crate::store::marks::tilde_under(&x.display().to_string(), &p.home));
     let mut pairs = vec![(format!("{from}/data/bin/herdr-superwork"), format!("{to}/data/bin/herdr-projects")), (from.clone(), to.clone())];
     if let (Some(f), Some(t)) = (tilde(&p.superwork), tilde(&p.to)) { pairs.push((format!("{f}/data/bin/herdr-superwork"), format!("{t}/data/bin/herdr-projects"))); pairs.push((f, t)); }
     let mut out = text.to_string();

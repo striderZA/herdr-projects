@@ -1,5 +1,4 @@
 //! Small tools the parts share: a link's escaping, a random id, quoting for a shell, versions compared.
-use std::io::Read;
 
 /// A text as one part of a link (JavaScript's encodeURIComponent).
 pub fn url_encode(s: &str) -> String {
@@ -25,7 +24,7 @@ pub fn url_decode(s: &str) -> String {
 /// `n` random bytes as hex.
 pub fn random_hex(n: usize) -> String {
     let mut buf = vec![0u8; n];
-    if std::fs::File::open("/dev/urandom").and_then(|mut f| f.read_exact(&mut buf)).is_err() {
+    if !crate::platform::random::fill(&mut buf) {
         let t = crate::clock::now() as u64 ^ (std::process::id() as u64) << 32;
         for (i, b) in buf.iter_mut().enumerate() { *b = (t >> ((i % 8) * 8)) as u8 ^ i as u8; }
     }
@@ -42,6 +41,9 @@ pub fn uuid() -> String {
 }
 /// A word quoted for a POSIX shell: `'it'\''s'`.
 pub fn shq(s: &str) -> String { format!("'{}'", s.replace('\'', "'\\''")) }
+/// A word quoted for PowerShell's single-quoted string syntax.
+#[cfg(windows)]
+pub fn psq(s: &str) -> String { format!("'{}'", s.replace('\'', "''")) }
 /// A folder copied whole into another (made where it is missing).
 pub fn copy_dir(from: &std::path::Path, to: &std::path::Path) -> std::io::Result<()> {
     std::fs::create_dir_all(to)?;
@@ -49,7 +51,8 @@ pub fn copy_dir(from: &std::path::Path, to: &std::path::Path) -> std::io::Result
         let e = e?;
         let (src, dst) = (e.path(), to.join(e.file_name()));
         let ft = e.file_type()?;
-        if ft.is_dir() { copy_dir(&src, &dst)?; } else if ft.is_symlink() { let target = std::fs::read_link(&src)?; let _ = std::fs::remove_file(&dst); std::os::unix::fs::symlink(target, &dst)?; } else { std::fs::copy(&src, &dst)?; }
+        let link = crate::platform::meta::is_link(&e.metadata()?);
+        if link { let target = std::fs::read_link(&src)?; let _ = std::fs::remove_file(&dst); crate::platform::links::make_link(&target, &dst)?; } else if ft.is_dir() { copy_dir(&src, &dst)?; } else { std::fs::copy(&src, &dst)?; }
     }
     Ok(())
 }

@@ -31,7 +31,8 @@ pub fn primary_root(folder: &Path) -> PathBuf {
     let root = git_root(folder);
     if fs::metadata(root.join(".git")).map(|m| m.is_file()).unwrap_or(false) {
         if let Ok(common) = git_out(&root, &["rev-parse", "--path-format=absolute", "--git-common-dir"]) {
-            let common = PathBuf::from(common);
+            // Git prints forward slashes on Windows; the folder is kept as Windows writes it, so it matches every other cwd.
+            let common = PathBuf::from(common.replace('/', std::path::MAIN_SEPARATOR_STR));
             if common.file_name().map(|n| n == ".git").unwrap_or(false) { if let Some(p) = common.parent() { return p.to_path_buf(); } }
         }
     }
@@ -57,18 +58,18 @@ fn repos_file() -> PathBuf { data_dir().join("repos.json") }
 /// Read again only when the file changed (it is written whole, under a new name): one look at the tasks asks it for
 /// every task.
 pub fn known_repos() -> Obj {
-    use std::os::unix::fs::MetadataExt;
-    static SEEN: std::sync::Mutex<Option<((PathBuf, u64, i64, i64, u64), Obj)>> = std::sync::Mutex::new(None);
+    static SEEN: std::sync::Mutex<Option<((PathBuf, Option<(u64, u64)>, i64, i64, u64), Obj)>> = std::sync::Mutex::new(None);
     let f = repos_file();
     let Ok(m) = fs::metadata(&f) else { return Obj::new() };
-    let key = (f.clone(), m.ino(), m.mtime(), m.mtime_nsec(), m.len());
+    let (mt, mn) = crate::platform::meta::mtime_parts(&m);
+    let key = (f.clone(), crate::platform::meta::file_id(&f), mt, mn, m.len());
     let mut seen = SEEN.lock().unwrap();
     if let Some((k, o)) = seen.as_ref() { if *k == key { return o.clone(); } }
     let o = read_obj(&f).unwrap_or_default();
     *seen = Some((key, o.clone()));
     o
 }
-fn real(p: &Path) -> PathBuf { fs::canonicalize(p).unwrap_or_else(|_| p.to_path_buf()) }
+fn real(p: &Path) -> PathBuf { crate::platform::links::place(p) }
 /// The repo a folder belongs to, named on first sight, with its short key given then (store/keys_given.rs).
 pub fn repo_of(folder: &Path) -> Res<(String, PathBuf)> {
     let root = primary_root(folder);

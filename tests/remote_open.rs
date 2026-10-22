@@ -39,6 +39,8 @@ fn enter(b: &mut Board) -> Vec<String> {
 }
 fn reopen_asked(far: &Far) -> Value { far.asked().into_iter().filter(|a| a.1 == "do").last().map(|a| a.2).unwrap_or(Value::Null) }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn enter_on_another_machines_agent_has_its_herdr_put_it_in_front_and_never_attaches_this_terminal() {
     let w = world_with(Opts { repo: true, settings: json!({ "board.machines": "vm-a" }), ..Default::default() });

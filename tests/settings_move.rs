@@ -13,6 +13,12 @@ fn kept() -> std::path::PathBuf { sw::store::files::config_dir().join("config.ol
 fn json_of(f: &std::path::Path) -> Value { serde_json::from_str(&read(f)).unwrap() }
 fn task_file(id: &str) -> std::path::PathBuf { sw::store::files::dir_of(id).join("task.json") }
 fn o(v: Value) -> Obj { v.as_object().cloned().unwrap() }
+/// The account's own home folder, as the system has it (the run is given another HOME, so not that one).
+#[cfg(unix)]
+fn account_home() -> std::path::PathBuf { unsafe { let pw = libc::getpwuid(libc::getuid()); std::path::PathBuf::from(std::ffi::CStr::from_ptr((*pw).pw_dir).to_string_lossy().into_owned()) } }
+/// Windows: the profile folder the account has (the run is given HOME, which Windows does not read here).
+#[cfg(windows)]
+fn account_home() -> std::path::PathBuf { std::path::PathBuf::from(std::env::var("USERPROFILE").expect("the account has a profile folder")) }
 /// This computer's settings on the day of the move, and its repo's own file.
 fn old() -> Value { json!({ "max": 10, "rounds": 5, "gate": "critical", "reviewerFast": true, "autoMerge": true, "coordinator": "claude" }) }
 fn old_repo() -> Value { json!({ "setup": "npm ci --no-audit --no-fund", "check": "npm run check -- --all", "land": "ask", "teardown": "", "include": [] }) }
@@ -102,7 +108,7 @@ fn a_task_under_way_when_the_move_happens_keeps_working_its_check_its_review_bar
 fn a_test_run_has_a_home_folder_of_its_own_nothing_here_reads_or_converts_your_real_one() {
     let _w = world_with(Opts::default());
     // The account's own home, as the system has it (the world gave this process another HOME).
-    let real = unsafe { let pw = libc::getpwuid(libc::getuid()); std::path::PathBuf::from(std::ffi::CStr::from_ptr((*pw).pw_dir).to_string_lossy().into_owned()) }.join(".herdr-projects");
+    let real = account_home().join(".herdr-projects");
     assert!(std::env::var("HERDR_PROJECTS_HOME").is_ok(), "the run names its own home folder");
     use sw::store::files::{config_dir, data_dir, home_dir, reports_dir};
     for dir in [home_dir(), data_dir(), config_dir(), reports_dir()] { assert!(dir != real && !dir.starts_with(&real), "{}", dir.display()); }

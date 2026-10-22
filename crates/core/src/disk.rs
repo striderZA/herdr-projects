@@ -6,12 +6,7 @@ use std::time::Instant;
 
 pub const GB: u64 = 1_000_000_000;
 /// A disk's free and whole size in bytes, as the disk itself says it.
-pub fn space(p: &Path) -> Option<(u64, u64)> {
-    let c = std::ffi::CString::new(p.as_os_str().as_encoded_bytes()).ok()?;
-    let mut s: libc::statvfs = unsafe { std::mem::zeroed() };
-    if unsafe { libc::statvfs(c.as_ptr(), &mut s) } != 0 { return None; }
-    Some((s.f_bavail as u64 * s.f_frsize as u64, s.f_blocks as u64 * s.f_frsize as u64))
-}
+pub fn space(p: &Path) -> Option<(u64, u64)> { crate::platform::disk::space(p) }
 /// The free bytes of the disk that holds `p` (its nearest folder that is there); None when that cannot be read.
 pub fn free_at(p: &Path) -> Option<u64> {
     if let Some(n) = std::env::var("HERDR_PROJECTS_FREE").ok().and_then(|v| v.parse().ok()) { return Some(n); }
@@ -20,13 +15,12 @@ pub fn free_at(p: &Path) -> Option<u64> {
 }
 /// The bytes a folder takes on disk, links not followed; `more` when the walk ran out of time first.
 pub fn size(dir: &Path, until: Instant) -> (u64, bool) {
-    use std::os::unix::fs::MetadataExt;
     let (mut n, mut todo) = (0u64, vec![dir.to_path_buf()]);
     while let Some(d) = todo.pop() {
         if Instant::now() > until { return (n, true); }
         for e in std::fs::read_dir(&d).into_iter().flatten().flatten() {
             let Ok(m) = e.metadata() else { continue };
-            n += m.blocks() * 512;
+            n += crate::platform::meta::bytes_on_disk(&m);
             if m.is_dir() { todo.push(e.path()); }
         }
     }

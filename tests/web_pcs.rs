@@ -47,6 +47,8 @@ fn a_machine_of_the_board_and_a_pc_of_the_web_ui_are_the_same_one_by_herdrs_id_o
 fn call(c: &str, what: &str, args: Value, machine: &str, pcs: Option<Vec<Pc>>) -> Value { let mut a = args; a["role"] = json!("drive"); sw::webui::web::call(c, what, a, machine, pcs).unwrap_or_else(|e| panic!("{what}: {e}")) }
 fn client(c: &str) -> std::sync::Arc<std::sync::Mutex<sw::webui::web::Client>> { sw::webui::web::client(c) }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn the_web_board_goes_with_the_web_ui_on_another_pc_it_is_that_machines_board_and_back_here_what_it_was() {
     let w = world_with(Opts { repo: true, settings: json!({ "board.machines": "vm-a vm-b" }), ..Default::default() });

@@ -7,11 +7,11 @@ use super::{ask, machines, Machine};
 use crate::json::*;
 use crate::store::settings::lookup::setting;
 
-fn host() -> String { let mut b = [0u8; 256]; unsafe { libc::gethostname(b.as_mut_ptr() as *mut libc::c_char, b.len()); } String::from_utf8_lossy(&b[..b.iter().position(|c| *c == 0).unwrap_or(0)]).into_owned() }
+fn host() -> String { crate::platform::net::host_name() }
 pub fn hostname() -> String { host() }
 /// What SSH hands a command: the account, its shell and a short PATH. Nothing of the terminal this was typed in.
 fn run_bare(line: &str, ms: u64) -> Ended {
-    let user = std::env::var("USER").unwrap_or_default();
+    let user = crate::platform::shell::user_name();
     let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/sh".into());
     let mut c = std::process::Command::new(&shell);
     c.args(["-lc", line]).env_clear().env("HOME", crate::store::files::user_home()).env("USER", &user).env("LOGNAME", &user).env("SHELL", &shell).env("PATH", "/usr/local/bin:/usr/bin:/bin");
@@ -27,7 +27,7 @@ pub fn here(ms: u64) -> Value {
     // A shell that cannot be started is this machine's own trouble, not ssh's.
     let mut why = match &j { Some(j) => not_list(j, "this machine", "<this machine>"), None if !end.error.is_empty() => json!({ "kind": "path", "line": "its login shell could not be started", "detail": [format!("{shell}: {}", end.error)], "said": "", "code": null }), None => why_not(&end, "this machine", "<this machine>") };
     let mut detail: Vec<Value> = why.arr("detail").iter().filter(|l| !text(l).starts_with("Test it from this machine")).cloned().collect();
-    detail.push(json!(format!("Test it from another machine: {}", test_line(&format!("{}@{}", std::env::var("USER").unwrap_or_default(), host())))));
+    detail.push(json!(format!("Test it from another machine: {}", test_line(&format!("{}@{}", crate::platform::shell::user_name(), host())))));
     why.as_object_mut().unwrap().put("detail", detail);
     json!({ "label": host(), "here": true, "ok": false, "shell": shell, "why": why })
 }
@@ -39,6 +39,11 @@ fn asked(m: &Machine, ms: u64) -> Value {
     }
 }
 pub fn check(ms: u64) -> Value {
+    // SSH machines are not in v1 on Windows (design §4): the check says so, and asks no machine.
+    if cfg!(windows) {
+        let why = json!({ "kind": "windows", "line": "SSH machines are not available on Windows in v1", "detail": [], "said": "", "code": null });
+        return json!({ "here": { "label": crate::platform::net::host_name(), "here": true, "ok": false, "shell": "", "why": why }, "machines": [], "off": false, "unavailable": true });
+    }
     let list = machines();
     let me = std::thread::spawn(move || here(ms));
     let others: Vec<_> = list.into_iter().map(|m| std::thread::spawn(move || asked(&m, ms))).collect();
@@ -64,6 +69,6 @@ pub fn say(r: &Value) -> String {
         out.join("\n")
     };
     let mut all: Vec<String> = rows.iter().map(|x| one(x)).collect();
-    if r.arr("machines").is_empty() { all.push(if r.b("off") { "Other machines are off (unset board.machines turns them on).".into() } else { "No other machines. Add one with: herdr machine add <name> <ssh target>  (or name them in the board.machines setting).".into() }); }
+    if r.arr("machines").is_empty() && !r.b("unavailable") { all.push(if r.b("off") { "Other machines are off (unset board.machines turns them on).".into() } else { "No other machines. Add one with: herdr machine add <name> <ssh target>  (or name them in the board.machines setting).".into() }); }
     all.join("\n")
 }

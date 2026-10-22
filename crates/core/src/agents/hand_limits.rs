@@ -17,9 +17,18 @@ pub const PROGRAM_ARG_MAX: usize = 131072;
 /// A message longer than this is handed over in a file.
 pub const MESSAGE_MAX: usize = 100_000;
 
-/// The start command as herdr types it, to measure.
+/// The start command as herdr types it, quoted for the pane's shell.
 pub fn typed_command(kind: &str, args: &[String]) -> String {
-    std::iter::once(kind.to_string()).chain(args.iter().map(|a| if a.chars().all(|c| c.is_ascii_alphanumeric() || "-_=./:,@%+".contains(c)) { a.clone() } else { crate::util::shq(a) })).collect::<Vec<_>>().join(" ")
+    #[cfg(unix)]
+    { return std::iter::once(kind.to_string()).chain(args.iter().map(|a| if a.chars().all(|c| c.is_ascii_alphanumeric() || "-_=./:,@%+".contains(c)) { a.clone() } else { crate::util::shq(a) })).collect::<Vec<_>>().join(" "); }
+    #[cfg(windows)]
+    {
+        let mut words = vec![];
+        let program = if kind.contains(['\\', '/']) || kind.contains(' ') { format!("& {}", crate::util::psq(kind)) } else { kind.to_string() };
+        words.push(program);
+        words.extend(args.iter().map(|a| crate::util::psq(a)));
+        words.join(" ")
+    }
 }
 /// The words that point a program at its standing rules in `file`, for a program that takes them only inline.
 pub fn rules_pointer(file: &Path) -> String {

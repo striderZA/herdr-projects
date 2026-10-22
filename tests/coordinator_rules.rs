@@ -28,7 +28,7 @@ fn the_rules_are_agents_md_in_the_folder_it_starts_in_on_no_launch_flag_and_stil
     assert_eq!(["claude", "codex", "pi"].map(|k| sw::agents::kinds::kind(k).unwrap().rules_file), [Some("CLAUDE.md"), Some("AGENTS.md"), Some("AGENTS.md")]);
     let a = agent(&w);
     assert_eq!(file("AGENTS.md").matches(HEAD).count(), 1); assert!(file("AGENTS.md").contains("board add \"<short title"));
-    assert!(file("AGENTS.md").contains(&format!("The board's command is: {}/bin/herdr-projects ", sw::store::files::data_dir().display())));
+    assert!(file("AGENTS.md").contains(&format!("The board's command is: {} ", sw::flow::send::launcher_file().display())));
     // Claude Code reads CLAUDE.md: it only passes on to AGENTS.md, so the rules are there once.
     assert!(regex::Regex::new(r"^<!-- herdr-projects[^\n]*-->\n@AGENTS\.md\n<!-- /herdr-projects -->\n$").unwrap().is_match(&file("CLAUDE.md")), "{}", file("CLAUDE.md"));
     // Told one way only: no flag carries them, no line is put before your words, and the old pointer file is gone.

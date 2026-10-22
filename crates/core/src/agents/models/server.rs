@@ -37,7 +37,8 @@ fn request(id: i64, method: &str, params: Value) -> String { format!("{}\n", jso
 /// no list (then the program's own list command is asked instead).
 pub fn ask(prog: &str, args: &[&str]) -> Result<Option<Names>, String> {
     let cmd = std::iter::once(prog).chain(args.iter().copied()).collect::<Vec<_>>().join(" ");
-    let mut child = match Command::new(prog).args(args).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::null()).spawn() {
+    let mut command = crate::platform::shell::program(prog).unwrap_or_else(|| Command::new(crate::platform::shell::program_file(prog)));
+    let mut child = match command.args(args).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::null()).spawn() {
         Ok(c) => c,
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
         Err(e) => return Err(format!("`{cmd}` could not be run: {e}")),

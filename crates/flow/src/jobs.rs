@@ -8,8 +8,12 @@ use crate::runner::inline;
 pub fn run_job(job: &str, id: &str, extra: &[String]) -> i32 {
     // A stop from the board ends this runner's own subprocesses with it: the runner leads its own process group.
     if !inline() {
-        extern "C" fn on_term(_: i32) { unsafe { libc::kill(0, libc::SIGKILL); libc::_exit(0); } }
-        unsafe { libc::signal(libc::SIGTERM, on_term as *const () as usize); }
+        static ENDED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+        crate::platform::signal::on_end(&ENDED);
+        std::thread::spawn(|| { loop {
+            if ENDED.load(std::sync::atomic::Ordering::SeqCst) { crate::platform::proc::signal_group(std::process::id() as i64, true); std::process::exit(0); }
+            std::thread::sleep(std::time::Duration::from_millis(50));
+        } });
     }
     let has = |f: &str| extra.iter().any(|x| x == f);
     let mut id = id.to_string();

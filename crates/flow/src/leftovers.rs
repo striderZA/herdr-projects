@@ -45,7 +45,7 @@ pub fn free_open(t: &Obj) -> u64 {
     if t.b("worktree") { for p in scratch_of(Path::new(t.s("worktree"))) { n += thin(&p, 2); } }
     n
 }
-fn gone_file(p: &Path) -> u64 { use std::os::unix::fs::MetadataExt; let n = std::fs::symlink_metadata(p).map(|m| m.blocks() * 512).unwrap_or(0); if std::fs::remove_file(p).is_ok() { n } else { 0 } }
+fn gone_file(p: &Path) -> u64 { let n = std::fs::symlink_metadata(p).map(|m| crate::platform::meta::bytes_on_disk(&m)).unwrap_or(0); if std::fs::remove_file(p).is_ok() { n } else { 0 } }
 /// Empty a folder, keeping the folders in it `keep` levels down (emptied too): the bytes that went.
 fn thin(p: &Path, keep: usize) -> u64 {
     if !safe(p) { return 0; }
@@ -68,7 +68,7 @@ fn trusted_top(p: &Path) -> Option<PathBuf> {
 /// where it is named.
 fn above_real(p: &Path) -> bool {
     let Some(top) = trusted_top(p) else { return false };
-    !p.ancestors().skip(1).take_while(|a| *a != top).any(|a| std::fs::symlink_metadata(a).map(|m| !m.is_dir() || m.file_type().is_symlink()).unwrap_or(true))
+    !p.ancestors().skip(1).take_while(|a| *a != top).any(|a| std::fs::symlink_metadata(a).map(|m| !m.is_dir() || crate::platform::meta::is_link(&m)).unwrap_or(true))
 }
 /// May the folder be emptied or removed: a real folder all the way down from a trusted folder, and guarded neither as
 /// it is named nor where it really is. Nothing is changed in asking.
@@ -81,8 +81,8 @@ pub fn removable(p: &Path) -> bool {
 /// `removable`; a link in a temporary folder's place, under real folders only, is taken away (what it points to
 /// stays, and nothing runs from it is stopped). A link reached through another link is never touched.
 fn safe(p: &Path) -> bool {
-    let is_link = std::fs::symlink_metadata(p).map(|m| m.file_type().is_symlink()).unwrap_or(false);
-    if is_link && above_real(p) && !guarded(p) { let _ = std::fs::remove_file(p); }
+    let is_link = std::fs::symlink_metadata(p).map(|m| crate::platform::meta::is_link(&m)).unwrap_or(false);
+    if is_link && above_real(p) && !guarded(p) { let _ = crate::platform::links::remove_link(p); }
     !is_link && removable(p)
 }
 /// Never removed: a folder this process's environment points into (a PATH entry of yours in an old scratchpad), the
@@ -104,14 +104,13 @@ pub fn remove(p: &Path) -> u64 {
     if std::fs::remove_dir_all(p).is_err() { writable(p); let _ = std::fs::remove_dir_all(p); } // a read-only folder in it (Go's module cache)
     before.saturating_sub(if p.exists() { took() } else { 0 })
 }
-/// Every folder in it writable by its owner, so what is in them can go.
+/// Everything in it writable by its owner, so what is in them can go (see `perms::make_removable`).
 fn writable(p: &Path) {
-    use std::os::unix::fs::PermissionsExt;
     let mut todo = vec![p.to_path_buf()];
     while let Some(d) = todo.pop() {
         let Ok(m) = std::fs::symlink_metadata(&d) else { continue };
+        let _ = crate::platform::perms::make_removable(&d);
         if !m.is_dir() { continue; }
-        let _ = std::fs::set_permissions(&d, std::fs::Permissions::from_mode(m.permissions().mode() | 0o700));
         for e in std::fs::read_dir(&d).into_iter().flatten().flatten() { todo.push(e.path()); }
     }
 }

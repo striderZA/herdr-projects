@@ -1,6 +1,8 @@
 //! Other machines that do not answer: the rest of the reasons and what to do, the answer read whatever a shell prints
 //! around it, asking over an SSH stand-in, and `herdr-projects machines` (this machine as a login shell finds it, then
 //! each machine). The boards' side of it: remote_board.rs.
+//! Unix only, gated on Windows: SSH machines are not in v1 there; remote_windows.rs asserts that instead.
+#![cfg(unix)]
 use crate::common;
 use crate::far;
 use common::*;

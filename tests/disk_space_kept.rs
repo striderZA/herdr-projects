@@ -58,9 +58,12 @@ fn real_programs_a_link_in_a_temporary_folder_s_place_is_never_followed() {
     let yours = w.base.join("home/projects/site");
     std::fs::create_dir_all(&yours).unwrap();
     std::fs::write(yours.join("index.html"), "mine\n").unwrap();
+    #[cfg(unix)]
     let mut server = std::process::Command::new("sleep").arg("60").current_dir(&yours).spawn().unwrap();
+    #[cfg(windows)]
+    let mut server = std::process::Command::new("ping").args(["-n", "61", "127.0.0.1"]).stdout(std::process::Stdio::null()).current_dir(&yours).spawn().unwrap();
     std::fs::remove_dir(&tmp).unwrap();
-    std::os::unix::fs::symlink(&yours, &tmp).unwrap();
+    sw::platform::links::make_link(&yours, &tmp).unwrap();
     assert_eq!(sw::leftovers::free(&t), 0);
     assert!(server.try_wait().unwrap().is_none(), "yours runs on");
     assert!(yours.join("index.html").exists());
@@ -68,15 +71,15 @@ fn real_programs_a_link_in_a_temporary_folder_s_place_is_never_followed() {
     // a link further up (the board's own folder of task folders) is not followed either
     let base = sw::temp::board_base();
     std::fs::rename(&base, w.base.join("moved")).unwrap();
-    std::os::unix::fs::symlink(&yours, &base).unwrap();
+    sw::platform::links::make_link(&yours, &base).unwrap();
     let inside = base.join(sw::temp::name_of(&t));
     std::fs::create_dir_all(yours.join(inside.file_name().unwrap())).unwrap();
     assert!(!sw::leftovers::removable(&inside));
     assert_eq!(sw::leftovers::free(&t), 0);
     assert!(yours.join(inside.file_name().unwrap()).exists() && server.try_wait().unwrap().is_none());
     // and the sweep, for a done task with such a link, stops nothing of yours
-    std::fs::remove_file(&base).unwrap(); std::fs::rename(w.base.join("moved"), &base).unwrap();
-    std::os::unix::fs::symlink(&yours, &tmp).unwrap();
+    std::fs::remove_dir(&base).or_else(|_| std::fs::remove_file(&base)).unwrap(); std::fs::rename(w.base.join("moved"), &base).unwrap();
+    sw::platform::links::make_link(&yours, &tmp).unwrap();
     sw::store::tasks::update(&id, |t| { t.put("stage", "done"); Ok(sw::store::tasks::Change::Write) }).unwrap();
     sw::leftovers::sweep::sweep();
     assert!(server.try_wait().unwrap().is_none() && yours.join("index.html").exists());
@@ -84,6 +87,7 @@ fn real_programs_a_link_in_a_temporary_folder_s_place_is_never_followed() {
 }
 
 #[test]
+#[cfg(unix)]
 fn the_build_an_approved_plan_starts_waits_for_room_on_a_nearly_full_disk() {
     let w = world_with(Opts { repo: true, settings: json!({ "plan.approve": "you", "worker.agent": "codex" }), ..Default::default() });
     unsafe { std::env::set_var("HERDR_PROJECTS_SANDBOX", "bwrap") };
@@ -112,14 +116,14 @@ fn a_link_reached_through_another_link_is_never_taken_away() {
     let yours = w.base.join("home/stuff");
     std::fs::create_dir_all(yours.join("site")).unwrap();
     std::fs::write(yours.join("site/keep.txt"), "mine\n").unwrap();
-    std::os::unix::fs::symlink(yours.join("site"), yours.join("shortcut")).unwrap();
+    sw::platform::links::make_link(&yours.join("site"), &yours.join("shortcut")).unwrap();
     let base = sw::temp::board_base();
     std::fs::create_dir_all(&base).unwrap();
-    std::os::unix::fs::symlink(&yours, base.join("parent")).unwrap();
+    sw::platform::links::make_link(&yours, &base.join("parent")).unwrap();
     let tmp = base.join("parent/shortcut");
     sw::store::tasks::update(&id, |t| { t.put("tmp", tmp.display().to_string()); t.put("stage", "done"); Ok(sw::store::tasks::Change::Write) }).unwrap();
     assert_eq!(sw::leftovers::free(&task(&id)), 0);
     sw::leftovers::sweep::sweep();
-    assert!(std::fs::symlink_metadata(yours.join("shortcut")).map(|m| m.file_type().is_symlink()).unwrap_or(false), "your link stays");
+    assert!(std::fs::symlink_metadata(yours.join("shortcut")).map(|m| sw::platform::meta::is_link(&m)).unwrap_or(false), "your link stays");
     assert!(yours.join("site/keep.txt").exists());
 }

@@ -64,7 +64,7 @@ fn no_source_file_but_the_keys_list_writes_a_board_keys_chord_into_its_words() {
         for e in std::fs::read_dir(&d).unwrap().flatten() {
             let p = e.path();
             if p.is_dir() { stack.push(p); continue; }
-            let rel = p.strip_prefix(root).unwrap().display().to_string();
+            let rel = p.strip_prefix(root).unwrap().display().to_string().replace('\\', "/");
             if !rel.ends_with(".rs") || skip.iter().any(|s| rel.starts_with(s)) { continue; }
             for (n, line) in std::fs::read_to_string(&p).unwrap().lines().enumerate() {
                 if line.trim_start().starts_with("//") { continue; }

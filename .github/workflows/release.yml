@@ -37,6 +37,10 @@ jobs:
           - { target: aarch64-unknown-linux-musl, runner: ubuntu-24.04, file: herdr-projects-linux-aarch64, zig: true }
           - { target: x86_64-apple-darwin, runner: macos-14, file: herdr-projects-macos-x86_64 }
           - { target: aarch64-apple-darwin, runner: macos-14, file: herdr-projects-macos-aarch64, runs: true }
+          - { target: x86_64-pc-windows-msvc, runner: windows-latest, file: herdr-projects-windows-x86_64.exe, windows: true, runs: true }
+    defaults:
+      run:
+        shell: bash
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v7
@@ -53,7 +57,6 @@ jobs:
         run: |
           rustup toolchain install stable --profile minimal --target ${{ matrix.target }}
           rustup default stable
-
       - name: Install musl tools
         if: contains(matrix.target, 'linux') && !matrix.zig
         run: sudo apt-get update && sudo apt-get install -y musl-tools
@@ -67,13 +70,19 @@ jobs:
       - name: Build
         run: |
           if [ "${{ matrix.zig }}" = true ]; then cargo zigbuild --release --locked --target ${{ matrix.target }}
+          elif [ "${{ matrix.windows }}" = true ]; then cargo build --release --locked
           else cargo build --release --locked --target ${{ matrix.target }}; fi
 
       - name: Name the file and write its checksum
         run: |
           mkdir dist
-          cp target/${{ matrix.target }}/release/herdr-projects dist/${{ matrix.file }}
-          cd dist && shasum -a 256 ${{ matrix.file }} > ${{ matrix.file }}.sha256 && cat ${{ matrix.file }}.sha256
+          if [ "${{ matrix.windows }}" = true ]; then
+            cp target/release/herdr-projects.exe "dist/${{ matrix.file }}"
+            cd dist && sha256sum "${{ matrix.file }}" > "${{ matrix.file }}.sha256" && cat "${{ matrix.file }}.sha256"
+          else
+            cp target/${{ matrix.target }}/release/herdr-projects "dist/${{ matrix.file }}"
+            cd dist && shasum -a 256 "${{ matrix.file }}" > "${{ matrix.file }}.sha256" && cat "${{ matrix.file }}.sha256"
+          fi
 
       - name: Check it runs and says the release's version
         if: matrix.runs
@@ -115,6 +124,9 @@ jobs:
             [ -s "$f" ] && [ -s "$f.sha256" ] || { echo "::error::$f or its checksum is missing"; exit 1; }
             sha256sum -c "$f.sha256"
           done; done
+          f="herdr-projects-windows-x86_64.exe"
+          [ -s "$f" ] && [ -s "$f.sha256" ] || { echo "::error::$f or its checksum is missing"; exit 1; }
+          sha256sum -c "$f.sha256"
 
       - name: Attach them to the release (made when it is not there yet)
         if: ${{ !inputs.dry_run }}

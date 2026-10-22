@@ -13,7 +13,14 @@ use sw::json::*;
 fn fill(p: &Path) { std::fs::create_dir_all(p.parent().unwrap()).unwrap(); std::fs::write(p, vec![7u8; 1_000_000]).unwrap(); }
 fn claude_files(w: &World, tree: &Path) -> PathBuf { w.base.join("tmp").join(format!("claude-{}", sw::agents::scratch::uid())).join(sw::agents::scratch::slug(tree)) }
 /// Changed `ms` from now by the board's clock.
-fn touched(p: &Path, ms: i64) { let at = std::time::UNIX_EPOCH + std::time::Duration::from_millis((sw::clock::now() + ms) as u64); std::fs::File::open(p).unwrap().set_modified(at).unwrap(); }
+fn touched(p: &Path, ms: i64) {
+    let at = std::time::UNIX_EPOCH + std::time::Duration::from_millis((sw::clock::now() + ms) as u64);
+    #[cfg(unix)]
+    let f = std::fs::File::open(p).unwrap();
+    #[cfg(windows)]
+    let f = { use std::os::windows::fs::OpenOptionsExt; std::fs::OpenOptions::new().write(true).custom_flags(0x0200_0000).open(p).unwrap() };
+    f.set_modified(at).unwrap();
+}
 
 #[test]
 fn the_sweep_removes_what_ended_tasks_left_and_only_what_is_provably_the_board_s() {
@@ -107,6 +114,7 @@ fn the_board_sweeps_when_it_opens_after_an_hour_and_from_the_housekeeping_pass_o
 }
 
 #[test]
+#[cfg(unix)]
 fn real_programs_what_runs_from_a_task_s_temporary_folder_is_stopped_before_the_folder_goes() {
     let w = world();
     let id = w.add("Server");

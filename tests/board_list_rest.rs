@@ -79,6 +79,8 @@ fn looking_at_a_done_task_changes_nothing_about_it() {
     for (n, id) in ids.iter().enumerate() { assert_eq!(task(id).b("seen"), n != 0, "{id}"); }
 }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn every_machines_tasks_say_whose_they_are_and_a_far_merge_says_where_it_lands() {
     let w = world_with(Opts { repo: true, settings: json!({ "board.machines": "otherbox" }), ..Default::default() });
@@ -111,6 +113,8 @@ fn every_machines_tasks_say_whose_they_are_and_a_far_merge_says_where_it_lands()
     s.press(&["n"]);
 }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn machine_names_too_long_for_the_header_go_on_whole_never_cut() {
     let long = ["a-very-long-machine-name-on-the-tailnet", "another-extremely-long-machine-name-there"];

@@ -63,6 +63,8 @@ fn space_on_a_repos_heading_talks_to_its_project_coordinator_and_space_again_goe
     assert!(!s.s.reply && s.s.msg.contains("Space on a machine's heading or a repo's heading talks to its coordinator"), "{}", s.s.msg);
 }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn space_on_a_machines_heading_talks_to_that_machines_coordinator_here_or_there() {
     let w = coord_world(json!({ "board.machines": "otherbox" }));

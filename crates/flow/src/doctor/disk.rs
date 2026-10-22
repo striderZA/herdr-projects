@@ -4,7 +4,7 @@
 use super::Found;
 use crate::json::*;
 use crate::store::marks::tilde;
-use crate::disk::{space, GB};
+use crate::disk::GB;
 pub use crate::disk::gb;
 use std::path::{Path, PathBuf};
 
@@ -14,12 +14,11 @@ pub const LOW: u64 = 10 * GB;
 #[derive(Clone, Debug, Default)]
 pub struct Disk { pub mount: PathBuf, pub free: u64, pub total: u64, pub holds: Vec<String> }
 
-fn dev(p: &Path) -> Option<u64> { use std::os::unix::fs::MetadataExt; std::fs::metadata(p).ok().map(|m| m.dev()) }
 /// The folder a disk is mounted at: the highest parent on the same device.
 pub fn mount_of(p: &Path) -> PathBuf {
-    let d = dev(p);
+    let d = crate::platform::disk::volume(p);
     let mut at = p.to_path_buf();
-    while let Some(up) = at.parent() { if dev(up) != d { break; } at = up.to_path_buf(); }
+    while let Some(up) = at.parent() { if crate::platform::disk::volume(up) != d { break; } at = up.to_path_buf(); }
     at
 }
 /// The nearest folder of a path that is there.
@@ -40,9 +39,9 @@ pub fn ask() -> Vec<Disk> {
     let mut out: Vec<(u64, Disk)> = vec![];
     for (what, p) in places() {
         let Some(p) = there(&p) else { continue };
-        let Some(d) = dev(&p) else { continue };
+        let Some(d) = crate::platform::disk::volume(&p) else { continue };
         if let Some((_, disk)) = out.iter_mut().find(|(x, _)| *x == d) { if !disk.holds.iter().any(|h| h == what) { disk.holds.push(what.into()); } continue; }
-        let Some((free, total)) = space(&p) else { continue };
+        let Some((free, total)) = crate::platform::disk::space(&p) else { continue };
         out.push((d, Disk { mount: mount_of(&p), free, total, holds: vec![what.into()] }));
     }
     out.into_iter().map(|(_, d)| d).collect()

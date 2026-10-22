@@ -138,13 +138,15 @@ fn a_merge_that_cannot_fetch_main_waits_as_behind_main_and_is_not_failed_and_goe
 fn a_lock_file_left_in_the_way_is_named_in_plain_words_and_the_work_waits_behind_main_until_it_is_gone() {
     let w = world_with(Opts { repo: true, origin: true, settings: json!({ "review.when": "never" }), ..Default::default() });
     let id = to_approval(&w, "Locked");
-    let lock = w.root.join(".git/refs/remotes/origin/main.lock");
+    let lock = w.root.join(".git").join("refs").join("remotes").join("origin").join("main.lock");
     std::fs::write(&lock, "").unwrap();
     they_push(&w, "main", "theirs.txt");
     let t = task(&id);
     let r = sw::sync::sync_main(&t, t.s("worktree"));
     assert_eq!(r.status, "error");
-    assert!(r.detail.starts_with(&format!("git's lock file {} stayed in the way on every try", lock.display())), "{}", r.detail);
+    let shown_lock = sw::platform::links::strip_verbatim(lock.clone());
+    let expected = format!("git's lock file {} stayed in the way on every try", shown_lock.display());
+    assert!(r.detail.starts_with(&expected), "expected {expected:?}\nactual: {}", r.detail);
     assert!(sw::sync::held_why(&r).starts_with("main could not be fetched (git's lock file"), "{}", sw::sync::held_why(&r));
     std::fs::remove_file(&lock).unwrap();
     assert_eq!(sw::sync::sync_main(&t, t.s("worktree")).status, "merged");
@@ -152,7 +154,6 @@ fn a_lock_file_left_in_the_way_is_named_in_plain_words_and_the_work_waits_behind
 
 #[test]
 fn git_2_53s_reference_already_exists_is_a_held_lock_only_when_its_lock_file_is_there() {
-    use std::os::unix::fs::PermissionsExt;
     let w = world_with(Opts { repo: true, origin: true, settings: json!({ "review.when": "never" }), ..Default::default() });
     let id = to_approval(&w, "Exists");
     they_push(&w, "main", "theirs.txt");
@@ -160,8 +161,9 @@ fn git_2_53s_reference_already_exists_is_a_held_lock_only_when_its_lock_file_is_
     let said = "error: fetching ref refs/remotes/origin/main failed: reference already exists";
     let up = w.base.join("upload-pack");
     std::fs::write(&up, format!("#!/bin/sh\necho x >> \"$0.calls\"\necho '{said}' >&2\nexit 1\n")).unwrap();
-    std::fs::set_permissions(&up, std::fs::Permissions::from_mode(0o755)).unwrap();
-    git(&w.root, &["config", "remote.origin.uploadpack", &up.display().to_string()]);
+    sw::platform::perms::make_executable(&up).unwrap();
+    // git runs this as a shell command, where a backslash is an escape: the path goes in with forward slashes
+    git(&w.root, &["config", "remote.origin.uploadpack", &up.display().to_string().replace('\\', "/")]);
     let calls = || std::fs::read_to_string(w.base.join("upload-pack.calls")).unwrap_or_default().lines().count();
     let t = task(&id);
     // no lock file: a real conflict, said once in git's own words
@@ -173,7 +175,7 @@ fn git_2_53s_reference_already_exists_is_a_held_lock_only_when_its_lock_file_is_
     let lock = w.root.join(".git/refs/remotes/origin/main.lock");
     std::fs::write(&lock, "").unwrap();
     let r = sw::sync::sync_main(&t, t.s("worktree"));
-    let named = std::fs::canonicalize(&lock).unwrap();
+    let named = sw::platform::links::place(&lock);
     assert!(r.detail.starts_with(&format!("git's lock file {} stayed in the way on every try", named.display())), "{}", r.detail);
     assert_eq!(calls(), 4, "tried three times");
     std::fs::remove_file(&lock).unwrap();

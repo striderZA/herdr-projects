@@ -20,7 +20,7 @@ fn scratch() -> (PathBuf, MutexGuard<'static, ()>) {
     (base, one)
 }
 fn write(p: &Path, text: &str) { std::fs::create_dir_all(p.parent().unwrap()).unwrap(); std::fs::write(p, text).unwrap(); }
-fn exec(p: &Path, text: &str) { write(p, text); use std::os::unix::fs::PermissionsExt; std::fs::set_permissions(p, std::fs::Permissions::from_mode(0o755)).unwrap(); }
+fn exec(p: &Path, text: &str) { write(p, text); sw::platform::perms::make_executable(p).unwrap(); }
 fn read(p: &Path) -> String { std::fs::read_to_string(p).unwrap_or_default() }
 fn here() -> (&'static str, &'static str) { platform().expect("the tests run on a platform a release is made for") }
 
@@ -84,6 +84,7 @@ impl Release {
 fn listing(dir: &Path) -> Vec<String> { let mut v: Vec<String> = std::fs::read_dir(dir).unwrap().flatten().map(|e| e.file_name().to_string_lossy().into_owned()).collect(); v.sort(); v }
 
 #[test]
+#[cfg(unix)]
 fn update_puts_the_newest_release_in_place() {
     let (b, _one) = scratch();
     let exe = b.join("plugin/bin").join(asset_name(here()));
@@ -106,6 +107,7 @@ fn update_puts_the_newest_release_in_place() {
 }
 
 #[test]
+#[cfg(unix)]
 fn update_changes_nothing_when_anything_is_wrong() {
     let (b, _one) = scratch();
     let exe = b.join("plugin/bin").join(asset_name(here()));
@@ -130,6 +132,7 @@ fn update_changes_nothing_when_anything_is_wrong() {
 }
 
 #[test]
+#[cfg(unix)]
 fn install_writes_the_launcher_for_this_program() {
     let (b, _one) = scratch();
     let exe = sw::store::files::bin();
@@ -176,6 +179,7 @@ fn run_sh(b: &Path, args: &[&str]) -> (i32, String, String) {
 }
 
 #[test]
+#[cfg(unix)]
 fn real_programs_run_sh_downloads_once_and_runs_it() {
     let (b, _one) = scratch();
     if std::process::Command::new("curl").arg("--version").output().is_err() { eprintln!("no curl here: skipped"); return; }

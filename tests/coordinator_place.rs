@@ -103,6 +103,11 @@ fn the_home_space_under_another_label_is_still_found_and_a_tab_that_is_there_is_
     assert_ne!(now.s("tab"), first.s("tab"));
     // the whole state file is lost, and the home space is not labelled ~: the running one is still found, by its folder
     let (starts, made) = (calls_of(&w, "^agent start").len(), calls_of(&w, "^(tab|workspace) create").len());
+    w.patch(|s| {
+        if let Some(p) = s["panes"].as_array_mut().unwrap().iter_mut().find(|p| p.s("pane_id") == now.s("pane")) {
+            p["agent"]["session"] = json!(first.s("session"));
+        }
+    });
     forget(&w);
     tell(&w, "again");
     assert_eq!(agents(&w).len(), 1); assert_eq!(calls_of(&w, "^agent start").len(), starts); assert_eq!(calls_of(&w, "^(tab|workspace) create").len(), made);

@@ -22,6 +22,9 @@ fn approve(id: &str) { sw::actions::finish_line::approve(id, None, false).unwrap
 fn has(text: &str, re: &str) -> bool { regex::Regex::new(re).unwrap().is_match(text) }
 
 #[test]
+// Unix only: plan approval needs a read-only mount for the plan's writer, which Windows does not have. The start is
+// refused there: plan_modes::plan_approval_you_is_refused_on_windows_with_its_reason.
+#[cfg(unix)]
 fn a_program_with_its_own_plan_mode_is_started_in_it_its_plan_taken_by_the_hook_and_started_again_after_the_yes() {
     let w = plan_world(json!({ "plan.approve": "you", "review.when": "never" }));
     w.script(json!({ "worker": [{ "note": "A first draft, said and not presented." }, { "plan": PLAN, "note": "Presented." }, { "status": "working" }] }));
@@ -72,6 +75,9 @@ fn a_program_with_its_own_plan_mode_is_started_in_it_its_plan_taken_by_the_hook_
 }
 
 #[test]
+// Unix only: plan approval needs a read-only mount for the plan's writer, which Windows does not have. The start is
+// refused there: plan_modes::plan_approval_you_is_refused_on_windows_with_its_reason.
+#[cfg(unix)]
 fn plan_agent_a_planner_in_a_tab_of_its_own_and_after_the_yes_the_worker_builds_in_its_own_tab() {
     let w = plan_world(json!({ "plan.approve": "you", "plan.agent": "codex/gpt-5.5", "worker.agent": "claude", "review.when": "never" }));
     w.script(json!({ "worker": [{ "plan": PLAN, "note": "Planned." }, { "status": "working" }] }));
@@ -84,7 +90,7 @@ fn plan_agent_a_planner_in_a_tab_of_its_own_and_after_the_yes_the_worker_builds_
     assert_eq!(planner.at("agent").s("kind"), "codex");
     let pargs = args_of(&w, &t).join(" ");
     let rules = sw::store::files::dir_of(&id).join("rules.md"); // long rules: Codex is pointed at them (hand_limits.rs)
-    assert!(pargs.contains("-m gpt-5.5") && pargs.contains(&rules.display().to_string()) && read(&rules).contains("You are the planner of this task"), "{pargs}");
+    assert!(pargs.contains("-m gpt-5.5") && pargs.contains(&rules.display().to_string().replace('\\', "\\\\")) && read(&rules).contains("You are the planner of this task"), "{pargs}");
     assert_eq!(t.s("agent"), "codex");
     assert_eq!(t.at("plan").at("writer"), &json!({ "kind": "codex", "model": "gpt-5.5" }));
     assert!(prompts(&w, t.at("link").s("pane"))[0].starts_with("Work board task proj/1, role: planner."));
@@ -109,4 +115,16 @@ fn plan_agent_a_planner_in_a_tab_of_its_own_and_after_the_yes_the_worker_builds_
     assert!(!has(&read(&sw::store::files::dir_of(&id).join("rules.md")), "planner|starts with a plan"), "the worker's rules are the work's");
     b.load();
     assert!(b.text().contains("Planner used"), "{}", b.text());
+}
+
+/// On Windows there is no read-only mount for a plan's writer, so `plan.approve you` refuses the start and says why.
+#[cfg(windows)]
+#[test]
+fn plan_approval_you_is_refused_on_windows_with_its_reason() {
+    let w = world_with(Opts { repo: true, settings: json!({ "plan.approve": "you", "review.when": "never" }), ..Default::default() });
+    unsafe { std::env::remove_var("HERDR_PROJECTS_SANDBOX") };
+    let id = w.add("Work");
+    let err = sw::actions::start::delegate(&id, vec![]).err().expect("the start is refused on Windows");
+    assert!(err.msg.contains("read-only mount is not available on Windows"), "{}", err.msg);
+    assert_ne!(task(&id).s("stage"), "working", "nothing was started");
 }

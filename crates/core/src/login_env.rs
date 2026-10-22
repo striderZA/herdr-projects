@@ -8,7 +8,6 @@ use crate::herdr::cli::socket_exists;
 use crate::json::*;
 use crate::store::files::{data_dir, read_obj, write_json};
 use crate::util::env_set;
-use std::process::{Command, Stdio};
 
 /// What gh reads its login and its host from.
 pub const GH_VARS: [&str; 6] = ["GH_TOKEN", "GITHUB_TOKEN", "GH_ENTERPRISE_TOKEN", "GITHUB_ENTERPRISE_TOKEN", "GH_HOST", "GH_CONFIG_DIR"];
@@ -37,11 +36,7 @@ pub fn remembered(env_out: &str, fallback: &str) -> Obj {
     obj(json!({ "at": now(), "PATH": path, "gh": names(gh_login(env_out, |_| false)), "ssh": names(ssh_agent(env_out, |_| false)) }))
 }
 /// A login shell's whole environment (`env`, which any shell runs): what it prints before it (a greeting) is ignored.
-fn login_shell() -> Option<String> {
-    let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/sh".into());
-    let out = Command::new(shell).args(["-lc", "env"]).stdin(Stdio::null()).stderr(Stdio::null()).output().ok()?;
-    out.status.success().then(|| String::from_utf8_lossy(&out.stdout).into_owned())
-}
+fn login_shell() -> Option<String> { crate::platform::shell::login_env() }
 
 /// A login shell is asked once and its PATH remembered for a while (`env.json`); the PATH of this process takes it in.
 /// gh's login and the SSH agent are never written down: where the login shell has one (the names are remembered) and
@@ -60,12 +55,12 @@ pub fn user_env() {
     }
     let mut seen = std::collections::HashSet::new();
     let mut all = vec![];
-    for p in cached.map(|c| c.t("PATH")).unwrap_or_default().split(':').chain(std::env::var("PATH").unwrap_or_default().split(':').map(|s| s.to_owned()).collect::<Vec<_>>().iter().map(|s| s.as_str())) {
+    for p in cached.map(|c| c.t("PATH")).unwrap_or_default().split(crate::platform::shell::PATH_SEP).chain(std::env::var("PATH").unwrap_or_default().split(crate::platform::shell::PATH_SEP).map(|s| s.to_owned()).collect::<Vec<_>>().iter().map(|s| s.as_str())) {
         if !p.is_empty() && seen.insert(p.to_string()) { all.push(p.to_string()); }
     }
     let login: Vec<_> = shell.map(|out| [gh_login(&out, env_set), ssh_agent(&out, env_set)].concat()).unwrap_or_default();
     unsafe {
-        std::env::set_var("PATH", all.join(":"));
+        std::env::set_var("PATH", all.join(&crate::platform::shell::PATH_SEP.to_string()));
         for (k, v) in login { std::env::set_var(k, v); }
         std::env::set_var("HERDR_PROJECTS_ENV_OK", "1");
     }

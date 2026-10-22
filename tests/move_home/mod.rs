@@ -14,7 +14,7 @@ pub fn put(file: &Path, text: &str, at: Option<i64>) {
 pub fn read(f: &Path) -> String { std::fs::read_to_string(f).unwrap_or_default() }
 pub fn is_link(p: &Path) -> bool { std::fs::symlink_metadata(p).map(|m| m.file_type().is_symlink()).unwrap_or(false) }
 pub fn is_dir(p: &Path) -> bool { std::fs::symlink_metadata(p).map(|m| m.is_dir()).unwrap_or(false) }
-pub fn ino(p: &Path) -> u64 { use std::os::unix::fs::MetadataExt; std::fs::metadata(p).unwrap().ino() }
+pub fn ino(p: &Path) -> u64 { sw::platform::meta::file_id(p).unwrap().1 }
 pub fn names(d: &Path) -> Vec<String> { let mut v: Vec<String> = std::fs::read_dir(d).unwrap().map(|e| e.unwrap().file_name().to_string_lossy().into_owned()).collect(); v.sort(); v }
 /// Every file under a folder with its text, links followed: what "nothing is lost" is checked against.
 pub fn all(dir: &Path) -> BTreeMap<String, String> {

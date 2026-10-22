@@ -29,13 +29,10 @@ echo "unexpected: tailscale $*" >&2; exit 1
 fn tailnet(base: &Path) -> PathBuf {
     let dir = base.join("tailscale");
     for d in ["web", "bin"] { std::fs::create_dir_all(dir.join(d)).unwrap(); }
-    let script = dir.join("bin/tailscale");
-    std::fs::write(&script, SCRIPT.replace("@DIR@", &dir.display().to_string())).unwrap();
-    use std::os::unix::fs::PermissionsExt;
-    std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o755)).unwrap();
-    let path = std::env::var("PATH").unwrap_or_default();
-    let path = path.split(':').filter(|p| !p.ends_with("tailscale/bin")).collect::<Vec<_>>().join(":");
-    unsafe { std::env::set_var("PATH", format!("{}:{path}", dir.join("bin").display())) };
+    // sh reads the folder with forward slashes (Git's sh on Windows does not read backslash paths).
+    fake_program(&dir.join("bin"), "tailscale", SCRIPT.replace("@DIR@", &dir.display().to_string().replace('\\', "/")).trim_start_matches("#!/bin/sh\n"));
+    let path: Vec<PathBuf> = std::env::split_paths(&std::env::var_os("PATH").unwrap_or_default()).filter(|p| !p.ends_with("tailscale/bin")).collect();
+    unsafe { std::env::set_var("PATH", std::env::join_paths(std::iter::once(dir.join("bin")).chain(path)).unwrap()) };
     dir
 }
 /// A stand-in web UI that says it is one.

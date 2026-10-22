@@ -6,7 +6,6 @@
 //! again when the plan's writer starts once more. Only the task's own worktree is ever locked: your own checkout is
 //! never made read-only.
 use crate::json::*;
-use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 
 fn tree_of(t: &Obj) -> Option<PathBuf> { let w = t.s("worktree"); (!w.is_empty() && Path::new(w).exists()).then(|| PathBuf::from(w)) }
@@ -19,15 +18,14 @@ pub fn git_dir_of(tree: &Path) -> Option<PathBuf> {
 /// Links are left alone. A folder is opened before it loses its write bit and after it has it back.
 fn chmod(on: bool, dir: &Path) -> bool {
     let mut ok = true;
-    fn set(p: &Path, mode: u32, on: bool, ok: &mut bool) { let m = if on { mode | 0o200 } else { mode & !0o222 }; if std::fs::set_permissions(p, std::fs::Permissions::from_mode(m)).is_err() { *ok = false; } }
+    fn set(p: &Path, on: bool, ok: &mut bool) { if crate::platform::perms::set_writable(p, on).is_err() { *ok = false; } }
     fn walk(p: &Path, on: bool, ok: &mut bool) {
         let Ok(s) = std::fs::symlink_metadata(p) else { return };
-        if s.file_type().is_symlink() { return; }
-        let mode = s.permissions().mode();
-        if !s.is_dir() { set(p, mode, on, ok); return; }
-        if on { set(p, mode, on, ok); }
+        if crate::platform::meta::is_link(&s) { return; }
+        if !s.is_dir() { set(p, on, ok); return; }
+        if on { set(p, on, ok); }
         match std::fs::read_dir(p) { Ok(rd) => for e in rd.flatten() { walk(&e.path(), on, ok); }, Err(_) => *ok = false }
-        if !on { set(p, mode, on, ok); }
+        if !on { set(p, on, ok); }
     }
     walk(dir, on, &mut ok);
     ok
@@ -56,6 +54,5 @@ pub fn set_locked(id: &str, on: bool) -> bool {
 }
 pub fn is_locked(t: &Obj) -> bool {
     let Some(tree) = tree_of(t) else { return false };
-    let c = std::ffi::CString::new(tree.display().to_string()).unwrap_or_default();
-    unsafe { libc::access(c.as_ptr(), libc::W_OK) != 0 }
+    !crate::platform::perms::can_write(&tree)
 }

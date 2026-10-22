@@ -22,6 +22,7 @@ pub struct Left { pub path: PathBuf, pub repo: PathBuf, pub why: Why, pub bytes:
 pub fn cache_dir() -> PathBuf {
     std::env::var("XDG_CACHE_HOME").ok().filter(|v| !v.is_empty()).map(PathBuf::from).unwrap_or_else(|| crate::store::files::user_home().join(".cache")).join("herdr-projects")
 }
+
 /// A task branch's fixed start (`work/` of `work/{n}-{slug}`): a branch that starts so is the board's.
 fn branch_start() -> String { setting_text("workspace.branch", None).split('{').next().unwrap_or("").to_string() }
 /// Kept warm builds no longer `current`, an hour after they last changed (the setup removes them only when it runs).

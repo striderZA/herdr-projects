@@ -2,6 +2,7 @@
 //! settings and no build cache, gets past its start on the default share of the cores, and a check that stops says
 //! why on stderr, never with no word.
 use std::path::{Path, PathBuf};
+use crate::common;
 
 /// A copy of the check's scripts in a git repo of its own, an empty home, and a `cargo` that writes down what it was
 /// given and stops the check (exit 7, without a word), so only the check's start runs.
@@ -17,11 +18,7 @@ impl Bench {
         for f in ["check.sh", "run-tests.sh", "build-cache.sh", "share-cores.sh"] {
             std::fs::copy(Path::new(env!("CARGO_MANIFEST_DIR")).join("scripts").join(f), proj.join("scripts").join(f)).unwrap();
         }
-        let stub = |name: &str, body: &str| {
-            let p = base.join("bin").join(name);
-            std::fs::write(&p, format!("#!/bin/sh\n{body}\n")).unwrap();
-            std::fs::set_permissions(&p, std::os::unix::fs::PermissionsExt::from_mode(0o755)).unwrap();
-        };
+        let stub = |name: &str, body: &str| { common::fake_program(&base.join("bin"), name, body); };
         stub("cargo", &format!("echo \"$CARGO_BUILD_JOBS $RUST_TEST_THREADS ${{RUSTC_WRAPPER:-none}}\" > '{}'\nexit 7", base.join("cargo-saw").display()));
         stub("rustc", "echo rustc 0.0.0");
         let b = Bench { base };
@@ -36,18 +33,21 @@ impl Bench {
     /// `sh scripts/check.sh --all` with nothing but this home and a plain PATH: its exit code, stderr, and what the
     /// stand-in cargo was given (empty when the check never got to it).
     fn run(&self) -> (i32, String, String) {
-        let o = std::process::Command::new("/bin/sh").args(["scripts/check.sh", "--all"]).current_dir(self.base.join("proj")).env_clear()
-            .env("HOME", self.home()).env("PATH", format!("{}:/usr/bin:/bin", self.base.join("bin").display())).output().unwrap();
+        let o = sw::platform::shell::sh().args(["scripts/check.sh", "--all"]).current_dir(self.base.join("proj")).env_clear()
+            .env("HOME", self.home()).env("PATH", common::path_with_first(&self.base.join("bin"))).output().unwrap();
         let saw = std::fs::read_to_string(self.base.join("cargo-saw")).unwrap_or_default();
         (o.status.code().unwrap_or(-1), String::from_utf8_lossy(&o.stderr).into_owned(), saw.trim().to_string())
     }
 }
 impl Drop for Bench { fn drop(&mut self) { let _ = std::fs::remove_dir_all(&self.base); } }
 
+#[cfg(unix)]
 fn cores() -> u64 {
     let o = std::process::Command::new("getconf").arg("_NPROCESSORS_ONLN").output().unwrap();
     String::from_utf8_lossy(&o.stdout).trim().parse().unwrap()
 }
+#[cfg(windows)]
+fn cores() -> u64 { std::thread::available_parallelism().map(|n| n.get() as u64).unwrap_or(1) }
 
 #[test]
 fn real_programs_the_check_starts_in_an_empty_home_on_the_default_share_and_says_why_it_stopped() {
@@ -79,7 +79,7 @@ fn real_programs_a_settings_file_that_cannot_be_read_is_the_default_and_one_that
 fn real_programs_a_check_that_stops_before_it_starts_says_why_once() {
     let b = Bench::new("refused");
     let (code, err, saw) = {
-        let o = std::process::Command::new("/bin/sh").args(["scripts/check.sh", "--nope"]).current_dir(b.base.join("proj")).env_clear()
+        let o = sw::platform::shell::sh().args(["scripts/check.sh", "--nope"]).current_dir(b.base.join("proj")).env_clear()
             .env("HOME", b.home()).env("PATH", "/usr/bin:/bin").output().unwrap();
         (o.status.code().unwrap_or(-1), String::from_utf8_lossy(&o.stderr).into_owned(), std::fs::read_to_string(b.base.join("cargo-saw")).unwrap_or_default())
     };

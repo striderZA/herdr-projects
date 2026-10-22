@@ -31,6 +31,8 @@ fn far_world() -> (World, Far) {
 fn show_vm_a() -> Value { call("press", json!({ "id": "scope" })); far::answered("t", 1); call("press", json!({ "id": "scope" })); far::answered("t", 1); call("board", json!({})) }
 fn looks(talk: &[(bool, &str)]) -> Look { Look { state: "idle".into(), readable: true, talk: talk.iter().map(|(you, t)| Said { you: *you, text: t.to_string(), at: 0 }).collect(), ..Default::default() } }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn another_machines_coordinator_sends_its_words_with_its_tasks_and_the_chat_shows_them() {
     let (_w, far) = far_world();

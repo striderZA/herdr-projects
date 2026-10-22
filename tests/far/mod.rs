@@ -6,6 +6,7 @@
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
 use sw::json::*;
+use crate::common::fake_program;
 
 pub struct Far { pub dir: PathBuf }
 const SCRIPT: &str = r#"#!/bin/sh
@@ -34,10 +35,7 @@ impl Far {
     pub fn new(base: &Path) -> Far {
         let dir = base.join("far");
         std::fs::create_dir_all(&dir).unwrap();
-        let script = dir.join("ssh");
-        std::fs::write(&script, SCRIPT.replace("@DIR@", &dir.display().to_string())).unwrap();
-        use std::os::unix::fs::PermissionsExt;
-        std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o755)).unwrap();
+        let script = fake_program(&dir, "ssh", SCRIPT.replace("@DIR@", &dir.display().to_string()).trim_start_matches("#!/bin/sh\n"));
         unsafe { std::env::set_var("HERDR_PROJECTS_SSH", &script) };
         unsafe { std::env::set_var("HERDR_PROJECTS_HOSTS", dir.join("hosts")) };
         Far { dir }

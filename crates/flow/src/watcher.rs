@@ -37,7 +37,7 @@ fn run_helper(cmd: OneShot, extra_env: &[(&str, &str)], done: impl FnOnce(i32, S
     user_env();
     let mut c = Command::new(&cmd.command);
     c.args(&cmd.args).current_dir(data_dir()).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());
-    let path = format!("{}:{}", shim().parent().map(|p| p.display().to_string()).unwrap_or_default(), std::env::var("PATH").unwrap_or_default());
+    let path = format!("{}{}{}", shim().parent().map(|p| p.display().to_string()).unwrap_or_default(), crate::platform::shell::PATH_SEP, std::env::var("PATH").unwrap_or_default());
     c.env("PATH", path).env("HERDR_PROJECTS_NO_KEEPER", "1");
     for k in ["HERDR_PANE_ID", "HERDR_TAB_ID", "HERDR_WORKSPACE_ID", "HERDR_PLUGIN_ID", "HERDR_PLUGIN_CONTEXT_JSON", "HERDR_PLUGIN_EVENT", "HERDR_PLUGIN_EVENT_JSON", "HERDR_PLUGIN_ENTRYPOINT_ID"] { c.env_remove(k); }
     for (k, v) in extra_env { c.env(k, v); }
@@ -45,9 +45,10 @@ fn run_helper(cmd: OneShot, extra_env: &[(&str, &str)], done: impl FnOnce(i32, S
     let child = c.spawn();
     std::thread::spawn(move || {
         let Ok(mut child) = child else { return done(1, String::new(), String::new()) };
+        crate::platform::proc::join_group(child.id() as i64);
         if let Some(mut i) = child.stdin.take() { let _ = i.write_all(cmd.stdin.unwrap_or_default().as_bytes()); }
-        let pid = child.id() as i32;
-        let killer = std::thread::spawn(move || { std::thread::sleep(std::time::Duration::from_millis(one::CALL_MS as u64)); unsafe { libc::kill(-pid, libc::SIGKILL); } });
+        let pid = child.id() as i64;
+        let killer = std::thread::spawn(move || { std::thread::sleep(std::time::Duration::from_millis(one::CALL_MS as u64)); crate::platform::proc::signal_group(pid, true); });
         let mut out = String::new(); let mut err = String::new();
         if let Some(mut o) = child.stdout.take() { let _ = o.read_to_string(&mut out); }
         if let Some(mut e) = child.stderr.take() { let _ = e.read_to_string(&mut err); }
@@ -152,8 +153,8 @@ pub fn stop_dispatch(id: &str) {
     use crate::store::inbox::{clear_dispatch, get_dispatch};
     if let Some(d) = get_dispatch(id) {
         if crate::store::files::marker_alive(&json!({ "pid": d.at("pid"), "start": d.at("pidStart") })) {
-            let pid = d.i("pid") as i32;
-            unsafe { if libc::kill(-pid, libc::SIGTERM) != 0 { libc::kill(pid, libc::SIGTERM); } }
+            let pid = d.i("pid");
+            if !crate::platform::proc::signal_group(pid, false) { crate::platform::proc::signal(pid, false); }
         }
     }
     clear_dispatch(id);

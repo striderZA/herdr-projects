@@ -1,6 +1,8 @@
 //! [real programs] The board itself in a real terminal (a pseudo-terminal this test drives as a terminal would): it
 //! starts and draws, takes a burst of keys, resizes cleanly, never clears the whole screen for a key, draws each frame
 //! as one synchronized update, and on closing gives the terminal back exactly as it was: nothing left in your shell.
+//! Unix only, gated on Windows: it needs a pseudo-terminal (openpty, ioctl, fcntl); ConPTY is not built in v1.
+#![cfg(unix)]
 use crate::common;
 use common::*;
 use std::io::{Read, Write};

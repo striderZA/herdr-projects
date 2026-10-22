@@ -9,13 +9,13 @@ pub const REPO: &str = "eliasstravik/herdr-projects";
 
 /// The release files' name for a platform, from `uname -s`/`uname -m` or Rust's own names. None: no release is made.
 pub fn platform_of(os: &str, arch: &str) -> Option<(&'static str, &'static str)> {
-    let os = match os.to_ascii_lowercase().as_str() { "linux" => "linux", "darwin" | "macos" => "macos", _ => return None };
+    let os = match os.to_ascii_lowercase().as_str() { "linux" => "linux", "darwin" | "macos" => "macos", "windows" => "windows", _ => return None };
     let arch = match arch { "x86_64" | "amd64" => "x86_64", "aarch64" | "arm64" => "aarch64", _ => return None };
     Some((os, arch))
 }
 pub fn platform() -> Option<(&'static str, &'static str)> { platform_of(std::env::consts::OS, std::env::consts::ARCH) }
 /// `herdr-projects-linux-x86_64`: the release file, and the downloaded program's name in the plugin's bin/ folder.
-pub fn asset_name((os, arch): (&str, &str)) -> String { format!("herdr-projects-{os}-{arch}") }
+pub fn asset_name((os, arch): (&str, &str)) -> String { format!("herdr-projects-{os}-{arch}{}", if os == "windows" { ".exe" } else { "" }) }
 /// Where the releases are: GitHub's, or HERDR_PROJECTS_RELEASES (a fork, a mirror, a folder as file:///…).
 pub fn releases() -> String {
     std::env::var("HERDR_PROJECTS_RELEASES").ok().filter(|v| !v.is_empty()).map(|v| v.trim_end_matches('/').to_string()).unwrap_or_else(|| format!("https://github.com/{REPO}/releases"))
@@ -96,8 +96,7 @@ pub fn download(exe: &Path, version: Option<&str>, fetch: &dyn Fn(&str, &Path) -
         let Some(want) = std::fs::read_to_string(&sums).ok().and_then(|t| sum_in(&t)) else { crate::fail!("{url}.sha256 holds no checksum: nothing was changed") };
         let Some(have) = sha256(&file) else { crate::fail!("no sha256sum, shasum or openssl here to check the download: nothing was changed") };
         if have != want { crate::fail!("the download does not match its checksum: nothing was changed. Try again.") }
-        use std::os::unix::fs::PermissionsExt;
-        std::fs::set_permissions(&file, std::fs::Permissions::from_mode(0o755))?;
+        crate::platform::perms::make_executable(&file)?;
         let Some(v) = version_of(&file) else { crate::fail!("the downloaded program does not run here: nothing was changed") };
         Ok(Got { version: v, file: file.clone() })
     })();
@@ -116,7 +115,11 @@ pub fn update(exe: &Path, version: Option<&str>, fetch: &dyn Fn(&str, &Path) -> 
         return Ok(format!("herdr-projects {VERSION} is the newest release."));
     }
     // Renamed over it, never written into: a running program keeps its old file, and macOS kills one changed in place.
-    if let Err(e) = std::fs::rename(&got.file, exe) { let _ = std::fs::remove_file(&got.file); crate::fail!("could not put the new program in place of {}: {e}", exe.display()) }
+    // On Windows a running program cannot be written over, but it can be renamed: it moves aside first, and is put back if
+    // the new one cannot take its place.
+    let aside = exe.with_extension("exe.old");
+    let moved = cfg!(windows) && std::fs::rename(exe, &aside).is_ok();
+    if let Err(e) = std::fs::rename(&got.file, exe) { if moved { let _ = std::fs::rename(&aside, exe); } let _ = std::fs::remove_file(&got.file); crate::fail!("could not put the new program in place of {}: {e}", exe.display()) }
     let named = platform().map(|p| exe.file_name().map(|n| n == asset_name(p).as_str()).unwrap_or(false)).unwrap_or(false);
     if named || version_file(exe).exists() { write_atomic(&version_file(exe), format!("{}\n", got.version).as_bytes())?; }
     crate::flow::send::shim();
@@ -128,13 +131,11 @@ pub fn update(exe: &Path, version: Option<&str>, fetch: &dyn Fn(&str, &Path) -> 
 pub fn path_problem(at: &Path, exe: &Path, path: &str) -> Option<(String, String)> {
     let dir = at.parent().map(Path::to_path_buf).unwrap_or_default();
     let real = |p: &Path| std::fs::canonicalize(p).ok();
-    use std::os::unix::fs::PermissionsExt;
-    // As a shell looks: the first file of that name it may run.
-    let runs = |f: &Path| std::fs::metadata(f).map(|m| m.is_file() && m.permissions().mode() & 0o111 != 0).unwrap_or(false);
-    match std::env::split_paths(path).map(|d| d.join("herdr-projects")).find(|f| runs(f)) {
+    // As a shell looks: the first program of that name along the PATH (on Windows, with its program extensions).
+    match crate::platform::shell::find_in(std::ffi::OsStr::new(path), "herdr-projects") {
         Some(f) if f == at || real(&f).is_some() && (real(&f) == real(at) || real(&f) == real(exe)) => None,
         Some(f) => Some((format!("{} comes first on your PATH (an older install? `npm unlink -g herdr-projects` takes out the Node one)", f.display()), format!("Remove it, or put {} before it.", dir.display()))),
-        None => Some(("herdr-projects is not on your PATH".into(), format!("To type herdr-projects in any shell, put its folder on your PATH (in ~/.profile or your shell's start-up file): export PATH=\"{}:$PATH\"", dir.display()))),
+        None => Some(("herdr-projects is not on your PATH".into(), if cfg!(windows) { format!("To type herdr-projects in any shell, put its folder on your PATH: Settings > System > Environment variables, Path. The folder: {}", dir.display()) } else { format!("To type herdr-projects in any shell, put its folder on your PATH (in ~/.profile or your shell's start-up file): export PATH=\"{}:$PATH\"", dir.display()) })),
     }
 }
 /// `install`: the launcher in the data folder names this program (flow/send.rs writes it, the only writer), and what
@@ -151,7 +152,7 @@ pub fn install(exe: &Path) -> String {
 /// The commands: `install`, `update [VERSION]`.
 pub fn main(cmd: &str, args: &[String]) -> i32 {
     let exe = bin();
-    let exe = std::fs::canonicalize(&exe).unwrap_or(exe);
+    let exe = crate::platform::links::place(&exe);
     let out = if cmd == "install" { Ok(format!("{}\n{}", install(&exe), crate::take_over::look::look_here().join("\n"))) } else { update(&exe, args.first().map(String::as_str), &fetch) };
     match out { Ok(s) => { println!("{s}"); 0 } Err(e) => { eprintln!("{}", e.msg); 1 } }
 }

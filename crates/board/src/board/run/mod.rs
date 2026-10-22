@@ -21,7 +21,6 @@ use std::sync::{Arc, Mutex};
 
 pub enum Msg { Ev(Event), Mouse(ce::MouseEvent), Resize, Close, Load }
 static STOP: AtomicBool = AtomicBool::new(false);
-extern "C" fn on_signal(_: i32) { STOP.store(true, Ordering::SeqCst); }
 
 /// What the loop keeps beside the board's state: the terminal, the theme, the threads' handles.
 pub struct Run { pub tx: Sender<Msg>, pub wants: Arc<Mutex<Wants>>, pub load: Arc<(Mutex<bool>, std::sync::Condvar)>, pub machines_at: i64 }
@@ -46,7 +45,7 @@ pub fn open_board(folder: &std::path::Path) -> i32 {
     let load = Arc::new((Mutex::new(true), std::sync::Condvar::new()));
     let mut run = Run { tx: tx.clone(), wants: wants.clone(), load: load.clone(), machines_at: 0 };
     start::threads(&tx, &wants, &load);
-    unsafe { for sig in [libc::SIGTERM, libc::SIGHUP] { libc::signal(sig, on_signal as *const () as usize); } }
+    crate::platform::signal::on_end(&STOP);
     term::guard_panics();
     if term::enter().is_err() { return 1; }
     let backend = ratatui::backend::CrosstermBackend::new(std::io::stdout());

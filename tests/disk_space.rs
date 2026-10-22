@@ -9,7 +9,7 @@ use std::path::{Path, PathBuf};
 use sw::actions::{archive, finish_line};
 use sw::json::*;
 
-fn uid() -> u32 { sw::agents::scratch::uid() }
+fn uid() -> String { sw::agents::scratch::uid() }
 fn has(text: &str, re: &str) -> bool { regex::Regex::new(re).unwrap().is_match(text) }
 /// A file of `mb` megabytes at `p`, its folders made.
 fn fill(p: &Path, mb: usize) { std::fs::create_dir_all(p.parent().unwrap()).unwrap(); std::fs::write(p, vec![7u8; mb * 1_000_000]).unwrap(); }
@@ -25,11 +25,12 @@ fn the_agent_and_the_reviewer_start_with_the_task_s_own_temporary_folder_and_are
     assert_eq!(t.s("tmp"), tmp.display().to_string());
     assert!(tmp.starts_with(w.base.join("tmp").join(format!("hp-{}", uid()))) && tmp.ends_with(short(&id)), "{}", tmp.display());
     assert!(tmp.display().to_string().len() < w.base.join("tmp").display().to_string().len() + 30, "short, for the sockets programs make in it");
-    use std::os::unix::fs::PermissionsExt;
-    assert_eq!(std::fs::metadata(&tmp).unwrap().permissions().mode() & 0o777, 0o700);
+    #[cfg(unix)]
+    assert_eq!(std::os::unix::fs::PermissionsExt::mode(&std::fs::metadata(&tmp).unwrap().permissions()) & 0o777, 0o700);
     // herdr hands a worktree's space no environment: the pane's shell is given it right before the program starts
     let all = calls(&w);
-    let export = all.iter().position(|c| c.starts_with("pane run") && c.contains(&format!("export TMPDIR={0} TMP={0} TEMP={0} CLAUDE_CODE_TMPDIR={0}", tmp.display()))).expect("the export");
+    let want = if cfg!(windows) { format!("$env:TMPDIR='{0}'; $env:TMP='{0}'; $env:TEMP='{0}'; $env:CLAUDE_CODE_TMPDIR='{0}';", tmp.display()) } else { format!("export TMPDIR={0} TMP={0} TEMP={0} CLAUDE_CODE_TMPDIR={0}", tmp.display()) };
+    let export = all.iter().position(|c| c.starts_with("pane run") && c.contains(&want)).expect("the export");
     let start = all.iter().position(|c| c.starts_with("agent start sw-proj-1 ")).unwrap();
     assert!(export < start, "{all:?}");
     // the reviewer's tab has it from the start

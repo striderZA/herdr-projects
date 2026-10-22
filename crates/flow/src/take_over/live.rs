@@ -11,14 +11,13 @@ use std::path::Path;
 pub struct Live;
 /// The program a process runs is herdr-superwork's (its file is named so): only those are stopped.
 fn old_program(pid: i64) -> bool {
-    let Ok(o) = std::process::Command::new("ps").args(["-p", &pid.to_string(), "-o", "args="]).output() else { return false };
-    let args = String::from_utf8_lossy(&o.stdout);
-    let prog = args.split_whitespace().next().unwrap_or("");
+    let Some(args) = crate::platform::proc::command_line(pid) else { return false };
+    let prog = match args.strip_prefix('"') { Some(rest) => rest.split('"').next().unwrap_or(""), None => args.split_whitespace().next().unwrap_or("") };
     Path::new(prog).file_name().map(|n| n.to_string_lossy().starts_with(OLD_ID)).unwrap_or(false)
 }
 fn stop(pid: i64) {
-    unsafe { libc::kill(pid as i32, libc::SIGTERM); }
-    for n in 0..60 { if !pid_alive(pid) { return; } if n == 40 { unsafe { libc::kill(pid as i32, libc::SIGKILL); } } crate::clock::sleep_ms(50); }
+    crate::platform::proc::signal(pid, false);
+    for n in 0..60 { if !pid_alive(pid) { return; } if n == 40 { crate::platform::proc::signal(pid, true); } crate::clock::sleep_ms(50); }
 }
 impl Sys for Live {
     fn launcher(&self) -> Option<String> { std::fs::read_to_string(crate::flow::send::shim()).ok() }

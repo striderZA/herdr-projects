@@ -33,8 +33,7 @@ fn a_commit_that_reaches_the_branch_while_it_is_being_merged_is_neither_merged_u
     let hook = w.root.join(".git/hooks/pre-commit");
     std::fs::create_dir_all(hook.parent().unwrap()).unwrap();
     std::fs::write(&hook, format!("#!/bin/sh\n[ -n \"$SW_LATE\" ] && exit 0\n(unset GIT_DIR GIT_INDEX_FILE GIT_WORK_TREE GIT_PREFIX; cd \"{}\" && echo late > late.txt && SW_LATE=1 git add -A && SW_LATE=1 git commit -qm late)\n", tree.display())).unwrap();
-    use std::os::unix::fs::PermissionsExt;
-    std::fs::set_permissions(&hook, std::fs::Permissions::from_mode(0o755)).unwrap();
+    sw::platform::perms::make_executable(&hook).unwrap();
     finish_line::approve(&id, None, false).unwrap();
     let t = settle(&id);
     assert_eq!(t.s("stage"), "done", "{}", t.at("failure"));

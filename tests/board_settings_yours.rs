@@ -21,6 +21,7 @@ fn pick(b: &mut Board, name: &str) {
 }
 fn whose(b: &Board) -> Option<Whose> { b.s.editing.as_ref().map(|e| e.whose.clone()) }
 /// A board with every machine shown: this machine's tasks and otherbox's one.
+#[cfg(unix)]
 fn every_machine() -> (World, Board, String) {
     let w = world_with(Opts { repo: true, settings: json!({ "board.machines": "otherbox" }), ..Default::default() });
     let id = w.add("Mine");
@@ -33,6 +34,7 @@ fn every_machine() -> (World, Board, String) {
 }
 
 #[test]
+#[cfg(unix)]
 fn the_settings_key_on_this_machines_heading_changes_your_own_settings_and_a_task_follows() {
     let (_w, mut b, id) = every_machine();
     b.s.sel = "head:machine\t".into();
@@ -67,6 +69,7 @@ fn the_settings_key_on_this_machines_heading_changes_your_own_settings_and_a_tas
 }
 
 #[test]
+#[cfg(unix)]
 fn on_a_repos_heading_it_is_your_entry_for_that_repo_on_a_task_the_tasks_own_and_another_machines_says_where() {
     let (_w, mut b, id) = every_machine();
     b.press(&["alt+s"]); assert!(b.s.by_repo);

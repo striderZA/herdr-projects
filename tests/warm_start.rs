@@ -24,8 +24,7 @@ impl Bench {
     fn dir(&self, wt: &str) -> PathBuf { self.base.join(wt) }
     fn git(&self, wt: &str, a: &[&str]) -> String {
         let o = Command::new("git").args(["-c", "user.name=t", "-c", "user.email=t@t"]).args(a).current_dir(self.dir(wt))
-            .env("GIT_CONFIG_GLOBAL", "/dev/null").env("GIT_CONFIG_NOSYSTEM", "1").output().unwrap();
-        assert!(o.status.success(), "git {a:?}: {}", String::from_utf8_lossy(&o.stderr));
+            .env("GIT_CONFIG_GLOBAL", self.base.join("empty-gitconfig")).env("GIT_CONFIG_NOSYSTEM", "1").output().unwrap();
         String::from_utf8_lossy(&o.stdout).trim().to_string()
     }
     fn write(&self, wt: &str, f: &str, text: &str) {
@@ -53,9 +52,9 @@ impl Bench {
     fn setup(&self, wt: &str, build: bool) -> String {
         let script = Path::new(env!("CARGO_MANIFEST_DIR")).join("scripts/warm-start.sh");
         let built = if build { format!("mkdir -p target/quick && echo 'built in {wt}' > target/quick/herdr-projects") } else { ":".into() };
-        let o = Command::new("/bin/sh").arg("-c").arg(format!("set -e; . '{}'; ws_seed; {built}; ws_keep", script.display()))
+        let o = Command::new("sh").arg("-c").arg(format!("set -e; . '{}'; ws_seed; {built}; ws_keep", script.display()))
             .current_dir(self.dir(wt)).env("XDG_CACHE_HOME", self.base.join("cache")).env_remove("HERDR_PROJECTS_NO_WARM")
-            .env_remove("CARGO_TARGET_DIR").env("GIT_CONFIG_GLOBAL", "/dev/null").env("GIT_CONFIG_NOSYSTEM", "1").output().unwrap();
+            .env_remove("CARGO_TARGET_DIR").env("GIT_CONFIG_GLOBAL", self.base.join("empty-gitconfig")).env("GIT_CONFIG_NOSYSTEM", "1").output().unwrap();
         assert!(o.status.success(), "the setup's steps failed: {}", String::from_utf8_lossy(&o.stderr));
         String::from_utf8_lossy(&o.stdout).into_owned()
     }

@@ -2,7 +2,7 @@
 //! stopping them before the folder goes, as stopping a task ends its panes: this user's own processes only, never this
 //! one or one it runs under. A process runs from a folder when its working folder or its program is in it (Linux:
 //! /proc; elsewhere `lsof`).
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 fn inside(p: &Path, dir: &Path) -> bool { p.starts_with(dir) }
 /// The process a process runs under.
@@ -25,12 +25,12 @@ fn ended(pid: i32) -> bool {
 }
 #[cfg(target_os = "linux")]
 fn running_from(dir: &Path) -> Vec<i32> {
-    use std::os::unix::fs::MetadataExt;
+    use std::path::PathBuf;
     let me = crate::agents::scratch::uid();
     let mut out = vec![];
     for e in std::fs::read_dir("/proc").into_iter().flatten().flatten() {
         let Some(pid) = e.file_name().to_str().and_then(|n| n.parse::<i32>().ok()) else { continue };
-        if e.metadata().map(|m| m.uid() != me).unwrap_or(true) { continue; }
+        if e.metadata().map(|m| crate::platform::meta::owner(&m) != me).unwrap_or(true) { continue; }
         let link = |w: &str| std::fs::read_link(e.path().join(w)).ok().map(|p| PathBuf::from(p.display().to_string().trim_end_matches(" (deleted)")));
         if link("cwd").map(|p| inside(&p, dir)).unwrap_or(false) || link("exe").map(|p| inside(&p, dir)).unwrap_or(false) { out.push(pid); }
     }
@@ -59,12 +59,12 @@ pub fn in_folder_but(dir: &Path, under: Option<i32>) -> Vec<i32> {
 }
 /// Stop what runs from the folder: asked to end, then, a few seconds on, ended. How many there were.
 pub fn stop_in(dir: &Path) -> usize {
-    if std::fs::symlink_metadata(dir).map(|m| m.file_type().is_symlink()).unwrap_or(true) { return 0; } // never through a link
+    if std::fs::symlink_metadata(dir).map(|m| crate::platform::meta::is_link(&m)).unwrap_or(true) { return 0; } // never through a link
     let pids = in_folder(dir);
-    for sig in [libc::SIGTERM, libc::SIGKILL] {
+    for force in [false, true] {
         let left: Vec<i32> = pids.iter().copied().filter(|p| !ended(*p)).collect();
         if left.is_empty() { break; }
-        for p in &left { unsafe { libc::kill(*p, sig); } }
+        for p in &left { crate::platform::proc::signal(*p as i64, force); }
         for _ in 0..30 { if left.iter().all(|p| ended(*p)) { break; } std::thread::sleep(std::time::Duration::from_millis(100)); }
     }
     pids.len()

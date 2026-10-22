@@ -25,7 +25,7 @@ impl Upstream for Door {
     fn down(&self) { if crate::clock::now() - *self.looked_at.lock().unwrap() > 5000 { self.find(); } }
 }
 /// A listener and the switch that stops its loop.
-struct Open { port: u16, on: Arc<AtomicBool> }
+struct Open { port: u16, on: Arc<AtomicBool>, thread: std::thread::JoinHandle<()> }
 /// The port it had may still be held for a moment by the process it takes over from; then the first one; then any.
 fn listen(wants: &[(u16, u32)]) -> Option<TcpListener> {
     for (port, tries) in wants {
@@ -38,7 +38,7 @@ fn open(door: &Arc<Door>, wants: &[(u16, u32)]) -> Option<Open> {
     let port = l.local_addr().ok()?.port();
     let on = Arc::new(AtomicBool::new(true));
     let (d, flag) = (door.clone(), on.clone());
-    std::thread::spawn(move || {
+    let thread = std::thread::spawn(move || {
         for conn in l.incoming() {
             if !flag.load(Ordering::SeqCst) { break; }
             let Ok(c) = conn else { continue };
@@ -46,9 +46,9 @@ fn open(door: &Arc<Door>, wants: &[(u16, u32)]) -> Option<Open> {
             std::thread::spawn(move || handle(c, &*d));
         }
     });
-    Some(Open { port, on })
+    Some(Open { port, on, thread })
 }
-fn shut(o: &Open) { o.on.store(false, Ordering::SeqCst); let _ = TcpStream::connect(("127.0.0.1", o.port)); }
+fn shut(o: Open) { o.on.store(false, Ordering::SeqCst); let _ = TcpStream::connect(("127.0.0.1", o.port)); let _ = o.thread.join(); }
 /// The front door's loop, one look at a time: what it has open, and the port it had (a test takes the looks itself).
 pub struct DoorLoop { door: Arc<Door>, server: Option<Open>, saved: u16 }
 impl Default for DoorLoop { fn default() -> Self { Self::new() } }
@@ -61,9 +61,9 @@ impl DoorLoop {
     pub fn tick(&mut self) {
         let before = self.door.to.lock().unwrap().clone();
         let to = self.door.find();
-        match (&to, &self.server) {
+        match (&to, self.server.as_ref().map(|o| o.port)) {
             // The web UI is gone, or the board in it was turned off: its link goes back. On again, it asks for this port.
-            (None, Some(o)) => { let _ = link::unlink(Some(o.port), before.as_ref().map(|w| w.port)); self.saved = o.port; shut(o); self.server = None; *self.door.linked.lock().unwrap() = String::new(); let _ = write_json(&door_file(), &json!({})); }
+            (None, Some(port)) => { let _ = link::unlink(Some(port), before.as_ref().map(|w| w.port)); self.saved = port; if let Some(o) = self.server.take() { shut(o); } *self.door.linked.lock().unwrap() = String::new(); let _ = write_json(&door_file(), &json!({})); }
             (None, None) => {}
             (Some(w), None) => {
                 // The board shows the herdr the web UI shows (find.rs says which).
@@ -73,7 +73,7 @@ impl DoorLoop {
                 wants.push((FIRST_PORT, 1)); wants.push((0, 1));
                 if let Some(o) = open(&self.door, &wants) { Self::write(o.port, &to); self.server = Some(o); }
             }
-            (Some(w), Some(o)) => if before.as_ref().map(|b| (b.port, &b.host)) != Some((w.port, &w.host)) { Self::write(o.port, &to); },
+            (Some(w), Some(port)) => if before.as_ref().map(|b| (b.port, &b.host)) != Some((w.port, &w.host)) { Self::write(port, &to); },
         }
         // Its links are where it is, and go back to where the web UI is now: one that still points at where the
         // front door was is brought along. A link made for the web UI later is left alone.
@@ -83,7 +83,7 @@ impl DoorLoop {
         }
     }
     /// Closed cleanly: nothing listens, and its bookkeeping says so.
-    pub fn stop(&mut self) { if let Some(o) = self.server.take() { shut(&o); } let _ = write_json(&door_file(), &json!({})); }
+    pub fn stop(&mut self) { if let Some(o) = self.server.take() { shut(o); } let _ = write_json(&door_file(), &json!({})); }
 }
 /// In the page server's process: opens the front door while there is a web UI, and keeps looking. Never fails.
 pub fn run_door() {
@@ -94,7 +94,7 @@ pub fn run_door() {
     std::thread::spawn(move || loop {
         // The program was updated: a new process takes over, on the same port (the file keeps saying which).
         if crate::keeper::code_stamp(&exe) != stamp {
-            if let Some(o) = d.server.take() { shut(&o); }
+            if let Some(o) = d.server.take() { shut(o); }
             crate::housekeeping::spawn_loose(&["serve"]);
             std::thread::sleep(std::time::Duration::from_millis(50));
             std::process::exit(0);

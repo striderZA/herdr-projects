@@ -22,6 +22,8 @@ fn empty_otherbox() -> (World, Board) {
     (w, s)
 }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn a_machine_with_no_task_has_its_heading_folded_and_space_there_talks_to_its_machine_coordinator() {
     let (_w, mut s) = empty_otherbox();
@@ -51,7 +53,7 @@ fn a_machine_with_no_task_has_its_heading_folded_and_space_there_talks_to_its_ma
 fn this_machine_with_no_task_has_its_heading_too_and_a_filter_hides_the_empty_ones() {
     let w = world_with(Opts { repo: true, settings: json!({ "board.machines": "otherbox" }), ..Default::default() });
     let mut s = open(&w.root, 40); s.s.side = false;
-    update(&mut s.s, Event::Machines(sw::remote::machines()));
+    update(&mut s.s, Event::Machines(vec![sw::remote::Machine { id: "otherbox".into(), target: "otherbox".into(), session: String::new(), label: "otherbox".into() }]));
     let now = sw::clock::now();
     update(&mut s.s, Event::Remote { label: "otherbox".into(), answer: Ok(json!({ "host": "otherbox", "version": "9.0.0", "tasks": [{ "id": "proj/1", "title": "Theirs", "state": "idle", "stage": "todo", "at": now, "created": now }] })) });
     s.press(&["alt+m"]);
@@ -63,6 +65,8 @@ fn this_machine_with_no_task_has_its_heading_too_and_a_filter_hides_the_empty_on
     assert!(!t.contains("0 tasks") && t.contains("Theirs"), "{t}");
 }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn the_web_board_shows_an_empty_machine_folded_with_0_tasks() {
     let (_w, s) = empty_otherbox();

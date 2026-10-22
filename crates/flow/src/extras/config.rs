@@ -28,7 +28,7 @@ fn block(what: &str, arg: &str) -> String {
 }
 pub fn block_text(what: &str, arg: &str) -> String { format!("{}\n{}\n{}", begin(what), block(what, arg), end(what)) }
 fn read() -> String { std::fs::read_to_string(herdr_config()).unwrap_or_default() }
-fn is_link() -> bool { std::fs::symlink_metadata(herdr_config()).map(|m| m.file_type().is_symlink()).unwrap_or(false) }
+fn is_link() -> bool { std::fs::symlink_metadata(herdr_config()).map(|m| crate::platform::meta::is_link(&m)).unwrap_or(false) }
 fn herdr_out(a: &[&str], env: Option<(&str, String)>) -> Option<(i32, String)> {
     if let Some(f) = crate::herdr::cli::fake() { let r = f.run(&a.iter().map(|x| x.to_string()).collect::<Vec<_>>(), ""); return Some((r.status, format!("{}{}", r.stdout, if r.stdout.is_empty() { r.stderr } else { String::new() }))); }
     let mut c = std::process::Command::new(crate::herdr::cli::bin());
@@ -132,7 +132,7 @@ pub fn remove_popups() -> bool {
 /// The whole file made `next`, for what an older install left in it (take_over/herdr_config.rs): checked on a copy
 /// first, backed up, herdr told to reload, and put back as it was when herdr rejects it.
 pub fn rewrite(file: &std::path::Path, next: &str) -> Result<(), String> {
-    if std::fs::symlink_metadata(file).map(|m| m.file_type().is_symlink()).unwrap_or(false) { return Err(format!("{} is a link, not ours to rewrite", tilde(&file.display().to_string()))); }
+    if std::fs::symlink_metadata(file).map(|m| crate::platform::meta::is_link(&m)).unwrap_or(false) { return Err(format!("{} is a link, not ours to rewrite", tilde(&file.display().to_string()))); }
     accepted(next).map_err(|why| format!("herdr would reject the change: {why}"))?;
     let text = std::fs::read_to_string(file).unwrap_or_default();
     std::fs::copy(file, format!("{}.bak-herdr-projects", file.display())).and_then(|_| std::fs::write(file, next)).map_err(|e| e.to_string())?;

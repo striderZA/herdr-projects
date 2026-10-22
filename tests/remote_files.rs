@@ -2,27 +2,38 @@
 //! link first (`remote keep`, the file on its stdin), and the words name it where it landed there; a file that cannot
 //! go stops the words, and says why. Also that machine's side: where its door keeps the file.
 use crate::common;
+#[cfg(unix)]
 use crate::far;
 use common::*;
+#[cfg(unix)]
 use far::Far;
 use serde_json::{json, Value};
+#[cfg(unix)]
 use sw::board::job_far::{dispatch, far as far_do};
 use sw::json::*;
+#[cfg(unix)]
 use sw::remote::Machine;
 
+#[cfg(unix)]
 fn vm_a() -> Machine { Machine { label: "vm-a".into(), target: "me@vm-a".into(), ..Default::default() } }
 /// What vm-a was asked, in order, without the machine: the request and what came with it.
+#[cfg(unix)]
 fn asked(far: &Far) -> Vec<(String, Value)> { far.asked().into_iter().map(|(_, what, arg)| (what, arg)).collect() }
 /// A file of this machine, in a folder of the test's own.
+#[cfg(unix)]
 fn file(w: &World, name: &str, bytes: &[u8]) -> String {
     let dir = w.base.join("desk");
     std::fs::create_dir_all(&dir).unwrap();
     std::fs::write(dir.join(name), bytes).unwrap();
     dir.join(name).display().to_string()
 }
+#[cfg(unix)]
 fn tell(text: &str) -> sw::board::job::Done { far_do(&vm_a(), "vm-a", "tell", json!({ "id": "far/1", "text": text }), false) }
+#[cfg(unix)]
 fn said(d: &sw::board::job::Done) -> String { d.flash.as_ref().map(|f| f.0.clone()).unwrap_or_default() }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn a_reply_to_another_machines_agent_takes_the_file_it_names_along_and_names_it_where_it_landed() {
     let w = world();
@@ -39,6 +50,8 @@ fn a_reply_to_another_machines_agent_takes_the_file_it_names_along_and_names_it_
     assert_eq!(a[1].1.s("text"), "look at @/home/me/proj/.herdr-projects/files/paste-1.png and @/home/me/proj/.herdr-projects/files/paste-1.png please");
 }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn a_dropped_path_goes_too_bare_escaped_or_quoted_and_a_path_that_is_no_file_here_is_left_as_it_is() {
     let w = world();
@@ -69,6 +82,8 @@ fn a_dropped_path_goes_too_bare_escaped_or_quoted_and_a_path_that_is_no_file_her
     assert_eq!(a[0].1.s("text"), words);
 }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn a_file_that_cannot_go_stops_the_words_and_says_why() {
     let w = world();
@@ -97,6 +112,8 @@ fn a_file_that_cannot_go_stops_the_words_and_says_why() {
     assert!(d.then.iter().any(|t| matches!(t, sw::board::job::Then::Unsent { text: x, to } if *x == text && to == "vm-a:far/1")), "{:?}", d.then);
 }
 
+// Unix only: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#[cfg(unix)]
 #[test]
 fn words_for_another_machines_coordinator_take_their_files_along_and_a_file_that_cannot_go_leaves_the_row_saying_why() {
     let w = world();

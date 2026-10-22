@@ -12,12 +12,6 @@ pub fn boxed() -> bool { std::env::var(MARK).as_deref() == Ok("1") }
 /// macOS's own check (libsystem_sandbox, in every Mac process): 1 for a sandboxed process, 0 for one that is not; with
 /// no operation named (SANDBOX_FILTER_NONE) it asks only that. It is looked up when it is asked for, not linked, so
 /// this builds, and is checked, everywhere: elsewhere there is no such function, and so no sandbox it could see.
-type Check = unsafe extern "C" fn(libc::pid_t, *const libc::c_char, libc::c_int, ...) -> libc::c_int;
-pub fn os_says() -> bool {
-    let f = unsafe { libc::dlsym(libc::RTLD_DEFAULT, c"sandbox_check".as_ptr()) };
-    if f.is_null() { return false; }
-    let check: Check = unsafe { std::mem::transmute::<*mut libc::c_void, Check>(f) };
-    unsafe { check(libc::getpid(), std::ptr::null(), 0) == 1 }
-}
+pub fn os_says() -> bool { crate::platform::sandbox::os_says() }
 /// Tests run the board's jobs in their own process (and may themselves run in a sandbox): there only the mark counts.
 pub fn inside() -> bool { boxed() || (!crate::runner::inline() && os_says()) }

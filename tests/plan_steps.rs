@@ -22,6 +22,8 @@ fn last(w: &World, t: &Obj) -> String { prompts(w, t.at("link").s("pane")).last(
 fn tell(id: &str, words: &str) { sw::actions::talk::tell(id, words, false).unwrap(); }
 fn approve(id: &str) { sw::actions::finish_line::approve(id, None, false).unwrap(); }
 
+// Unix only: a plan writer needs a read-only mount, which Windows does not have.
+#[cfg(unix)]
 #[test]
 fn the_settings_are_read_when_their_step_starts_and_a_stop_with_no_plan_is_a_failure_the_agent_can_fix() {
     let w = plan_world(json!({ "worker.agent": "codex", "review.when": "never" }), "bwrap");
@@ -60,6 +62,9 @@ fn the_settings_are_read_when_their_step_starts_and_a_stop_with_no_plan_is_a_fai
 }
 
 #[test]
+// Unix only: plan approval needs a read-only mount for the plan's writer, which Windows does not have. The start is
+// refused there: plan_modes::plan_approval_you_is_refused_on_windows_with_its_reason.
+#[cfg(unix)]
 fn without_a_read_only_mount_no_plan_is_written_in_a_repo_and_a_plan_said_not_saved_is_the_new_plan() {
     let w = plan_world(json!({ "plan.approve": "you", "worker.agent": "codex", "review.when": "never" }), "none");
     // A machine where the mount cannot be made: nothing is started, in the task's worktree or in your checkout.
@@ -102,6 +107,9 @@ fn without_a_read_only_mount_no_plan_is_written_in_a_repo_and_a_plan_said_not_sa
 }
 
 #[test]
+// Unix only: plan approval needs a read-only mount for the plan's writer, which Windows does not have. The start is
+// refused there: plan_modes::plan_approval_you_is_refused_on_windows_with_its_reason.
+#[cfg(unix)]
 fn a_plan_review_that_cannot_start_leaves_the_plan_for_your_yes_and_the_yes_builds_it_writable_even_when_its_start_fails() {
     let w = plan_world(json!({ "plan.approve": "you", "worker.agent": "codex", "review.when": "never" }), "bwrap");
     w.script(json!({ "worker": [{ "plan": PLAN, "note": "Written." }, { "plan": PLAN, "note": "The same." }, { "status": "working" }] }));
@@ -141,6 +149,9 @@ fn a_plan_review_that_cannot_start_leaves_the_plan_for_your_yes_and_the_yes_buil
 }
 
 #[test]
+// Unix only: plan approval needs a read-only mount for the plan's writer, which Windows does not have. The start is
+// refused there: plan_modes::plan_approval_you_is_refused_on_windows_with_its_reason.
+#[cfg(unix)]
 fn a_plan_and_several_attempts_the_plan_is_approved_once_then_every_attempt_is_handed_it() {
     let w = plan_world(json!({ "plan.approve": "you", "attempts.by": "codex, claude", "review.when": "never" }), "bwrap");
     w.script(json!({ "worker": [{ "plan": PLAN, "note": "Written." }, { "status": "working" }, { "status": "working" }] }));

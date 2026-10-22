@@ -3,6 +3,8 @@
 //! there), whose path is answered; for a heading's coordinator, and for the Coordinator of the machine whose board
 //! shows; and where the web UI cannot (no PC, not connected, no pane known, or it says why not), over the board's own
 //! SSH link, or the box is told plainly that it could not be sent there.
+//! Unix only, gated on Windows: it needs another machine over SSH, and SSH machines are not in v1 on Windows.
+#![cfg(unix)]
 use crate::common;
 use crate::far;
 use common::*;

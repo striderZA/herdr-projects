@@ -15,6 +15,8 @@ fn plan_world(settings: serde_json::Value) -> World {
     w
 }
 
+// Unix only: a plan writer needs a read-only mount, which Windows does not have.
+#[cfg(unix)]
 #[test]
 fn plan_approve_you_waits_as_plan_ready_and_the_yes_starts_the_build() {
     let w = plan_world(json!({ "plan.approve": "you", "worker.agent": "codex" }));
@@ -75,6 +77,9 @@ fn plan_approve_you_waits_as_plan_ready_and_the_yes_starts_the_build() {
 }
 
 #[test]
+// Unix only: plan approval needs a read-only mount for the plan's writer, which Windows does not have. The start is
+// refused there: plan_modes::plan_approval_you_is_refused_on_windows_with_its_reason.
+#[cfg(unix)]
 fn plan_approve_reviewer_sends_a_failing_plan_back_and_builds_one_that_passes() {
     let w = plan_world(json!({ "plan.approve": "reviewer", "worker.agent": "codex", "review.rounds": 1, "review.when": "never" }));
     let bad = |subject: &str| json!({ "verdict": { "meets": true, "findings": [{ "severity": "major", "subject": subject, "where": "step 1", "proof": "read the plan" }], "text": "Not yet." } });

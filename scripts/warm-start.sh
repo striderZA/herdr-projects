@@ -45,7 +45,17 @@ ws_seed() {
   # What was built with that folder's path written into it (env!("CARGO_MANIFEST_DIR")) cargo would take as built
   # here too: built again (its notes removed), never carried over. A path into its own target/ cargo moves itself.
   for d in target/quick/deps/*.d target/quick/build/*/*.d; do
-    grep '^# env-dep:' "$d" 2>/dev/null | grep -F "$ws_was" | grep -vF "$ws_was/target/" | grep -q . || continue
+    case "$(uname -s)" in
+      MINGW*|MSYS*|CYGWIN*)
+        if command -v cygpath >/dev/null 2>&1; then
+          ws_match=$(cygpath -m "$ws_was" 2>/dev/null) || ws_match=$ws_was
+          tr '\\' '/' < "$d" | tr -s '/' | grep '^# env-dep:' | grep -F "$ws_match" | grep -vF "$ws_match/target/" | grep -q . || continue
+        else
+          grep '^# env-dep:' "$d" 2>/dev/null | grep -F "$ws_was" | grep -vF "$ws_was/target/" | grep -q . || continue
+        fi ;;
+      *)
+        grep '^# env-dep:' "$d" 2>/dev/null | grep -F "$ws_was" | grep -vF "$ws_was/target/" | grep -q . || continue ;;
+    esac
     h=${d##*-}; rm -rf target/quick/.fingerprint/*-"${h%.d}"
   done
   if [ "$ws_list" != "-" ]; then

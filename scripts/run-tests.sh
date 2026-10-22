@@ -60,15 +60,18 @@ if [ -n "$units" ] || [ -z "$mods" ] || [ -n "$words" ]; then
 fi
 n=0
 while [ "$n" -lt "$i" ]; do
+  # A Windows command line takes 32,767 characters at most: a process's names go to its program in pieces of 100, one
+  # piece after another, so a process with many names never fails to start.
   # shellcheck disable=SC2046
-  ( rc=0; "$(cat "$tmp/$n.bin")" -q --exact $(cat "$tmp/$n.names") > "$tmp/$n.out" 2>&1 || rc=$?; echo "$rc" > "$tmp/$n.rc" ) &
+  ( rc=0; : > "$tmp/$n.out"; split -l 100 "$tmp/$n.names" "$tmp/$n.part."; for p in "$tmp/$n.part."*; do "$(cat "$tmp/$n.bin")" -q --exact $(cat "$p") >> "$tmp/$n.out" 2>&1 || rc=$?; done; echo "$rc" > "$tmp/$n.rc" ) &
   n=$((n + 1))
 done
 wait
 passed=${doc:-0}; failed=0; bad=""
 n=0
 while [ "$n" -lt "$i" ]; do
-  r=$(sed -n 's/^test result: [A-Za-z]*\. \([0-9]*\) passed; \([0-9]*\) failed.*/\1 \2/p' "$tmp/$n.out" | tail -1)
+  # Each piece of a process reports its own results: all of them count.
+  r=$(sed -n 's/^test result: [A-Za-z]*\. \([0-9]*\) passed; \([0-9]*\) failed.*/\1 \2/p' "$tmp/$n.out" | awk '{ p += $1; f += $2; s = 1 } END { if (s) print p, f }')
   if [ -n "$r" ]; then passed=$((passed + ${r%% *})); failed=$((failed + ${r##* })); fi
   if [ "$(cat "$tmp/$n.rc")" != 0 ]; then bad="$bad $n"; [ -n "$r" ] || failed=$((failed + 1)); fi
   n=$((n + 1))

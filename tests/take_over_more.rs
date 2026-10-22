@@ -61,8 +61,7 @@ fn an_old_ticker_that_will_not_stop_leaves_both_folders_where_they_are_for_now()
     m.superwork();
     // The ticker holds its lock (here: this test does), and its pid is not one a signal reaches.
     let lock = std::fs::File::open(m.at(".herdr-projects/.ticker.lock")).unwrap();
-    use std::os::fd::AsRawFd;
-    assert_eq!(unsafe { libc::flock(lock.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) }, 0);
+    assert!(sw::platform::lock::try_lock(&lock), "the test holds the ticker's lock: another handle has it");
     put(&m.at(".herdr-projects/.ticker.lock"), r#"{"pid":0}"#);
     let r = m.run(&Fake::default());
     assert_eq!(r.stay, Some(m.at(".herdr-superwork"))); // this run works on herdr-superwork's folder where it is
@@ -73,7 +72,7 @@ fn an_old_ticker_that_will_not_stop_leaves_both_folders_where_they_are_for_now()
     drop(lock);
     let r = m.run(&Fake::default());
     assert!(r.stay.is_none() && r.left.is_empty(), "{:?}", r.left);
-    assert!(is_link(&m.at(".herdr-superwork")) && m.at(".herdr-projects-legacy/gtm-ai/PROJECT.md").exists() && !exists(&m.at(".herdr-projects-legacy/.ticker.stop")));
+    assert!(is_link(&m.at(".herdr-superwork")) == cfg!(unix) && is_link(&m.at(".herdr-projects")) == cfg!(windows) && m.at(".herdr-projects-legacy/gtm-ai/PROJECT.md").exists() && !exists(&m.at(".herdr-projects-legacy/.ticker.stop")));
 }
 
 #[test]
@@ -89,6 +88,8 @@ fn herdr_refusing_the_change_leaves_its_config_as_it_was_and_says_so() {
     assert!(!read(&m.p.herdr_config).contains("open-popup"), "{d:?}");
 }
 
+// Windows links the new path to the old folder instead of performing the Unix-only injected swap.
+#[cfg(unix)]
 #[test]
 fn a_run_cut_off_after_the_move_is_finished_by_the_next_one() {
     let w = world_with(Opts::default());
@@ -120,6 +121,7 @@ fn a_repo_with_only_herdr_superworks_settings_file_keeps_its_settings() {
     assert_eq!(sw::store::settings::places::repo_file(&root, None).0.s("repo.key"), "NEW");
 }
 
+#[cfg(unix)]
 #[test]
 fn real_programs_herdr_superworks_own_processes_are_stopped_and_no_other() {
     use sw::take_over::Sys;

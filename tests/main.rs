@@ -1,12 +1,9 @@
-//! The one test program: every file in tests/ is a module of it, one `mod` line each in its place in the list,
-//! so cargo compiles and links the tests once. A new test file is a new line here (the guard fails a file left out).
-//! What the files share is declared once, at the top. Running one area alone: `npm run check board-panel`.
+//! The one test program: every file in tests/ is a module of it, one `mod` line each in its place in the list (the guard fails a file left out).
 mod common;
 mod far;
 mod move_home;
 mod review_kit;
 mod takeover_kit;
-
 mod after;
 mod after_far;
 mod after_more;
@@ -107,6 +104,7 @@ mod board_still_sight;
 mod board_textbox;
 mod board_widths;
 mod board_widths_rest;
+mod calls_windows;
 mod chat_only;
 mod chat_review;
 mod check_again;
@@ -182,6 +180,7 @@ mod merge_rest;
 mod model_refused;
 mod notify;
 mod old_suggestions;
+mod pane_payload;
 mod plan;
 mod plan_modes;
 mod plan_more;
@@ -189,6 +188,16 @@ mod plan_rest;
 mod plan_sandbox;
 mod plan_steps;
 mod plan_untouched;
+mod platform_disk;
+mod platform_endpoint;
+mod platform_links;
+mod platform_lock;
+mod platform_meta;
+mod platform_net;
+mod platform_perms;
+mod platform_proc;
+mod platform_shell;
+mod platform_signal;
 mod pull_requests;
 mod pull_requests_actions_only;
 mod pull_requests_already;
@@ -206,6 +215,7 @@ mod remote_files;
 mod remote_more;
 mod remote_open;
 mod remote_why;
+mod remote_windows;
 mod research;
 mod research_more;
 mod research_rest;
@@ -285,5 +295,6 @@ mod web_rest;
 mod web_select;
 mod web_settings;
 mod web_voice;
+mod windows_launcher;
 mod workspace_branch;
 mod workspace_from;

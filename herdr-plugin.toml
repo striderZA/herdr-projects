@@ -49,6 +49,54 @@ command = ["sh", "bin/run.sh", "hook"]
 on = "worktree.removed"
 command = ["sh", "bin/run.sh", "hook"]
 
+# Windows invokes the downloaded executable directly; each action id is distinct across platforms.
+[[build]]
+platforms = ["windows"]
+command = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "bin/run.ps1", "--fetch"]
+
+[[startup]]
+platforms = ["windows"]
+command = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "bin/run.ps1", "hook"]
+
+[[actions]]
+id = "open-windows"
+platforms = ["windows"]
+title = "Open the work board"
+command = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", '''$b=$env:HERDR_BIN_PATH; if(-not $b){$b='herdr'}; $p=((& $b plugin list --json|ConvertFrom-Json).result.plugins|?{$_.plugin_id -eq 'herdr-projects'}).plugin_root; if($p -and $p.StartsWith('\\?\')){$p=$p.Substring(4)}; & (Join-Path (Join-Path $p 'bin') 'run.ps1') open''']
+
+[[actions]]
+id = "coordinator-windows"
+platforms = ["windows"]
+title = "Go into the Coordinator's chat"
+command = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", '''$b=$env:HERDR_BIN_PATH; if(-not $b){$b='herdr'}; $p=((& $b plugin list --json|ConvertFrom-Json).result.plugins|?{$_.plugin_id -eq 'herdr-projects'}).plugin_root; if($p -and $p.StartsWith('\\?\')){$p=$p.Substring(4)}; & (Join-Path (Join-Path $p 'bin') 'run.ps1') open-coordinator''']
+
+[[actions]]
+id = "approve-current-windows"
+platforms = ["windows"]
+title = "Approve the task in the focused pane (the board asks first)"
+contexts = ["pane"]
+command = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", '''$b=$env:HERDR_BIN_PATH; if(-not $b){$b='herdr'}; $p=((& $b plugin list --json|ConvertFrom-Json).result.plugins|?{$_.plugin_id -eq 'herdr-projects'}).plugin_root; if($p -and $p.StartsWith('\\?\')){$p=$p.Substring(4)}; & (Join-Path (Join-Path $p 'bin') 'run.ps1') approve-current''']
+
+[[events]]
+platforms = ["windows"]
+on = "pane.agent_status_changed"
+command = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "bin/run.ps1", "hook"]
+
+[[events]]
+platforms = ["windows"]
+on = "pane.agent_detected"
+command = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "bin/run.ps1", "hook"]
+
+[[events]]
+platforms = ["windows"]
+on = "pane.closed"
+command = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "bin/run.ps1", "hook"]
+
+[[events]]
+platforms = ["windows"]
+on = "worktree.removed"
+command = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "bin/run.ps1", "hook"]
+
 [[panes]]
 id = "board"
 title = "Work board"

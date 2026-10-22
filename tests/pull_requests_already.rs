@@ -23,8 +23,7 @@ fn archivable(w: &World) -> Value {
     let bare = w.base.join("origin.git");
     let hook = bare.join("hooks").join("pre-receive");
     std::fs::write(&hook, "#!/bin/sh\nif [ \"$(git config --get herdr.archived)\" = true ]; then echo 'ERROR: This repository was archived so it is read-only.' >&2; exit 1; fi\n").unwrap();
-    use std::os::unix::fs::PermissionsExt;
-    std::fs::set_permissions(&hook, std::fs::Permissions::from_mode(0o755)).unwrap();
+    sw::platform::perms::make_executable(&hook).unwrap();
     json!(["--git-dir", bare.display().to_string(), "config", "herdr.archived", "true"])
 }
 

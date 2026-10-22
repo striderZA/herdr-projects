@@ -77,6 +77,7 @@ fn real_shim(w: &World) -> std::path::PathBuf { sw::herdr::cli::set_fake(None); 
 fn env_obj(v: Vec<(String, String)>) -> Value { Value::Object(v.into_iter().map(|(k, v)| (k, json!(v))).collect()) }
 
 #[test]
+#[cfg(unix)]
 fn a_board_kept_in_its_own_folder_the_agents_command_and_its_herdr_space_both_name_that_board() {
     let w = world_with(Opts { repo: false, ..Default::default() }); // a plain folder: its space is herdr's to make, not a worktree
     w.script(json!({ "worker": [{ "status": "working" }, { "status": "working" }] }));
@@ -93,16 +94,19 @@ fn a_board_kept_in_its_own_folder_the_agents_command_and_its_herdr_space_both_na
     std::fs::write(other.join("settings/config.json"), json!({ "max": 23 }).to_string()).unwrap();
     let want = vec![("HERDR_PROJECTS_DATA_DIR".to_string(), other.join("data").display().to_string()), ("HERDR_PROJECTS_CONFIG_DIR".to_string(), other.join("settings").display().to_string())];
     let got = sw::store::files::board_env();
+    #[cfg(unix)]
     let text = read(&real_shim(&w)); // the command names both, so the agent's own environment does not count
     unsafe { std::env::set_var("HERDR_PROJECTS_HOME", w.base.join("sw")) }
     assert_eq!(got, want);
+    #[cfg(unix)]
     for (k, v) in &want { assert!(text.contains(&format!("export {k}='{v}'")), "{text}"); }
     // a shim an older version left as a link is replaced
-    std::fs::remove_file(&cmd).unwrap(); std::os::unix::fs::symlink(sw::store::files::bin(), &cmd).unwrap();
-    assert!(!std::fs::symlink_metadata(real_shim(&w)).unwrap().file_type().is_symlink());
+    std::fs::remove_file(&cmd).unwrap(); sw::platform::links::make_link(&sw::store::files::bin(), &cmd).unwrap();
+    assert!(!sw::platform::meta::is_link(&std::fs::symlink_metadata(real_shim(&w)).unwrap()));
 }
 
 #[test]
+#[cfg(unix)]
 fn real_programs_the_agents_command_names_its_board_with_nothing_in_the_environment_pointing_at_it() {
     let w = world_with(Opts { repo: false, ..Default::default() });
     let cmd = real_shim(&w);

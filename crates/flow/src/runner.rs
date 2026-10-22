@@ -20,8 +20,7 @@ thread_local! { pub static JOBS: RefCell<Vec<(String, String, Vec<String>)>> = c
 const DROP_ENV: [&str; 8] = ["HERDR_PLUGIN_EVENT", "HERDR_PLUGIN_EVENT_JSON", "HERDR_PLUGIN_CONTEXT_JSON", "HERDR_PLUGIN_ENTRYPOINT_ID", "HERDR_PLUGIN_ACTION_ID", "HERDR_PANE_ID", "HERDR_TAB_ID", "HERDR_WORKSPACE_ID"];
 /// A process of its own session, detached from this one: it outlives whoever started it.
 pub fn detach(c: &mut Command) {
-    use std::os::unix::process::CommandExt;
-    unsafe { c.pre_exec(|| { libc::setsid(); Ok(()) }); }
+    crate::platform::proc::detach(c);
 }
 /// Start a detached command and leave it to run: a small thread of this process waits for its end. `setsid` does not
 /// change a process's parent, so one nobody waits for stays a zombie of a long-lived starter (the keeper, the board)
@@ -31,6 +30,7 @@ pub fn detach(c: &mut Command) {
 pub fn start_reaped(c: &mut Command) -> u32 {
     let Ok(mut ch) = c.spawn() else { return 0 };
     let pid = ch.id();
+    crate::platform::proc::join_group(pid as i64);
     let _ = std::thread::Builder::new().name("reap".into()).stack_size(64 << 10).spawn(move || { let _ = ch.wait(); });
     pid
 }
@@ -62,7 +62,7 @@ pub fn drain_jobs(run: &dyn Fn(&str, &str, &[String])) {
 pub fn detached_sh(cmd: &str, env: &[(&str, String)]) -> u32 {
     if inline() { JOBS.with(|j| j.borrow_mut().push(("notify".into(), cmd.into(), env.iter().map(|(k, v)| format!("{k}={v}")).collect()))); return 0; }
     user_env();
-    let mut c = Command::new("sh");
+    let mut c = crate::platform::shell::sh();
     c.args(["-c", cmd]).stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null());
     for (k, v) in env { c.env(k, v); }
     detach(&mut c);
@@ -156,12 +156,16 @@ pub struct ShOut { pub ok: bool, pub out: String, pub aborted: bool }
 pub fn sh(cmd: &str, cwd: &std::path::Path, env: &[(String, String)], timeout_min: f64, alive: Option<&dyn Fn() -> bool>, tick: Option<&mut dyn FnMut() -> Res<()>>) -> ShOut {
     use std::io::Read;
     user_env();
-    let mut c = Command::new("sh");
-    c.args(["-lc", cmd]).current_dir(cwd).stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::piped());
+    let mut c = crate::platform::shell::sh();
+    // A login shell reads the user's profile: on Windows Git Bash's first login prints a set-up banner into the output, and
+    // Windows keeps no login environment to read (shell.rs), so Windows runs the command in a plain shell.
+    let login = if cfg!(windows) { "-c" } else { "-lc" };
+    c.args([login, cmd]).current_dir(cwd).stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::piped());
     for (k, v) in env { c.env(k, v); }
     detach(&mut c);
     let mut child = match c.spawn() { Ok(ch) => ch, Err(e) => return ShOut { ok: false, out: e.to_string(), aborted: false } };
-    let pid = child.id() as i32;
+    let pid = child.id() as i64;
+    crate::platform::proc::join_group(pid);
     let buf = std::sync::Arc::new(std::sync::Mutex::new(Vec::<u8>::new()));
     let mut readers = vec![];
     for stream in [child.stdout.take().map(|s| Box::new(s) as Box<dyn Read + Send>), child.stderr.take().map(|s| Box::new(s) as Box<dyn Read + Send>)].into_iter().flatten() {
@@ -172,7 +176,7 @@ pub fn sh(cmd: &str, cwd: &std::path::Path, env: &[(String, String)], timeout_mi
             while let Ok(n) = s.read(&mut chunk) { if n == 0 { break; } let mut b = b.lock().unwrap(); b.extend_from_slice(&chunk[..n]); if b.len() > 8 << 20 { let cut = b.len() - (4 << 20); b.drain(..cut); } }
         }));
     }
-    let kill = || unsafe { libc::kill(-pid, libc::SIGKILL); };
+    let kill = || { crate::platform::proc::signal_group(pid, true); };
     let until = std::time::Instant::now() + std::time::Duration::from_secs_f64(timeout_min * 60.0);
     let mut last_poll = std::time::Instant::now();
     // The command is looked at every second (HERDR_PROJECTS_TICK_MS: a test of what a long check shows looks sooner).

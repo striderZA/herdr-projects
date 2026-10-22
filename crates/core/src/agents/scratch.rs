@@ -6,7 +6,7 @@
 //! where one started without it left its files.
 use std::path::{Path, PathBuf};
 
-pub fn uid() -> u32 { unsafe { libc::getuid() } }
+pub fn uid() -> String { crate::platform::shell::user_id() }
 /// A folder as Claude Code names it: `/home/me/.herdr/x` is `-home-me--herdr-x`.
 pub fn slug(p: &Path) -> String { p.display().to_string().chars().map(|c| if c.is_ascii_alphanumeric() { c } else { '-' }).collect() }
 /// The temporary folders an agent started without the task's own may have used: this machine's (temp.rs), and Claude

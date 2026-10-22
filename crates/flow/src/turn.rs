@@ -22,7 +22,7 @@ fn log(msg: &str) {
 /// The hook's input: Claude and pi send JSON on stdin, Codex appends it as the last argument.
 fn input(extra: &[String]) -> Value {
     for a in extra { if a.starts_with('{') { if let Ok(v) = serde_json::from_str(a) { return v; } } }
-    if unsafe { libc::isatty(0) } == 1 { return json!({}); }
+    if std::io::IsTerminal::is_terminal(&std::io::stdin()) { return json!({}); }
     let mut s = String::new();
     let _ = std::io::stdin().read_to_string(&mut s);
     serde_json::from_str(if s.trim().is_empty() { "{}" } else { &s }).unwrap_or(json!({}))

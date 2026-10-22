@@ -6,7 +6,6 @@ use std::cell::RefCell;
 use std::collections::HashSet;
 use std::fs::{self, File, OpenOptions};
 use std::io::Write;
-use std::os::unix::fs::MetadataExt;
 use std::path::{Path, PathBuf};
 
 /// Every stage a task can be in. The board's five states are derived from these in state.rs.
@@ -28,7 +27,7 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 // has a variable of its own too. The XDG_* variables only say where an older version kept things (move_home.rs).
 pub const HOME_NAME: &str = ".herdr-projects";
 fn env(k: &str) -> Option<String> { std::env::var(k).ok().filter(|v| !v.is_empty()) }
-pub fn user_home() -> PathBuf { env("HOME").map(PathBuf::from).unwrap_or_else(|| PathBuf::from("/")) }
+pub fn user_home() -> PathBuf { crate::platform::shell::user_home() }
 pub fn home_dir() -> PathBuf { env("HERDR_PROJECTS_HOME").map(PathBuf::from).unwrap_or_else(|| user_home().join(HOME_NAME)) }
 pub fn data_dir() -> PathBuf { env("HERDR_PROJECTS_DATA_DIR").map(PathBuf::from).unwrap_or_else(|| home_dir().join("data")) }
 pub fn config_dir() -> PathBuf { env("HERDR_PROJECTS_CONFIG_DIR").map(PathBuf::from).unwrap_or_else(|| home_dir().join("settings")) }
@@ -47,19 +46,12 @@ pub fn artifacts_dir(id: &str) -> PathBuf { dir_of(id).join("artifacts") }
 /// This program, by its full path: what agents and hooks are handed, and what a process starts its successors from.
 /// Once an update put a new file at that path, Linux names the running one "… (deleted)", a file nothing can be started
 /// from: the path is the one without it, where the new program is.
-pub fn bin() -> PathBuf {
-    use std::os::unix::ffi::OsStrExt;
-    let Ok(p) = std::env::current_exe() else { return PathBuf::from("herdr-projects") };
-    match p.as_os_str().as_bytes().strip_suffix(b" (deleted)") { Some(b) => PathBuf::from(std::ffi::OsStr::from_bytes(b)), None => p }
-}
+pub fn bin() -> PathBuf { crate::platform::shell::own_path() }
 pub fn absolute(p: &Path) -> PathBuf { if p.is_absolute() { p.to_path_buf() } else { std::env::current_dir().map(|d| d.join(p)).unwrap_or_else(|_| p.to_path_buf()) } }
 
 /// The user's name, as the owner of a task.
 pub fn me() -> String {
-    let name = unsafe {
-        let pw = libc::getpwuid(libc::getuid());
-        if pw.is_null() { String::new() } else { std::ffi::CStr::from_ptr((*pw).pw_name).to_string_lossy().into_owned() }
-    };
+    let name = crate::platform::shell::user_name();
     let name = if name.is_empty() { env("USER").unwrap_or_default() } else { name };
     let clean: String = name.chars().filter(|c| c.is_ascii_alphanumeric() || "_.+-".contains(*c)).take(32).collect();
     if clean.is_empty() { "you".into() } else { clean }
@@ -96,17 +88,9 @@ pub fn read_lines(file: &Path) -> Vec<Value> {
     out
 }
 
-pub fn pid_alive(pid: i64) -> bool {
-    if pid <= 0 { return false; }
-    let r = unsafe { libc::kill(pid as libc::pid_t, 0) };
-    r == 0 || std::io::Error::last_os_error().raw_os_error() == Some(libc::EPERM)
-}
+pub fn pid_alive(pid: i64) -> bool { crate::platform::proc::alive(pid) }
 /// A process marker is a pid plus that process's start time, so a pid reused after a reboot is not mistaken for it.
-pub fn proc_start(pid: i64) -> Option<String> {
-    let s = fs::read_to_string(format!("/proc/{pid}/stat")).ok()?;
-    let rest = &s[s.rfind(')')? + 2..];
-    rest.split(' ').nth(19).map(|x| x.to_string())
-}
+pub fn proc_start(pid: i64) -> Option<String> { crate::platform::proc::start_time(pid) }
 pub fn marker() -> Obj {
     let pid = std::process::id() as i64;
     obj(json!({ "pid": pid, "start": proc_start(pid), "started": now() }))
@@ -134,11 +118,7 @@ pub fn base64url(bytes: &[u8]) -> String {
     out
 }
 fn same_file(f: &File, path: &Path) -> bool {
-    match (f.metadata(), fs::metadata(path)) { (Ok(a), Ok(b)) => a.ino() == b.ino() && a.dev() == b.dev(), _ => false }
-}
-fn flock(f: &File, wait: bool) -> bool {
-    use std::os::fd::AsRawFd;
-    unsafe { libc::flock(f.as_raw_fd(), libc::LOCK_EX | if wait { 0 } else { libc::LOCK_NB }) == 0 }
+    match (crate::platform::meta::file_id_of(f), crate::platform::meta::file_id(path)) { (Some(a), Some(b)) => a == b, _ => false }
 }
 /// A lock taken: it is let go when this is dropped.
 pub struct Held { file: Option<File>, path: PathBuf }
@@ -149,11 +129,12 @@ fn take_lock(name: &str, path: &Path, wait_ms: i64) -> Res<File> {
     if let Some(d) = path.parent() { fs::create_dir_all(d)?; }
     let until = now() + wait_ms.max(0);
     loop {
-        let f = OpenOptions::new().create(true).append(true).open(path)?;
-        let mut got = flock(&f, false);
+        // Read access too: Windows' LockFileEx refuses a handle that has only append access, so the lock is never taken.
+        let f = OpenOptions::new().create(true).read(true).append(true).open(path)?;
+        let mut got = crate::platform::lock::try_lock(&f);
         while !got && now() < until && same_file(&f, path) {
             std::thread::sleep(std::time::Duration::from_millis(15));
-            got = flock(&f, false);
+            got = crate::platform::lock::try_lock(&f);
         }
         if !got {
             if !same_file(&f, path) && now() < until { continue; }
@@ -185,7 +166,7 @@ pub fn hold_lock(name: &str, wait_ms: i64) -> Res<Held> {
 /// Whether somebody holds the lock of this name right now (a lock taken and let go at once).
 pub fn lock_free(name: &str) -> bool {
     let path = lock_file(name);
-    match OpenOptions::new().create(true).append(true).open(&path) { Ok(f) => flock(&f, false), Err(_) => true }
+    match OpenOptions::new().create(true).read(true).append(true).open(&path) { Ok(f) => crate::platform::lock::try_lock(&f), Err(_) => true }
 }
 /// A task's lock: an attempt (`repo/12b`) shares its own id's.
 pub fn task_key(id: &str) -> String { id.split('/').take(2).collect::<Vec<_>>().join("/") }
@@ -196,8 +177,8 @@ pub fn with_task_lock<T>(id: &str, wait_ms: i64, f: impl FnOnce() -> Res<T>) -> 
 pub fn wait_lock(name: &str) -> Res<Held> {
     let path = lock_file(name);
     if let Some(d) = path.parent() { fs::create_dir_all(d)?; }
-    let f = OpenOptions::new().create(true).append(true).open(&path)?;
-    if !flock(&f, true) { return Err(Error::busy(format!("{name} is busy"))); }
+    let f = OpenOptions::new().create(true).read(true).append(true).open(&path)?;
+    if !crate::platform::lock::lock(&f) { return Err(Error::busy(format!("{name} is busy"))); }
     HELD.with(|h| h.borrow_mut().insert(path.clone()));
     Ok(Held { file: Some(f), path })
 }

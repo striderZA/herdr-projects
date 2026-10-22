@@ -10,9 +10,9 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 pub fn lstat(p: &Path) -> Option<fs::Metadata> { fs::symlink_metadata(p).ok() }
-pub fn real(p: &Path) -> PathBuf { fs::canonicalize(p).unwrap_or_else(|_| absolute(p)) }
+pub fn real(p: &Path) -> PathBuf { crate::platform::links::place(p) }
 pub fn short(p: &Path, home: &Path) -> String {
-    if p == home { "~".into() } else if let Ok(rest) = p.strip_prefix(home) { format!("~/{}", rest.display()) } else { p.display().to_string() }
+    crate::store::marks::tilde_under(&p.display().to_string(), home)
 }
 #[derive(Clone)]
 pub struct Part { pub what: &'static str, pub from: PathBuf, pub to: PathBuf, pub key: &'static str }
@@ -54,7 +54,7 @@ fn others_board(p: &Plan, bin: &Path, linked: bool) -> bool {
     if linked { return true; }
     let Some(text) = read_text(&p.parts[0].from.join("bin").join(OLD_NAME)) else { return false };
     let named = text.lines().find_map(|l| launcher_target(l)).unwrap_or_default();
-    !named.is_empty() && Path::new(&named).exists() && real(Path::new(&named)) != real(bin) && !named.ends_with(".js")
+    !named.is_empty() && Path::new(&named).exists() && !crate::platform::links::same_place(Path::new(&named), bin) && !named.ends_with(".js")
 }
 fn free(file: &Path) -> PathBuf {
     if lstat(file).is_none() { return file.to_path_buf(); }
@@ -63,15 +63,14 @@ fn free(file: &Path) -> PathBuf {
 /// Takes a lock file for a moment. None when a running process holds it.
 fn grab_now(file: &Path) -> Option<Option<fs::File>> {
     let Ok(f) = fs::File::open(file) else { return Some(None) };
-    use std::os::fd::AsRawFd;
-    if unsafe { libc::flock(f.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0 { Some(Some(f)) } else { None }
+    if crate::platform::lock::try_lock(&f) { Some(Some(f)) } else { None }
 }
 fn is_lock(file: &Path) -> bool { file.extension().map(|e| e == "lock").unwrap_or(false) && file.parent().and_then(|p| p.file_name()).map(|n| n == "locks").unwrap_or(false) }
 fn keep(file: &Path, spot: &Path) { if fs::hard_link(file, spot).is_err() { let _ = copy_all(file, spot); } }
 fn copy_all(from: &Path, to: &Path) -> std::io::Result<()> {
     if fs::symlink_metadata(from)?.is_dir() { fs::create_dir_all(to)?; for e in fs::read_dir(from)? { let e = e?; copy_all(&e.path(), &to.join(e.file_name()))?; } Ok(()) } else { fs::copy(from, to).map(|_| ()) }
 }
-fn mtime(m: &fs::Metadata) -> f64 { use std::os::unix::fs::MetadataExt; m.mtime() as f64 * 1000.0 + m.mtime_nsec() as f64 / 1e6 }
+fn mtime(m: &fs::Metadata) -> f64 { crate::platform::meta::mtime_ms(m) }
 /// What the new place holds goes into the old one (the one in use); then the folder moves as one. Of a file both
 /// have, the newer one stays in use and the other goes to the set-aside folder. Returns how many were set aside.
 pub fn merge_into(from: &Path, to: &Path, aside: &Path) -> std::io::Result<usize> {
@@ -97,19 +96,9 @@ pub fn merge_into(from: &Path, to: &Path, aside: &Path) -> std::io::Result<usize
     Ok(kept)
 }
 /// Two paths change places in one step: there is no moment at which either is missing. False: not possible here.
-pub fn swap_now(a: &Path, b: &Path) -> bool {
-    use std::ffi::CString;
-    use std::os::unix::ffi::OsStrExt;
-    let (Ok(ca), Ok(cb)) = (CString::new(a.as_os_str().as_bytes()), CString::new(b.as_os_str().as_bytes())) else { return false };
-    #[cfg(target_os = "linux")]
-    unsafe { libc::syscall(libc::SYS_renameat2, libc::AT_FDCWD, ca.as_ptr(), libc::AT_FDCWD, cb.as_ptr(), 2u32) == 0 }
-    #[cfg(target_os = "macos")]
-    unsafe { libc::renamex_np(ca.as_ptr(), cb.as_ptr(), libc::RENAME_SWAP) == 0 }
-    #[cfg(not(any(target_os = "linux", target_os = "macos")))]
-    { let _ = (ca, cb); false }
-}
-fn same_disk(a: &Path, b: &Path) -> bool { use std::os::unix::fs::MetadataExt; matches!((fs::metadata(a), fs::metadata(b)), (Ok(x), Ok(y)) if x.dev() == y.dev()) }
-fn link(target: &Path, at: &Path) -> std::io::Result<()> { std::os::unix::fs::symlink(target, at) }
+pub fn swap_now(a: &Path, b: &Path) -> bool { crate::platform::links::swap(a, b) }
+fn same_disk(a: &Path, b: &Path) -> bool { crate::platform::meta::same_disk(a, b) }
+fn link(target: &Path, at: &Path) -> std::io::Result<()> { crate::platform::links::make_link(target, at) }
 /// One folder, in three steps each whole or not done (`<old>.moving` is the spare name the steps use):
 ///   1. two links are made: <old>.moving -> new, and new -> <old>.moving
 ///   2. <old> and <old>.moving change places: old -> new -> <old>.moving, which is now the folder
@@ -123,28 +112,28 @@ pub fn move_one(p: &Part, rec: &mut Obj, file: &Path, aside: &Path, swap: &dyn F
     for _ in 0..6 {
         let (f, t, m) = (lstat(&p.from), lstat(&p.to), lstat(&tmp));
         let cur = rec.o(p.what).cloned().unwrap_or_default();
-        if f.as_ref().map(|x| x.file_type().is_symlink()).unwrap_or(false) {
-            if t.as_ref().map(|x| x.file_type().is_symlink()).unwrap_or(false) && m.as_ref().map(|x| x.is_dir()).unwrap_or(false) && points(&p.to, &tmp) {
+        if f.as_ref().map(crate::platform::meta::is_link).unwrap_or(false) {
+            if t.as_ref().map(crate::platform::meta::is_link).unwrap_or(false) && m.as_ref().map(|x| x.is_dir()).unwrap_or(false) && points(&p.to, &tmp) {
                 if !swap(&p.to, &tmp) { return Ok(how); }
                 continue; // step 3
             }
             if !t.as_ref().map(|x| x.is_dir()).unwrap_or(false) || cur.s("state") != "moving" { return Ok(None); }
-            if m.as_ref().map(|x| x.file_type().is_symlink()).unwrap_or(false) { fs::remove_file(&tmp)?; }
+            if m.as_ref().map(crate::platform::meta::is_link).unwrap_or(false) { crate::platform::links::remove_link(&tmp)?; }
             let h = how.clone().or_else(|| cur.so("how").map(String::from)).unwrap_or_else(|| "moved".into());
             let mut done = cur.clone(); done.put("state", "done"); done.put("how", h.as_str()); done.put("at", now());
             save(rec, done);
             return Ok(Some(h));
         }
         if !f.as_ref().map(|x| x.is_dir()).unwrap_or(false) { return Ok(None); }
-        let begun = t.as_ref().map(|x| x.file_type().is_symlink()).unwrap_or(false) && points(&p.to, &tmp);
-        if !begun && real(&p.from) == real(&p.to) { return Ok(None); } // the new place is a link to this one already
+        let begun = t.as_ref().map(crate::platform::meta::is_link).unwrap_or(false) && points(&p.to, &tmp);
+        if !begun && crate::platform::links::same_place(&p.from, &p.to) { return Ok(None); } // the new place is a link to this one already
         if t.as_ref().map(|x| !x.is_dir()).unwrap_or(false) && !begun { return Ok(None); } // something not ours sits there
         let mut moving = cur.clone();
         moving.put("from", p.from.display().to_string()); moving.put("to", p.to.display().to_string()); moving.put("state", "moving");
         if let Some(h) = &how { moving.put("how", h.as_str()); }
         save(rec, moving); // written first: a cut-off run is known for what it is
         if let Some(d) = p.to.parent() { fs::create_dir_all(d)?; }
-        if t.as_ref().map(|x| x.is_dir() && !x.file_type().is_symlink()).unwrap_or(false) {
+        if t.as_ref().map(|x| x.is_dir() && !crate::platform::meta::is_link(x)).unwrap_or(false) {
             let kept = merge_into(&p.to, &p.from, &aside.join(p.what))?;
             fs::remove_dir(&p.to)?;
             how = Some("merged".into());
@@ -154,14 +143,15 @@ pub fn move_one(p: &Part, rec: &mut Obj, file: &Path, aside: &Path, swap: &dyn F
             continue;
         }
         let stay = |rec: &mut Obj| -> std::io::Result<Option<String>> {
-            for l in [&p.to, &tmp] { if lstat(l).map(|x| x.file_type().is_symlink()).unwrap_or(false) { let _ = fs::remove_file(l); } }
+            for l in [&p.to, &tmp] { if lstat(l).map(|x| crate::platform::meta::is_link(&x)).unwrap_or(false) { let _ = crate::platform::links::remove_link(l); } }
             link(&p.from, &p.to)?;
             let mut done = rec.o(p.what).cloned().unwrap_or_default(); done.put("state", "done"); done.put("how", "linked"); done.put("at", now());
             save(rec, done);
             Ok(Some("linked".into()))
         };
         if !same_disk(&p.from, p.to.parent().unwrap_or(Path::new("/"))) { return stay(rec); }
-        if m.as_ref().map(|x| !x.file_type().is_symlink()).unwrap_or(false) { return Ok(None); } // the spare name is taken
+        if cfg!(windows) { return stay(rec); } // no two-path directory swap on Windows: leave the old folder and junction the new path to it.
+        if m.as_ref().map(|x| !crate::platform::meta::is_link(x)).unwrap_or(false) { return Ok(None); } // the spare name is taken
         if m.is_none() { link(&p.to, &tmp)?; }
         if t.is_none() { link(&tmp, &p.to)?; }
         if !swap(&tmp, &p.from) { return stay(rec); } // step 2
@@ -236,7 +226,7 @@ pub fn move_told(home: &Path, env: &Env) {
 pub fn moved_from(dir: &Path) -> Option<PathBuf> {
     let rec = read_obj(&move_plan(&user_home(), &env_now()).file).unwrap_or_default();
     for v in rec.values() {
-        if v.s("state") != "done" || v.s("how") == "linked" || !v.b("to") || !v.b("from") { continue; }
+        if v.s("state") != "done" || (!cfg!(windows) && v.s("how") == "linked") || !v.b("to") || !v.b("from") { continue; }
         if let Ok(rest) = dir.strip_prefix(v.s("to")) { return Some(if rest.as_os_str().is_empty() { PathBuf::from(v.s("from")) } else { Path::new(v.s("from")).join(rest) }); }
     }
     None
