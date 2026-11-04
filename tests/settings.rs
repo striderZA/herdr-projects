@@ -6,7 +6,7 @@ use common::*;
 use serde_json::{json, Value};
 use sw::json::*;
 use sw::store::settings::change::{set_value, unset_value};
-use sw::store::settings::lookup::{lookup, setting, Scope};
+use sw::store::settings::lookup::{lookup, setting, work, Scope};
 use sw::store::settings::places::{repo_file, yours};
 use sw::store::settings::show::{problems, show_text};
 
@@ -152,4 +152,69 @@ fn values_a_switch_a_choice_a_time_with_its_unit_an_agent_with_its_model_and_the
     assert_eq!(set_value("worker.effort", &json!("xhigh"), &you()).unwrap().value, json!("xhigh")); assert_eq!(set_value("worker.access", &json!("ask"), &you()).unwrap().value, json!("ask"));
     refused(set_value("worker.agent", &json!("pi"), &you()), r#"worker\.agent: pi cannot do "ask": it never asks before it acts"#);
     assert_eq!(set_value("reviewer.access", &json!("ask"), &Scope::repo("proj")).unwrap().value, json!("ask")); // codex can ask
+}
+
+#[test]
+fn the_superpowers_preset_is_a_work_setting_with_two_values_and_the_repos_own_file_cannot_set_it() {
+    let w = world();
+    let id = w.add("One");
+    assert_eq!(setting("worker.preset", Some(&task(&id))), json!("none"));
+    set_value("worker.preset", &json!("superpowers"), &Scope::task(&task(&id))).unwrap();
+    assert_eq!(setting("worker.preset", Some(&task(&id))), json!("superpowers"));
+    refused(set_value("worker.preset", &json!("superpower"), &Scope::task(&task(&id))), r"worker\.preset must be none, superpowers");
+    assert!(!sw::store::settings_list::repo_facts().contains(&"worker.preset"));
+}
+
+#[test]
+fn the_superpowers_preset_tells_the_worker_the_board_owns_the_finish_line_and_questions_are_waits() {
+    let w = world();
+    let id = w.add("One");
+    let plain = sw::delegate::rules::rules(&task(&id));
+    assert!(!plain.contains("superpowers:"), "{plain}");
+    set_value("worker.preset", &json!("superpowers"), &Scope::task(&task(&id))).unwrap();
+    let told = sw::delegate::rules::rules(&task(&id));
+    for want in [
+        "This task uses the Superpowers method",
+        "The board owns this worktree, branch, commits, push, pull request, review and merge",
+        "Never use superpowers:finishing-a-development-branch",
+        "Every stop that needs the human is a wait",
+        "superpowers:brainstorming",
+        "superpowers:subagent-driven-development",
+        "superpowers:test-driven-development",
+        "superpowers:receiving-code-review",
+        "The board's reviewer is the final whole-branch review",
+        "superpowers:using-superpowers",
+    ] { assert!(told.contains(want), "{want}\n{told}"); }
+}
+
+#[test]
+fn a_superpowers_plan_step_writes_the_plan_into_the_boards_own_plan_file() {
+    let w = world();
+    let id = w.add("Work");
+    set_value("worker.preset", &json!("superpowers"), &Scope::task(&task(&id))).unwrap();
+    let mut t = task(&id);
+    t.put("plan", json!({ "asked": 1, "by": "you" }));
+    let told = sw::delegate::rules::rules(&t);
+    assert!(told.contains("The board's plan approval replaces the writing-plans"), "{told}");
+    assert!(told.contains("Write it in the Superpowers plan format"), "{told}");
+    assert!(told.contains(&format!("Save it as {}", sw::plan::plan_file(&t).display())), "{told}");
+    let pb = sw::plan::review::plan_brief(&t, std::path::Path::new("/tmp/review"));
+    assert!(pb.contains("This plan is in the Superpowers plan format"), "{pb}");
+}
+
+#[test]
+fn the_superpowers_preset_tells_the_reviewer_it_is_the_final_whole_branch_review() {
+    let w = world();
+    let id = w.add("Work");
+    set_value("worker.preset", &json!("superpowers"), &Scope::task(&task(&id))).unwrap();
+    let t = task(&id);
+    let ch = work(Some(&t));
+    let brief = sw::finish::review_brief::review_brief(&t, &sw::finish::review_brief::Brief { text: "Done.", change: None, to_land: false, ch: &ch, earlier: None, check: "" });
+    assert!(brief.contains("final whole-branch review"), "{brief}");
+    assert!(brief.contains("Do not invoke superpowers:requesting-code-review"), "{brief}");
+    let other = w.add("Plain");
+    let plain = task(&other);
+    let ch = work(Some(&plain));
+    let brief = sw::finish::review_brief::review_brief(&plain, &sw::finish::review_brief::Brief { text: "Done.", change: None, to_land: false, ch: &ch, earlier: None, check: "" });
+    assert!(!brief.contains("final whole-branch review"), "{brief}");
 }

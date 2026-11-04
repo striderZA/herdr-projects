@@ -6,6 +6,7 @@ pub mod from;
 pub mod jobs;
 pub mod launch;
 pub mod rules;
+pub mod superpowers;
 pub mod worktree;
 pub use jobs::{delegate_job, reopen, restart_job};
 pub use launch::{agent_name, launch_extras, resumable, start_agent};

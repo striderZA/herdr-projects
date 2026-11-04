@@ -8,6 +8,7 @@ use crate::flow::{send::shim, task::note_file};
 use crate::json::*;
 use crate::plan;
 use crate::research as r;
+use super::superpowers;
 use crate::store::keys::{repo_keys, say_id};
 use crate::store::settings::lookup::work;
 use crate::store::settings::values::command_of;
@@ -29,7 +30,7 @@ pub fn rules(t: &Obj) -> String {
     let tree = if planner { String::new() } else if t.b("worktree") && chat { c::chat_tree(t) } else if t.b("worktree") && research { r::research_tree(t) } else if t.b("worktree") {
         format!("You are in your own git worktree on branch {}; the human's checkout is elsewhere and untouched. Commit your work on this branch with clear messages. Do not push, merge into the human's branch or switch branches yourself (you may bring the base branch into your own branch to resolve a conflict). When you finish, the board runs the repo's check and opens the pull request.", t.s("branch"))
     } else { String::new() };
-    let lines: Vec<String> = vec![
+    let mut lines: Vec<String> = vec![
         if planner { plan::planner_rule(t) } else { OWN_WORK_RULE.into() },
         if plan::open(t) && !planner { plan::plan_rule(t) } else { String::new() },
         if chat && !planner { c::chat_rule(t) } else if research && !planner { r::research_rule(t) } else { String::new() },
@@ -47,6 +48,7 @@ pub fn rules(t: &Obj) -> String {
         if chat { String::new() } else { r::report_rule(t) },
         format!("Before you stop, also write {} to {} (the board's own folder for this task, not the folder you work in). It is the board's fallback when it cannot read your last message.", if chat { "your last message to the human" } else { "your closing summary (or your question to the human)" }, note_file(t).display()),
     ];
+    if !planner && !chat && !research { lines.extend(superpowers::rules(t)); }
     let short = say_id(t.s("id"), &repo_keys());
     let also = if short != t.s("id") { format!("; the human also calls it {short}, and every command takes that name too") } else { String::new() };
     format!("Rules for this task (its id on the work board is {}{also}):\n{}{}", t.s("id"),

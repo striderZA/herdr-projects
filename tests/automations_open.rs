@@ -90,7 +90,9 @@ fn an_automations_settings_are_the_page_a_task_has_its_own_rows_marked_a_row_cha
     like(&row_of(&mut s, "worker.agent"), r"^▌› {3}Agent's program +claude +worker\.agent *$");
     like(&row_of(&mut s, "reviewer.agent"), r"^ {3}\* Reviewer's program +claude +reviewer\.agent *$");
     like(&row_of(&mut s, "review.rounds"), r"^ {5}Rounds by itself +5 +review\.rounds *$");
+    s.s.panel_top = 1_000_000;
     assert!(t(&mut s, 120).contains("\n * this automation only\n"));
+    s.s.panel_top = 0;
     go(&mut s, "review.when"); s.press(&["enter"]);
     assert_eq!(automation(a.s("id")).unwrap().at("settings").s("review.when"), "never");
     like(&row_of(&mut s, "review.when"), r"^▌› \* Review when +never +review\.when *$");
