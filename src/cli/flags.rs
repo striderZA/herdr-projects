@@ -65,7 +65,6 @@ fn takes(cmd: &str, sub: &str) -> Option<Takes> {
         "set" | "unset" | "show" => f(WHERE),
         "models" => f(&[]),
         "automations" | "automation" => match sub { "add" | "new" => s(AUTO_ADD), "change" | "edit" => f(AUTO_CHANGE), _ => f(&[]) },
-        "autopilot" => match sub { "on" => s(&["project", "goal"]), "off" => f(&["project", "all"]), "show" => f(&["project"]), _ => f(&[]) },
         "coordinator" => match sub { "tell" => f(&["delegate", "project"]), "new" | "fresh" => f(&["agent", "effort", "project"]), _ => f(&["project"]) },
         "sweep" => f(&["dry"]),
         "remove-extras" | "reopen" | "version" | "install" | "update" | "doctor" => f(&[]),
@@ -74,7 +73,7 @@ fn takes(cmd: &str, sub: &str) -> Option<Takes> {
         _ => return None,
     })
 }
-fn has_subs(cmd: &str) -> bool { ["automations", "automation", "coordinator", "autopilot"].contains(&cmd) }
+fn has_subs(cmd: &str) -> bool { ["automations", "automation", "coordinator"].contains(&cmd) }
 /// The flags of a command that it does not know, as typed. A name with a dot is a setting where settings are taken.
 pub fn unknown_flags(cmd: &str, flags: &Obj, typed: &Obj, sub: &str) -> Vec<String> {
     let Some(t) = takes(cmd, sub) else { return vec![] };

@@ -46,7 +46,7 @@ pub const HELP: &str = r#"herdr-projects: a work board for herdr
                                                 with its tasks as they were. Nothing on disk or GitHub is deleted.
   herdr-projects set <name> <value> [--repo NAME | --task ID | --automation NAME | --main-coordinator | --project-coordinator REPO]
                                       change a setting: for you, for your entry for one repo, for one task, for an automation,
-                                      or for one coordinator (its coordinator.* and autopilot.* settings)
+                                      or for one coordinator (its coordinator.* settings)
   herdr-projects unset <name> [--repo NAME | --task ID | the same coordinator flags]
                                       back to what it would be without that answer
   herdr-projects show [<id>] [--repo NAME]     every setting and the place it came from; without an id, your own
@@ -68,15 +68,7 @@ pub const HELP: &str = r#"herdr-projects: a work board for herdr
                                                 a fresh one; with options, that choice is for this one only
   herdr-projects coordinator stop              close it; the next message starts it again where it left off (words still waiting go in then)
   herdr-projects coordinator --project REPO …  the same for a repo's project coordinator
-  herdr-projects autopilot                     every coordinator of this machine, with its autopilot (docs/autopilot.md)
-  herdr-projects autopilot show [--project REPO]
-                                                one coordinator's autopilot as it stands now: goal, today's counts,
                                                 its tasks under way, its settings
-  herdr-projects autopilot on [--project REPO] [--goal TEXT] [--autopilot.<name> VALUE …]
-                                                put a coordinator on autopilot: the board wakes it to work toward its goal,
-                                                within its limits; the values given are for this time only
-  herdr-projects autopilot off [--project REPO | --all]
-                                                off again (--all: every coordinator of this machine)
   herdr-projects --skill                       instructions an agent can load
   herdr-projects sweep [--dry]                 remove what ended tasks left behind now: their temporary files, agents'
                                                 files for worktrees that are gone, old build output (docs/disk-space.md);
