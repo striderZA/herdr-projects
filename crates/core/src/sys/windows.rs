@@ -11,7 +11,10 @@ use windows_sys::Win32::Storage::FileSystem::{
     GetDiskFreeSpaceExW, GetFileInformationByHandle, LockFileEx, BY_HANDLE_FILE_INFORMATION, LOCKFILE_EXCLUSIVE_LOCK, LOCKFILE_FAIL_IMMEDIATELY,
 };
 use windows_sys::Win32::System::IO::OVERLAPPED;
-use windows_sys::Win32::System::Threading::{GetExitCodeProcess, GetProcessTimes, OpenProcess, PROCESS_QUERY_LIMITED_INFORMATION};
+use windows_sys::Win32::System::Pipes::WaitNamedPipeW;
+use windows_sys::Win32::System::Threading::{GetExitCodeProcess, GetProcessTimes, OpenProcess, TerminateProcess, PROCESS_QUERY_LIMITED_INFORMATION, PROCESS_TERMINATE};
+mod local_stream;
+pub use local_stream::LocalStream;
 /// The variable that names the user's home folder: Windows's profile folder.
 pub const HOME_VAR: &str = "USERPROFILE";
 /// Where a path starts when nothing else says where: the root of the system drive.
@@ -118,3 +121,58 @@ pub fn allocated_bytes(m: &Metadata) -> u64 { const CLUSTER: u64 = 4096; m.file_
 pub fn restrict_dir(_p: &Path) {}
 /// This machine's own name, as Windows gives it.
 pub fn hostname() -> String { std::env::var("COMPUTERNAME").unwrap_or_default() }
+/// The pipe a herdr socket path names: the same path after `\\.\pipe\`, which is how herdr names its pipe.
+fn pipe_name(path: &str) -> String { format!(r"\\.\pipe\{path}") }
+/// Connects to a herdr socket by its path: its named pipe, read and written as one stream.
+pub fn connect_local(path: &str) -> io::Result<LocalStream> {
+    let file = OpenOptions::new().read(true).write(true).open(pipe_name(path))?;
+    LocalStream::connect(file)
+}
+/// Whether a herdr socket is there: its pipe has an instance waiting, or every instance is taken (WaitNamedPipe times
+/// out with ERROR_SEM_TIMEOUT, 121). No such pipe: ERROR_FILE_NOT_FOUND, so not there.
+pub fn socket_exists(path: &str) -> bool {
+    let name: Vec<u16> = pipe_name(path).encode_utf16().chain(std::iter::once(0)).collect();
+    unsafe { WaitNamedPipeW(name.as_ptr(), 0) != 0 || io::Error::last_os_error().raw_os_error() == Some(121) }
+}
+/// Whether a path is a program that runs: a file of a program's kind (Windows has no execute bit).
+pub fn is_program(p: &Path) -> bool {
+    std::fs::metadata(p).map(|m| m.is_file() && p.extension().and_then(|e| e.to_str()).map(|e| matches!(e.to_ascii_lowercase().as_str(), "exe" | "cmd" | "bat" | "com")).unwrap_or(false)).unwrap_or(false)
+}
+/// Windows has no mode bits: a read-only file says 0444, any other 0644.
+pub fn mode_bits(m: &Metadata) -> u32 { if m.permissions().readonly() { 0o444 } else { 0o644 } }
+/// Windows has no signals: each of these ends the process, as a stop does here.
+pub const TERM_SIGNAL: i32 = 15;
+pub const KILL_SIGNAL: i32 = 9;
+/// Ends a process (TerminateProcess). Signal 0 asks instead whether it runs. False where it cannot be.
+pub fn send_signal(pid: i64, sig: i32) -> bool {
+    if pid <= 1 { return false; }
+    if sig == 0 { return pid_alive(pid); }
+    unsafe {
+        let h = OpenProcess(PROCESS_TERMINATE, 0, pid as u32);
+        if h.is_null() { return false; }
+        let ok = TerminateProcess(h, 1) != 0;
+        CloseHandle(h);
+        ok
+    }
+}
+/// Windows has no zombie processes: one that ended is gone from the process table.
+pub fn zombie(_pid: i64) -> bool { false }
+/// The process table, read for one question (Windows has no `ps`; sysinfo reads the table). None when sysinfo cannot read it.
+fn table() -> Option<sysinfo::System> {
+    let mut s = sysinfo::System::new().ok()?;
+    s.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
+    Some(s)
+}
+/// A process's command line: its arguments joined by spaces.
+pub fn command_line(pid: i64) -> Option<String> {
+    let s = table()?;
+    let p = s.process(sysinfo::Pid::from_u32(pid as u32))?;
+    let line = p.cmd().iter().map(|a| a.to_string_lossy().into_owned()).collect::<Vec<_>>().join(" ");
+    Some(line).filter(|l| !l.is_empty())
+}
+/// The processes whose parent is this one.
+pub fn children(pid: i64) -> Result<Vec<i64>, ()> {
+    let s = table().ok_or(())?;
+    let parent = sysinfo::Pid::from_u32(pid as u32);
+    Ok(s.processes().values().filter(|p| p.parent() == Some(parent)).map(|p| p.pid().as_u32() as i64).collect())
+}

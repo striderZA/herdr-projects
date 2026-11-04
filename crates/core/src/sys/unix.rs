@@ -94,3 +94,31 @@ pub fn hostname() -> String {
     unsafe { libc::gethostname(b.as_mut_ptr() as *mut libc::c_char, b.len()); }
     String::from_utf8_lossy(&b[..b.iter().position(|c| *c == 0).unwrap_or(0)]).into_owned()
 }
+/// A connection to a herdr socket: a Unix domain socket here.
+pub type LocalStream = std::os::unix::net::UnixStream;
+/// Connects to a herdr socket by its path.
+pub fn connect_local(path: &str) -> io::Result<LocalStream> { LocalStream::connect(path) }
+/// Whether a herdr socket is there: a socket file at this path.
+pub fn socket_exists(path: &str) -> bool { use std::os::unix::fs::FileTypeExt; std::fs::metadata(path).map(|m| m.file_type().is_socket()).unwrap_or(false) }
+/// Whether a path is a program that runs: a file with an execute bit set.
+pub fn is_program(p: &Path) -> bool { use std::os::unix::fs::PermissionsExt; std::fs::metadata(p).map(|m| m.is_file() && m.permissions().mode() & 0o111 != 0).unwrap_or(false) }
+/// A file's mode bits, as the research check records them.
+pub fn mode_bits(m: &Metadata) -> u32 { use std::os::unix::fs::MetadataExt; m.mode() }
+/// The signals that ask a process to end (soft), and that end it at once (hard).
+pub const TERM_SIGNAL: i32 = libc::SIGTERM;
+pub const KILL_SIGNAL: i32 = libc::SIGKILL;
+/// Sends `sig` to a process: false where it cannot be (gone, another user's).
+pub fn send_signal(pid: i64, sig: i32) -> bool { pid > 1 && unsafe { libc::kill(pid as i32, sig) } == 0 }
+/// Whether a process is a zombie: it has ended and waits for its parent to read it.
+pub fn zombie(pid: i64) -> bool { std::fs::read_to_string(format!("/proc/{pid}/stat")).ok().and_then(|s| s.rfind(')').map(|i| s[i + 2..].starts_with('Z'))).unwrap_or(false) }
+/// A process's command line, where the system tells (`ps`).
+pub fn command_line(pid: i64) -> Option<String> {
+    let o = std::process::Command::new("ps").args(["-o", "args=", "-p", &pid.to_string()]).output().ok()?;
+    Some(String::from_utf8_lossy(&o.stdout).trim().to_string()).filter(|s| !s.is_empty())
+}
+/// The processes started by one process (`pgrep -P`): Err when the system cannot say.
+pub fn children(pid: i64) -> Result<Vec<i64>, ()> {
+    let o = std::process::Command::new("pgrep").args(["-P", &pid.to_string()]).output().map_err(|_| ())?;
+    if o.status.code().unwrap_or(2) > 1 { return Err(()); }
+    Ok(String::from_utf8_lossy(&o.stdout).lines().filter_map(|l| l.trim().parse().ok()).collect())
+}

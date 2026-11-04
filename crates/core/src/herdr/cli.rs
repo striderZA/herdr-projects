@@ -47,7 +47,7 @@ pub fn session_name(socket: &str) -> String {
     if n >= 3 && parts[n - 1] == "herdr.sock" && parts[n - 3] == "sessions" { parts[n - 2].to_string() } else { "default".into() }
 }
 pub fn in_herdr() -> bool { std::env::var("HERDR_ENV").as_deref() == Ok("1") }
-pub fn socket_exists(socket: &str) -> bool { use std::os::unix::fs::FileTypeExt; std::fs::metadata(socket).map(|m| m.file_type().is_socket()).unwrap_or(false) }
+pub fn socket_exists(socket: &str) -> bool { crate::sys::socket_exists(socket) }
 /// Whether two paths name the same herdr socket: alike as text, or once links are followed (a config folder reached
 /// through a symlink spells the same session's socket another way). A socket not there yet is followed as far as its
 /// folder. Asked for every task on every pass: what a path resolves to is kept for a minute.
@@ -129,9 +129,7 @@ pub fn run_raw(socket: Option<&str>, args: &[String], timeout_ms: u64, input: &s
 /// The processes started by one process.
 pub fn kids(pid: i64) -> Result<Vec<i64>, ()> {
     if let Some(f) = fake() { return Ok(f.kids(pid)); }
-    let o = Command::new("pgrep").args(["-P", &pid.to_string()]).output().map_err(|_| ())?;
-    if o.status.code().unwrap_or(2) > 1 { return Err(()); }
-    Ok(String::from_utf8_lossy(&o.stdout).lines().filter_map(|l| l.trim().parse().ok()).collect())
+    crate::sys::children(pid)
 }
 pub fn args(a: &[&str]) -> Vec<String> { a.iter().map(|s| s.to_string()).collect() }
 pub fn path_str(p: &Path) -> String { p.display().to_string() }

@@ -20,6 +20,8 @@ pub fn pick(os: &str, set: impl Fn(&str) -> bool, found: impl Fn(&str) -> bool) 
         // Over ssh a Mac's browser opens on that Mac's screen, not in front of you.
         "macos" if ssh => Err("the board runs over ssh".into()),
         "macos" => Ok("open"),
+        "windows" if ssh => Err("the board runs over ssh".into()),
+        "windows" => Ok("cmd-start"),
         _ if !display => Err(if ssh { "the board runs over ssh with no display" } else { "this machine has no display" }.into()),
         _ if found("xdg-open") => Ok("xdg-open"),
         _ => Err("this machine has no xdg-open".into()),
@@ -32,12 +34,25 @@ fn on_path(name: &str) -> bool {
 pub fn openable(link: &str) -> bool {
     (link.starts_with("http://") || link.starts_with("https://") || link.starts_with('/')) && !link.chars().any(|c| (c as u32) < 0x20 || c as u32 == 0x7f)
 }
+/// The command that opens a link with `program`. `cmd-start` (Windows) runs `cmd /C start "" "<link>"`: the link is
+/// quoted, since a web address holds `&`, which cmd would read as a separator.
+fn opener_command(program: &str, link: &str) -> Result<Command, String> {
+    if program != "cmd-start" { let mut c = Command::new(program); c.arg(link); return Ok(c); }
+    if link.contains('"') { return Err("the link has a quote mark, which the Windows opener cannot take".into()); }
+    let mut c = Command::new("cmd");
+    c.args(["/C", "start", ""]);
+    #[cfg(windows)]
+    { use std::os::windows::process::CommandExt; c.raw_arg(format!("\"{link}\"")); }
+    #[cfg(not(windows))]
+    { c.arg(link); }
+    Ok(c)
+}
 /// Open the link here, or say why it was not.
 pub fn open(link: &str) -> Result<(), String> {
     if !openable(link) { return Err("it is no link".into()); }
     if let Some(f) = FAKE.with(|x| x.borrow().clone()) { return f(link); }
     let program = pick(std::env::consts::OS, crate::util::env_set, on_path)?;
-    let mut child = Command::new(program).arg(link).stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null()).spawn().map_err(|e| format!("{program} did not start ({e})"))?;
+    let mut child = opener_command(program, link)?.stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null()).spawn().map_err(|e| format!("{program} did not start ({e})"))?;
     // The opener hands the link to the browser and ends; one that stays (a browser it started itself) is left to run.
     let until = Instant::now() + Duration::from_secs(3);
     loop {
@@ -60,6 +75,8 @@ mod tests {
         assert_eq!(pick("macos", env(&[]), |_| false), Ok("open"));
         assert!(pick("macos", env(&["SSH_CONNECTION"]), |_| true).is_err());
         assert_eq!(pick("linux", env(&["DISPLAY"]), |_| true), Ok("xdg-open"));
+        assert_eq!(pick("windows", env(&[]), |_| false), Ok("cmd-start"));
+        assert!(pick("windows", env(&["SSH_TTY"]), |_| true).is_err());
         assert_eq!(pick("linux", env(&["WAYLAND_DISPLAY", "SSH_TTY"]), |_| true), Ok("xdg-open"));
         assert_eq!(pick("linux", env(&["SSH_CONNECTION"]), |_| true), Err("the board runs over ssh with no display".into()));
         assert_eq!(pick("linux", env(&["DISPLAY"]), |_| false), Err("this machine has no xdg-open".into()));

@@ -99,10 +99,9 @@ fn dirty_of(dir: &Path) -> Res<BTreeMap<String, String>> {
     }
     let mut out = BTreeMap::new();
     for rel in names {
-        use std::os::unix::fs::MetadataExt;
         let f = dir.join(&rel);
         let file = match fs::symlink_metadata(&f) {
-            Ok(s) => format!("{:o}:{}", s.mode(), if s.is_file() && s.len() < 8_000_000 { fs::read(&f).map(|b| sha1_smol::Sha1::from(b).digest().to_string()).unwrap_or_default() } else { format!("{}:{}", s.len(), s.mtime() * 1000 + s.mtime_nsec() / 1_000_000) }),
+            Ok(s) => format!("{:o}:{}", crate::sys::mode_bits(&s), if s.is_file() && s.len() < 8_000_000 { fs::read(&f).map(|b| sha1_smol::Sha1::from(b).digest().to_string()).unwrap_or_default() } else { let (sec, ns) = crate::sys::mtime(&s); format!("{}:{}", s.len(), sec * 1000 + ns / 1_000_000) }),
             Err(_) => "gone".into(),
         };
         let line = format!("{file} {}{}", staged.get(&rel).map(|s| s.as_str()).unwrap_or("-"), hidden.get(&rel).map(|c| format!(" hidden:{c}")).unwrap_or_default());

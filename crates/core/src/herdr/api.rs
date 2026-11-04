@@ -106,9 +106,9 @@ impl Herdr {
         let info = self.process_info(id);
         let shell = info.as_ref().map(|i| i.i("shell_pid")).unwrap_or(-1);
         let pids: Vec<i64> = info.map(|i| i.arr("foreground_processes").iter().map(|p| p.i("pid")).filter(|p| *p > 1 && *p != shell).collect()).unwrap_or_default();
-        for sig in [libc::SIGTERM, libc::SIGKILL] {
+        for sig in [crate::sys::TERM_SIGNAL, crate::sys::KILL_SIGNAL] {
             if pids.is_empty() || gone() { break; }
-            for pid in &pids { match super::cli::fake() { Some(f) => f.kill(*pid), None => unsafe { libc::kill(*pid as i32, sig); } } }
+            for pid in &pids { match super::cli::fake() { Some(f) => f.kill(*pid), None => { crate::sys::send_signal(*pid, sig); } } }
             let until = crate::clock::now() + wait_ms / 2;
             while crate::clock::now() < until && !gone() { std::thread::sleep(std::time::Duration::from_millis(200)); }
         }
