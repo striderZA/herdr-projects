@@ -31,7 +31,7 @@ fn fail_start(id: &str, title: &str, said: &str, again: &str) {
     let Some(t) = get(id) else { return };
     let (kind, pane, api) = (t.t("agent"), t.at("link").t("pane"), flow::task::h(&t));
     let screen = sf::screen_of(&api, &pane);
-    let w = sf::explain(&sf::Start { kind: &kind, setting: if plan::planner(&t) { "plan.agent" } else { "worker.agent" }, again }, said, &screen);
+    let w = sf::explain(&sf::Start { kind: &kind, setting: "worker.agent", again }, said, &screen);
     sf::tidy(&api, &pane, &screen);
     let log = dir_of(id).join("runner.log");
     let look = if screen.is_empty() { String::new() } else { format!("Its terminal is still open: go into the task ({}) to see all of it. ", key_name("open")) };
@@ -163,7 +163,7 @@ fn delegate_steps(id: &str, g: &mut Guard, mut t: Task) -> Res<()> {
     let mut refusal = None;
     t = g.set(|t| { if let Err(e) = r::starts_as(t) { refusal = Some(e); } })?;
     if let Some(e) = refusal { return Err(e); }
-    if !t.b("startedAgentAt") && !t.at("plan").is_object() { t = plan::build::begin(g, t, &api)?; } // the work starts with a plan, where `plan.approve` says so
+    if !t.b("startedAgentAt") && !t.at("plan").is_object() { t = plan::build::begin(g, t)?; } // the work starts with a plan, where `plan.approve` says so
     let waiting: Vec<String> = take_text(id)?.iter().map(|m| m.t("text")).collect();
     let turned = if t.b("startedAgentAt") { turned_words(&t) } else { String::new() };
     let (resume, prompt) = if t.b("startedAgentAt") { again_prompt(&t, &[turned].into_iter().filter(|s| !s.is_empty()).chain(waiting.iter().cloned()).collect::<Vec<_>>()) }

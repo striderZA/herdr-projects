@@ -25,7 +25,7 @@ pub enum Force { No, Yes, Pr }
 
 pub fn housekeeping(socket: &str, force: Force) {
     if !has_tasks() { return; }
-    crate::runner::outside::start_asked(); // jobs asked for from inside a plan writer's sandbox, started out here
+    crate::runner::outside::start_asked(); // jobs a command handed to the keeper
     if force == Force::No && !due(&format!("housekeep-{}", key(socket)), 2000) { return; }
     once::once(&key(socket), force, |f| pass(socket, f));
 }

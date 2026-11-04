@@ -1,8 +1,7 @@
 //! One review: the reviewer started in its own tab, its brief typed in once it is up, then waited for until its
 //! verdict file appears (or its turn ends without one), and what it changed put back.
-use super::review::{close_reviewer, Reviewed};
+use super::review::{close_reviewer, Cut, Reviewed};
 use super::review_brief::{parse_verdict, review_brief, Brief};
-use super::review_fallback::{reviewer_now, Cut};
 use super::review_screen::last_screen;
 use super::shared::{ms, review_until, timed_out};
 use crate::agents::{adapter, helpers::still_at_work, installed, start, start_failed};
@@ -14,7 +13,6 @@ use crate::gate;
 use crate::json::*;
 use crate::runner::{is_aborted, Guard};
 use crate::store::files::artifacts_dir;
-use crate::store::handovers::{handover_line, last_handover, log_handover};
 use crate::store::marks::pending_events;
 use crate::store::repos::{cwd_of, folder_of, git_out};
 use crate::store::reviews::{keep_saved_review, review_history};
@@ -28,11 +26,8 @@ pub struct Plan { pub brief: Box<dyn Fn(&Obj, &Path) -> String> }
 fn sleep(ms: i64) { std::thread::sleep(std::time::Duration::from_millis(ms.max(0) as u64)); }
 #[allow(clippy::too_many_arguments)]
 pub fn review_once(id: &str, g: &mut Guard, text: &str, change: Option<&Value>, to_land: bool, ch: &Obj, check: &str, plan: Option<&Plan>) -> Res<Reviewed> {
-    // One that just took the review over says so on the row until the Watcher has a line of it.
     let mut t = g.set(|t| {
-        let took = last_handover(t, "reviewer");
-        let keep = took.map(|h| t.s("msg") == handover_line(&h)).unwrap_or(false);
-        if !keep { t.put("msg", if plan.is_some() { "The reviewer checks the plan" } else { "Under review" }); }
+        t.put("msg", if plan.is_some() { "The reviewer checks the plan" } else { "Under review" });
         t.put("stage", "reviewing"); t.put("watch", Value::Null); t.put("waiting", Value::Null); t.put("reviewAt", now());
     })?;
     g.allow(&["reviewneeds"]);
@@ -44,17 +39,15 @@ pub fn review_once(id: &str, g: &mut Guard, text: &str, change: Option<&Value>, 
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(&dir)?;
     // The configured reviewer program may not be installed here: review with the working agent's kind instead, on that
-    // kind's own default model and effort. Or, with a `reviewer.fallback`, the first on that list that is installed.
+    // kind's own default model and effort.
     let who = start::role_of("reviewer", &|n| ch.at(n).clone());
-    let (now_agent, stand_in) = reviewer_now(&t, ch);
+    let now_agent = if t.b("reviewerOn") { t.t("reviewerOn") } else { ch.t("reviewer.agent") };
     let on = agent_of(&now_agent);
     let (mut rkind, mut rmodel, mut reffort, mut by) = (on.kind.clone(), on.model.clone(), who.effort.clone(), now_agent.clone());
     if !installed::installed(&rkind) && installed::installed(t.s("agent")) { rkind = t.t("agent"); rmodel = String::new(); reffort = String::new(); by = rkind.clone(); }
-    // A stand-in for a program that is not installed is a hand-over like any other.
-    if !stand_in.is_empty() { g.set(|t| { let h = log_handover(t, "reviewer", ch.s("reviewer.agent"), &now_agent, &format!("{stand_in} is not installed here")); t.put("reviewerOn", now_agent.clone()); t.put("msg", handover_line(&h)); })?; }
     let round = if plan.is_some() { 0 } else { t.i("reviewRound") + 1 };
     let other = by != ch.s("reviewer.agent");
-    let note = if rkind != who.kind && !t.b("reviewerOn") && stand_in.is_empty() { Some(format!("reviewed by {rkind}: {} is not installed here", who.kind)) } else { None };
+    let note = if rkind != who.kind { Some(format!("reviewed by {rkind}: {} is not installed here", who.kind)) } else { None };
     let was = t.t("reviewSession"); // a review started again: the conversation of the try before is not this one's
     t = g.set(|t| { if plan.is_none() { keep_saved_review(t); t.put("reviewRound", round); } t.put("reviewSession", Value::Null); let f = t.obj_mut("fallbacks"); match &note { Some(n) => f.put("reviewer", n.clone()), None => f.del("reviewer") } })?;
     // From the second round of a send-back on, the reviewer checks the earlier findings instead of starting over.
@@ -85,7 +78,7 @@ pub fn review_once(id: &str, g: &mut Guard, text: &str, change: Option<&Value>, 
         let opts = |hook: Vec<String>| start::StartOpts { model: rmodel.clone(), effort: reffort.clone(), fast: Some(who.fast), access: who.access.clone(), session: x.session.clone().unwrap_or_default(), extra: hook, folder: folder.clone(), ..Default::default() };
         let start_with = |hook: Vec<String>| -> Res<()> {
             let args = start::start_args(&rkind, &opts(hook))?;
-            let r = if plan.is_some() { crate::plan::sandbox::start_program(&api, &get(id).unwrap_or(t.clone()), &name, &rkind, &pane, &args, "reviewer") } else { api.agent_start(&name, &rkind, &pane, &args, 60000).map(|_| ()) };
+            let r = api.agent_start(&name, &rkind, &pane, &args, 60000).map(|_| ());
             match r { Ok(()) => { crate::submit::settle(&api, &pane, &std::iter::once(crate::agents::kinds::program(&rkind).to_string()).chain(args).collect::<Vec<_>>().join(" ")); Ok(()) } Err(e) if e.code == "agent_not_ready" => Ok(()),
                 Err(e) => Err(start_failed::say(&api, &start_failed::Start { kind: &rkind, setting: "reviewer.agent", again: "retry the review" }, &pane, &e.message, &crate::store::files::dir_of(id).join("runner.log")).into()) }
         };

@@ -4,7 +4,7 @@
 //! in the terminal), inside the agent's turn. It saves the plan as the task's plan file and answers the question with
 //! Claude Code's structured `deny` on stdout, whose message tells the agent to stop: Claude Code shows it as "Denied by
 //! PermissionRequest hook". Anything else is let through: nothing printed. Always exit 0. The board no longer starts
-//! Claude Code in plan mode (it plans with its usual access in the read-only mount and saves plan.md, as every program
+//! Claude Code in plan mode (it plans with the worktree read-only and saves plan.md, as every program
 //! does): this file and `plan-written` go in the release after.
 use super::{open, write_plan};
 use crate::json::*;

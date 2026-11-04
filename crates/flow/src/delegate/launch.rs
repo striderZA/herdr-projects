@@ -6,7 +6,6 @@ use crate::clock::now;
 use crate::err::Res;
 use crate::flow;
 use crate::json::*;
-use crate::plan;
 use crate::runner::Guard;
 use crate::store::files::dir_of;
 use crate::store::inbox::queue_text;
@@ -46,11 +45,10 @@ pub fn start_agent(id: &str, g: &mut Guard, prompt: &str, resume: Option<&str>) 
     let t = get(id).ok_or("the task is gone")?;
     let api = flow::task::h(&t);
     let kind = t.t("agent");
-    // The worker's settings, read now, as it starts. A planner of its own runs on its own program and model.
+    // The worker's settings, read now, as it starts.
     let w = work(Some(&t));
-    let worker = start::role_of("worker", &|n| w.at(n).clone());
-    let who = if plan::planner(&t) { let wr = t.at("plan").at("writer"); start::Role { kind: wr.t("kind"), model: wr.t("model"), effort: String::new(), fast: false, access: worker.access.clone(), instructions: worker.instructions.clone() } } else { worker.clone() };
-    let took = agent_of(if plan::planner(&t) { "" } else { t.s("on") });
+    let who = start::role_of("worker", &|n| w.at(n).clone());
+    let took = agent_of(t.s("on"));
     let model = if took.kind == kind { took.model } else if who.kind == kind { who.model.clone() } else { String::new() };
     let level = start::effort_for(&kind, &model, &who.effort);
     let root = if t.b("root") { PathBuf::from(t.s("root")) } else { folder_of(t.s("id")) };
@@ -58,9 +56,9 @@ pub fn start_agent(id: &str, g: &mut Guard, prompt: &str, resume: Option<&str>) 
     installed::pre_trust(&kind, &root, &cwd, &who.access);
     let taken: Vec<String> = api.agents().unwrap_or_default().iter().filter(|a| a.s("pane_id") != t.at("link").s("pane")).map(|a| a.t("name")).filter(|n| !n.is_empty()).collect();
     let name = agent_name(&t, &taken);
-    if plan::planner(&t) { flow::tabs::name_tab(&api, t.at("link").s("tab"), flow::tabs::PLANNER_TAB); } else { flow::tabs::name_agent_tab(&api, t.at("link").s("tab"), Some(&t)); }
+    flow::tabs::name_agent_tab(&api, t.at("link").s("tab"), Some(&t));
     let x = launch_extras(&t, "agent", &kind, 0, &rules(&t), resume)?;
-    let fast = if plan::planner(&t) { None } else { Some(who.fast) };
+    let fast = Some(who.fast);
     let args = |hooked: bool| -> Res<Vec<String>> {
         let mut extra = if hooked { x.hook.clone() } else { vec![] };
         extra.extend(x.rules.clone());
@@ -74,8 +72,7 @@ pub fn start_agent(id: &str, g: &mut Guard, prompt: &str, resume: Option<&str>) 
     let mut used: Vec<String> = vec![]; // the arguments it was started on: built once a try (OpenCode 2 makes a conversation)
     let mut start_with = |with_hook: bool| -> Res<()> {
         used = args(with_hook)?;
-        // In a read-only mount while its plan waits (plan/sandbox.rs).
-        match plan::sandbox::start_program(&api, &t, &name, &kind, &pane, &used, "writer") {
+        match api.agent_start(&name, &kind, &pane, &used, 60000).map(|_| ()) {
             Ok(()) => Ok(()),
             Err(e) if e.code == "agent_not_ready" => { blocked = true; Ok(()) } // a dialog is in the way: the text waits in the inbox
             Err(e) => Err(e.into()),
@@ -89,14 +86,13 @@ pub fn start_agent(id: &str, g: &mut Guard, prompt: &str, resume: Option<&str>) 
     // herdr calls the program ready before it has drawn anything; text typed that early loses its enter (submit.rs).
     if !prompt.is_empty() && !blocked { let launch = std::iter::once(crate::agents::kinds::program(&kind).to_string()).chain(used).collect::<Vec<_>>().join(" "); crate::submit::settle(&api, &pane, &launch); }
     // The send time arms the pipeline: nothing older than this counts as the turn's end.
-    let (session, version, boxed) = (resume.map(String::from).or(x.session.clone()), x.version.clone(), plan::sandbox::boxed(&t));
+    let (session, version) = (resume.map(String::from).or(x.session.clone()), x.version.clone());
     let t = g.set(|t| {
         t.put("stage", "working"); t.put("armedAt", now()); t.put("expectedWake", Value::Null); t.put("turnOpen", true); t.put("turnBy", "start"); t.put("msg", "");
         t.obj_mut("link").put("agent", name.clone());
         if !(t.i("workAt") >= t.i("since") && t.has("workAt")) { t.put("workAt", now()); }
         t.put("startedAgentAt", now()); t.put("exitedAt", Value::Null); t.put("tmp", tmp.display().to_string());
         t.put("hooked", hooked); t.put("agentVersion", version.clone()); t.put("sent", Value::Null); t.put("unsent", Value::Null);
-        if plan::open(t) { t.obj_mut("plan").put("mode", boxed); } // in the mount: started again after the yes (plan/build.rs)
         if t.at("failure").s("stage") == "send" { t.put("failure", Value::Null); }
         let s = session.clone().map(Value::String).unwrap_or(Value::Null);
         if s != *t.at("session") && !(s.is_null() && t.s("session").is_empty()) {
@@ -113,7 +109,7 @@ pub fn start_agent(id: &str, g: &mut Guard, prompt: &str, resume: Option<&str>) 
 /// Which program works on the task is `worker.agent` as it reads when the agent starts, not when it was queued. Only
 /// a conversation that is reopened keeps its program, which is the one that holds it.
 pub fn agent_now(g: &mut Guard, t: Task) -> Res<Task> {
-    if (t.b("startedAgentAt") && resumable(&t)) || plan::planner(&t) { return Ok(t); }
+    if t.b("startedAgentAt") && resumable(&t) { return Ok(t); }
     let k = agent_of(&if t.b("on") { t.t("on") } else { setting_text("worker.agent", Some(&t)) }).kind;
     if !k.is_empty() && k != t.s("agent") { return g.set(|t| { t.put("agent", k.clone()); t.put("app", k.clone()); t.put("session", Value::Null); t.put("transcript", Value::Null); }); }
     Ok(t)

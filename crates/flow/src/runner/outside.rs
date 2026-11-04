@@ -1,12 +1,8 @@
-//! A job asked for from inside the board's own sandbox (plan/sandbox/inside.rs), such as the finish runner a plan
-//! writer's turn-end hook starts: a runner started there would run in that sandbox too, unable to make the worktree
-//! writable again or to start the plan's reviewer in a mount of its own (macOS allows no sandbox inside another). So it
-//! is written down in the data folder instead, and the next housekeeping pass outside starts it: the keeper's (every
-//! second or two), or any herdr hook's. A command typed in a shell or run by a script does the same while a keeper runs
-//! on this machine: the command may end, and everything it started with it (a systemd oneshot ends its whole cgroup,
-//! #312), while the keeper's own runners live on.
+//! A job a command asks for, handed to the keeper: a command typed in a shell or run by a script may end, and
+//! everything it started with it (a systemd oneshot ends its whole cgroup, #312), while the keeper's own runners live
+//! on. The job is written down in the data folder instead, and the next housekeeping pass starts it: the keeper's
+//! (every second or two), or any herdr hook's.
 use crate::json::*;
-use crate::plan::sandbox::inside::boxed;
 use crate::store::files::{data_dir, read_obj, write_json};
 use std::cell::Cell;
 use std::path::PathBuf;
@@ -36,10 +32,9 @@ fn files() -> Vec<PathBuf> {
 fn job_of(o: &Obj) -> (String, String, Vec<String>) { (o.t("job"), o.t("id"), strings(o.at("extra"))) }
 /// The jobs asked for and not started yet, oldest first: (job, task, extra).
 pub fn asked() -> Vec<(String, String, Vec<String>)> { files().iter().filter_map(|f| read_obj(f)).map(|o| job_of(&o)).collect() }
-/// Start each one, once: whoever takes its file off starts it. Nothing is started from inside the mount, nor by a
-/// command that hands its jobs over.
+/// Start each one, once: whoever takes its file off starts it. Not by a command that hands its jobs over.
 pub fn start_asked() {
-    if boxed() || hands_over() { return; }
+    if hands_over() { return; }
     let mut done: Vec<(String, String, Vec<String>)> = vec![];
     for f in files() {
         let Some(o) = read_obj(&f) else { continue };

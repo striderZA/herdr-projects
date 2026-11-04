@@ -10,7 +10,6 @@ use crate::research::{turn_refusal, RESEARCH};
 use crate::runner::{runner_alive, spawn_runner};
 use crate::store::attempts::attempts_of;
 use crate::store::files::{with_lock_wait, SLOT_STAGES};
-use crate::store::handovers::fresh_list;
 use crate::store::settings::change::checked;
 use crate::store::settings::lookup::{setting, setting_text, Scope};
 use crate::store::settings::values::agent_of;
@@ -100,7 +99,6 @@ pub fn delegate_with(id: &str, asked: Vec<(String, Value)>, w: Wait) -> Res<Task
         // Work that already landed and was cleaned up starts a new round in a fresh worktree, never in your checkout.
         if flow::git::cleaned_up(t) { old = owns(t); for k in FRESH { t.del(k); } t.put("link", json!({})); }
         t.put("on", Value::Null);
-        fresh_list(t); // a new start is `worker.agent` again, with its whole fallback list before it
         // Attempts of an earlier round that none was chosen from: it starts over.
         if !t.arr("attempts").is_empty() && !t.b("picked") {
             stale = attempts_of(t);

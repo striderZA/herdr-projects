@@ -3,7 +3,6 @@
 //! is one that passes by itself, the board waits and starts the review again, a few times with growing waits; then, or at
 //! once for an error that waiting cannot fix, it fails with the provider's own words. A reviewer that ended without a
 //! verdict is started once more by itself before the review counts as failed.
-use super::review_fallback::{next_reviewer, Cut};
 use super::review_once::{review_once, Plan};
 use crate::err::Res;
 use crate::flow;
@@ -12,6 +11,9 @@ use crate::limits::reached::{stop_at, tokens_over, StopHow};
 use crate::runner::{is_aborted, Guard};
 use crate::store::retries::{gave_up, retry_waits};
 use crate::store::tasks::{get, one_line, update_wait, Change};
+
+/// What cut a reviewer off: its provider's error.
+pub struct Cut { pub passing: bool, pub reason: String, pub error: String }
 
 /// Why a reviewer stopped for good; for a model it could not use, the reason in plain words and what to do.
 fn refused_words(by: &str, error: &str) -> String {
@@ -52,16 +54,14 @@ pub fn run_review_with(id: &str, g: &mut Guard, text: &str, change: Option<&Valu
         let Some(cut) = r.cut_by.as_ref() else { return Ok(r) };
         // At the task's token limit a cut-off review is not started again by itself.
         if let Some((limit, used)) = tokens_over(id, "") { stop_at(id, "tokens", &limit, used, StopHow { role: "reviewer".into(), ..Default::default() }); return Ok(Reviewed { aborted: true, ..Default::default() }); }
-        // It cannot review: the next one on `reviewer.fallback` does, as the same review, with the tries counted afresh.
-        if !cut.passing || tries >= waits.len() as i64 {
-            tried.push(r.by.clone());
-            match next_reviewer(g, ch, &r.by, cut, r.auth, tries + 1, &tried) {
-                Ok(next) if !next.is_empty() => { tries = 0; continue; }
-                Ok(_) => {}
-                Err(e) if is_aborted(&e) => return Ok(Reviewed { aborted: true, ..Default::default() }),
-                Err(e) => return Err(e),
-            }
+        // Its model was refused: the same program reviews again on its own default model, once.
+        let a = crate::store::settings::values::agent_of(&r.by);
+        if let Some(m) = crate::agents::model_refused::read(&a.kind, &cut.error).filter(|_| !r.auth && !cut.passing && !a.model.is_empty() && !tried.contains(&a.kind)) {
+            tried.push(a.kind.clone()); tries = 0;
+            g.set(|t| { t.put("reviewerOn", a.kind.clone()); t.put("msg", format!("{}: the review starts again on {}'s own default model", m.plain, a.kind)); t.put("waiting", Value::Null); })?;
+            continue;
         }
+        // It cannot review: after the board's own tries it fails with the provider's own words.
         if !cut.passing { return Ok(Reviewed { error: refused_words(&r.by, &cut.error), auth: r.auth, cut: true, ..Default::default() }); }
         if tries >= waits.len() as i64 { return Ok(Reviewed { error: format!("{}. Its error: {}", gave_up("reviewer", &cut.reason, tries + 1), cut.error.trim_end_matches(|c: char| c == '.' || c.is_whitespace())), cut: true, ..Default::default() }); }
         let until = crate::clock::now() + waits[tries as usize];
