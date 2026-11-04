@@ -112,7 +112,7 @@ fn kill_runner(t: &Task) {
     let r = t.at("runner");
     if r.is_object() && r.i("pid") != std::process::id() as i64 && marker_alive(r) {
         let pid = r.i("pid") as i32;
-        unsafe { if libc::kill(-pid, libc::SIGTERM) != 0 { libc::kill(pid, libc::SIGTERM); } }
+        if !crate::sys::kill_group(pid, crate::sys::TERM_SIGNAL) { crate::sys::send_signal(pid as i64, crate::sys::TERM_SIGNAL); }
     }
 }
 /// Stop: the stage is set first and the pane's state_change_seq recorded, then the interrupt key is sent, so a late

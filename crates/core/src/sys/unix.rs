@@ -122,3 +122,22 @@ pub fn children(pid: i64) -> Result<Vec<i64>, ()> {
     if o.status.code().unwrap_or(2) > 1 { return Err(()); }
     Ok(String::from_utf8_lossy(&o.stdout).lines().filter_map(|l| l.trim().parse().ok()).collect())
 }
+/// The owner's numeric id of a file.
+pub fn owner_uid(m: &Metadata) -> u32 { use std::os::unix::fs::MetadataExt; m.uid() }
+/// Sets a file's mode bits, as chmod does.
+pub fn set_mode(p: &Path, mode: u32) -> io::Result<()> { use std::os::unix::fs::PermissionsExt; std::fs::set_permissions(p, std::fs::Permissions::from_mode(mode)) }
+/// Options for a program the owner runs and anyone may read: created with mode 0755.
+pub fn executable_mode(o: &mut OpenOptions) -> &mut OpenOptions { use std::os::unix::fs::OpenOptionsExt; o.mode(0o755) }
+/// Whether the owner cannot write to this path (access(2) says so): a plan's locked worktree.
+pub fn not_writable(p: &Path) -> bool { let c = std::ffi::CString::new(p.display().to_string()).unwrap_or_default(); unsafe { libc::access(c.as_ptr(), libc::W_OK) != 0 } }
+/// A process of its own session, detached from this one: it outlives whoever started it.
+pub fn detach(c: &mut std::process::Command) { use std::os::unix::process::CommandExt; unsafe { c.pre_exec(|| { libc::setsid(); Ok(()) }); } }
+/// The stop signals that interrupt (SIGINT) and hang up (SIGHUP).
+pub const INT_SIGNAL: i32 = libc::SIGINT;
+pub const HUP_SIGNAL: i32 = libc::SIGHUP;
+/// Sends `sig` to a process group (`pid` 0: this process's own group). True when it was sent.
+pub fn kill_group(pid: i32, sig: i32) -> bool { unsafe { libc::kill(-pid, sig) == 0 } }
+/// Calls `f` when one of `sigs` arrives. A signal handler does only what is safe in one.
+pub fn on_stop(f: extern "C" fn(i32), sigs: &[i32]) { for s in sigs { unsafe { libc::signal(*s, f as *const () as usize); } } }
+/// Ends this process at once, skipping what exit would run (safe in a signal handler).
+pub fn exit_now(code: i32) -> ! { unsafe { libc::_exit(code) } }

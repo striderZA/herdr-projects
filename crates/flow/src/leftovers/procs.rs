@@ -63,7 +63,7 @@ pub fn stop_in(dir: &Path) -> usize {
 }
 /// End processes: asked to end, then, a few seconds on, ended. Those that still run.
 pub fn end(pids: &[i32]) -> Vec<i32> {
-    for sig in [libc::SIGTERM, libc::SIGKILL] {
+    for sig in [crate::sys::TERM_SIGNAL, crate::sys::KILL_SIGNAL] {
         let left: Vec<i32> = pids.iter().copied().filter(|p| !ended(*p)).collect();
         if left.is_empty() { break; }
         for p in &left { crate::herdr::procs::signal(*p as i64, sig); }
@@ -80,9 +80,8 @@ pub fn started_in(tmp: &Path) -> Vec<i32> {
     let me = crate::agents::scratch::uid();
     let mut out = vec![];
     for e in std::fs::read_dir("/proc").into_iter().flatten().flatten() {
-        use std::os::unix::fs::MetadataExt;
         let Some(pid) = e.file_name().to_str().and_then(|n| n.parse::<i32>().ok()) else { continue };
-        if own.contains(&pid) || e.metadata().map(|m| m.uid() != me).unwrap_or(true) || ended(pid) { continue; }
+        if own.contains(&pid) || e.metadata().map(|m| crate::sys::owner_uid(&m) != me).unwrap_or(true) || ended(pid) { continue; }
         if this_program(pid) { continue; }
         let Ok(env) = std::fs::read(e.path().join("environ")) else { continue };
         if env.split(|b| *b == 0).any(|v| v.strip_prefix(b"TMPDIR=").map(|d| { let d = PathBuf::from(&*String::from_utf8_lossy(d)); inside(&d, tmp) || inside(&d, &real) }).unwrap_or(false)) { out.push(pid); }

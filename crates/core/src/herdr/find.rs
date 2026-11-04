@@ -20,7 +20,7 @@ pub fn spots(home: &Path) -> Vec<PathBuf> {
 
 pub fn runs(p: &Path) -> bool { crate::sys::is_program(p) }
 /// The file names a program `name` may have: as given, and on Windows with each program extension (herdr is herdr.exe).
-fn names(name: &str) -> Vec<String> {
+pub fn names(name: &str) -> Vec<String> {
     if cfg!(windows) && !name.contains('.') { ["", ".exe", ".cmd", ".bat", ".com"].iter().map(|e| format!("{name}{e}")).collect() } else { vec![name.to_string()] }
 }
 /// The program `name` in one folder, if it runs there.

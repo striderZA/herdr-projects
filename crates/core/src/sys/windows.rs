@@ -11,6 +11,7 @@ use windows_sys::Win32::Storage::FileSystem::{
     GetDiskFreeSpaceExW, GetFileInformationByHandle, LockFileEx, BY_HANDLE_FILE_INFORMATION, LOCKFILE_EXCLUSIVE_LOCK, LOCKFILE_FAIL_IMMEDIATELY,
 };
 use windows_sys::Win32::System::IO::OVERLAPPED;
+use windows_sys::Win32::System::Console::SetConsoleCtrlHandler;
 use windows_sys::Win32::System::Pipes::WaitNamedPipeW;
 use windows_sys::Win32::System::Threading::{GetExitCodeProcess, GetProcessTimes, OpenProcess, TerminateProcess, PROCESS_QUERY_LIMITED_INFORMATION, PROCESS_TERMINATE};
 mod local_stream;
@@ -176,3 +177,43 @@ pub fn children(pid: i64) -> Result<Vec<i64>, ()> {
     let parent = sysinfo::Pid::from_u32(pid as u32);
     Ok(s.processes().values().filter(|p| p.parent() == Some(parent)).map(|p| p.pid().as_u32() as i64).collect())
 }
+/// Windows has no numeric user id: every file's owner is 0 here.
+pub fn owner_uid(_m: &Metadata) -> u32 { 0 }
+/// Sets a file's mode: Windows keeps only whether a file is read-only (no write bit in the mode means read-only).
+pub fn set_mode(p: &Path, mode: u32) -> io::Result<()> {
+    let mut perm = std::fs::metadata(p)?.permissions();
+    perm.set_readonly(mode & 0o222 == 0);
+    std::fs::set_permissions(p, perm)
+}
+/// Windows has no mode to set on a new file: a program runs by its extension.
+pub fn executable_mode(o: &mut OpenOptions) -> &mut OpenOptions { o }
+/// Whether this path is read-only (a locked worktree). A folder's read-only flag does not stop writes in it here.
+pub fn not_writable(p: &Path) -> bool { std::fs::metadata(p).map(|m| m.permissions().readonly()).unwrap_or(false) }
+/// A process in a group of its own (CREATE_NEW_PROCESS_GROUP), so Ctrl+C in its starter's console does not reach it.
+pub fn detach(c: &mut std::process::Command) { use std::os::windows::process::CommandExt; c.creation_flags(0x0000_0200); }
+/// Windows has no signal numbers for these: each is a console event, and one handler takes them all.
+pub const INT_SIGNAL: i32 = 2;
+pub const HUP_SIGNAL: i32 = 1;
+/// Ends a process and the processes it started, children first (`pid` 0: this process). True when any was ended.
+pub fn kill_group(pid: i32, sig: i32) -> bool {
+    let root = if pid == 0 { std::process::id() as i64 } else { pid as i64 };
+    let mut todo = vec![root];
+    let mut all = vec![];
+    while let Some(p) = todo.pop() {
+        all.push(p);
+        if let Ok(kids) = children(p) { todo.extend(kids); }
+    }
+    all.into_iter().fold(false, |hit, p| send_signal(p, sig) || hit)
+}
+static STOP: std::sync::OnceLock<extern "C" fn(i32)> = std::sync::OnceLock::new();
+/// A console event (Ctrl+C, Ctrl+Break, the console closed): the stop callback runs, and the event is handled.
+unsafe extern "system" fn console_event(_kind: u32) -> i32 {
+    if let Some(f) = STOP.get() { f(0); }
+    1
+}
+/// Calls `f` on a stop, which here is a console event. The first callback registered is the one kept.
+pub fn on_stop(f: extern "C" fn(i32), _sigs: &[i32]) {
+    if STOP.set(f).is_ok() { unsafe { SetConsoleCtrlHandler(Some(console_event), 1); } }
+}
+/// Ends this process (Windows has no exit path that skips what exit runs, so this is the ordinary exit).
+pub fn exit_now(code: i32) -> ! { std::process::exit(code) }

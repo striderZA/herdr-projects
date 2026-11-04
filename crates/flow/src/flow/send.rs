@@ -56,10 +56,10 @@ pub fn shim() -> PathBuf {
     let is_link = std::fs::symlink_metadata(&file).map(|m| m.file_type().is_symlink()).unwrap_or(false);
     let have = if is_link { None } else { std::fs::read_to_string(&file).ok() };
     if have.as_deref() != Some(text.as_str()) && crate::herdr::cli::fake().is_none() {
-        use std::os::unix::fs::OpenOptionsExt;
         let _ = std::fs::create_dir_all(&dir);
         let tmp = dir.join(format!("herdr-projects.{}", std::process::id()));
-        let ok = std::fs::OpenOptions::new().write(true).create(true).truncate(true).mode(0o755).open(&tmp).and_then(|mut f| std::io::Write::write_all(&mut f, text.as_bytes())).is_ok();
+        let mut o = std::fs::OpenOptions::new();
+        let ok = crate::sys::executable_mode(o.write(true).create(true).truncate(true)).open(&tmp).and_then(|mut f| std::io::Write::write_all(&mut f, text.as_bytes())).is_ok();
         if ok { let _ = std::fs::rename(&tmp, &file); }
     }
     file

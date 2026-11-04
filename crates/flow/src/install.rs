@@ -96,8 +96,7 @@ pub fn download(exe: &Path, version: Option<&str>, fetch: &dyn Fn(&str, &Path) -
         let Some(want) = std::fs::read_to_string(&sums).ok().and_then(|t| sum_in(&t)) else { crate::fail!("{url}.sha256 holds no checksum: nothing was changed") };
         let Some(have) = sha256(&file) else { crate::fail!("no sha256sum, shasum or openssl here to check the download: nothing was changed") };
         if have != want { crate::fail!("the download does not match its checksum: nothing was changed. Try again.") }
-        use std::os::unix::fs::PermissionsExt;
-        std::fs::set_permissions(&file, std::fs::Permissions::from_mode(0o755))?;
+        crate::sys::set_mode(&file, 0o755)?;
         let Some(v) = version_of(&file) else { crate::fail!("the downloaded program does not run here: nothing was changed") };
         Ok(Got { version: v, file: file.clone() })
     })();
@@ -128,10 +127,9 @@ pub fn update(exe: &Path, version: Option<&str>, fetch: &dyn Fn(&str, &Path) -> 
 pub fn path_problem(at: &Path, exe: &Path, path: &str) -> Option<(String, String)> {
     let dir = at.parent().map(Path::to_path_buf).unwrap_or_default();
     let real = |p: &Path| std::fs::canonicalize(p).ok();
-    use std::os::unix::fs::PermissionsExt;
     // As a shell looks: the first file of that name it may run.
-    let runs = |f: &Path| std::fs::metadata(f).map(|m| m.is_file() && m.permissions().mode() & 0o111 != 0).unwrap_or(false);
-    match std::env::split_paths(path).map(|d| d.join("herdr-projects")).find(|f| runs(f)) {
+    let runs = |f: &Path| crate::sys::is_program(f);
+    match std::env::split_paths(path).flat_map(|d| crate::herdr::find::names("herdr-projects").into_iter().map(move |n| d.join(n))).find(|f| runs(f)) {
         Some(f) if f == at || real(&f).is_some() && (real(&f) == real(at) || real(&f) == real(exe)) => None,
         Some(f) => Some((format!("{} comes first on your PATH (an older install? `npm unlink -g herdr-projects` takes out the Node one)", f.display()), format!("Remove it, or put {} before it.", dir.display()))),
         None => Some(("herdr-projects is not on your PATH".into(), format!("To type herdr-projects in any shell, put its folder on your PATH (in ~/.profile or your shell's start-up file): export PATH=\"{}:$PATH\"", dir.display()))),

@@ -47,7 +47,7 @@ pub fn free_open(t: &Obj) -> u64 {
     if t.b("worktree") { for p in scratch_of(Path::new(t.s("worktree"))) { n += thin(&p, 2); } }
     n
 }
-fn gone_file(p: &Path) -> u64 { use std::os::unix::fs::MetadataExt; let n = std::fs::symlink_metadata(p).map(|m| m.blocks() * 512).unwrap_or(0); if std::fs::remove_file(p).is_ok() { n } else { 0 } }
+fn gone_file(p: &Path) -> u64 { let n = std::fs::symlink_metadata(p).map(|m| crate::sys::allocated_bytes(&m)).unwrap_or(0); if std::fs::remove_file(p).is_ok() { n } else { 0 } }
 /// Empty a folder, keeping the folders in it `keep` levels down (emptied too): the bytes that went.
 fn thin(p: &Path, keep: usize) -> u64 {
     if !safe(p) { return 0; }
@@ -108,12 +108,11 @@ pub fn remove(p: &Path) -> u64 {
 }
 /// Every folder in it writable by its owner, so what is in them can go.
 fn writable(p: &Path) {
-    use std::os::unix::fs::PermissionsExt;
     let mut todo = vec![p.to_path_buf()];
     while let Some(d) = todo.pop() {
         let Ok(m) = std::fs::symlink_metadata(&d) else { continue };
         if !m.is_dir() { continue; }
-        let _ = std::fs::set_permissions(&d, std::fs::Permissions::from_mode(m.permissions().mode() | 0o700));
+        let _ = crate::sys::set_mode(&d, crate::sys::mode_bits(&m) | 0o700);
         for e in std::fs::read_dir(&d).into_iter().flatten().flatten() { todo.push(e.path()); }
     }
 }

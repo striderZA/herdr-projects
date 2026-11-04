@@ -34,8 +34,8 @@ pub fn ignored_mark(dir: &Path, rels: Option<&[String]>) -> Option<Obj> {
     let mut out = Obj::new();
     for rel in rels {
         if let Ok(s) = std::fs::symlink_metadata(dir.join(rel)) {
-            use std::os::unix::fs::MetadataExt;
-            let mt = s.mtime() as f64 * 1000.0 + s.mtime_nsec() as f64 / 1e6;
+            let (sec, ns) = crate::sys::mtime(&s);
+            let mt = sec as f64 * 1000.0 + ns as f64 / 1e6;
             out.put(rel, if s.is_dir() { format!("d:{mt}") } else { format!("{}:{mt}", s.len()) });
         }
         if out.len() > MOST { return None; } // too many to keep on a task: not compared

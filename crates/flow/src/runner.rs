@@ -21,8 +21,7 @@ thread_local! { pub static JOBS: RefCell<Vec<(String, String, Vec<String>)>> = c
 const DROP_ENV: [&str; 8] = ["HERDR_PLUGIN_EVENT", "HERDR_PLUGIN_EVENT_JSON", "HERDR_PLUGIN_CONTEXT_JSON", "HERDR_PLUGIN_ENTRYPOINT_ID", "HERDR_PLUGIN_ACTION_ID", "HERDR_PANE_ID", "HERDR_TAB_ID", "HERDR_WORKSPACE_ID"];
 /// A process of its own session, detached from this one: it outlives whoever started it.
 pub fn detach(c: &mut Command) {
-    use std::os::unix::process::CommandExt;
-    unsafe { c.pre_exec(|| { libc::setsid(); Ok(()) }); }
+    crate::sys::detach(c);
 }
 /// Start a detached command and leave it to run: a small thread of this process waits for its end. `setsid` does not
 /// change a process's parent, so one nobody waits for stays a zombie of a long-lived starter (the keeper, the board)
@@ -192,7 +191,7 @@ pub fn sh(cmd: &str, cwd: &std::path::Path, env: &[(String, String)], timeout_mi
             while let Ok(n) = s.read(&mut chunk) { if n == 0 { break; } let mut b = b.lock().unwrap(); b.extend_from_slice(&chunk[..n]); if b.len() > 8 << 20 { let cut = b.len() - (4 << 20); b.drain(..cut); } }
         }));
     }
-    let kill = || unsafe { libc::kill(-pid, libc::SIGKILL); };
+    let kill = || { crate::sys::kill_group(pid, crate::sys::KILL_SIGNAL); };
     let until = std::time::Instant::now() + std::time::Duration::from_secs_f64(timeout_min * 60.0);
     let mut last_poll = std::time::Instant::now();
     // The command is looked at every second (HERDR_PROJECTS_TICK_MS: a test of what a long check shows looks sooner).

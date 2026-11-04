@@ -19,7 +19,7 @@ pub fn low_at(total: u64) -> u64 { LOW.min(total / 2).max(crate::leftovers::room
 #[derive(Clone, Debug, Default)]
 pub struct Disk { pub mount: PathBuf, pub free: u64, pub total: u64, pub holds: Vec<String>, pub waiting: Vec<String> }
 
-fn dev(p: &Path) -> Option<u64> { use std::os::unix::fs::MetadataExt; std::fs::metadata(p).ok().map(|m| m.dev()) }
+fn dev(p: &Path) -> Option<u64> { std::fs::metadata(p).ok().map(|m| crate::sys::file_key(&m).0) }
 /// The folder a disk is mounted at: the highest parent on the same device.
 pub fn mount_of(p: &Path) -> PathBuf {
     let d = dev(p);

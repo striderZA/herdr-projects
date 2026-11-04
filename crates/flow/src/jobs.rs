@@ -8,8 +8,8 @@ use crate::runner::inline;
 pub fn run_job(job: &str, id: &str, extra: &[String]) -> i32 {
     // A stop from the board ends this runner's own subprocesses with it: the runner leads its own process group.
     if !inline() {
-        extern "C" fn on_term(_: i32) { unsafe { libc::kill(0, libc::SIGKILL); libc::_exit(0); } }
-        unsafe { libc::signal(libc::SIGTERM, on_term as *const () as usize); }
+        extern "C" fn on_term(_: i32) { crate::sys::kill_group(0, crate::sys::KILL_SIGNAL); crate::sys::exit_now(0); }
+        crate::sys::on_stop(on_term, &[crate::sys::TERM_SIGNAL]);
     }
     let has = |f: &str| extra.iter().any(|x| x == f);
     let mut id = id.to_string();
