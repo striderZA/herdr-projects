@@ -38,4 +38,4 @@ Details if you need them: https://github.com/eliasstravik/herdr-projects/blob/ma
 
 Update later with `herdr-projects update`.
 
-More detail (building from source, older installs, uninstalling): [installing](install.md).
+More detail (building from source, uninstalling): [installing](install.md).

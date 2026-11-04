@@ -17,7 +17,7 @@ too, and with `NO_COLOR` the board still reads.
 | light grey | the board runs its own check |
 | purple | an automation |
 | the base colour | every name: a project's, a task's title |
-| the fainter grey | what goes with a name: counts (`9 projects · 30 tasks`, `7 tasks`), keys (`HP`, `HOME`), times, and tags after a title or a name (`[auto]`, `[research]`, `[chat]`, `[autopilot]`, `×3`) |
+| the fainter grey | what goes with a name: counts (`9 projects · 30 tasks`, `7 tasks`), keys (`HP`, `HOME`), times, and tags after a title or a name (`[auto]`, `[research]`, `[chat]`, `×3`) |
 
 ## The board is in Herdr's theme
 
@@ -104,14 +104,6 @@ A `mauve` of your own (`[theme.custom]`) is held to the same rule.
 **Colour is not the only clue**: the heading is a heading by its place and its word, the mark is an arrow going round
 where every task's mark is another shape, and `on` or `off` is a word on every row. With `NO_COLOR` all of that still
 stands. One that is off is quiet as a done task is: its mark dimmed, its words greyed.
-
-## Autopilot has no colour of its own
-
-A coordinator on [autopilot](autopilot.md) keeps its row's own mark, in its own colour, as when it is off. Autopilot
-shows only in the board's own patterns: a dimmed `[autopilot]` after the row's name, as a task's `[research]`; a status
-line under the row in the grey of a task's (`Autopilot · next check-in in 12m · 3 of 20 today`, `Working on HSW-92`,
-`Needs you · …`); and `1 on autopilot` in the top row's summary. Its wakes in the chat stand under the name `Autopilot`,
-as the board's own words stand under `Board`, in the same greys. With `NO_COLOR` all of it still reads.
 
 ## The greys are quiet but always readable
 

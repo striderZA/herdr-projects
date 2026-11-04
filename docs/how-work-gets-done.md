@@ -98,7 +98,7 @@ never finishes a task. The turn counts as ended when:
 - the saved conversation ends in a finished message or an error; or
 - a closing note was written to the task's own folder (`closing-note.md`,
   [where it is](home-folder.md#nothing-of-the-boards-goes-into-the-folder-an-agent-works-in)). The rules still ask for
-  one, as the fallback.
+  one.
 
 Otherwise the task is held as "Stopped without a summary": `Ctrl+R` tells the agent to continue, `Ctrl+L` takes the work
 as it is. Its message is the agent's last words on its screen: what stands above the program's input box, never the
@@ -393,7 +393,7 @@ looking at it).
 ## With the board closed: the keeper
 
 A small background process, the keeper (`herdr-projects keeper`), does what the open board's tick does: it polls pull
-requests, starts queued tasks, runs the Watcher, and keeps Herdr's sidebar current.
+requests, starts queued tasks, and keeps Herdr's sidebar current.
 
 - **The sidebar.** An agent's entry there is a small copy of its task's row on the board ([Herdr's sidebar](sidebar.md)):
   the task's number and title; who is on it and where it stands, in the board's own words (one list:

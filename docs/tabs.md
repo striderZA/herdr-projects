@@ -6,12 +6,8 @@ Every task with an agent gets its own Herdr space. Inside it, each helper has it
 |---|---|
 | `Agent` | the agent doing the task |
 | `Reviewer #1`, `Reviewer #2`, … | the reviewer, one tab per review round |
-| `Planner` | the agent writing the task's plan ([a plan first](plan.md)) |
 | `Plan review` | the reviewer checking that plan |
 | `Agent A`, `Agent B`, … and `Picker` | [several attempts](attempts.md) at one task, and the reviewer who compares them |
-
-When a [fallback agent](fallback.md) takes over, the tab says which program is on it now: `Agent (codex)`,
-`Reviewer #2 (claude)`.
 
 Two tabs live outside the task spaces: `Coordinator` in the home space ([the Coordinator](coordinator.md)) and
 `herdr-projects`, the board itself ([the board](board.md)).
@@ -23,8 +19,7 @@ Two tabs live outside the task spaces: `Coordinator` in the home space ([the Coo
 - **`Reviewer #N`** opens when a review starts and closes when it ends, whatever the result. It also closes when you
   stop the task, and when a review is cut off and tried again. `N` is the review round, the same number as the row's
   `R#2` tag. A reviewer is never a pane inside the agent's tab.
-- **`Planner`** (set by `plan.agent`) closes after you say yes to the plan. `Plan review` is used when
-  `plan.approve` is `reviewer`.
+- **`Plan review`** is used when `plan.approve` is `reviewer`.
 - **Attempts:** when one attempt is picked, the other attempts' tabs close. The kept one keeps its name.
 - **Done:** when the task is merged or archived, its whole space closes, tabs and all.
 

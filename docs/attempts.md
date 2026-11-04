@@ -83,8 +83,7 @@ kept, not the first.
 ## On the board
 
 - **One row.** A tag after the task's name says how many attempts it has (`×3`). The line under it has a mark per
-  attempt: `A claude ✓ · B codex working 60% · C pi ✗ check`. The [Watcher](watcher.md) follows each attempt's agent;
-  the row's bar is their average.
+  attempt: `A claude ✓ · B codex working 60% · C pi ✗ check`. The row's bar is their average.
 - **Pick one.** A task waiting for your choice stands under **needs you** and says `Pick one of 3`, with the reviewer's
   recommendation when there is one. In Herdr's sidebar, the task's space says the same, and each attempt that passed
   says `pick one`.
@@ -114,7 +113,5 @@ the reports. The picker reads the reports instead of diffs.
 Attempts stand between the start and the review:
 
 - A [plan](plan.md) is made and approved once, before the attempts fan out.
-- A [fallback agent](fallback.md) takes over inside one attempt, one after another and only on failure. Attempts are side
-  by side, and always.
 - [Limits](limits.md): the attempts are one task. `limit.time` holds for each attempt's own runs, `limit.tokens` for all
   the attempts and the task together.

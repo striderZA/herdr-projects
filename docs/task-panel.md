@@ -39,7 +39,6 @@ whether the chat's message shows, and `Space` never opens or folds it, at any wi
               waits for GitHub's checks
  Workspace    from main · removed when done
  Also         one attempt · not research only · no limits
-              no fallback
  * this task only
 ```
 
@@ -69,7 +68,6 @@ The panel and the full screen have the same parts, in the same order:
   | `Progress` | the bar, its percent and the minutes left |
   | `Now` | what the agent or reviewer is doing right now, wrapped whole |
   | `On it` | who |
-  | `Took over` | each hand-over to [a fallback agent](fallback.md), in plain words |
   | `Made by` | the [automation](automations.md) that made it, if one did |
   | `Change` | the pull request, in the colour of its checks, and the size of the change. The number is a link; full screen, the address is printed too |
   | `Next` | for a task nobody is on: what puts an agent on it |
@@ -104,8 +102,7 @@ usual ones.
 | Row | Says | Settings |
 |---|---|---|
 | `Agent` | who works: the program (and its version), its model, its effort; `fast`, `asks before acting` and `words of your own` where they are so | `worker.*` |
-| `Takes over` | who takes over when the agent, or the reviewer, cannot go on, under that one's row. Once one of the two has a list both have the row, and the one without says `nobody` | `worker.fallback`, `reviewer.fallback` |
-| `Plan first` | `off`, or who approves the plan and who writes it (a planner somebody chose is shown while it is off too) | `plan.approve`, `plan.agent` |
+| `Plan first` | `off`, or who approves the plan | `plan.approve` |
 | `Attempts` | how many and by whom, and who picks; only for more than one | `attempts.by`, `attempts.pick` |
 | `Reviewer` | who reviews, as `Agent`; `off` where nothing is reviewed, with what somebody chose for it all the same | `reviewer.*` |
 | `Review when` | `in a repo`, `always` or `never`, and whether the reviewer brings evidence | `review.when`, `review.evidence` |
@@ -114,7 +111,7 @@ usual ones.
 | `Merge` | after your yes or by itself, how it lands, and whether a pull request is opened. A research-only task has `Research` here instead: it merges nothing. A [chat-only](chat.md) one has `Chat` (`no change to the repo · ends when you say`), and no `Reviewer`, `Review when`, `Send back` or `Check` rows: none of them runs | `merge.by`, `merge.method`, `merge.pr`, `research.only`, `chat.only` |
 | `Limits` | the longest run and the most tokens, both of them (`2h a run · no token limit`); only where one is set, or somebody said `none` | `limit.time`, `limit.tokens` |
 | `Workspace` | what the worktree starts from, what sets it up, is copied in and tears it down, and whether it is removed when done | `workspace.*` |
-| `Also` | in a word each, what has no row of its own while it is nothing: `one attempt`, `not research only`, `no limits`, `no fallback` | |
+| `Also` | in a word each, what has no row of its own while it is nothing: `one attempt`, `not research only`, `no limits` | |
 
 - **Only a value set for this task alone is marked**: a `*` after it, in the accent colour, and one dim line under the
   rows, `* this task only` (the first line to go where room is short). Every other value looks the same, whether it is
@@ -182,17 +179,13 @@ a repo's entry `you`). `Esc` goes back to the list ([settings](settings.md)).
 On a coordinator's row (a project's row or the top row) the panel shows that
 coordinator, in the same form:
 
-- **Status**: `State` (its chat's, `idle` or `working`; on [autopilot](autopilot.md), autopilot's word), `Last`, its
-  latest message as the chat shows it, and while on, `Goal` and `Today` (`2 of 5 added · 1 of 2 under way`).
-- **Settings**: `Agent` (its program, model and effort), and while on, `Wakes`, `Limits`, `May set`, `May touch` and the
-  rest, in plain words. `*` marks this time's values, with `* this time only` under them.
-- While autopilot is off, nothing of it shows.
+- **Status**: `State` (its chat's, `idle` or `working`), `Last`, and its latest message as the chat shows it.
+- **Settings**: `Agent` (its program, model and effort), `Limits`, `May set`, `May touch` and the rest, in plain words.
 - A `coordinator.*` value changed while its chat runs says `from its next fresh chat`, here and on its settings page.
-- `Alt+T` shows it whole, and while on its last 20 wakes: when, why, and whether it answered.
+- `Alt+T` shows it whole.
 
 `Ctrl+E` there opens its settings page, in this page's form and keys: its own rows first, under `This coordinator`,
-then your own settings, then on a project's row your entry for that repo. While autopilot is on,
-`Enter` on an autopilot row other than the goal saves it for this time only, and a line under the rows says so.
+then your own settings, then on a project's row your entry for that repo.
 
 ## The reviews
 

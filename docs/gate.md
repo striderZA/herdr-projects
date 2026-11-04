@@ -38,9 +38,7 @@ The severity says what the fault does:
   means everywhere: a task with `merge.by: itself` merges ([merging by itself](#merging-by-itself)), an approved merge
   that was repaired goes through, and the board says `Pass`.
 - **Fail:** the work goes back to the agent by itself, at most `review.rounds` times. Findings at or above the gate are
-  sent as required, the rest as optional. When the cap is reached and it still fails, it stops and waits for you. With
-  a fallback agent set (`worker.fallback`), the next agent on that list takes over first, with the open findings and
-  rounds of its own ([the fallback agent](fallback.md)).
+  sent as required, the rest as optional. When the cap is reached and it still fails, it stops and waits for you.
 - **From the second round on**, the reviewer gets the earlier findings and only checks that each is fixed and that the
   fixes broke nothing. It may add a new finding only if it is critical, with proof. Anything smaller it notices late is
   left out (a pre-existing fault is still noted). A reply from you starts a full review again.

@@ -2,7 +2,7 @@
 
 **An automation is a saved task plus a trigger.** Each time the trigger fires, the board adds an ordinary task and puts
 an agent on it at once. Nothing else: it chases no goal by itself, and it wakes nobody (nothing is sent to the
-Coordinator). A coordinator that works toward a goal by itself is [autopilot](autopilot.md).
+Coordinator).
 
 The easiest way to make one is to tell the Coordinator in plain words: "every Monday at nine, look for dependencies that
 are out of date", "after every merge, update the changelog". It runs the commands below.
@@ -111,8 +111,8 @@ herdr-projects show --automation <name>            every setting its next task w
 
 ## Its settings: the same as any task's
 
-An automation may hold its own value for any setting a single task may hold: the work settings, never `board.*`,
-`coordinator.*` or `watcher.*`.
+An automation may hold its own value for any setting a single task may hold: the work settings, never `board.*` or
+`coordinator.*`.
 
 - Research only is one of them (`research.only`; `--research` on `automations add` and `automations change` is its short
   form: [research-only tasks](research.md)). So is chat only (`chat.only`, `--chat` and `--no-chat`): each task it makes
