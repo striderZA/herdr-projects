@@ -96,7 +96,7 @@ fn a_size_that_changes_for_a_moment_and_is_back_does_not_move_the_board() {
     assert_ne!(laid, mid, "it did follow");
     s.wait(1000); s.at(141, 46); s.wait(1000);
     assert_eq!(s.at(141, 46), wide);
-    // Without the wait (the tests' boards, and the web board) a size is the board's at once.
+    // Without the wait (the tests' boards) a size is the board's at once.
     let mut plain = open(&w.root, 46); plain.screen(141); assert!(!side_panel(&plain.screen(47)));
 }
 

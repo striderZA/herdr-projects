@@ -26,7 +26,7 @@ in [`.herdr-projects.json`](../.herdr-projects.json)).
   program's name before): it reads only that name.
 
 **Picking tests by name.** A name is first an area: `board-panel` (or `board_panel`) runs `tests/board_panel.rs` and every
-`tests/board_panel_*.rs`, exactly those (not `web_board_panel.rs`). A name that is no area is matched against each test's
+`tests/board_panel_*.rs`, exactly those (not `board_panel_extra.rs`). A name that is no area is matched against each test's
 own name, as `cargo test` matches it: a test in `tests/` is named by its file and its function
 (`board_hints::the_hint_line_names_the_task_once_…`), and one beside the code by its module path. So
 `npm run check textbox` runs the tests that say `textbox`, wherever they are. A word that matches no test runs none, and
@@ -302,9 +302,6 @@ something that says when it is done: a real terminal is read until its frame is 
   frame is written; `UPDATE_FRAMES=1` writes them all again, for a change to what the board looks like. Look at what
   changed before you commit it. Every frame also holds to the rules that need no picture: no line over the width, the
   hint line last.
-- **The board as data for the web page** (`tests/web_board.rs`): `common::board::web(&w, call, args)` asks the web board
-  what the page would ask, on the same world: the same list, groups, marks and words as the terminal board, and its
-  buttons pressing the board's own keys.
 - **A real terminal**, a few: `tests/real_terminal.rs` starts the built program in a pseudo-terminal and drives it as a
   terminal would: it starts and draws, takes a burst of keys, resizes cleanly, and on closing gives the terminal back
   exactly as it was.
@@ -349,5 +346,4 @@ A new area of that kind goes in the macOS job's list.
 
 ## Looking at the real thing
 
-Tests read the board as text and as frames. A real terminal or a browser screenshot is only for a task that changes what
-the board or the review page looks like. For any other task, the tests are the evidence.
+Tests read the board as text and as frames. A real terminal is only for a task that changes what the board looks like. For any other task, the tests are the evidence.

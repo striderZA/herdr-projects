@@ -1,4 +1,4 @@
-//! pi's skills and prompts (the web UI's server/skills/pi.ts): skills as `/skill:name`, yours (its own folder, any
+//! pi's skills and prompts: skills as `/skill:name`, yours (its own folder, any
 //! depth, a loose `.md` at its top too, and `~/.agents/skills`) and the project's (`.pi/skills`, `.agents/skills`);
 //! prompt templates as `/name`, yours and the project's.
 use super::read::{commands, skills, Walk};

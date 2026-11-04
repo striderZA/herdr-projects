@@ -8,8 +8,7 @@ That order is used everywhere machines are listed:
 
 - the machine headings in the list;
 - `Alt+M`'s round (every machine, then each machine by itself), shown as the filter row's first item;
-- the same on the web board, and the web UI's Boards section and its list of whose tasks to show, whatever order the
-  web UI keeps its PCs in ([web UI](web-ui.md)). There **All machines** stands first, above the machines.
+- **All machines** stands first, above the machines.
 
 ## Where Herdr keeps the order
 
@@ -63,7 +62,7 @@ the ones it really has, never cut from its whole name.
 
 Where the board follows another machine's sidebar, it names the machines as that sidebar does, with its own name beside
 it where the two differ: `Local (elias-macbook-pro-m1)` for the machine whose window it is, `Mac mini (Mac)` for this
-one. The same names are in the filter row and on the web board. Following this machine's own list,
+one. The same names are in the filter row. Following this machine's own list,
 the board's names stand. A machine's name in a scope, a message or a coordinator's name is still the board's.
 
 ## Machines the sidebar does not show

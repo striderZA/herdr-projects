@@ -13,7 +13,7 @@ use sw::store::settings::lookup::Scope;
 
 /// The skills and commands a program takes in its chat, read where it keeps them.
 mod skills;
-/// The skills of the other programs the herdr web UI lists them for.
+/// The skills of the other programs.
 mod skills_more;
 /// Trusting a repo in Codex's config.toml, read as TOML (#314).
 mod codex_trust;

@@ -1,7 +1,7 @@
 //! A stand-in for ssh, for the tests of other machines: `HERDR_PROJECTS_SSH` names a script that ends each call as
 //! the test told that machine to (its stdout, stderr and exit code for each request, kept in a folder of files), and
 //! writes down what it was asked; and for the resolver, a file of the addresses host names stand for (`hosts`), so no
-//! real look is made. Also: a web board's answers from other machines, waited for.
+//! real look is made.
 #![allow(dead_code)]
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
@@ -77,21 +77,4 @@ impl Drop for Far { fn drop(&mut self) { unsafe { std::env::remove_var("HERDR_PR
 /// A task of another machine, as its door lists it.
 pub fn theirs(n: i64) -> Value { let now = sw::clock::now(); json!({ "id": format!("far/{n}"), "title": format!("Theirs {n}"), "stage": "todo", "state": "idle", "agent": "", "app": "", "msg": "", "note": "", "at": now, "created": now, "snap": { "folder": "~/far" } }) }
 
-/// The web board of one browser, once every machine it knows has answered (they are asked on threads of their own).
-pub fn answered(client: &str, machines: usize) {
-    for _ in 0..500 {
-        let c = sw::webui::web::client(client);
-        let mut g = c.lock().unwrap();
-        sw::webui::web::take_in(&mut g);
-        if g.s.remotes.len() == machines && g.s.remotes.values().all(|m| !m.busy) { return; }
-        drop(g);
-        std::thread::sleep(std::time::Duration::from_millis(10));
-    }
-    panic!("the machines did not answer");
-}
-/// Every machine of this browser's board asked again now, and their answers in.
-pub fn ask_again(client: &str, machines: usize) {
-    { let c = sw::webui::web::client(client); let mut g = c.lock().unwrap(); sw::webui::web::poll(&mut g, true); }
-    answered(client, machines);
-}
 pub fn obj_of(v: &Value) -> Obj { v.as_object().cloned().unwrap_or_default() }

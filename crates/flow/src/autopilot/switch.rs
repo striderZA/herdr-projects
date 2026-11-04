@@ -1,5 +1,5 @@
 //! Turning autopilot on and off: one function each, which every way of switching goes through (the keys, the commands,
-//! the web board, another machine). On needs a goal (saved as that coordinator's own) and a coordinator that can run
+//! another machine). On needs a goal (saved as that coordinator's own) and a coordinator that can run
 //! unattended (`coordinator.access` not `ask`); this time's values last until it goes off. Turning on is a wake, and so
 //! is `on` while it is on, which changes what it names. Off drops this time's values and the reasons waiting, and takes
 //! a wake not yet typed out of the queue; a turn under way goes on, but may write nothing more.

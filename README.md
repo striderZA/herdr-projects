@@ -36,7 +36,7 @@ Keep your attention on decisions. Herdr Projects starts, checks and tracks the t
 
 ### 📈 See every task at a glance
 
-The board's list holds your tasks in five groups, in the order they need you: `needs you`, `ready to approve`, `working`, `to do` and `done`. Its header counts them (`3 need you · 1 ready · 2 working`), and each row says who is on it, where it stands, its review round and pull request, and a percent and time to go. Herdr's own sidebar carries a small copy of each live agent's row, so you see the same thing from any space. With the [Herdr web UI](docs/web-ui.md) the board is on your phone too, and `Alt+M` shows the tasks of your [other machines](docs/other-machines.md).
+The board's list holds your tasks in five groups, in the order they need you: `needs you`, `ready to approve`, `working`, `to do` and `done`. Its header counts them (`3 need you · 1 ready · 2 working`), and each row says who is on it, where it stands, its review round and pull request, and a percent and time to go. Herdr's own sidebar carries a small copy of each live agent's row, so you see the same thing from any space. `Alt+M` shows the tasks of your [other machines](docs/other-machines.md).
 
 ### ⚡ Stop briefing every agent yourself
 
@@ -80,7 +80,7 @@ An open board and the keeper see the new program and load it by themselves, once
 
 ### Do I need to know how to code?
 
-You need to be comfortable in a terminal. The plugin downloads one prebuilt program for your platform, and you never have to edit its files: everything changes by asking the Coordinator or from the board's settings page (`Ctrl+E`). You'll need macOS or Linux, Herdr 0.9.3 or newer, Git, `curl` or `wget`, and an agent CLI the board can start: Claude Code, Codex, pi or another agent herdr supports. `gh` (pull requests) and `tailscale` (private review links) are optional. Rust/Cargo is needed only when you build it yourself. [Installing](docs/install.md) covers the prerequisites.
+You need to be comfortable in a terminal. The plugin downloads one prebuilt program for your platform, and you never have to edit its files: everything changes by asking the Coordinator or from the board's settings page (`Ctrl+E`). You'll need macOS or Linux, Herdr 0.9.3 or newer, Git, `curl` or `wget`, and an agent CLI the board can start: Claude Code, Codex, pi or another agent herdr supports. `gh` (pull requests) is optional. Rust/Cargo is needed only when you build it yourself. [Installing](docs/install.md) covers the prerequisites.
 
 ### How do I check that Herdr Projects is running?
 
@@ -98,7 +98,7 @@ It checks the program and its launcher, the plugin in Herdr, your agent programs
 
 ### Does the plugin send my work to a hosted service?
 
-No. The board keeps its files in a folder on your machine, talks to your local Herdr session, and reaches your other machines over your own SSH. Reports and review evidence get a private link on your tailnet, or on `127.0.0.1`. Your agent CLI still uses its own service as usual.
+No. The board keeps its files in a folder on your machine, talks to your local Herdr session, and reaches your other machines over your own SSH. Reports and review evidence stay as files in the task's folder, and the board shows their paths. Your agent CLI still uses its own service as usual.
 
 ### Will it touch my branches or worktrees on its own?
 

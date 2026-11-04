@@ -1,5 +1,5 @@
 //! A key as crossterm reads it, said as the board's keys name chords ("ctrl+l", "shift+enter", "up"). Old terminals
-//! send alt as esc and a letter; crossterm reads that as alt too, so the alt keys work in every view, the web UI's
+//! send alt as esc and a letter; crossterm reads that as alt too, so the alt keys work in every view, a remote
 //! terminal included.
 use crate::board::keys::Press;
 use crossterm::event::{KeyCode, KeyEvent, KeyEventKind, KeyModifiers};

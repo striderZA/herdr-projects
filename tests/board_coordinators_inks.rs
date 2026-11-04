@@ -12,7 +12,6 @@ use sw::board::update::coords::{MACHINE_INK, REPO_HEAD_INK};
 use sw::board::update::heads::{group_id, machine_id};
 use sw::board::update::{update, Event};
 use sw::board::view::textbox::box_ink;
-use sw::json::*;
 use sw::shown::ink::{Ink, Inked};
 
 fn coord_world() -> World {
@@ -23,7 +22,7 @@ fn coord_world() -> World {
     w
 }
 /// Herdr's theme of that name, as the board paints with it.
-fn theme(name: &str) -> Theme { let r = resolve(&Default::default(), None, name, Seen::default()); Theme { pal: r.pal, ground: r.ground, symbols: true, plain: false, name: r.name, web: false } }
+fn theme(name: &str) -> Theme { let r = resolve(&Default::default(), None, name, Seen::default()); Theme { pal: r.pal, ground: r.ground, symbols: true, plain: false, name: r.name } }
 fn drain() { flush(); sw::runner::drain_jobs(&|job, id, extra| { sw::jobs::run_job(job, id, extra); flush(); }); }
 /// The inks (and boldness) of the pieces under `needle` on the first line that has it (and `on`, where it is not empty).
 fn inks(lines: &[Inked], needle: &str) -> Vec<(Ink, bool)> { inks_on(lines, "", needle) }
@@ -152,26 +151,6 @@ fn another_machines_coordinators_box_is_amber_while_it_works_and_red_when_it_ask
         all(&mut s, "╭─", ink, false);
         s.press(&["space"]);
     }
-}
-
-#[test]
-fn the_web_board_draws_the_box_in_the_status_colour_and_names_in_the_base_colour() {
-    let w = coord_world();
-    w.add("Fix the login");
-    let web = |call: &str, args: serde_json::Value| common::board::web(&w, call, args);
-    let s = web("board", json!({}));
-    assert_eq!(s.at("chat").s("box"), "text", "the top row's coordinator, never started: {}", s.at("chat"));
-    // this machine's group: the base colour, no accent
-    assert!(s.at("list").arr("groups").iter().filter(|g| g.b("machine")).all(|g| g.s("color") == "plain"), "{}", s.at("list"));
-    web("press", json!({ "id": "byRepo" }));
-    let s = web("board", json!({}));
-    let head = s.at("list").arr("groups").iter().find(|g| g.s("id").starts_with("head:repo")).map(|g| g.t("id")).unwrap();
-    web("fold", json!({ "id": head }));
-    let s = web("press", json!({ "id": "talk" }));
-    assert_eq!(s.at("chat").s("box"), "text", "{}", s.at("chat"));
-    // its heading on the page is in plain text, as on the terminal board; no task title is bold
-    assert!(s.at("list").arr("groups").iter().any(|g| g.s("id") == head && g.s("color") == "plain"), "{}", s.at("list"));
-    assert!(s.at("list").arr("groups").iter().flat_map(|g| g.arr("rows").to_vec()).all(|r| !r.b("strong")), "{}", s.at("list"));
 }
 
 #[test]

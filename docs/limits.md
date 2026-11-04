@@ -82,11 +82,6 @@ Stopping the task yourself (`Ctrl+X`, `herdr-projects stop <id>`) takes the limi
 - **`details <id>`** has a `limits` entry: each limit, what has been used against it, and the stop if there was one.
   **`show <id>`** lists both settings with where each value came from.
 
-The web Board shows the same panel and rows, with "Send back" and "Yes" as buttons for continue and as it is. Its
-**Settings** button on a task opens that task's settings page: every work setting, the two limits among them, with its
-plain label, its value, where that comes from, what it may be and what it means. A row is changed there
-([the board in the web UI](web-ui.md)).
-
 ## What is measured
 
 ### A run

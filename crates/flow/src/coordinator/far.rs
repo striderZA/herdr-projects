@@ -13,7 +13,7 @@ fn cut(s: &str) -> String { if s.chars().count() <= LONGEST { s.to_string() } el
 pub fn sent(v: &Look, ready: bool) -> Value {
     if !ready { return json!({ "off": true }); }
     let talk: Vec<Value> = v.talk.iter().skip(v.talk.len().saturating_sub(KEEP)).map(|m| json!({ "you": m.you, "text": cut(&m.text) })).collect();
-    // Its pane there: a file attached for it goes into its folder through the web UI (webui/attach/far.rs).
+    // Its pane there: a file attached for it goes into its folder through the board's remote call.
     json!({ "state": v.state, "error": v.error, "queue": v.queue, "readable": v.readable, "said": cut(&v.said), "sent": cut(&v.sent), "talk": talk, "pane": v.pane,
         "began": v.began, "at": v.at })
 }

@@ -1,8 +1,8 @@
 //! Tasks that wait for a free slot: their own mark (◷, a clock) in a magenta no other state has, and their place in the queue (Q#1 gets the next
-//! slot) the same on the row, the task panel, `list` and `details`, herdr's sidebar and the web Board; last under
+//! slot) the same on the row, the task panel, `list` and `details`, and herdr's sidebar; last under
 //! `working`, in the order they start; and the places move up when a slot frees.
 use crate::common;
-use common::board::{open, web};
+use common::board::open;
 use common::*;
 use serde_json::json;
 use sw::json::*;
@@ -46,11 +46,6 @@ fn tasks_that_wait_for_a_free_slot_have_their_own_mark_and_place_in_the_queue_ev
     // herdr's sidebar: where it stands, then its place, without the row's second line.
     let e = sw::flow::sidebar_entry::entry_of(&row(&c), "", sw::clock::now());
     assert_eq!((e.place.as_str(), e.line.as_str(), e.progress.as_str()), ("queued", "", "Q#2"));
-    // The web Board: the same mark, colour and place.
-    let s = web(&w, "board", json!({}));
-    let rows: Vec<Value> = s.at("list").arr("groups").iter().flat_map(|g| g.arr("rows").iter().cloned()).collect();
-    let wc = rows.iter().find(|x| x.s("id") == c).unwrap();
-    assert_eq!((wc.s("mark"), wc.s("color"), wc.s("percent")), ("◷", "queue", "Q#2"));
     // A slot frees: the first in the queue starts, and the one after it moves up.
     settle(&a);
     sw::housekeeping::housekeeping(&w.socket, sw::housekeeping::Force::Yes);

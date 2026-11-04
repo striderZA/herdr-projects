@@ -20,7 +20,7 @@ use std::path::PathBuf;
 
 /// The task whose plan it is: an attempt builds its task's plan.
 pub fn source(t: &Task) -> Task { if t.b("attemptOf") { get(t.s("attemptOf")).unwrap_or_else(|| t.clone()) } else { t.clone() } }
-/// In the task's own folder, among what the board serves for it: so the plan has a private link, as a report has.
+/// In the task's own folder, among what the board keeps for it: so the plan has a path, as a report has.
 pub const PLAN: &str = "plan";
 pub fn plan_folder(t: &Obj) -> PathBuf { artifacts_dir(t.s("id")).join(PLAN) }
 pub fn plan_file(t: &Obj) -> PathBuf { plan_folder(t).join("plan.md") }
@@ -28,8 +28,8 @@ pub fn read_plan(t: &Obj) -> String { std::fs::read_to_string(plan_file(t)).map(
 pub fn write_plan(t: &Obj, text: &str) -> crate::err::Res<()> { std::fs::create_dir_all(plan_folder(t))?; std::fs::write(plan_file(t), format!("{}\n", text.trim()))?; Ok(()) }
 /// The plan as it is on file now, in a few letters: the same file coming back is known for the old plan.
 pub fn plan_mark(t: &Obj) -> String { let text = read_plan(t); if text.is_empty() { String::new() } else { sha1_smol::Sha1::from(text).digest().to_string()[..16].to_string() } }
-/// Its link: `base` answers where the task's pages are served from ("" when nothing serves them: then it is the file).
-pub fn plan_link(t: &Obj, base: impl FnOnce() -> String) -> String { let root = base(); if root.is_empty() { plan_file(t).display().to_string() } else { format!("{root}/{PLAN}/plan.md") } }
+/// Its link: the file's path in the task's own folder on the board.
+pub fn plan_link(t: &Obj) -> String { plan_file(t).display().to_string() }
 /// Does this task start with a plan? The setting, read now: "" for none.
 pub fn wanted(t: &Task) -> String { let by = setting_text("plan.approve", Some(t)); if by == "none" { String::new() } else { by } }
 /// The step is open: a plan was asked for and nobody has said yes to it. Every turn that ends meanwhile is the plan's.

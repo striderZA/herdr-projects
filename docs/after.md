@@ -29,7 +29,7 @@ A task with `--after` that nobody tabbed (`add --after` without `--delegate`, or
 stays under **to do** with its `○`. It never starts by itself, not even once those tasks are done.
 
 - `Ctrl+S` starts it any time. If they are not all done yet, it is queued (below). If they are, it starts at once.
-- Its row says nothing of the wait. Neither do the web Board and the Herdr sidebar rows.
+- Its row says nothing of the wait, and neither does its Herdr sidebar row.
 - The task panel has a `To wait for` line (`To wait for  SKL-6`), where you see and change it.
 - `list` shows it beside the title: `after SKL-6`, or `after SKL-4, SKL-5`, naming the ones not done yet (none once
   they all are).
@@ -46,7 +46,7 @@ A task tabbed with `--after` while those tasks are not all done is queued, exact
 - it has no place in the queue (`Q#2`) yet: it waits for tasks, not for a slot;
 - the task panel's State says `queued after AGT-2`, and a `Starts after` line lists each task (`(done)` beside those
   that are). `details` has an `after` part, and `list` shows it beside the title;
-- the web Board, another machine's board and the Herdr sidebar (`queued after AGT-2`) show the same. Another machine's
+- another machine's board and the Herdr sidebar (`queued after AGT-2`) show the same. Another machine's
   board shows the line and names as the task's own machine says them (its keys, which that board may not know), never
   the bare id (`gtm-agent/2`).
 
@@ -85,7 +85,7 @@ Nothing of that is final: get the other task going again, and once it is done th
 - `after <id> --clear` drops the wait; a task that was waiting starts at once. `delegate <id> --after none` does the same
   while delegating.
 - `delegate` on a task queued after others says it still is, and how to go on: `delegate <id> --now` starts it anyway.
-  Its agent is told the tasks were not all done, and what there is of them. On the board (and the web Board), `Ctrl+S` on
+  Its agent is told the tasks were not all done, and what there is of them. On the board, `Ctrl+S` on
   such a task asks first: `Start HSW-4 "…" now?`.
 - `stop <id>` on a task queued after others stops the waiting (on the board: the stop key, as for any queued task). It
   goes back to to do, and what it waits for is kept as its condition for its next `Ctrl+S`. A task that waits for this one

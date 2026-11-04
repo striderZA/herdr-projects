@@ -70,9 +70,6 @@ a `closing-1.md` beside `data` and `settings` comes from. Now:
 - **The how-to file** in each agent program's own skills folder (`~/.claude/skills/herdr-projects` and the others), and
   **the marked blocks** in Herdr's `config.toml`. They have to be where those programs read them.
   `herdr-projects remove-extras` takes them out ([installing](install.md)).
-- **The web UI's shared link.** With the web UI (Ovis) installed, and only after a yes: where that web UI's shared link
-  (`tailscale serve`) points, so the Board shows in it. `herdr-projects web-ui unlink` and `remove-extras` point it back
-  ([the board in the web UI (Ovis)](web-ui.md)).
 - **The trust mark for a repo**, in the agent program's own settings (`~/.claude.json`, `~/.codex/config.toml`; pi's
   for each task's worktree in `~/.pi/agent/trust.json`).
 - **This repo's own test runner** keeps what already passed in `~/.cache/herdr-projects-check` ([testing](testing.md)).
@@ -107,8 +104,7 @@ in one line, the first time you would see it (on the board when it opens, or aft
   finds nothing to do. `moved.json` is written before the first step.
 - **The old places become links to the new ones.** Everything that still holds an old path keeps working on the same
   files: a board or keeper still running old code, the command path agents were handed
-  (`~/.local/state/herdr-superwork/bin/herdr-superwork`), the hook settings of running agents, a task's saved artifacts,
-  the page server. A lock is one file whichever path takes it, so old and new code still take turns. The links can be
+  (`~/.local/state/herdr-superwork/bin/herdr-superwork`), the hook settings of running agents, a task's saved artifacts. A lock is one file whichever path takes it, so old and new code still take turns. The links can be
   removed once nothing started before the move still runs; the board leaves them.
 - **Data already in the new place is never written over.** What the new place holds is first put into the old folder
   (the one in use), then the folder moves as above. Whatever only one side has is kept. Of a file both have, the newer

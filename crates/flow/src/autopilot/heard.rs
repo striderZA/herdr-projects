@@ -1,5 +1,5 @@
 //! Other machines' tasks as the main Coordinator's autopilot sees them: the keeper never asks other machines, so they
-//! are what an open board (in a terminal or the web UI) last heard when it asked them for their lists, kept in one file
+//! are what an open board in a terminal last heard when it asked them for their lists, kept in one file
 //! of the data folder. A machine not heard from for `FRESH` counts as not seen: with no board open, the main
 //! Coordinator's area is this machine's tasks only (docs/autopilot.md).
 use crate::json::*;

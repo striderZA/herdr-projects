@@ -86,15 +86,15 @@ fn the_board_paints_with_what_it_read_true_colour_the_terminals_16_colours_herdr
 
 #[test]
 fn only_a_moon_says_someone_works_and_every_mark_is_one_column_wide() {
-    use sw::board::theme::marks::{mark, web_mark, MARK_STATES};
+    use sw::board::theme::marks::{mark, MARK_STATES};
     let kinds = ["", "question", "permission", "auth"];
-    let all: Vec<(&str, &str, &str)> = MARK_STATES.iter().flat_map(|s| kinds.iter().flat_map(move |k| [("symbols", *s, mark(s, k, true)), ("dots", *s, mark(s, k, false)), ("web", *s, web_mark(s, k))])).collect();
+    let all: Vec<(&str, &str, &str)> = MARK_STATES.iter().flat_map(|s| kinds.iter().flat_map(move |k| [("symbols", *s, mark(s, k, true)), ("dots", *s, mark(s, k, false))])).collect();
     for (how, state, m) in &all {
         assert_eq!((sw::text::width(m), m.chars().count()), (1, 1), "{how} {state}: {m}");
         let mut buf = Buffer::empty(Rect::new(0, 0, 3, 1)); draw(&Theme::default_dark(true), &[Inked::plain(*m).add(Inked::plain("x"))], &mut buf);
         assert_eq!(buf[(1, 0)].symbol(), "x", "{how} {state}: {m} takes one cell on the terminal board");
         let moon = "◐◑◒◓".contains(*m);
-        assert_eq!(moon, ["working", "review"].contains(state) && *how != "dots" && !(*how == "web" && *state == "working"), "{how} {state}: {m}");
+        assert_eq!(moon, ["working", "review"].contains(state) && *how != "dots", "{how} {state}: {m}");
     }
-    assert_eq!(["board", "queue"].map(|s| mark(s, "", true)), ["◇", "◷"]); assert_eq!(["board", "queue"].map(|s| web_mark(s, "")), ["◇", "◷"]);
+    assert_eq!(["board", "queue"].map(|s| mark(s, "", true)), ["◇", "◷"]);
 }

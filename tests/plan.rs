@@ -1,8 +1,8 @@
 //! A plan before the build (plan.approve, plan.agent): the plan written in a read-only worktree, "plan ready" until
-//! your yes or the reviewer's, sent back with your words, and the build from it afterwards; on the board, the web
-//! board and herdr's sidebar.
+//! your yes or the reviewer's, sent back with your words, and the build from it afterwards; on the board and in
+//! herdr's sidebar.
 use crate::common;
-use common::board::{open, web};
+use common::board::open;
 use common::*;
 use serde_json::json;
 use sw::json::*;
@@ -48,13 +48,6 @@ fn plan_approve_you_waits_as_plan_ready_and_the_yes_starts_the_build() {
     b.press(&["alt+t"]);
     let whole = b.text();
     for want in ["plan ready", "waits for your yes", "the working agent", "1. Add f.txt with one line.", "Open plan"] { assert!(whole.contains(want), "{want}: {whole}"); }
-    // The web board is the same board: the plan's part with its words, and the yes as a button.
-    let page = web(&w, "pick", json!({ "id": id, "open": true }));
-    let part = page.at("panel").arr("parts").iter().find(|p| p.s("head") == "Plan").cloned().unwrap_or_default();
-    let said = part.at("items").to_string();
-    for want in ["waits for your yes", "1. Add f.txt with one line.", "Open plan", "Yes approves this plan and the build starts"] { assert!(said.contains(want), "{want}: {said}"); }
-    let acts: Vec<(String, String)> = page.arr("actions").iter().map(|x| (x.t("id"), x.t("label"))).take(2).collect();
-    assert_eq!(acts, vec![("yes".to_string(), "approve this task's plan".to_string()), ("talk".to_string(), "send the plan back with your words".to_string())]);
     // A reply sends the plan back with those words, and it is written again.
     assert_eq!(sw::actions::talk::tell(&id, "Make it smaller.", false).unwrap().msg, "The plan went back to its writer with your words");
     assert!(prompts(&w, t.at("link").s("pane")).last().unwrap().starts_with("Your plan is not approved. The human read it and sent it back with these words:\n\nMake it smaller."));

@@ -1,11 +1,10 @@
 //! Where an automation stands in the list: in the part of the machine that has it, as its tasks do. By status, a
 //! machine's automations are a group of their own after its tasks' groups, folding as they do; by repo, each stands
-//! under its repo's heading after that repo's tasks. A folded heading says what it holds (`1 task, 1 automation`), and
-//! the web board has the same groups and the same words.
+//! under its repo's heading after that repo's tasks. A folded heading says what it holds (`1 task, 1 automation`).
 use crate::common;
 use common::board::{open, Board};
 use common::*;
-use serde_json::{json, Value};
+use serde_json::json;
 use sw::automations::list::{self as l, Add};
 use sw::automations::triggers::parse_schedule;
 use sw::board::update::heads::{group_id, machine_id};
@@ -21,12 +20,6 @@ fn poll(s: &mut Board) {
     let j = json!({ "host": "vm-b", "version": "0.2.0", "tasks": [{ "id": "far/7", "title": "Their task", "stage": "todo", "state": "idle", "agent": "", "app": "", "msg": "", "note": "", "at": now, "created": now, "snap": { "folder": "~/far" } }], "automations": [auto] });
     let _ = update(&mut s.s, Event::Remote { label: "vm-b".into(), answer: Ok(j) });
 }
-/// The web board's groups as (name, count, its rows' ids).
-fn groups(s: &Board) -> Vec<(String, Value, Vec<String>)> {
-    let l = sw::webui::model::list::list_of(&s.s, &s.theme);
-    l.arr("groups").iter().map(|g| (g.t("name"), g.at("count").clone(), g.arr("rows").iter().map(|r| r.t("id")).collect())).collect()
-}
-
 #[test]
 fn each_machines_automations_stand_in_its_own_part_and_fold_with_it_by_status_and_by_repo() {
     let w = world_with(Opts { repo: true, settings: json!({ "board.machines": "vm-b" }), ..Default::default() });
@@ -44,9 +37,6 @@ fn each_machines_automations_stand_in_its_own_part_and_fold_with_it_by_status_an
     // Under the top row, All machines: each machine a step in, its groups another, its tasks with them.
     like(&text, &format!(r"\n ▾ All machines {{2}}2 machines · 2 tasks\n   ▾ {}\n     ▾ to do\n[ ▌]    ○ PRJ-1 Mine +0s ago\n     ▾ automations\n     ⟳ on {{4}}Look for old dependencies {{2}}every 2h +next in {{2}}2h\n     ▾ vm-b\n     ▾ to do\n     ○ #7 +Their task +0s ago\n     ▾ automations\n     ⟳ on {{4}}Theirs nightly {{2}}every 5m · far +next in {{2}}4m\n", regex::escape(&here)));
     assert!(!text.contains("on vm-b"), "{text}");
-    // The web board: the same groups, in the same order.
-    assert_eq!(groups(&s).iter().map(|g| (g.0.clone(), g.2.clone())).collect::<Vec<_>>(), vec![("All machines".into(), vec![]), (here.clone(), vec![]), ("to do".into(), vec!["proj/1".into()]), ("automations".into(), vec![row.clone()]),
-        ("vm-b".into(), vec![]), ("to do".into(), vec!["vm-b:far/7".into()]), ("automations".into(), vec!["vm-b:auto:0a1b2c3d".into()])]);
     // The arrows go through them where they stand: this machine's automation, then vm-b's heading.
     s.s.sel = "proj/1".into(); s.load();
     s.press(&["down"]); assert_eq!(s.s.sel, group_id(&s.s, "", "automations"));
@@ -57,14 +47,12 @@ fn each_machines_automations_stand_in_its_own_part_and_fold_with_it_by_status_an
     s.s.sel = g.clone(); s.load(); s.press(&["left"]);
     let text = t(&mut s, 120);
     like(&text, r"\n▌    ▸ automations {2}1 automation\n"); assert!(!text.contains("Look for old"), "{text}");
-    assert_eq!(groups(&s)[3].1, json!("1 automation"));
     s.press(&["right", "down", "space"]); assert_eq!(s.s.sel, row);
     assert_eq!(sw::store::automations::automation(mine.s("id")).unwrap().at("on"), &json!(false), "space on its row in its machine's part turns it off");
     s.press(&["space"]);
     // This machine folded: its one line counts the tasks and the automations it hides.
     s.s.sel = machine_id(""); s.load(); s.press(&["left"]);
     like(&t(&mut s, 120), &format!(r"\n▌  ▸ {} {{2}}1 task, 1 automation\n", regex::escape(&here)));
-    assert_eq!(groups(&s)[1].1, json!("1 task, 1 automation"));
     s.press(&["right"]);
     // Taken to an automation in a folded group (a jump, a firing's link): its group unfolds.
     s.s.sel = g.clone(); s.load(); s.press(&["left"]); s.s.sel = row.clone(); s.load();
@@ -78,7 +66,6 @@ fn each_machines_automations_stand_in_its_own_part_and_fold_with_it_by_status_an
     // A repo folded says what it holds too.
     s.s.sel = group_id(&s.s, "vm-b", "far"); s.load(); s.press(&["left"]);
     like(&t(&mut s, 120), r"\n▌      ▸ far {2}1 task, 1 automation\n");
-    assert_eq!(groups(&s).iter().find(|g| g.0 == "far").unwrap().1, json!("1 task, 1 automation"));
     // On one machine's own board, its automations stand with its tasks there.
     s.press(&["right", "alt+s", "alt+s"]); while s.s.scope != "vm-b" { s.press(&["alt+m"]); } assert!(!s.s.by_repo && !s.s.by_machine);
     like(&t(&mut s, 120), r"\n[ ▌]  ▾ vm-b {2}1 project · 1 task\n   ▾ to do\n[ ▌]  ○ #7 +Their task +0s ago\n   ▾ automations\n[ ▌]  ⟳ on {2}Theirs nightly {2}every 5m · far +next in {2}4m\n");
@@ -99,12 +86,9 @@ fn another_machines_repo_with_only_automations_never_takes_this_machines_key() {
     let text = t(&mut s, 120);
     like(&text, r"\n     ▾ proj · PRJ\n[ ▌]      ○ PRJ-1 Mine"); // this machine's own repo keeps its key
     like(&text, r"\n     ▾ vm-b\n       ▾ proj\n       ⟳ on {4}Theirs nightly"); // vm-b's sent none: no key, never this machine's
-    let keys = |s: &Board| sw::webui::model::list::list_of(&s.s, &s.theme).arr("groups").iter().filter(|g| g.s("name") == "proj").map(|g| g.t("key")).collect::<Vec<_>>();
-    assert_eq!(keys(&s), ["PRJ", ""]);
     // Folded, with no row under it, the same: no key.
     s.s.sel = group_id(&s.s, "vm-b", "proj"); s.load(); s.press(&["left"]);
     like(&t(&mut s, 120), r"\n     ▾ vm-b\n▌      ▸ proj {2}1 automation\n");
-    assert_eq!(keys(&s), ["PRJ", ""]);
     // A repo of theirs that has tasks keeps the key they came with, folded too.
     s.s.sel = group_id(&s.s, "vm-b", "far"); s.load(); s.press(&["left"]);
     like(&t(&mut s, 120), r"\n▌      ▸ far · FAR {2}1 task\n");

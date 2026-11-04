@@ -98,9 +98,8 @@ fn repos_an_older_version_knew_get_a_key_once_on_upgrade_and_the_board_says_whic
     let mut c = config(); c["repos"].as_object_mut().unwrap().shift_remove("notes");
     std::fs::write(sw::store::files::config_dir().join("config.json"), c.to_string()).unwrap();
     keys_at_start(); assert!(entry("notes").is_null());
-    // The board says which it gave, once: on its opening (the web board's here), never again after.
-    let s = common::board::web_as(&w, "keys-upgrade", "board", json!({})).unwrap();
-    assert_eq!(s.at("msg").s("text"), "Every repo and folder has a short key now: PRJ for proj, NTS for notes, HOME for me. Change one: herdr-projects set repo.key <KEY> --repo <name>");
+    // The board says which it gave, once: on its opening, never again after.
+    assert_eq!(sw::store::keys_given::keys_note(), "Every repo and folder has a short key now: PRJ for proj, NTS for notes, HOME for me. Change one: herdr-projects set repo.key <KEY> --repo <name>");
     assert_eq!(entry("notes"), json!("NTS"));
     assert_eq!(keys_note(), ""); assert!(give_keys(None).is_empty());
 }
@@ -121,10 +120,6 @@ fn where_the_board_names_a_repo_its_key_stands_beside_it_dimmed_but_never_twice_
     // The task's whole page: its id, with the key beside it.
     b.s.sel = id.clone(); b.load(); b.press(&["alt+t"]); b.s.panel_top = 1_000_000_000;
     assert!(has(&b.screen(100).join("\n"), r"\n Task id {6}proj/1 · PRJ\n"), "{}", b.screen(100).join("\n"));
-    // The web board's headings carry the key apart, for the page to dim it.
-    let s = common::board::web_as(&w, "keys-heads", "press", json!({ "id": "byRepo" })).unwrap();
-    let heads: Vec<(String, String)> = s.at("list").arr("groups").iter().map(|g| (g.t("name"), g.t("key"))).collect();
-    assert!(heads.contains(&("proj".into(), "PRJ".into())) && heads.contains(&("gtm-agent".into(), "AGN".into())), "{heads:?}");
 }
 fn has(text: &str, re: &str) -> bool { regex::Regex::new(re).unwrap().is_match(text) }
 
@@ -143,11 +138,9 @@ fn upgrade_never_changes_a_key_you_saved_even_one_two_repos_share_and_the_top_li
     // Changed by you, the stand-in goes; your key counts.
     set_value("repo.key", &json!("BB"), &Scope::repo("beta")).unwrap(); give_keys(None);
     assert_eq!(keys(), json!({ "proj": "KEEP", "beta": "BB" })); assert!(sw::store::keys_given::stand_ins().is_empty());
-    // The top line: where new tasks go, with the key beside the name, in the header's quiet ink; the web board's too.
+    // The top line: where new tasks go, with the key beside the name, in the header's quiet ink.
     let id = w.add("Mine"); let mut b = common::board::open(&w.root, 30); b.s.sel = id; b.load();
     assert!(b.screen(100)[0].starts_with(" herdr-projects  proj · KEEP") && b.screen(100)[1].starts_with(" All 1 "), "{:?}", b.screen(100));
-    let s = common::board::web_as(&w, "keys-top", "board", json!({})).unwrap();
-    assert_eq!((s.at("list").at("head").s("where"), s.at("list").at("head").s("whereKey")), ("proj", "KEEP"));
 }
 
 #[test]

@@ -92,7 +92,7 @@ whole conversation, its dialogs, slash commands and menus, **go into it** in Her
 - Your first message starts it, and it stays. If its program exited or Herdr restarted, your next message starts it
   again in the same conversation.
 - **Closing the board does not stop it**, and the board says so as you close it. One Coordinator serves every board of
-  the machine (a tab, the popup, the web board) and `coordinator tell`, and a turn of it may still be at work.
+  the machine (a tab, the popup) and `coordinator tell`, and a turn of it may still be at work.
   `herdr-projects coordinator stop` closes its tab; your next message starts it again, in the same conversation.
 - The agent's own new-chat command (`/clear`, `/new`) is followed: the chat and a restart go with the conversation it
   is in now.

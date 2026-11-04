@@ -1,7 +1,7 @@
 //! Grouped by repo, a known repo with no task in view keeps its heading when it was used lately (a task that changed in
 //! the last 14 days, archived ones too) or has a project coordinator: folded, `0 tasks`, and space there talks to its
 //! project coordinator. An old repo, one whose folder is gone, and any while a filter or the archive narrows the list
-//! have none. The web board has the same heading.
+//! have none.
 use crate::common;
 use common::board::{open, Board};
 use common::*;
@@ -48,10 +48,6 @@ fn a_known_repo_with_a_project_coordinator_and_no_tasks_has_its_heading_and_spac
     s.press(&["space"]);
     assert!(s.s.reply && s.s.reply_id == head);
     assert!(s.text().contains("›  side  · Project coordinator ─") && s.text().contains("Ask it something"), "{}", s.text());
-    // The web board shows it too, folded.
-    let g = sw::webui::model::list::list_of(&s.s, &s.theme);
-    let side = g.arr("groups").iter().find(|g| g.s("id") == head).cloned().unwrap_or_else(|| panic!("{g}"));
-    assert!(side.b("folded") && side.s("count") == "0 tasks" && side.arr("rows").is_empty(), "{side}");
     // Not by status: no repo headings at all.
     s.press(&["alt+s"]); assert!(!screen(&mut s).contains("side"));
 }

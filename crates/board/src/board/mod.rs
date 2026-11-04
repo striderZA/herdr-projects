@@ -1,6 +1,6 @@
 //! The board: one plain record of what it shows (state.rs), one function that takes it and an event to the next
 //! (update/), the screen in the board's own words and named inks (view/), and the runtime that reads keys, runs jobs
-//! and draws it on a terminal (run/). The web board takes the same state and events (webui/). The keys are keys.rs;
+//! and draws it on a terminal (run/). The keys are keys.rs;
 //! colours are theme/, both in sw-flow (crates/flow/src/board/).
 // The keys' table and the theme are built in sw-flow, which uses them too; here they are the board's.
 pub use sw_flow::board::{key_style, keys, remap, theme};

@@ -40,8 +40,7 @@ says `Plan ready · <the plan's first words>`, the State line and Herdr's sideba
 fires as for anything that needs you.
 
 The task panel shows the plan under **Plan**: where it stands, who wrote it, the plan's own words (its first lines beside
-the list, all of it full screen), and **`Open plan`**, a private link served the way a report's is. The web Board shows
-the same part. You do one of two things:
+the list, all of it full screen), and **`Open plan`**, the plan's file in the task's folder. You do one of two things:
 
 - **Yes**: the approve key (`ctrl+l`), or `herdr-projects approve <id>`. The plan is approved as it stands and the build
   starts.

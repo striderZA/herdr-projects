@@ -28,7 +28,7 @@ pub fn pick(os: &str, set: impl Fn(&str) -> bool, found: impl Fn(&str) -> bool) 
 fn on_path(name: &str) -> bool {
     std::env::var_os("PATH").map(|p| std::env::split_paths(&p).any(|d| std::fs::metadata(d.join(name)).map(|m| m.is_file()).unwrap_or(false))).unwrap_or(false)
 }
-/// Only what the board itself keeps as a link: a web address, or a file's whole path (a report no page server serves).
+/// Only what the board itself keeps as a link: a web address, or a file's whole path.
 pub fn openable(link: &str) -> bool {
     (link.starts_with("http://") || link.starts_with("https://") || link.starts_with('/')) && !link.chars().any(|c| (c as u32) < 0x20 || c as u32 == 0x7f)
 }

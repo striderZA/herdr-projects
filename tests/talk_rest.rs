@@ -1,5 +1,5 @@
-//! What the old board-talk test checked that tests/talk.rs does not: under review the web board's chat has what the
-//! reviewer says and its text box says the review goes on through a message; another machine's task shows what its machine sent,
+//! What the old board-talk test checked that tests/talk.rs does not: under review the chat has what the
+//! reviewer says; another machine's task shows what its machine sent,
 //! or says that machine is too old to send it; the reviewer's screen is read fresh; a dialog is said in words; and a
 //! working agent's chat is its words (markdown read as text), never its tool calls, or its screen where it cannot be read.
 use crate::common;
@@ -27,7 +27,7 @@ fn boxed(s: &mut common::board::Board) -> Vec<String> { crate::board_chat::chat(
 fn with(r: &Obj, more: Value) -> Obj { let mut o = r.clone(); for (k, v) in more.as_object().unwrap() { o.insert(k.clone(), v.clone()); } o }
 
 #[test]
-fn under_review_the_web_board_another_machine_and_a_dialog_say_what_the_reviewer_says() {
+fn under_review_another_machine_and_a_dialog_say_what_the_reviewer_says() {
     let w = world_with(Opts { repo: true, settings: json!({ "reviewer.agent": "claude" }), ..Default::default() });
     let claude_dir = PathBuf::from(std::env::var("CLAUDE_CONFIG_DIR").unwrap());
     w.script(json!({ "worker": [{ "files": { "f.txt": "1\n" }, "commit": "1", "note": "Made f." }] }));
@@ -45,11 +45,6 @@ fn under_review_the_web_board_another_machine_and_a_dialog_say_what_the_reviewer
     let mut s = common::board::open(&w.root, 34); s.s.side = false;
     s.s.sel = id.clone(); s.load(); s.press(&["space"]);
     assert_eq!(boxed(&mut s)[..2].to_vec(), vec!["Reviewer:", "One fault left: the header is cut."]);
-    // the web board gets the same parts, and its text box says what a message does now
-    let side = sw::webui::model::side::side_of(&mut s.s, &s.theme.clone());
-    assert_eq!(side.at("chat").arr("parts").last().unwrap(), &json!({ "by": "Reviewer", "text": "One fault left: the header is cut.", "mine": false, "tone": "", "raw": false, "sent": false }));
-    assert_eq!(side.at("chat").at("raw"), &json!(false));
-    assert_eq!(side.at("send").s("place"), "Send message to the agent: the review goes on unless the code changes");
     // another machine's task: what that machine sent; one on an older version sends none, and that is said
     let r = s.s.current().unwrap().clone();
     let sent = sw::remote::remote_list().at("tasks").as_array().unwrap().iter().find(|x| x.s("id") == id).unwrap().at("snap").at("talk").clone();

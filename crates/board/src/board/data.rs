@@ -52,8 +52,6 @@ pub struct Data {
     pub host: String,
     /// herdr's approve action asked this board to ask about a task; a line the board key left for this board.
     pub approve: String, pub heard: Option<(String, String)>,
-    /// The voice call of this machine, when one is on (voice/call.rs); else the last one, ended (its id and why).
-    pub call: Option<Obj>, pub call_ended: Option<(String, String)>,
     /// Your settings ("") or your entry for a repo, while the settings page shows them: which, and its rows and problems.
     pub mine: Option<(String, Value)>,
     /// The skills the text box offers while a draft could start one (skills.rs): whose (`Wants::skills`), and the list.
@@ -65,7 +63,7 @@ pub struct Data {
 /// What the board wants a closer look at. `mine`: your settings (`Some("")`) or your entry for a repo, for the
 /// settings page. `skills`: whose skills the text box offers ("" none: update/skills.rs).
 #[derive(Clone, Debug, Default)]
-pub struct Wants { pub ids: Vec<String>, pub cwd: String, pub own_pane: String, pub web: bool, pub coord: String, pub mine: Option<String>, pub looks: Vec<String>, pub skills: String }
+pub struct Wants { pub ids: Vec<String>, pub cwd: String, pub own_pane: String, pub coord: String, pub mine: Option<String>, pub looks: Vec<String>, pub skills: String }
 
 /// The repo the board is in, worked out once for each folder: a busy lock keeps what was known.
 pub fn repo_here(cwd: &str) -> (String, String) {
@@ -109,8 +107,7 @@ pub fn load(wants: &Wants) -> Data {
         items, autos, jobs, coord, coord_screen, sub, looks, coords, can_dispatch: crate::coordinator::who::ready(&socket), keys: repo_keys(), repos: roots.keys().cloned().collect(), roots, lately, archived, pins: crate::store::pins::pins(),
         session: session_name(&socket), notify: setting("board.notify", None).as_str().unwrap_or("").to_string(),
         repo: here.0, repo_root: here.1, host: crate::remote::check::hostname(),
-        // herdr's approve action and a line left by the board key are for a board in a terminal, never the web board.
-        approve: if wants.web { String::new() } else { crate::actions::finish_line::take_approve(&socket, &wants.own_pane) }, heard: if wants.web { None } else { crate::board::run::say::heard(&wants.own_pane, &socket) }, call: crate::voice::call::get(), call_ended: crate::voice::call::last().filter(|c| c.s("state") == "ended").map(|c| (c.t("id"), c.t("why"))),
+        approve: crate::actions::finish_line::take_approve(&socket, &wants.own_pane), heard: crate::board::run::say::heard(&wants.own_pane, &socket),
         mine: wants.mine.as_ref().map(|r| (r.clone(), mine(r))), skills, pilots: crate::autopilot::far::sent(&socket, now), loaded: true, seq,
     }
 }

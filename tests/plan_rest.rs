@@ -1,8 +1,8 @@
 //! A plan before the build, the rest of the old suite's checks: "plan ready" as the row, herdr's sidebar, the
-//! notification, the panel and the web board say it, the read-only worktree and its mount, the yes and the review of
+//! notification, and the panel say it, the read-only worktree and its mount, the yes and the review of
 //! the work against the plan; and the reviewer's look at a plan in tabs of its own, which is no round of the task's.
 use crate::common;
-use common::board::{open, web};
+use common::board::open;
 use common::*;
 use serde_json::json;
 use sw::json::*;
@@ -48,13 +48,6 @@ fn plan_ready_is_said_everywhere_the_worktree_stays_untouched_and_the_work_is_re
     assert!(has(&whole, r"Written by\s+the working agent"), "{whole}");
     assert!(has(&whole, r"Plan first\s+you approve it( \*)? · written by the agent"), "{whole}");
     assert!(sw::actions::finish_line::details(&id).unwrap().at("plan").to_string().contains("Add f.txt with one line"));
-    // The web board: the plan's part comes after the first, and the row stands with what waits for you.
-    let page = web(&w, "pick", json!({ "id": id, "open": true }));
-    let heads: Vec<String> = page.at("panel").arr("parts").iter().map(|p| p.t("head")).collect();
-    assert!(heads.iter().position(|h| h == "Plan").unwrap_or(0) > 0, "{heads:?}");
-    // (under this machine's row, the top row)
-    let g = page.at("list").arr("groups").iter().find(|g| g.s("name") == "needs you").cloned().unwrap_or_else(|| panic!("{}", page.at("list")));
-    assert_eq!(g.arr("rows")[0].arr("says").iter().map(|x| x.t("t")).collect::<String>(), "Plan ready · Plan");
     // Sent back and written again: still nothing in the repo.
     sw::actions::talk::tell(&id, "Make it smaller.", false).unwrap();
     let t = settle(&id);

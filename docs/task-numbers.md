@@ -42,7 +42,7 @@ never changes.
 - **Several repos in one list:** the key tells them apart. A tag is the repo's key with the number (`PW-12`) in every list, so two tasks numbered 1 in two
   repos read `PW-1` and `HSW-1`.
   To see each repo's tasks together, group the list by repo (`Alt+S`, in the `?` menu as "group by repo: see which repo
-  each task is in"; the "Group by repo" button on the web board): each group's heading names its repo. The whole task
+  each task is in"): each group's heading names its repo. The whole task
   names the repo too, in its `Task id` row (`pi-work/12`), with the session.
 - **Other machines.** A task of another machine has the tag its own machine gives it (that machine's keys). Each machine
   counts its own tasks, so two machines can each have a `#1`. With every machine shown, each machine is a heading of its
@@ -68,16 +68,14 @@ never changes.
 | the chat's line that names who you talk to | the tag between the mark and the task's name; a window too narrow to leave the status 20 cells goes without it |
 | an automation's firings | `made HSW-140`, on the board and on the command line |
 | the board's own messages | the tag and the title, in one form: `Archived HSW-134 "Fix the footer".`, `Pinned HSW-14 "…" to the top.`, `Stopped HSW-14 "…".`, `Removed …`. A message an action wrote with the id reads with the tag too (`HSW-14: approved, merging`). Only a line that shows a command to run keeps the id the command takes. Pinning says so, and an action on another machine says what it is doing there (`Pinning HSW-2 on otherbox…`), never a bare `…` |
-| Herdr's sidebar, and a pane's title | the task's space is named with the tag and the task's title (`HSW-34 Add a file…`), which is the first row of its agent's entry ([Herdr's sidebar](sidebar.md)). The pane's title is the same, so the web UI's sidebar reads `HSW-34 Add a file…` too. A reviewer's pane is named the same way |
-| the web board | the same tag on each row, in the same column and with the same limit on the room before a title. What a task says and its bar start under the title, not under the tag. A list too narrow to leave the widest tag's title 16 letters shows no tags, on every row at once. The tag stands before the task's title when one is open, and in the chat's line |
+| Herdr's sidebar, and a pane's title | the task's space is named with the tag and the task's title (`HSW-34 Add a file…`), which is the first row of its agent's entry ([Herdr's sidebar](sidebar.md)). The pane's title is the same. A reviewer's pane is named the same way |
 
 ### The key beside a repo's name
 
 Where the board names a repo, its key stands beside the name, dimmed: `gtm-agent · AGT`. That is:
 
-- the board's top line, which names the repo new tasks go to (`herdr-projects  gtm-agent · AGT · 3 to do`, on the web
-  board too);
-- a repo's heading in the list grouped by repo (on the web board too);
+- the board's top line, which names the repo new tasks go to (`herdr-projects  gtm-agent · AGT · 3 to do`);
+- a repo's heading in the list grouped by repo;
 - the `Task id` row of the whole task (`gtm-agent/12 · AGT`), and an automation's `Repo` row.
 
 Never on a task's row, which starts with the key already (`AGT-12`). On a narrow screen a heading is cut at its end, so
@@ -182,7 +180,7 @@ hand in your settings, or in the repo's own file. The board puts every key a rep
 
 ## Finding a task
 
-In find (`Ctrl+F` on the board, the search box on the web board), a task is found by its number and tag as well as by its
+In find (`Ctrl+F` on the board), a task is found by its number and tag as well as by its
 words: `134`, `#134` and `hsw-134` all match it. What you type still filters as you type (`13` also shows `HSW-13` and
 `HSW-135`). When it is exactly one task's number or tag, the selection goes to that task. `herdr-projects list --query`
 matches the same way.

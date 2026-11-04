@@ -20,7 +20,7 @@ Both use names this version needs:
 
 - **herdr-superwork** kept everything in `~/.herdr-superwork/` (tasks, settings, reports, the Coordinator's chat). It
   wrote `# >>> herdr-superwork …` blocks in Herdr's config, a `herdr-superwork` how-to in each agent program's skills
-  folder, and ran its own keeper and page server (with the web UI's front door).
+  folder, and ran its own keeper and page server.
 - **herdr-projects 0.2** kept its projects in `~/.herdr-projects/` (this version's home folder), its settings in
   `~/.config/herdr-projects/`, and a file in Herdr's state folder for the plugin. It changed Herdr's config, the agent
   programs' settings (hooks) and their skills folders.
@@ -66,10 +66,8 @@ Both use names this version needs:
   - The old launcher, `data/bin/herdr-superwork`, now runs this program, for agents that still use it.
 - **The Coordinator's conversation** carries on: after its next restart it is found by its id in the moved folder, as
   after the first move.
-- **Its processes.** Its keeper and page server (with the web UI's front door) are stopped, but only when the program
-  they run is herdr-superwork's, and this version's are started. The front door opens on the port the old one had, so
-  the web UI's shared link points at the new one with no change. A link that moved is brought along
-  ([the board in the web UI (Ovis)](web-ui.md)).
+- **Its processes.** Its keeper and page server are stopped, but only when the program they run is herdr-superwork's,
+  and this version's keeper is started.
 - **Its plugin**, if Herdr still has `herdr-superwork` installed, is switched off (`herdr plugin disable`, not
   removed), so its hooks no longer run the old program on the moved board.
 - **Its extras** become this version's:

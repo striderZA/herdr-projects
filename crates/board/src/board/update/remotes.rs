@@ -23,7 +23,7 @@ pub fn machines(s: &mut State, list: Vec<Machine>, fx: &mut Vec<Effect>) {
     let alone = s.remotes.is_empty();
     if s.all() && alone {
         s.scope.clear(); fx.push(Effect::Save);
-        if !s.ctx.web { s.flash(none_said(), Ink::Yellow); }
+        s.flash(none_said(), Ink::Yellow);
     }
     // The scope key asked for the machines: every machine shows once there is another one.
     if std::mem::take(&mut s.seeking) {
@@ -105,8 +105,7 @@ pub fn next_scope(s: &mut State, fx: &mut Vec<Effect>) {
     s.flash("Looking for other machines…".to_string(), Ink::Muted);
 }
 /// Whose board shows, picked: no line confirms it (the filter row's first item says whose it is, the chat's switch who
-/// gets your words). Where the board moved by itself (the machines found after the scope key asked for them, the web
-/// board following the web UI), its caller says so: scope_said.
+/// gets your words). Where the board moved by itself (the machines found after the scope key asked for them), its caller says so: scope_said.
 pub fn set_scope(s: &mut State, to: String, fx: &mut Vec<Effect>) {
     s.scope = to; fx.push(Effect::Save);
     if s.all() { fx.push(Effect::Poll(true)); }

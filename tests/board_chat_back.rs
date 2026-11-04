@@ -73,7 +73,7 @@ fn the_box_holds_only_the_newest_message_whoever_said_it_your_words_only_until_t
     assert_eq!(message(&c.boxed()), v(&["And now?"]));
     c.talk.push((false, "Now this.".into())); c.turn = "turn-2".into();
     assert_eq!(message(&c.boxed()), v(&["Now this."]));
-    // A task's agent the same, on the web board too: one part, the newest.
+    // A task's agent the same: one part, the newest.
     use sw::board::view::talk::{opens_at, talk, Part};
     let part = |by: &str, sent: bool| Part { by: by.into(), text: "x".into(), sent, ..Default::default() };
     assert_eq!(opens_at(&[part("Board", true), part("Agent", false), part("You", true), part("Agent", false), part("Agent", false)]), 4);

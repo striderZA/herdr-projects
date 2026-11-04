@@ -1,7 +1,6 @@
 //! A board opened on a test world, as a terminal would show it: keys pressed by their chord ("alt+t", "esc", "ctrl+l")
 //! or typed as text, what they started run at once (the jobs a terminal board runs on threads), and the screen read as
-//! plain text. Also the web board's calls on the same world.
-use serde_json::Value;
+//! plain text.
 use sw::board::data::{load, Wants};
 use sw::board::job;
 use sw::board::keys::Press;
@@ -29,7 +28,7 @@ pub fn open_with(cwd: &std::path::Path, rows: usize, popup: bool) -> Board {
 }
 impl Board {
     pub fn load(&mut self) {
-        let d = load(&Wants { ids: vec![self.s.sel.clone(), self.s.reply_id.clone()], cwd: self.s.ctx.cwd.clone(), own_pane: String::new(), web: false, coord: sw::board::update::coords::wanted(&self.s), mine: sw::board::update::edit::wanted(&self.s), looks: sw::board::update::coords::looks_wanted(&self.s), skills: sw::board::update::skills::wanted(&self.s) });
+        let d = load(&Wants { ids: vec![self.s.sel.clone(), self.s.reply_id.clone()], cwd: self.s.ctx.cwd.clone(), own_pane: String::new(), coord: sw::board::update::coords::wanted(&self.s), mine: sw::board::update::edit::wanted(&self.s), looks: sw::board::update::coords::looks_wanted(&self.s), skills: sw::board::update::skills::wanted(&self.s) });
         let fx = update(&mut self.s, Event::Loaded(Box::new(d)));
         self.effects(fx);
     }
@@ -110,12 +109,3 @@ impl Board {
     pub fn screen(&mut self, cols: usize) -> Vec<String> { let was = self.cols; self.cols = cols; let l = self.lines(); self.cols = was; l.into_iter().map(|x| x.trim_end().to_string()).collect() }
 }
 fn press_of(k: &str) -> Press { match k { "space" => Press::char(' '), "esc" => Press::chord("escape"), k if k.chars().count() == 1 => Press::char(k.chars().next().unwrap()), k => Press::chord(k) } }
-/// One call of the web board, as the page makes it (for a page that may drive).
-pub fn web(w: &super::World, call: &str, args: Value) -> Value { web_as(w, "test", call, args).unwrap_or_else(|e| panic!("web {call}: {e}")) }
-/// A call of one browser's board (`client`), as a page that may drive unless `args` says its `role`.
-pub fn web_as(w: &super::World, client: &str, call: &str, args: Value) -> Result<Value, String> {
-    let view = sw::store::files::data_dir().join("view.json");
-    if !view.exists() { let _ = std::fs::write(&view, serde_json::json!({ "cwd": w.root_str() }).to_string()); }
-    let mut a = args; if a.get("role").is_none() { a["role"] = serde_json::json!("drive"); }
-    sw::webui::web::call(client, call, a, "", None)
-}

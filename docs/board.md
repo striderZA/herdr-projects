@@ -151,8 +151,6 @@ A project you are done with for now leaves the board whole, and comes back as it
   MST-4.`) and `herdr-projects restore --repo mstars` (`Restored mstars and its 6 tasks.`). They do not ask.
   `--on vm-str` does it on another machine (`vm-str: Archived autopilot-tictactoe and its 3 tasks.`), as `add --on`
   adds a task there.
-- The web board does the same: select the project's row, then **Archive** among its coordinator's buttons (Open) or in
-  More…; in the archive its row, selected, has **Restore this project** under it. Another machine's projects too.
 
 ### The list says what it hides
 
@@ -200,7 +198,7 @@ The `?` menu has the list too.
   ([machine and project coordinators](machine-and-project-coordinators.md)).
 
 - **Only a moon says someone works**: `◐` and `◑`, an agent or its reviewer.
-- Every mark is one column wide, and a character every monospace font has. The web board draws the same ones.
+- Every mark is one column wide, and a character every monospace font has.
 - Herdr's `status_indicators = "dots"` brings its dots back for working (the agent's and the reviewer's) and done. The
   board's `◇`, the `◷` of a wait for a slot, and what a waiting task needs keep their marks with dots too, since no dot
   means those.
@@ -223,8 +221,7 @@ terminal program-status spec ([OSC 7501](https://mitchellh.com/writing/program-s
   waits from one that went wrong.
 - Finished work that passed and waits for your yes is none of these: its mark is `◆`, in green, under `ready to approve`
   (an exclamation mark there would read as "something is wrong", and nothing is).
-- The words for where a task stands are one list (`crates/core/src/status_words.rs`), which the rows, the State line,
-  Herdr's sidebar and the web page all read.
+- The words for where a task stands are one list (`crates/core/src/status_words.rs`), which the rows, the State line and Herdr's sidebar all read.
 - The records the board writes to the terminal carry no mark: they name the state and the kind
   (`state=blocked:kind=question`), and the terminal draws its own.
 
@@ -277,7 +274,7 @@ is on it, or it waits for you.
 - Line 2 is in the brighter of the board's two greys, Herdr's `subtext0`, because it must be read (the fainter one,
   `overlay0`, is for what may be missed: times, counts, tags). What a task asks of you (its question, the OK it wants,
   the login it needs: a `?`, `!` or `@` row) is in its mark's needs-you colour, Herdr's `red`, so it stands out as the
-  mark does; on the selected row too, and on the web board in its needs-you colour.
+  mark does; on the selected row too.
 - In the all-machines view the machine is the heading above its tasks, never in a row
   ([list headings](list-headings.md)), so line 2 starts under the task's name as everywhere.
 - Line 2 has the row's whole width, so it is rarely cut. One longer than the window is cut at its end with `…`, never
@@ -370,7 +367,7 @@ task has its percent: `Q#1` gets the next free slot, `Q#2` the one after.
   and the order says which is next. (Grouped by repo there is no status heading: they stand among their repo's tasks.)
 - **The same place is said everywhere**: the task panel's State line (`◷ waiting for a free slot, Q#2`), `list`
   (`· waiting for a free slot, Q#2`; `--json` has `queue: 2`), `details` (`queue: { place, words }`), the message when you
-  start it, Herdr's sidebar ([sidebar](sidebar.md)) and the web Board.
+  start it and Herdr's sidebar ([sidebar](sidebar.md)).
 - **A narrow board** keeps it too: there `Q#2` stands with the time at the end of the row's second line, so a waiting
   task's row is two lines, not three.
 
@@ -484,7 +481,7 @@ not say which task it is. So under 80 columns:
 
  to do
  ○ Check herdr-projects /autoproject for ideas w…
- ○ Bring the board to herdr's web UI
+ ○ Bring the board's list to a narrow window
  ○ Rethink how the Coordinator works, restarts
    and remembers what it was told before
 ```
@@ -645,8 +642,7 @@ It looks the same for a coordinator and for a task's agent, at every window widt
      gives up those rows and keeps the selected task in view. (Under the whole task, `Alt+T`, and the `?` menu, which are
      there to be read themselves, the message keeps to a third of the window.)
    - `Alt+C` hides the message and shows it again. With nothing else to step back from (a draft, find, the whole task,
-     the filter, the archive), `Esc` hides it too, before it does anything about closing the board. On the web board
-     `Esc` does the same, while nothing is typed and find is closed.
+     the filter, the archive), `Esc` hides it too, before it does anything about closing the board.
 3. **One greyed hint line under the box**, with only the keys that do something right now. While you type, it says what
    the keys do with your words (`enter send to the Coordinator · shift+enter new line · esc put away`). What each hint says, and what gives way in a narrow window:
    [the hint line](keys.md#the-hint-line).
@@ -698,9 +694,6 @@ their own conversation has the words, the line over the box says so (`Sending…
 coordinator), and nothing else of them stands over the chat: a send to another machine has no row "on its way" over the
 box, only one that failed, with why (nor do the ones you sent just before). Words that did not get there leave the box;
 on this machine they go back to the line you type on. An earlier turn the agent ends while your words are still on
-their way does not take them away. The web board's page draws them in its conversation as you send them, before the
-board has answered it.
-
 That holds also for words you send while the agent works: Claude Code queues them and they go in during its turn, and the
 board reads them there. For the Coordinator this holds when the board is closed and opened again; for a task's agent, for
 as long as the board stays open.
@@ -815,8 +808,8 @@ that running board from anywhere, instead of opening a second one.
 - **Pressed on the board itself, the key takes you back** to the pane you came from: a way there and a way back. When that
   pane is closed, or you started the board by hand, the board says on its message line that it is the board already.
 - Closing the board (`Ctrl+C` twice) closes its tab. **The Coordinator keeps running**, and the line that asks for the
-  second `Ctrl+C` says so while it runs: it is not this board's but the machine's, the same one the popup, the web board
-  and `coordinator tell` talk to, and it may be at work on what you asked. `herdr-projects coordinator stop` ends it
+  second `Ctrl+C` says so while it runs: it is not this board's but the machine's, the same one the popup and
+  `coordinator tell` talk to, and it may be at work on what you asked. `herdr-projects coordinator stop` ends it
   ([the Coordinator](coordinator.md)).
 
 **A board you start with `herdr-projects` names its tab `herdr-projects`**, for as long as the board is open, so you can
@@ -891,7 +884,7 @@ What Herdr would need for the real thing is in [checked on Herdr](checked-on-her
 
 What changes the board's size at all, and why a size that lasts a moment is not drawn: [the board's size](board-size.md).
 
-- **A view somebody is looking through** (the board open in the web UI's terminal view) keeps the terminal, and the
+- **A view somebody is looking through** (a `herdr terminal attach`) keeps the terminal, and the
   board's first line says so.
 - **From any other view, the board takes its pane's size back by itself within a few seconds**: the remote view
   described here is disconnected. Until then the board draws inside what Herdr's window shows, so its text box and hints
@@ -899,7 +892,7 @@ What changes the board's size at all, and why a size that lasts a moment is not 
 
 What follows is what you see until then, and when the board could not take the size back.
 
-A remote view of the board's pane (a `herdr terminal attach`, which Herdr's web UI starts for each pane it shows) sets
+A remote view of the board's pane (a `herdr terminal attach`) sets
 that pane's size to its own, and holds it for as long as it runs, also after its browser tab is gone. Herdr's own window
 then shows a cut-out of a board drawn for another size. The board notices within ten seconds, and says so on its first
 line, top left, where a cut-out still shows it, with what frees the size first, so a narrow window keeps it:

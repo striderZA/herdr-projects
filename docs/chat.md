@@ -32,7 +32,7 @@ line the agent wrote, with the question mark of a task that asks you something.
 
 ## It ends when you say
 
-- On the board and on the web Board: **yes** (`Ctrl+L`, `end the chat, as it is`), while the task waits for your answer.
+- On the board: **yes** (`Ctrl+L`, `end the chat, as it is`), while the task waits for your answer.
 - On the command line: `herdr-projects finish <id>`.
 
 The task is then **done**, with the agent's last message as its summary, or `Chat ended. Report: <link>` when it wrote a
@@ -53,7 +53,7 @@ setting is, nearest answer first: **the task → your entry for that repo → yo
 | For | How |
 |---|---|
 | one task, when it is added | `herdr-projects add "<title>" --chat` (short for `--chat.only true`) |
-| one task, later | `herdr-projects delegate <id> --chat` (`--no-chat` turns it off), `herdr-projects set chat.only true --task <id>`, or its row on the task's settings page (`Chat only`): on the terminal board, and on the web Board under the open task (**All settings**) |
+| one task, later | `herdr-projects delegate <id> --chat` (`--no-chat` turns it off), `herdr-projects set chat.only true --task <id>`, or its row on the task's settings page (`Chat only`): on the terminal board |
 | a whole repo, or everything of yours | `herdr-projects set chat.only true --repo <name>`, or without `--repo`. The repo's own `.herdr-projects.json` may say it too: `{ "chat": { "only": true } }` |
 | an [automation](automations.md) | `--chat` when it is made or changed (`--no-chat` turns it off), or `set chat.only true --automation <name>`. Each task it makes has it as its own |
 
@@ -70,7 +70,7 @@ rules, its turn ends wait for you, and its row says `[chat]`, not `[research]`.
 
 ## On the board
 
-- The row says `[chat]` after the task's name: on the board, in Herdr's sidebar, on the web Board, and for a task on
+- The row says `[chat]` after the task's name: on the board, in Herdr's sidebar, and for a task on
   another machine. The label comes from the setting, never from the title.
 - The task panel has a part **Chat**: `No change to the repo · ends when you say.`, with the report's link when there is
   one. Its settings say `Chat  no change to the repo · ends when you say` where an ordinary task says how it merges, and

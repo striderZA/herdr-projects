@@ -1,4 +1,4 @@
-//! OpenCode's commands and skills, all as `/name` (the web UI's server/skills/opencode.ts): the commands of its
+//! OpenCode's commands and skills, all as `/name`: the commands of its
 //! config (`command` in opencode.json or opencode.jsonc, yours and the project's) and of its `commands` folders; the
 //! skill it comes with (`customize-opencode`); skills in `~/.claude/skills`, `~/.agents/skills` and the project's (unless
 //! OpenCode is told not to read them), and in its own `skill`/`skills` folders. A skill's name must be its folder's,

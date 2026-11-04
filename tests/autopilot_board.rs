@@ -1,9 +1,9 @@
 //! Autopilot on the board: a machine's or a project's row keeps its coordinator's own mark, and while on has the
 //! board's own patterns only (a dimmed `[autopilot]` after its name, a grey status line under it, `1 on autopilot` in its
-//! machine's summary; nothing while off), `Ctrl+O`, its panel, its settings page, the web board's row, a frame.
+//! machine's summary; nothing while off), `Ctrl+O`, its panel, its settings page, a frame.
 //! Other machines: autopilot_board/far.rs.
 use crate::common;
-use common::board::{open, web, Board};
+use common::board::{open, Board};
 use common::pilot::*;
 use common::*;
 use serde_json::json;
@@ -162,27 +162,6 @@ fn the_settings_page_of_a_coordinators_row_saves_for_this_time_while_on_and_as_i
     pick(&mut b, "autopilot.approve"); b.press(&["ctrl+u"]); assert!(record(&co).at("once").at("autopilot.approve").is_null());
     pick(&mut b, "autopilot.approve"); b.press(&["enter"]); ok(&["autopilot", "off", "--project", "proj"]);
     assert_eq!(sw::autopilot::record::words(&co, "autopilot.approve"), "no");
-}
-
-#[test]
-fn the_web_board_has_the_same_marks_and_buttons() {
-    let w = pilot_world();
-    w.add("One");
-    ok(&["autopilot", "on", "--project", "proj", "--goal", "Docs"]);
-    web(&w, "press", json!({ "id": "byRepo" }));
-    let snap = web(&w, "board", json!({}));
-    let groups = snap.at("list").arr("groups");
-    assert!(!groups.iter().any(|g| g.b("main") || g.s("name") == "Coordinator"), "no row of the main Coordinator's: {snap}");
-    let g = groups.iter().find(|g| g.s("name") == "proj").cloned().unwrap_or_else(|| panic!("{snap}"));
-    let p = g.at("pilot"); assert!(p.arr("mark").iter().map(|x| x.t("t")).collect::<String>() == "○" && p.s("label") == "idle" && p.arr("cols").is_empty(), "its coordinator's own mark: {g}");
-    assert!(p.arr("under").iter().map(|x| x.t("t")).collect::<String>().starts_with("Autopilot · "), "its status line: {g}");
-    assert!(g.arr("words").iter().any(|x| x.s("t").contains("[autopilot]") && x.s("c") == "overlay0"), "its tag, dimmed: {g}");
-    let snap = web(&w, "pick", json!({ "id": g.s("id"), "open": true }));
-    assert!(snap.at("panel").b("coordinator"), "{}", snap.at("panel"));
-    let labels: Vec<String> = snap.arr("actions").iter().map(|a| a.t("label")).collect();
-    assert!(labels.contains(&"start".to_string()) && labels.contains(&"stop".to_string()) && labels.contains(&"autopilot off".to_string()), "{labels:?}");
-    web(&w, "press", json!({ "id": "autopilot" }));
-    assert!(!sw::autopilot::record::is_on(&proj(&w)));
 }
 
 #[test]

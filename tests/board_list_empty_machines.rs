@@ -1,6 +1,6 @@
 //! With every machine shown, a machine with no task yet has its heading too: folded, `0 tasks`. Space there talks to
 //! its machine coordinator, what you type goes there, enter goes into that coordinator; it comes open with its first
-//! task. A filter hides it, and a machine that did not answer has none. The web board has the same heading.
+//! task. A filter hides it, and a machine that did not answer has none.
 use crate::common;
 use common::board::{open, Board};
 use common::*;
@@ -63,12 +63,4 @@ fn this_machine_with_no_task_has_its_heading_too_and_a_filter_hides_the_empty_on
     s.press(&["ctrl+f"]); s.typed("Theirs");
     let t = s.screen(100).join("\n");
     assert!(!t.contains("0 tasks") && t.contains("Theirs"), "{t}");
-}
-
-#[test]
-fn the_web_board_shows_an_empty_machine_folded_with_0_tasks() {
-    let (_w, s) = empty_otherbox();
-    let groups = sw::webui::model::list::list_of(&s.s, &s.theme).arr("groups").to_vec();
-    let g = groups.iter().find(|g| g.s("name") == "otherbox");
-    assert!(g.map(|g| g.b("machine") && g.b("folded") && g.s("count") == "0 tasks" && g.arr("rows").is_empty()).unwrap_or(false), "{groups:?}");
 }

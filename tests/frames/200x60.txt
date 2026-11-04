@@ -207,7 +207,6 @@
    ctrl+z       undo
    ctrl+f       find: show only the tasks that match
    ctrl+c       twice: close the board
-   ctrl+t       a voice call with whoever the chat talks to
 
  alt: only shows or hides
    alt+c        hide the chat's latest message
@@ -236,7 +235,8 @@
    65% 2m left  how far it is, and the time left; the time after it is how long it has worked, or how long ago it stopped
    R#2          the review it is on or last had, coloured by where it stands: passed, failed, the reviewer working
    PR#16        its pull request: green when its checks pass, red when they fail
- ↓ 3 more
+   [auto]       made by an automation; [research]: research only, nothing is merged
+ ↓ 2 more
 
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 ❯ Add a task

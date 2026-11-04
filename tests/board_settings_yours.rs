@@ -5,7 +5,7 @@
 use crate::common;
 use common::board::{open, Board};
 use common::*;
-use serde_json::{json, Value};
+use serde_json::json;
 use sw::board::state::Whose;
 use sw::board::update::{update, Event};
 use sw::json::*;
@@ -121,9 +121,4 @@ fn the_menu_opens_your_settings_from_a_task_too() {
     b.press(&["enter"]);
     assert_eq!(whose(&b), Some(Whose::You));
     assert!(b.screen(120).join("\n").contains("Settings  yours"));
-    // The web board has no such line: its settings are a task's and an automation's.
-    b.press(&["esc"]);
-    let theme = b.theme.clone();
-    let side = Value::Object(sw::webui::model::side::side_of(&mut b.s, &theme));
-    assert!(!side.to_string().contains("your own settings"), "{side}");
 }

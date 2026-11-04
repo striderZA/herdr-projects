@@ -88,8 +88,7 @@ fn heading(s: &State, t: &Theme, rows: &[Row], at: usize, width: usize) -> Vec<I
     let (named, row) = heading_words(s, t, rows, at);
     super::pilot::placed(caret, named, row, width)
 }
-/// A heading's words, in their inks, and its coordinator's row (view/pilot.rs): what the terminal draws after the
-/// caret, and the web board too (webui/model/list.rs).
+/// A heading's words, in their inks, and its coordinator's row (view/pilot.rs): what the board draws after the caret.
 pub fn heading_words(s: &State, t: &Theme, rows: &[Row], at: usize) -> (Inked, Option<super::pilot::Shown>) {
     let r = &rows[at];
     let Row::Head { name, autos, machine, folded, folded_autos, id, .. } = r else { return (Inked::new(), None) };

@@ -1,4 +1,4 @@
-//! Codex's skills and prompts (the web UI's server/skills/codex.ts): skills as `$name`, the project's `.agents/skills`,
+//! Codex's skills and prompts: skills as `$name`, the project's `.agents/skills`,
 //! yours in `~/.agents/skills` and Codex's own folder, the ones it comes with, and those of the plugins turned on in
 //! its config.toml (found in its plugin cache, under their own names); your prompts as `/prompts:name`. A skill turned
 //! off in config.toml (`[[skills.config]]` with `enabled = false`) is left out.

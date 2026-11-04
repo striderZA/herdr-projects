@@ -13,7 +13,6 @@ pub const WIDE: usize = 90;
 pub mod ask;
 pub mod chat;
 pub mod chat_title;
-pub mod chat_call;
 pub mod chat_keep;
 pub mod chat_text;
 pub mod coords;
@@ -38,7 +37,7 @@ use crate::shown::ink::{Ink, Inked};
 /// What frees the size comes first, because the right end is what a narrow window or a cut-out loses.
 pub fn held_lines(s: &State, width: usize) -> Vec<Inked> {
     let Some(d) = &s.held else { return vec![] };
-    if s.guest { return vec![Inked::plain(" ").add(Inked::of(format!("Drawn for a remote view of this pane at {}×{} (herdr's web UI has it open): herdr's own window ({}×{}) shows a cut-out of it until that view is closed", d.columns, d.rows, d.room.0, d.room.1), Ink::Muted)).cut(width)]; }
+    if s.guest { return vec![Inked::plain(" ").add(Inked::of(format!("Drawn for a remote view of this pane at {}×{} (a remote view has it open): herdr's own window ({}×{}) shows a cut-out of it until that view is closed", d.columns, d.rows, d.room.0, d.room.1), Ink::Muted)).cut(width)]; }
     let who = d.by.first();
     let text = match who {
         // Taking it changed nothing and no attach holds it: a second herdr window has the session at its size.

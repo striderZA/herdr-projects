@@ -1,4 +1,4 @@
-//! omp's plugins beyond Claude Code's (the web UI's server/skills/omp.ts): extensions its settings.json names, and
+//! omp's plugins beyond Claude Code's: extensions its settings.json names, and
 //! plugins installed as npm packages in its plugins folders (yours and the project's), and which of them, or of the
 //! Claude Code plugins, are portable agent plugins (agent-plugins.org), whose skills must keep that spec's rules.
 use super::read::{json_file, Found};

@@ -105,7 +105,7 @@ fn review_must_fix_is_major_by_default_yours_or_one_tasks_and_review_rounds_0_se
 }
 
 #[test]
-fn the_pull_request_and_the_review_page_show_every_finding_those_below_the_gate_marked_not_required() {
+fn the_pull_request_shows_every_finding_those_below_the_gate_marked_not_required() {
     let w = world_with(Opts { repo: true, origin: true, ..Default::default() });
     w.script(json!({ "worker": [{ "files": { "f.txt": "1\n" }, "commit": "v1", "note": "Did v1." }], "reviewer": [{ "verdict": { "meets": true, "text": "Looked at it.", "findings": [finding("minor", "The name could be clearer", json!({}))] } }] }));
     let id = w.add("With a pull request");
@@ -114,16 +114,5 @@ fn the_pull_request_and_the_review_page_show_every_finding_those_below_the_gate_
     assert_eq!(t.s("stage"), "approval", "{}", t.at("failure"));
     let log = gh_log(&w);
     assert!(re(r"pr comment 7 --body \*\*Review 1 · Pass · 1 minor\*\*[\s\S]*\*\*Not required \(below the gate\)\*\*\n- \*\*minor\*\*: The name could be clearer \(`f\.txt`\)", &log), "{log}");
-    let mut rv = review_of(false, vec![finding("major", "Crashes on <empty> files", json!({})), finding("minor", "A name is unclear", json!({})), finding("major", "The old importer drops rows", json!({ "preexisting": true }))], "major");
-    for f in rv.get_mut("findings").unwrap().as_array_mut().unwrap() { if f.b("preexisting") { f["task"] = json!("proj/9"); } }
-    rv.put("at", sw::clock::now()); rv.put("left", 2);
-    let page = sw::review_page::render::render_review_page(&json!({ "id": id, "round": 2, "title": "T", "summary": "Did it." }), &Value::Object(rv), &[], &w.base);
-    assert!(re(r#"<div class="score warning">Fail</div><p class="decision">1 major, 1 minor, 1 pre-existing</p><p>Does the change do what the task asked\? <strong>No</strong>"#, &page), "{page}");
-    assert!(re(r#"<h4>Required</h4><ul class="findings"><li><span class="sev major">major</span> Crashes on &lt;empty&gt; files <code>f\.txt</code><div class="proof">Proof: ran it</div></li></ul>"#, &page));
-    assert!(re(r#"<h4>Not required: below the gate</h4><ul class="findings"><li><span class="sev minor">minor</span> A name is unclear <code>f\.txt</code> <span class="tag">not required</span>"#, &page));
-    assert!(re(r#"<h4>Not required: there before this change</h4>[^\n]*<span class="tag">not required · task proj/9</span>"#, &page));
-    assert!(page.contains("2 smaller findings noticed only in this later round were left out."));
-    let mut pass = review_of(true, vec![], "major"); pass.put("at", sw::clock::now());
-    let clean = sw::review_page::render::render_review_page(&json!({ "id": id, "title": "T", "summary": "Did it." }), &Value::Object(pass), &[], &w.base);
-    assert!(re(r#"No findings reported by the reviewer\.[\s\S]*<div class="score success">Pass</div><p class="decision">Nothing found</p>"#, &clean), "{clean}");
+
 }

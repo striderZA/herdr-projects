@@ -1,8 +1,8 @@
 //! The key that opens a task's link: a done research task's report in the browser, else its pull request, copied
 //! where nothing opens it, nothing on a task with neither; the panel's Report row, the hint line and the ? menu name it,
-//! and the web board's button opens it in a tab of the page's own.
+//! and a task with neither does nothing.
 use crate::common;
-use common::board::{open, web};
+use common::board::open;
 use common::*;
 use serde_json::json;
 use sw::actions::filing;
@@ -89,15 +89,4 @@ fn on_a_task_without_a_link_the_key_does_nothing() {
     assert!(w.opener.opened.borrow().is_empty() && b.s.msg.is_empty());
     b.rows = 60; b.press(&["?"]);
     assert!(!b.text().contains("in the browser"), "no line in the menu: {}", b.text());
-}
-
-#[test]
-fn the_web_boards_button_opens_the_link_in_a_tab_of_the_page() {
-    let w = world_with(Opts { repo: false, ..Default::default() });
-    let id = done_research(&w);
-    web(&w, "pick", json!({ "id": id, "open": true }));
-    let s = web(&w, "press", json!({ "id": "openLink" }));
-    assert_eq!(s.at("go").s("url"), REPORT);
-    assert!(s.arr("actions").iter().any(|b| b.s("id") == "openLink" && b.s("label") == "open its report"), "{}", s.at("actions"));
-    assert!(w.opener.opened.borrow().is_empty(), "the page opens it, not this machine");
 }

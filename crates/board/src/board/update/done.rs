@@ -34,7 +34,7 @@ pub fn apply(s: &mut State, d: Done, fx: &mut Vec<Effect>) {
                 fx.push(Effect::Save);
                 let title = s.items.iter().find(|r| r.s("id") == id).map(|r| crate::shown::words::clean(if r.b("title") { r.s("title") } else { r.s("id") })).unwrap_or_else(|| id.clone());
                 // Only where to find it, when it is not in front of you: no line that says it was done.
-                if s.guest || s.viewed { s.flash(format!("Opened {id}'s agent in herdr's own window. In the web UI, pick it in the sidebar: “{title}”."), Ink::Muted); }
+                if s.guest || s.viewed { s.flash(format!("Opened {id}'s agent in herdr's own window. In that view, pick it in the sidebar: “{title}”."), Ink::Muted); }
             }
             Then::OpenedThere { id, host, agent } => {
                 fx.push(Effect::Save);
@@ -44,13 +44,9 @@ pub fn apply(s: &mut State, d: Done, fx: &mut Vec<Effect>) {
             }
             Then::Attach { command, args, .. } => fx.push(Effect::Attach { command, args }),
             Then::Copy(text) => fx.push(super::link::copy(&text)),
-            Then::CallRang { id } => s.call_link = Some((id, s.now)),
             Then::Paste(text) => { s.paste_text = [s.paste_text.clone(), text].into_iter().filter(|x| !x.is_empty()).collect::<Vec<_>>().join("\n\n"); }
             Then::Saved(name) => if s.editing.as_ref().map(|e| e.typing == name).unwrap_or(false) { if let Some(e) = s.editing.as_mut() { e.typing.clear(); } s.input.set_text(""); },
-            Then::Go(to) => {
-                if s.msg.ends_with(": opening…") { s.msg.clear(); }
-                super::web::going(s, to);
-            }
+
             Then::SetupLeft { key, sidebar } => {
                 if !key && !sidebar { s.setup = None; }
                 else if let Some(st) = s.setup.as_mut() { if !key { st.key = None; } if !sidebar { st.sidebar = None; } }

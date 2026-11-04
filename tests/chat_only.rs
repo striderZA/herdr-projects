@@ -129,11 +129,6 @@ fn one_setting_looked_up_like_every_other_its_label_from_the_setting_and_chat_wi
     let side = sw::flow::sidebar_entry::entry_of(&row("proj/2"), "", sw::clock::now());
     assert!(side.stands.contains("[chat]") && !side.stands.contains("[research]"), "{}", side.stands);
     assert!(run(&w, &["list"]).contains("Consult me [chat]"));
-    // The web Board: its settings page has the row, and the task's row says [chat] once it is set there.
-    let s = common::board::web(&w, "pick", json!({ "id": id, "open": true }));
-    assert!(s.at("settings").arr("rows").iter().any(|x| x.s("name") == NAME && x.s("label") == "Chat only"));
-    let s = common::board::web(&w, "set", json!({ "id": id, "name": NAME, "value": "true" }));
-    assert!(s.at("list").arr("groups").iter().flat_map(|g| g.arr("rows").to_vec()).any(|x| x.s("id") == id && x.s("title").contains("Plain words [chat]")), "{}", s.at("list"));
     let mut t = task(&both); t.put("worktree", "/tmp/x"); t.put("branch", "work/3-x");
     let rules = sw::delegate::rules::rules(&t);
     assert!(rules.contains("This task is chat only") && !rules.contains("This task is research only"), "{rules}");

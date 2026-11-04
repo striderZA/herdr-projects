@@ -58,7 +58,7 @@ pub struct Piece {
     #[serde(skip_serializing_if = "no")] pub bold: bool, #[serde(skip_serializing_if = "no")] pub dim: bool,
     #[serde(skip_serializing_if = "no")] pub quiet: bool, #[serde(skip_serializing_if = "no")] pub under: bool, #[serde(skip_serializing_if = "no")] pub inv: bool,
     #[serde(skip_serializing_if = "Option::is_none")] pub bg: Option<Ink>, #[serde(skip_serializing_if = "Option::is_none")] pub link: Option<String>,
-    /// What the line this piece starts is, where a page lays it out by itself (the task panel's parts on the web board):
+    /// What the line this piece starts is, where a page lays it out by itself (the task panel's parts):
     /// "head", "fact:<label>", "more", "text". Never drawn.
     #[serde(skip_serializing_if = "Option::is_none")] pub role: Option<String>,
 }

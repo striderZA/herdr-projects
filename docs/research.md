@@ -1,8 +1,8 @@
 # Reports, and research-only tasks
 
 **A report never goes into the repo.** A report, a review or a research result is something an agent writes for you to
-read. It is not part of the product, so it is never committed, in no folder. It is kept with the task, and you get a
-private link to it.
+read. It is not part of the product, so it is never committed, in no folder. It is kept with the task, and its path is
+its link.
 
 **A research-only task changes nothing in the repo.** Its whole result is a report. Work that should follow from it is a
 short **Also noticed** list in that report: nothing adds a task for it.
@@ -22,8 +22,7 @@ Every agent the board starts is told the same, in every repo:
 - **The folder is in its environment too**, as `HERDR_PROJECTS_TASK_REPORTS`, beside the task's id as
   `HERDR_PROJECTS_ID` (the name `workspace.setup` has it by): the agent, its reviewers and the picker of
   [attempts](attempts.md) all have both.
-- **When the agent finishes, the board gives the report a link**, served the way a review's evidence is: privately on
-  your tailnet with `serve: tailscale`, on `127.0.0.1` with `serve: local` ([settings](settings.md)). The link opens
+- **When the agent finishes, the board gives the report a link**: its path in the task's folder. The link opens
   `index.html` when there is one, else `report.html`, `report.md`, `README.md`, else the folder's first file.
 
 The task panel shows the link under **Report**, beside the list and full screen (full screen also shows the file's name
@@ -34,9 +33,7 @@ and the full link). `herdr-projects details <id>` has it as `report`. To open it
   the key. Where nothing can open a link there (no opener, ssh without a display), the key copies the link to your
   clipboard instead (OSC 52, as the board's copy does: [mouse](mouse.md)) and says so. The full list: [keys](keys.md).
 - **The terminal's own click on a link**: `Cmd`+click on a Mac, `Ctrl`+click in most other terminals. A plain click does
-  nothing, and some terminals do not pass the link through herdr at all. A report no page server serves (no
-  `serve` link) is a file's path, not a link: `Ctrl+D` opens that too.
-- **On the web board** the report is a plain link, and the task's "Open the link" button opens it in a new tab.
+  nothing, and some terminals do not pass the link through herdr at all. A report is a file's path: `Ctrl+D` opens that too.
 
 This holds for any task. A task that changes code and also wrote a report has both: its change in the pull request, and
 its report on the task.
@@ -49,7 +46,7 @@ every setting is, nearest answer first: **the task → your entry for that repo 
 | For | How |
 |---|---|
 | one task, when it is added | `herdr-projects add "<title>" --research` (short for `--research.only true`) |
-| one task, later | `herdr-projects delegate <id> --research` (`--no-research` turns it off), `herdr-projects set research.only true --task <id>`, or its row on the task's settings page (`Research only`): on the terminal board, and on the web Board under the open task (**All settings**). All write the same one setting on the task |
+| one task, later | `herdr-projects delegate <id> --research` (`--no-research` turns it off), `herdr-projects set research.only true --task <id>`, or its row on the task's settings page (`Research only`): on the terminal board. All write the same one setting on the task |
 | a whole repo, or everything of yours | `herdr-projects set research.only true --repo <name>`, or without `--repo`. Every new task there is research only unless the task says otherwise (`--no-research`, or `set research.only false --task <id>`). The repo's own `.herdr-projects.json` may say it too: `{ "research": { "only": true } }` |
 | an [automation](automations.md) | `--research` when it is made, or `set research.only true --automation <name>`. Each task it makes has it as its own |
 
@@ -64,7 +61,7 @@ every setting is, nearest answer first: **the task → your entry for that repo 
 
 ### On the board
 
-- The row says `[research]` after the task's name: on the board, in Herdr's sidebar and on the web Board, for an
+- The row says `[research]` after the task's name: on the board and in Herdr's sidebar, for an
   automation's task and a task on another machine alike. The label comes from the setting, never from the title.
 - The task panel has a part **Research only** with the report's link (or `No report yet`). Its settings say
   `Research  only · no change to the repo` where an ordinary task says how it merges.

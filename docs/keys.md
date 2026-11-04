@@ -29,9 +29,6 @@ It lists the same three groups as the tables below, each line with its key. A `C
 there, which does what the key does. So a terminal that does not pass `Alt` on (a Mac terminal without "Option as Meta",
 some phone keyboards) loses nothing.
 
-In the terminal view of Herdr's web UI, the `Alt` keys and `Shift+Enter` arrive in the old byte form and are taken as
-such, and the Enter a phone's input line adds after `?`, `y`, `n` or space is dropped ([the web UI](web-ui.md)).
-
 ## Questions: the board asks before what cannot be undone
 
 Only merging and removing a task ask. Nothing else does.
@@ -53,7 +50,6 @@ Only merging and removing a task ask. Nothing else does.
   window's last line, as the chat's box sits on its hints. A question longer than the window wraps, and its keys are
   never cut: in a short window its detail gives way first, then its rules. There is no hint line meanwhile: the box takes
   its row.
-- On the web Board neither answer to a merge or a remove is the filled button.
 
 A result stays on screen until your next key press. An error stays until `Esc` dismisses it, with `(esc dismisses)` after
 it.
@@ -162,7 +158,7 @@ herdr-projects set board.keys "chatMessage=ctrl+g, chatScrollUp=ctrl+up, chatScr
 ```
 
 - **The key then answers to your chord only.** Its old chord does nothing. The `?` menu, the hint line and the board's
-  messages name your chord, on the web board too.
+  messages name your chord.
 - **A chord that is taken is refused, and you are told by which key:** `chatMessage=ctrl+l: ctrl+l is yes's key
   already`. To use it anyway, move that key too, in the same value (`undo=ctrl+c, close=ctrl+q`). The key that opens
   the board is refused too, and so is Herdr's prefix when that key starts with it.
@@ -218,13 +214,12 @@ below always use the PC names.
 | `Ctrl+O` | on a coordinator's row (a machine's or a project's row): its [autopilot](autopilot.md) on, with its saved goal and settings, and off again; on one at `needs you` or `could not start` it starts again. With no machine's, project's or task's row selected (a status group's heading, an empty list): the main Coordinator's. On, its row keeps its mark and has `[autopilot]` after its name and a line under it that says what autopilot does |
 | `Ctrl+A` | archive the selected task, or restore it from the archive. Archiving closes its space (its agent ends) and frees its temporary files; its worktree, branch and history stay. Restoring starts nothing. On a project's row (a repo's heading, grouped by repo, `Alt+S`): archive the whole project with its tasks, after a yes when one of them works, waits or is to do; in the archive, on an archived project's heading: restore it with its tasks as they were |
 | `Ctrl+P` | pin the selected row, or unpin it: a task, a project's row or a machine's row (here or on another machine). Nothing moves: the row gets a yellow pin mark `★` and shows under Pinned, the last filter on the filter row (`Tab`) ([pinned.md](pinned.md)) |
-| `Ctrl+D` | open the selected task's link in the browser: its report when it has one ([research.md](research.md#where-a-report-goes)), else its pull request. It opens with this machine's own opener (`open` on macOS, `xdg-open` on Linux with a display). Where nothing can open it (no opener, ssh without a display) it copies the link instead (OSC 52, as the board's copy does, [mouse.md](mouse.md)) and says so. On the web board the page opens it. On a task with neither it does nothing |
+| `Ctrl+D` | open the selected task's link in the browser: its report when it has one ([research.md](research.md#where-a-report-goes)), else its pull request. It opens with this machine's own opener (`open` on macOS, `xdg-open` on Linux with a display). Where nothing can open it (no opener, ssh without a display) it copies the link instead (OSC 52, as the board's copy does, [mouse.md](mouse.md)) and says so. On a task with neither it does nothing |
 | `Ctrl+E` `Ctrl+U` | the selected task's settings, full screen: every work setting by its name and its value. `↑` `↓` move to a row; `Enter` changes it (a switch or a choice goes to its next value, anything else is typed and saved with `Enter`); rows set for this task only are marked `*` (where any other value comes from is `herdr-projects show <id>`'s). `Ctrl+U` puts the selected row back to what it would be without this task's own answer. `Esc` or `Ctrl+E` again goes back ([settings.md](settings.md)). On an automation's row: the automation's own settings, the same page. On a coordinator's row (a heading stands for its coordinator): that coordinator's own settings first (`coordinator.*` and `autopilot.*`; while its autopilot is on, an autopilot row is saved for this time), then on this machine's heading your own settings, which every task starts from (on a repo's heading: your entry for that repo), changed as `herdr-projects set` changes them; another machine's coordinator is shown whole instead, as its settings are changed there |
 | `Ctrl+Z` | undo: bring back a draft that was put away, or take the last archiving back |
 | `Ctrl+F` | find: type, and the list shows only the tasks that match, archived ones too. `Enter` keeps the filter, `Esc` leaves find; `Esc` on the list clears a filter that is kept |
 | `Ctrl+K` | only while a remote view holds the board's terminal at another size than herdr shows it (the line at the top says so): end that view, so the board has its own size again ([board-size.md](board-size.md)) |
 | `Ctrl+C` | twice: close the board, with text typed too: the draft is kept and is back when the board reopens |
-| `Ctrl+T` | a voice call with whoever the chat talks to: a live conversation with the board's voice agent, which sends what you ask for to the Coordinator, the task's agent or a coordinator, and reads their answers back in short. The call follows the chat: `Space` and moving between tasks change who it talks to. The microphone and the speaker are the computer you sit at: its call helper holds the call there, in the terminal's computer, with no browser. The key again hangs up. With `voice.calls off` it only says that calls are off. More: [voice calls](voice.md) |
 
 **`Alt`: only shows or hides**
 

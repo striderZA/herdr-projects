@@ -9,7 +9,6 @@
 pub mod answers;
 pub mod greys;
 pub mod marks;
-pub mod page;
 pub mod picks;
 
 use crate::herdr::palette::{canonical_theme_name, parse_color, Palette};
@@ -115,17 +114,15 @@ pub fn resolve(cfg: &toml::Table, light: Option<bool>, want: &str, seen: Seen) -
 /// The theme the board draws with: the palette, the ground the greys were measured on, whether marks are herdr's
 /// symbols or its dots, and whether colour is off (NO_COLOR).
 #[derive(Clone, Debug)]
-pub struct Theme { pub pal: Pal, pub ground: C, pub symbols: bool, pub plain: bool, pub name: String, pub web: bool }
+pub struct Theme { pub pal: Pal, pub ground: C, pub symbols: bool, pub plain: bool, pub name: String }
 impl Theme {
     pub fn load(light: Option<bool>, seen: Seen) -> Theme {
         let want = crate::store::settings::lookup::setting("board.theme", None).as_str().unwrap_or("herdr").to_string();
         let r = resolve(&read_config(), light, &want, seen);
-        Theme { pal: r.pal, ground: r.ground, symbols: r.symbols, plain: no_color(), name: r.name, web: false }
+        Theme { pal: r.pal, ground: r.ground, symbols: r.symbols, plain: no_color(), name: r.name }
     }
     /// The board's default look with no config read: herdr's own Catppuccin. For tests and frames.
-    pub fn default_dark(plain: bool) -> Theme { let r = resolve(&toml::Table::new(), None, "herdr", Seen::default()); Theme { pal: r.pal, ground: r.ground, symbols: true, plain, name: r.name, web: false } }
-    /// The web board's: the page gives each ink name a colour of its own, and draws each state's mark itself.
-    pub fn web() -> Theme { Theme { web: true, ..Theme::default_dark(true) } }
+    pub fn default_dark(plain: bool) -> Theme { let r = resolve(&toml::Table::new(), None, "herdr", Seen::default()); Theme { pal: r.pal, ground: r.ground, symbols: true, plain, name: r.name } }
     /// A theme for measuring only (every mark is one cell in every theme): made once.
     pub fn measure() -> &'static Theme { static T: std::sync::OnceLock<Theme> = std::sync::OnceLock::new(); T.get_or_init(|| Theme::default_dark(true)) }
     /// Does the terminal have to be asked for its appearance to finish the theme (herdr's auto_switch)?
@@ -141,12 +138,11 @@ impl Theme {
     }
     /// A colour made quieter, for a mark that is finished with: measured, so it is still seen.
     pub fn quiet(&self, i: Ink) -> C { greys::quieter(self.ink(i), self.ground, self.pal.row()) }
-    pub fn mark(&self, state: &str, kind: &str) -> &'static str { if self.web { marks::web_mark(state, kind) } else { marks::mark(state, kind, self.symbols) } }
+    pub fn mark(&self, state: &str, kind: &str) -> &'static str { marks::mark(state, kind, self.symbols) }
     /// Can the selected row be painted? Where it cannot (colour off, no background in the theme) it is drawn reversed.
     pub fn paints_selection(&self) -> bool { !self.plain && self.pal.row() != C::Own }
 }
 pub fn no_color() -> bool { std::env::var("NO_COLOR").map(|v| !v.is_empty()).unwrap_or(false) }
-pub use page::page_theme;
 
 #[cfg(test)]
 mod tests {

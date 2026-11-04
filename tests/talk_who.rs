@@ -1,6 +1,6 @@
 //! Who said what in a task's chat, as in the Coordinator's: your words and the agent's with no label, and
 //! what others sent it under their own name: the board's brief and its own prompts ("Board:"), the Coordinator's
-//! ("Coordinator:"). The same in the box, on the web board and for another machine's task.
+//! ("Coordinator:"). The same in the box and for another machine's task.
 use crate::common;
 use common::*;
 use serde_json::json;
@@ -40,10 +40,6 @@ fn each_thing_sent_to_a_tasks_agent_is_under_the_name_of_who_sent_it() {
     for _ in 0..12 { s.press(&["alt+k"]); b.extend(crate::board_chat::chat(&mut s, 120).boxed); }
     for name in ["Board:", "Coordinator:"] { assert!(b.iter().any(|l| l == name), "{name} in {b:?}"); }
     assert!(!b.iter().any(|l| l.starts_with("To the")), "{b:?}");
-    // the web board: the same names
-    let side = sw::webui::model::side::side_of(&mut s.s, &s.theme.clone());
-    let by: Vec<String> = side.at("chat").arr("parts").iter().filter(|p| p.s("by") != "Agent").map(|p| p.t("by")).collect();
-    assert_eq!(by, vec!["Board", "You", "Coordinator", "Board"]);
     // another machine's task: its machine says who sent what
     let snap = sw::remote::remote_list().at("tasks").as_array().unwrap().iter().find(|x| x.s("id") == id).unwrap().at("snap").clone();
     let mut far = r.clone(); far.insert("host".into(), json!("vm-a")); far.insert("snap".into(), snap);

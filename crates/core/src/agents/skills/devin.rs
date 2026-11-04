@@ -1,4 +1,4 @@
-//! Devin's skills, as `/name` by their folder's name (the web UI's server/skills/devin.ts): yours and the project's in
+//! Devin's skills, as `/name` by their folder's name: yours and the project's in
 //! Devin's own folders (`devin`, `cognition`, `.agents`), and, unless its config.json's `read_config_from` turns them
 //! off, Windsurf's, Claude Code's (skills, and the project's commands) and Copilot's; then its plugins', as
 //! `/plugin:name`. A name found in two of these places is told apart by the place (`/claude:review`). A skill whose

@@ -25,7 +25,7 @@ fn every_agent_is_told_a_report_never_goes_into_the_repo_a_research_agent_that_i
     let tree = |id: &str| { let mut t = task(id); t.put("worktree", "/tmp/x"); t.put("branch", "work/1-x"); t.put("repoFile", json!({ "check.command": "npm test" })); sw::delegate::rules::rules(&t) };
     let (told, told_research) = (tree(&plain), tree(&research));
     // Any task, in any repo: where a report goes, and never a commit of one.
-    for t in [&told, &told_research] { assert!(t.contains("never goes into the repo: do not commit one, in no folder") && t.contains("private link"), "{t}"); }
+    for t in [&told, &told_research] { assert!(t.contains("never goes into the repo: do not commit one, in no folder") && t.contains("shows the human its path"), "{t}"); }
     let reports = sw::store::files::reports_dir().join("proj");
     assert!(told.contains(&format!("Save it in {}/ (this task's own folder among the board's reports, outside every repo)", reports.join("1").display())), "{told}");
     assert!(told.contains("Commit your work on this branch") && told.contains("only counts as done when this passes: npm test") && !told.contains("research only"), "{told}");

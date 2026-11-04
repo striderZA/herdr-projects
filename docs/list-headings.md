@@ -74,7 +74,7 @@ opens on it. The archive has none.
 
 They stay while the list refreshes, when you switch the grouping or the machines and back, and **after the board is
 closed**. They are kept with the rest of the board's view, in `view.json` in the board's data folder. The popup has its
-own, as it has for its selection. The web board keeps its own folds the same way, in its own file.
+own, as it has for its selection.
 
 ### What a fold never hides
 
@@ -86,19 +86,3 @@ own, as it has for its selection. The web board keeps its own folds the same way
 
 A list longer than its room counts what it does not show on its last line (`↓ 11 more`). Tasks under a folded heading
 are not in that count, since the heading already says how many it holds.
-
-## The web board
-
-Same rows, same order, same depth: the top row at the left edge, each machine's row one step in under `All machines`,
-a project's and a status group's one step in under its machine, a project's tasks one step further. Every name is in
-the base colour (the top row's and a machine's bold), a status group's heading in its colour, what goes with a name
-dimmed.
-
-- A machine's row and a project's row are their coordinator's: its mark where a task's mark stands, its time on the
-  right, one line. A tap selects it (its coordinator is then the other one the chat's switch offers); its caret (`▾`
-  open, `▸` folded) folds and unfolds it. Selected, its **Open** shows the coordinator whole.
-- A status group's heading, the automations' and the archive's have nobody to talk to: a tap anywhere on them folds and
-  unfolds them, their caret standing in the marks' column.
-- A folded heading says what it holds (`7 tasks, 1 automation`, `0 tasks`); the top row says it open or folded
-  (`2 projects · 14 tasks`).
-- A watching device may fold too. It only changes what that page shows.

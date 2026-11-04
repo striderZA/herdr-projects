@@ -1,5 +1,5 @@
 //! What taking over an older install does to this machine beyond files: herdr-superwork's processes (its keeper, its
-//! page server with the web UI's front door) stopped and this version's started in their place, its plugin switched
+//! page server) stopped and this version's started in their place, its plugin switched
 //! off in herdr, and herdr's config written through herdr's own check. The tests put a stand-in in its place
 //! (take_over.rs: `Sys`).
 use super::Sys;
@@ -35,10 +35,8 @@ impl Sys for Live {
         said.dedup();
         said
     }
-    fn start_new(&self, stopped: &[String]) {
+    fn start_new(&self, _stopped: &[String]) {
         crate::keeper::ensure_keeper();
-        if stopped.iter().any(|s| s == "page server") { crate::review_page::ensure_server(); }
-        crate::webui::keep::ensure_door();
         crate::extras::sync_skill();
     }
     fn write_config(&self, file: &Path, next: &str) -> Result<(), String> { crate::extras::config::rewrite(file, next) }

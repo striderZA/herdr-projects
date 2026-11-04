@@ -1,12 +1,12 @@
 //! Reports and research-only tasks: a report never goes into the repo, and a task marked research only changes
 //! nothing in it. A report is written into the task's own folder among the board's reports (docs/home-folder.md),
-//! outside every repo; the board gives it a private link. A research-only task (the setting `research.only`) has that
+//! outside every repo; the board keeps its path as its link. A research-only task (the setting `research.only`) has that
 //! report as its whole result: the finish line pushes, opens and merges nothing for it, and a change in its worktree or
 //! on its branch goes back to its agent.
 use crate::clock::now;
 use crate::err::Res;
 use crate::json::*;
-use crate::store::files::{artifacts_dir, reports_dir};
+use crate::store::files::reports_dir;
 pub use crate::store::old_research::RESEARCH;
 use crate::store::repos::{branch_of, cwd_of, git_out};
 use crate::store::settings::lookup::setting;
@@ -46,7 +46,7 @@ const FIRST: [&str; 4] = ["index.html", "report.html", "report.md", "README.md"]
 
 // ---- what agents are told ----------------------------------------------------------------------------------------------
 pub fn report_rule(t: &Task) -> String {
-    format!("A report, a review or a research result (anything you write for the human to read that is not part of the product) never goes into the repo: do not commit one, in no folder. Save it in {}/ (this task's own folder among the board's reports, outside every repo), as index.html (one page that stands by itself) or report.md. The board gives the human a private link to it.", report_folder(t).display())
+    format!("A report, a review or a research result (anything you write for the human to read that is not part of the product) never goes into the repo: do not commit one, in no folder. Save it in {}/ (this task's own folder among the board's reports, outside every repo), as index.html (one page that stands by itself) or report.md. The board shows the human its path.", report_folder(t).display())
 }
 pub fn research_rule(t: &Task) -> String {
     let look = if t.b("worktree") { format!("worktree and at branch {}", t.s("branch")) } else { "folder".into() };
@@ -56,7 +56,7 @@ pub fn research_tree(t: &Task) -> String {
     format!("You are in your own git worktree on branch {}; the human's checkout is elsewhere and untouched. Commit nothing on this branch, and do not push, merge or switch branches. When you finish, the board keeps your report and opens no pull request.", t.s("branch"))
 }
 pub fn review_rule(t: &Task) -> String {
-    format!("This task is research only: nothing in the repository may change, and its whole result is a report, in {}/ (outside the repository; the human gets a private link to it). You are in the folder where the work was done, with all your tools. Read the report whole and check it against what was asked: does it answer all of it, correctly? Check what it states against the code, the sources and the commands it speaks of: a claim that is false, or that nothing shows, is a finding. No report there is a critical finding. The agent was told to change nothing in the repository: look for yourself (`git status`, `git log`, other branches, anything pushed) and report any file it added, changed or deleted, and any commit, as a critical finding. Ignore taste and style nits.", report_folder(t).display())
+    format!("This task is research only: nothing in the repository may change, and its whole result is a report, in {}/ (outside the repository; the human gets its path). You are in the folder where the work was done, with all your tools. Read the report whole and check it against what was asked: does it answer all of it, correctly? Check what it states against the code, the sources and the commands it speaks of: a claim that is false, or that nothing shows, is a finding. No report there is a critical finding. The agent was told to change nothing in the repository: look for yourself (`git status`, `git log`, other branches, anything pushed) and report any file it added, changed or deleted, and any commit, as a critical finding. Ignore taste and style nits.", report_folder(t).display())
 }
 
 // ---- what a research-only task changed ---------------------------------------------------------------------------------
@@ -204,22 +204,11 @@ fn files_in(dir: &Path) -> Vec<String> {
     v.sort();
     v
 }
-pub fn report_store(id: &str) -> PathBuf { artifacts_dir(id).join(REPORT) }
-/// The report the agent wrote, and its link: what the task remembers ({ file, link, at }), or None. The page server only
-/// serves a task's own folder in the board's data, so that folder gets a link to the report folder. `base` answers
-/// where the task's pages are served from ("" when nothing serves them: then the link is the file).
-pub fn keep_report(t: &Task, base: impl FnOnce() -> String) -> Option<Value> {
+/// The report the agent wrote, and its link: what the task remembers ({ file, link, at }), or None. The report stays
+/// where the agent wrote it, in the task's own folder among the board's reports; the link is its path there.
+pub fn keep_report(t: &Task) -> Option<Value> {
     let from = report_folder(t);
     let names = files_in(&from);
     let file = FIRST.iter().find(|n| names.iter().any(|x| x == *n)).map(|s| s.to_string()).or_else(|| names.first().cloned())?;
-    let to = report_store(t.s("id"));
-    let mut root = String::new();
-    let there = fs::read_link(&to).ok();
-    let ok = if there.as_deref() != Some(from.as_path()) {
-        let _ = fs::remove_dir_all(&to); let _ = fs::remove_file(&to);
-        to.parent().map(|p| fs::create_dir_all(p).is_ok()).unwrap_or(false) && std::os::unix::fs::symlink(&from, &to).is_ok()
-    } else { true };
-    if ok { root = base(); }
-    let link = if root.is_empty() { from.join(&file).display().to_string() } else { format!("{root}/{REPORT}/{}", crate::util::url_encode(&file)) };
-    Some(json!({ "file": file, "link": link, "at": now() }))
+    Some(json!({ "file": file, "link": from.join(&file).display().to_string(), "at": now() }))
 }

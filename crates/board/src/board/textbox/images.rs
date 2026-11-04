@@ -53,7 +53,7 @@ fn words(text: &str) -> Vec<(usize, usize)> {
     out
 }
 /// Words already sent, each picture in them as its chip, numbered from 1: a path with a picture's end (the file may be
-/// on the machine it was sent to; `@<path>` as the web board sends one), and the `[Image #39]` Claude Code writes for
+/// on the machine it was sent to; `@<path>` as a chat box sends one), and the `[Image #39]` Claude Code writes for
 /// a picture it took in.
 pub fn labelled(text: &str) -> String {
     // A path at the end of a sentence: the mark after it is no part of it.

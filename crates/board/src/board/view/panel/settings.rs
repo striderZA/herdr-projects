@@ -117,7 +117,7 @@ pub fn settings(k: &mut Kit, c: &Ctx, r: &Obj) -> Drawn {
     let lines = if known { draw_rows(k, &shown, 0, &own_of(&all), true) } else { k.wrap("Reading its settings…").into_iter().map(|l| l.recolor(Ink::Muted)).collect() };
     let mut part_lines = vec![k.head("Settings", None)];
     part_lines.extend(lines);
-    if c.full && !r.b("archivedAt") { let change = if c.web { "All settings, below, has every one of them, and changes them".to_string() } else { format!("{} changes them", key_name("settings")) }; part_lines.extend(k.wrap(&change).into_iter().map(|l| l.recolor(Ink::Muted))); }
+    if c.full && !r.b("archivedAt") { let change = format!("{} changes them", key_name("settings")); part_lines.extend(k.wrap(&change).into_iter().map(|l| l.recolor(Ink::Muted))); }
     let part = k.part(part_lines);
     k.parts[part].name = "settings";
     if c.full && !session.is_empty() { let mut sl = vec![k.head("Session", None)]; sl.extend(draw_rows(k, &session, 0, &own_of(&all), false)); k.part(sl); }

@@ -116,7 +116,7 @@
    ctrl+e       this task's settings: see and change each one
                 your own settings: what every task starts from
    ctrl+z       undo
- ↓ 37 more
+ ↓ 36 more
 
 ────────────────────────────────────────────────────────────────────────────────────────────────────
 ❯ Add a task

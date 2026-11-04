@@ -258,10 +258,6 @@ fn a_task_that_waits_for_disk_space_says_so_everywhere_and_one_that_waits_for_a_
     assert!(!lines.iter().any(|l| l.contains("Waits for disk") && l.contains("free slot")), "{}", lines.join("\n"));
     let panel = sw::board::view::panel::panel(&mut bd.s, &bd.theme, &r, 100, false, 0).iter().map(|l| l.text()).collect::<Vec<_>>().join("\n");
     assert!(panel.contains("◷ waiting for disk space, Q#1"), "{panel}");
-    // The web board's row: the same line, and its place.
-    let rows: Vec<Value> = common::board::web(&w, "board", json!({})).at("list").arr("groups").iter().flat_map(|g| g.arr("rows").iter().cloned()).collect();
-    let wd = rows.iter().find(|x| x.s("id") == d).unwrap();
-    assert!(wd.at("says").to_string().contains("Disk nearly full on") && wd.s("percent") == "Q#1", "{wd}");
     // `list` and `details`.
     let (_, said) = sw::cli::tasks::command("list", &sw::cli::flags::parse(&["list".to_string()])).unwrap();
     assert!(said.lines().any(|l| l.contains("Waits for disk") && l.contains("· waiting for disk space, Q#1")), "{said}");

@@ -177,7 +177,6 @@
    ctrl+z       undo
    ctrl+f       find: show only the tasks that match
    ctrl+c       twice: close the board
-   ctrl+t       a voice call with whoever the chat talks to
 
  alt: only shows or hides
    alt+c        hide the chat's latest message
@@ -196,7 +195,8 @@
    ◇            the board's own step (it checks, waits for GitHub, merges)
    ◷            queued: for a free slot (Q#1 next) or after other tasks
    ?            asks you
- ↓ 13 more
+   !            asks for your OK
+ ↓ 12 more
 
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 ❯ Add a task

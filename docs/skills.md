@@ -1,6 +1,6 @@
 # Skills in the chat
 
-**Type `/` in the board's text box to use a skill**, as in the web UI's (Ovis's) chat box. A list over the box shows the
+**Type `/` in the board's text box to use a skill**, as in an agent program's own chat box. A list over the box shows the
 skills and commands of whoever the chat talks to, with what each does. Pick one and send: its program runs it.
 
 ```
@@ -48,7 +48,7 @@ with no Coordinator (your words are added as a task). What you type still goes a
 
 ## What each program offers
 
-The same as the web UI (Ovis) lists, read from the same places:
+The same as those programs list, read from the same places:
 
 | Program | What it lists |
 |---|---|
@@ -65,6 +65,5 @@ The same as the web UI (Ovis) lists, read from the same places:
 - Each shows what it does in its first sentence: the rest of a skill's description says when to use it, which is for the
   agent.
 - A program's own built-in commands (`/model`, `/compact`, …) are not listed. They work when typed.
-- The other programs (Copilot, Cursor, Droid, Kilo, Kimi, Letta, Mastra Code, Qoder, Qwen) list nothing, as in the web
-  UI. What you type still goes to them as typed.
+- The other programs (Copilot, Cursor, Droid, Kilo, Kimi, Letta, Mastra Code, Qoder, Qwen) list nothing. What you type still goes to them as typed.
 - A skill added or changed shows within a few seconds.

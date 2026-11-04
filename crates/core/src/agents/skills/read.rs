@@ -1,6 +1,6 @@
 //! Reading a program's skills and commands off the disk: a skill is a folder holding a `SKILL.md` (some programs also
 //! take a loose `.md`), a command a `.md` file; what each says of itself is in its header (`name:`, `description:`),
-//! else its first line. Read as the herdr web UI's chat box reads them (its server/skills/walk.ts): only a file's first
+//! else its first line. Read as a chat box reads them: only a file's first
 //! 64 KB, the header as YAML (line by line where it is not strict YAML), a link that leads nowhere skipped. And the
 //! programs' own settings files (JSON with comments, TOML, YAML), read as plain data.
 use serde_json::{Map, Value};

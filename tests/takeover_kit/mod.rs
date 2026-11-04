@@ -113,7 +113,7 @@ impl Machine {
         put(&s.join("data/tasks/herdr-superwork/7/hook-agent.json"), &format!(r#"{{"hooks":{{"Stop":[{{"hooks":[{{"type":"command","command":"'{launcher}' turn-ended --id herdr-superwork/7"}}]}}]}}}}"#));
         put(&s.join("data/tasks/herdr-superwork/7/artifacts/check.txt"), &format!("ran {launcher}\n"));
         put(&s.join("data/bin/herdr-superwork"), &format!("#!/bin/sh\nexport HERDR_SUPERWORK_DATA_DIR='{old}/data'\nexec '/old/herdr-superwork' \"$@\"\n"));
-        put(&s.join("data/extras.json"), &format!(r#"{{"skillPaths":["{h}/.claude/skills/herdr-superwork","{h}/elsewhere/mine"],"sidebar":true,"asked":true,"webUi":"yes","webUiLinks":[{{"https":8751,"now":"http://127.0.0.1:7327"}}]}}"#, h = self.home.display()));
+        put(&s.join("data/extras.json"), &format!(r#"{{"skillPaths":["{h}/.claude/skills/herdr-superwork","{h}/elsewhere/mine"],"sidebar":true,"asked":true}}"#, h = self.home.display()));
         put(&s.join("data/keeper.json"), r#"{"pid":1,"version":"0.3.0"}"#);
         put(&s.join("data/coordinator/default/chat/notes.md"), &format!("saved in {old}/data/coordinator/default/chat\n"));
         put(&s.join("data-0.2.0/keeper.json"), &format!(r#"{{"was":"{old}"}}"#));

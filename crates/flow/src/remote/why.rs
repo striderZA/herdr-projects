@@ -1,5 +1,5 @@
 //! Why another machine's tasks could not be read, and what to do about it. One reading of how the SSH call ended (its
-//! exit code, what it wrote to stderr and stdout, whether the board gave up waiting) for the board, the web board and
+//! exit code, what it wrote to stderr and stdout, whether the board gave up waiting) for the board and
 //! `herdr-projects machines`. Five kinds: `connect` (the machine cannot be reached), `login` (it does not let the
 //! board in), `path` (a login shell there does not find `herdr-projects`, or an older one's `node`), `answer` (it said
 //! something that is not the board's answer) and `slow` (it took too long).

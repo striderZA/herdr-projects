@@ -5,7 +5,7 @@ use crate::board::state::{Ask, State, Valid};
 use crate::json::*;
 
 /// Ask. `keys`: the answers' words (yes first); `detail`: what the question is about, shown quietly under it;
-/// `danger`: a yes cannot be undone, so on the web board neither answer is the filled button.
+/// `danger`: a yes cannot be undone.
 pub fn confirm(s: &mut State, q: String, yes: Job, valid: Valid, keys: Vec<(&'static str, String)>, detail: String, danger: bool) {
     s.ask = Some(Ask { q, yes, no: None, valid, keys: if keys.is_empty() { vec![("sayYes", "yes".into()), ("sayNo", "no".into())] } else { keys }, detail, danger, nudge: false });
 }

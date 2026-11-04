@@ -63,7 +63,6 @@ pub fn moved_values(o: &Obj, builtin: &[(&str, String)]) -> Obj {
         put("board.machines", json!(v), &mut out);
     }
     if has(o.at("theme")) { put("board.theme", o.at("theme").clone(), &mut out); }
-    if has(o.at("webUi")) { put("board.webUi", json!(if off(o.at("webUi")) { "none" } else { "auto" }), &mut out); }
     out
 }
 fn nested(flat: &Obj) -> Obj {

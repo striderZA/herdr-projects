@@ -34,6 +34,17 @@ pub(crate) fn clean(s: &str, extra: &str) -> String { s.chars().filter(|c| c.is_
 
 /// The board's name for a machine herdr names `raw`: no user, no domain, nothing but letters, digits, `_.-`.
 pub fn short_label(raw: &str) -> String { raw.rsplit('@').next().unwrap_or("").split('.').next().unwrap_or("").chars().map(|c| if c.is_ascii_alphanumeric() || "_.-".contains(c) { c } else { '-' }).collect() }
+/// An SSH address as its parts: `user@host`, `host`, or herdr's `ssh://user@host:port`. An SSH alias is a host.
+pub fn address(target: &str, port: u16) -> (String, String, u16) {
+    if let Some(c) = crate::re!(r"^ssh://(?:([^@/]+)@)?(\[[^\]]+\]|[^:/]+)(?::(\d+))?$").captures(target) {
+        let p = c.get(3).and_then(|x| x.as_str().parse().ok()).filter(|p| *p > 0).unwrap_or(port);
+        return (c.get(1).map(|x| x.as_str().to_string()).unwrap_or_default(), c[2].to_lowercase(), p);
+    }
+    match crate::re!(r"^(?:([^@]+)@)?(.+)$").captures(target) {
+        Some(c) => (c.get(1).map(|x| x.as_str().to_string()).unwrap_or_default(), c[2].to_lowercase(), port),
+        None => (String::new(), String::new(), port),
+    }
+}
 pub fn machines() -> Vec<Machine> {
     let want = setting("board.machines", None).as_str().unwrap_or("auto").to_string();
     let user = std::env::var("USER").unwrap_or_default();
@@ -41,7 +52,7 @@ pub fn machines() -> Vec<Machine> {
     if want != "auto" {
         return want.split(|c: char| c.is_whitespace() || c == ',').filter(|x| !x.is_empty()).map(|x| Machine { id: String::new(), target: if x.contains('@') { x.into() } else { format!("{user}@{x}") }, label: x.rsplit('@').next().unwrap_or(x).split('.').next().unwrap_or(x).into(), session: String::new() }).collect();
     }
-    // `id`: herdr's own id for the saved machine (the web UI names its PCs by it: webui/pcs.rs).
+    // `id`: herdr's own id for the saved machine.
     crate::herdr::Herdr::new(None).machines().into_iter().filter(|m| m.is_object() && m.at("enabled") != &json!(false)).map(|m| {
         let pick = |ks: &[&str]| ks.iter().map(|k| m.t(k)).find(|s| !s.is_empty()).unwrap_or_default();
         let label = short_label(&pick(&["label", "name", "ssh_target", "target"]));

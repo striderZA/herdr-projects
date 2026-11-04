@@ -1,6 +1,6 @@
-//! Hermes' skills, as `/name` in its own spelling (lower case, `-` for spaces and `_`), (the web UI's
-//! server/skills/hermes.ts): the project's `.hermes/skills` and `.agents/skills` where its config.yaml trusts the
-//! project, then `~/.hermes/skills`, its `create_dir` and `external_dirs`, any depth; its skill bundles; and its
+//! Hermes' skills, as `/name` in its own spelling (lower case, `-` for spaces and `_`): the project's `.hermes/skills`
+//! and `.agents/skills` where its config.yaml trusts the project, then `~/.hermes/skills`, its `create_dir` and
+//! `external_dirs`, any depth; its skill bundles; and its
 //! `quick_commands`. A skill turned off (`disabled`), one for another system (`platforms`), one named like one of its
 //! own commands, and a name two folders of one rank both have, are left out.
 use super::read::{entries, header, text_of, texts, yaml_file, Fields};

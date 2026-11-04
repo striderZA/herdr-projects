@@ -51,13 +51,6 @@ pub enum Job {
     FreeSize { pids: Vec<i64> },
     /// The first run's answers: which blocks to add to herdr's config.
     Setup { key: Option<String>, sidebar: Option<bool>, file: String },
-    /// The web board's "Open agent": the task's space reopened (on its machine: the machine, its label, the web UI's
-    /// PC for it and the pane it last named), and the web UI's link to its pane.
-    WebOpen { id: String, far: Option<(crate::remote::Machine, String, String, String)> },
-    /// The herdr web UI's link through the board's front door, or left alone for good.
-    WebUiLink, WebUiDecline,
-    /// A voice call for whoever the chat talks to (calls/ring.rs), hanging it up, and who it talks to now.
-    CallRing { owner: String, target: crate::voice::call::Target, session: String }, CallEnd, CallTarget { target: crate::voice::call::Target },
     Nothing,
 }
 impl Job {
@@ -112,8 +105,6 @@ pub enum Then {
     Paste(String),
     /// The first run: which of its two choices are still to be asked (a refused one); both settled: the screen goes.
     SetupLeft { key: bool, sidebar: bool },
-    /// The web page goes to the web UI's view of this pane.
-    Go(Value),
     /// The open automation was removed: nothing of it stays open.
     AutoGone,
     /// A setting typed on the settings page was taken: the box it was typed in is emptied. A refused one stays there
@@ -121,8 +112,6 @@ pub enum Then {
     Saved(String),
     /// Copy this to the clipboard of the terminal the board is in (OSC 52).
     Copy(String),
-    /// A call rang: its id, for the chat to say when no helper took it, or why it ended before it began.
-    CallRang { id: String },
 }
 /// `about`: the row the job acted on (Job::about), `kind` which job it was (Job::kind); `seen`: how many reads of the tasks had started when it ended, so the
 /// board knows which read shows what it did (update/pending.rs).
@@ -230,15 +219,6 @@ fn run_one(job: Job) -> Done {
                 else { Done::say("The remote view could not be ended from here: close it where it runs.", Ink::Yellow) }
             }
             Job::Setup { key, sidebar, file } => super::job_far::setup(key, sidebar, &file),
-            Job::WebOpen { id, far } => super::job_far::web_open(&id, far),
-            Job::WebUiLink => { let r = crate::webui::command::link_now(); Done::say(r.t("msg"), if r.b("ok") { Ink::Green } else { Ink::Red }) }
-            Job::WebUiDecline => { crate::webui::command::decline(); Done::say("Left as it is. `herdr-projects web-ui link` does it later.", Ink::Muted) }
-            Job::CallRing { owner, target, session } => match crate::calls::ring::ring(&owner, &target, &session) {
-                Ok(id) => Done::say(format!("Calling with {}…", target.name), Ink::Muted).and(Then::CallRang { id }),
-                Err(e) => Done::fail(e),
-            },
-            Job::CallEnd => { crate::voice::call::end("hung up on the terminal board"); Done::say("Hung up.", Ink::Muted) }
-            Job::CallTarget { target } => { crate::voice::call::set_target(&target); Done::default() }
             Job::Nothing => Done::default(),
         })
     })();
