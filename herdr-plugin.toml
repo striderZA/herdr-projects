@@ -8,8 +8,8 @@ platforms = ["linux", "macos"]
 
 # Commands go through bin/run.sh: herdr starts them with its server's environment, which may lack the user's PATH. It
 # runs the program built here, or the one downloaded for this platform from this version's GitHub release. The Windows
-# entries (platforms = ["windows"]) run bin/run.ps1 instead, the same steps (see there). Each action id is distinct:
-# herdr rejects a duplicate action id whatever its platforms.
+# entries (platforms = ["windows"]) run bin/run.ps1 instead, the same steps (see there). Each action and pane id is
+# distinct: herdr rejects a duplicate action id whatever its platforms.
 
 # Gets the program when the plugin is installed: downloads it, or builds it from source when it cannot.
 [[build]]
@@ -105,3 +105,10 @@ title = "Work board"
 # instead, a window over everything (src/board/run/place.rs).
 placement = "tab"
 command = ["sh", "bin/run.sh", "board"]
+
+[[panes]]
+id = "board-windows"
+title = "Work board"
+platforms = ["windows"]
+placement = "tab"
+command = ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "bin/run.ps1", "board"]
