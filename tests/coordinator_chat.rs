@@ -29,7 +29,6 @@ fn one_chat_for_everyone_space_on_a_task_talks_to_its_agent_otherwise_to_the_coo
     unsafe { std::env::set_var("HERDR_ENV", "1") };
     let so = w.socket.clone();
     let chat_key = regex::escape(&key_name("chatMessage"));
-    let top = regex::escape(&crate::board_chat::top_name());
     let mut s = open(&w.root, 34);
     assert!(s.s.chat_open);
     assert!(has(&s.text(), &format!(r"\n╭─ [^\n]*╮\n(?:│ +│\n)?│ +❯ Ask it something, e\.g\. ")) && !s.text().contains(&format!("{} Not started", crate::board_chat::top_name())), "{}", s.text());
@@ -58,7 +57,7 @@ fn one_chat_for_everyone_space_on_a_task_talks_to_its_agent_otherwise_to_the_coo
     // panel no longer repeats.
     let t = w.add(TITLE); delegate(&t); settle(&t);
     e.s.all_done = true; e.load(); e.s.sel = t.clone(); e.load(); // all done: a done task has no row else
-    assert!(has(&wide(&mut e, 160), r"The agent said ─+ *\n[^\n]*Done\."), "{}", wide(&mut e, 160)); assert!(has(&wide(&mut e, 160), r"\n╭─  [^›\n]+  · Machine coordinator ─*╮\n(?:│ +│\n)?"));
+    assert!(has(&wide(&mut e, 160), r"The agent said ─+ *\n[^\n]*Done\."), "{}", wide(&mut e, 160)); assert!(has(&wide(&mut e, 160), r"\n╭─  [^›\n]+  · Coordinator ─*╮\n(?:│ +│\n)?"));
     e.press(&["space"]); assert!(e.s.reply);
     let text = wide(&mut e, 160);
     // the box names it: the ladder down to its tag; inside, what it said, under no label
@@ -104,7 +103,7 @@ fn one_chat_for_everyone_space_on_a_task_talks_to_its_agent_otherwise_to_the_coo
     e.press(&["alt+c"]); assert!(e.s.chat_open); assert!(has(&wide(&mut e, 160), r"\n│ +Done\. +│\n│ +│\n│ +❯ Send message to the agent"));
     // space goes back to the top row's coordinator with its message up, and its reply is there.
     e.press(&["space"]); assert!(e.s.chat_open && !e.s.reply); e.load();
-    assert!(has(&e.text(), &format!(r"╭─[^\n]*╮\n(?:│ +│\n)?│ +All done\. +│\n│ +│\n│ +❯ Send message to the machine coordinator")), "{}", e.text()); assert_eq!(look(&so).unseen, "");
+    assert!(has(&e.text(), &format!(r"╭─[^\n]*╮\n(?:│ +│\n)?│ +All done\. +│\n│ +│\n│ +❯ Send message to the coordinator")), "{}", e.text()); assert_eq!(look(&so).unseen, "");
     // Nothing changes who the chat names while you type.
     e.typed("half typed");
     w.script(json!({ "coordinator": [{ "said": "Again." }] }));

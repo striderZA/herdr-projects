@@ -5,7 +5,6 @@
 use super::actions as act;
 use super::list::relist;
 use super::Effect;
-use crate::board::job::Job;
 use crate::board::keys::{entry, is, key_name, typed, Press, K};
 use crate::board::state::{Away, Mode, State};
 use crate::json::*;
@@ -77,12 +76,6 @@ fn press(s: &mut State, p: &Press, fx: &mut Vec<Effect>) {
     }
     if close { s.closing = Some((s.now + CLOSE_WAIT, false)); return; }
     if s.mode == Mode::Find { if !start { s.input.handle(p); relist(s); } return; }
-    if let Some(j) = s.job().cloned() { if text.is_empty() {
-        // Words on their way to another machine: stop them, or take them back to change and send again.
-        if is(p, K::Stop) { fx.push(Effect::Run(Job::StopDispatch { id: j.t("id") })); return; }
-        if enter { fx.push(Effect::Run(Job::StopDispatch { id: j.t("id") })); s.input.set_text(j.s("text")); return; }
-        if start { return; }
-    } }
     // On a heading, with nothing typed: fold it, or unfold it ({open} goes into its coordinator).
     if enter && text.is_empty() && super::heads::selected(s).is_some() { let id = s.sel.clone(); return super::heads::toggle(s, &id, fx); }
     if enter { return act::enter(s, &text, r.as_ref(), fx); }
@@ -135,7 +128,7 @@ pub fn run_as(s: &mut State, k: K, p: &Press, r: Option<&Obj>, fx: &mut Vec<Effe
         K::SendBack => if let Some(r) = r { act::send_back(s, r, fx) },
         K::NextAttempt => if let Some(r) = r { act::next_attempt(s, r) },
         K::Stop => match r { Some(r) => act::stop(s, r, fx), None => if let Some(t) = super::pilot::keyed(s) { super::pilot::run(s, &t, false, fx) } },
-        K::Pilot => match super::pilot::keyed(s).filter(|_| r.is_none()) { Some(t) => super::pilot::toggle(s, &t, fx), None => s.flash(format!("{} turns a coordinator's autopilot on and off: select a machine's or a project's row.", key_name("autopilot")), Ink::Muted) },
+        K::Pilot => match super::pilot::keyed(s).filter(|_| r.is_none()) { Some(t) => super::pilot::toggle(s, &t, fx), None => s.flash(format!("{} turns a coordinator's autopilot on and off: select the top row or a project's row.", key_name("autopilot")), Ink::Muted) },
         K::Archive => match r { Some(r) => act::archive_selected(s, r, fx), None if super::heads::selected(s).is_some() => super::archive_project::key(s, fx), None => s.flash("Select a task to archive or restore.", Ink::Muted) },
         K::Pin => super::pinned::key(s, r, fx),
         K::OpenLink => if let Some(r) = r { super::link::open(s, r, fx) },
@@ -150,10 +143,9 @@ pub fn run_as(s: &mut State, k: K, p: &Press, r: Option<&Obj>, fx: &mut Vec<Effe
         K::Side => if !s.full { act::toggle_side(s, fx) },
         K::Panel => if s.full { act::fold_panel(s) } else { act::open_panel(s) },
         K::ArchiveView => act::toggle_archive(s),
-        // By status, by repo, by machine, and round again.
-        K::ByRepo => { (s.by_repo, s.by_machine) = (!s.by_repo && !s.by_machine, s.by_repo); fx.push(Effect::Save); relist(s); }
+        // By status, by repo, and round again.
+        K::ByRepo => { s.by_repo = !s.by_repo; fx.push(Effect::Save); relist(s); }
         K::AllDone => { s.all_done = !s.all_done; relist(s); }
-        K::Scope => super::remotes::next_scope(s, fx),
         // Decided by the state, above: nothing of their own here.
         // Its line in the ? menu: as the key itself does with nothing typed (the key goes through the state, above).
         K::Delegate => match r { Some(r) => act::tab(s, "", Some(r), fx), None => if let Some(t) = super::pilot::keyed(s) { super::pilot::run(s, &t, true, fx) } },

@@ -8,7 +8,7 @@ use crate::store::settings_list::SETTINGS;
 
 /// Positional arguments, flags (`--flag value`, `--flag` true, `--no-flag` false), and each flag as it was typed.
 pub struct Args { pub pos: Vec<String>, pub flags: Obj, pub typed: Obj }
-const BOOL: [&str; 18] = ["json", "archived", "all", "done", "delegate", "force", "help", "skill", "research", "chat", "every-repo", "anyway", "now", "clear", "machine", "main-coordinator", "machine-coordinator", "pinned"];
+const BOOL: [&str; 16] = ["json", "archived", "all", "done", "delegate", "force", "help", "skill", "research", "chat", "every-repo", "anyway", "now", "clear", "main-coordinator", "pinned"];
 pub fn parse(argv: &[String]) -> Args {
     let (mut pos, mut flags, mut typed) = (vec![], Obj::new(), Obj::new());
     let mut i = 0;
@@ -36,9 +36,9 @@ const SETTING: &str = "any work setting by its name (--review.when never)";
 pub struct Takes { pub flags: &'static [&'static str], pub settings: bool }
 const fn f(flags: &'static [&'static str]) -> Takes { Takes { flags, settings: false } }
 const fn s(flags: &'static [&'static str]) -> Takes { Takes { flags, settings: true } }
-const ADD: &[&str] = &["desc", "description", "repo", "delegate", "research", "chat", "after", "on"];
+const ADD: &[&str] = &["desc", "description", "repo", "delegate", "research", "chat", "after"];
 const LIST: &[&str] = &["archived", "all", "query", "pinned"];
-const WHERE: &[&str] = &["repo", "task", "automation", "main-coordinator", "machine-coordinator", "project-coordinator"];
+const WHERE: &[&str] = &["repo", "task", "automation", "main-coordinator", "project-coordinator"];
 const AUTO_ADD: &[&str] = &["prompt", "desc", "schedule", "when", "every-repo", "if", "repo", "research", "chat"];
 const AUTO_CHANGE: &[&str] = &["name", "prompt", "schedule", "when", "every-repo", "if", "research", "chat"];
 /// One command per line, beside the commands it belongs with, never at the end. A command with subcommands names
@@ -47,7 +47,7 @@ const AUTO_CHANGE: &[&str] = &["name", "prompt", "schedule", "when", "every-repo
 fn takes(cmd: &str, sub: &str) -> Option<Takes> {
     Some(match cmd {
         "board" | "--skill" | "skill" => f(&["skill"]),
-        "help" | "hook" | "keeper" | "keeper-work" | "open" | "open-coordinator" | "approve-current" | "remote" => f(&[]),
+        "help" | "hook" | "keeper" | "keeper-work" | "open" | "open-coordinator" | "approve-current" => f(&[]),
         "docs" => f(&["check", "where", "guard"]),
         "turn-ended" => f(&["id", "role", "token", "round"]),
         "plan-written" => f(&["id", "token"]),
@@ -56,19 +56,19 @@ fn takes(cmd: &str, sub: &str) -> Option<Takes> {
         "list" | "ls" => f(LIST),
         "report" => f(&["state", "kind", "msg", "title", "progress", "eta", "desc", "repo"]),
         "describe" | "rename" | "tell" | "stop" | "start" | "pick" | "review" | "retry" | "fix" | "finish" | "details" | "clear" => f(&[]),
-        "pin" | "unpin" => f(&["on"]),
-        "restore" | "unarchive" => f(&["repo", "on"]),
-        "archive" => f(&["done", "repo", "on"]),
+        "pin" | "unpin" => f(&[]),
+        "restore" | "unarchive" => f(&["repo"]),
+        "archive" => f(&["done", "repo"]),
         "delegate" => s(&["research", "chat", "after", "now"]),
         "after" => f(&["clear"]),
         "approve" => f(&["anyway"]),
         "set" | "unset" | "show" => f(WHERE),
         "models" => f(&[]),
         "automations" | "automation" => match sub { "add" | "new" => s(AUTO_ADD), "change" | "edit" => f(AUTO_CHANGE), _ => f(&[]) },
-        "autopilot" => match sub { "on" => s(&["machine", "project", "goal"]), "off" => f(&["machine", "project", "all"]), "show" => f(&["machine", "project"]), _ => f(&[]) },
-        "coordinator" => match sub { "tell" => f(&["delegate", "machine", "project"]), "new" | "fresh" => f(&["agent", "effort", "machine", "project"]), _ => f(&["machine", "project"]) },
+        "autopilot" => match sub { "on" => s(&["project", "goal"]), "off" => f(&["project", "all"]), "show" => f(&["project"]), _ => f(&[]) },
+        "coordinator" => match sub { "tell" => f(&["delegate", "project"]), "new" | "fresh" => f(&["agent", "effort", "project"]), _ => f(&["project"]) },
         "sweep" => f(&["dry"]),
-        "machines" | "remove-extras" | "reopen" | "version" | "install" | "update" | "doctor" => f(&[]),
+        "remove-extras" | "reopen" | "version" | "install" | "update" | "doctor" => f(&[]),
         "housekeep" => f(&["pr"]),
         "check" => f(&["all", "fresh"]),
         _ => return None,

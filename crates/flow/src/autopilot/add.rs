@@ -20,8 +20,8 @@ use std::path::Path;
 pub const LOCK: &str = "autopilot-adds";
 pub struct Added { pub task: Task, pub start: bool, pub dropped: Vec<String> }
 /// What an autopilot task records: who added it, when, and whether a change to the repo's file waits for you.
-pub fn record_of(co: &Co, machine: &str) -> Value {
-    json!({ "coordinator": key_of(co), "name": co.name(), "machine": machine, "at": now(), "repoFileWaits": words(co, "autopilot.repoFileWaits") != "no" })
+pub fn record_of(co: &Co) -> Value {
+    json!({ "coordinator": key_of(co), "name": co.name(), "at": now(), "repoFileWaits": words(co, "autopilot.repoFileWaits") != "no" })
 }
 /// Is the repo `name` in this coordinator's area?
 fn in_area(co: &Co, repo: &str) -> bool { co.repo().map(|r| r.eq_ignore_ascii_case(repo)).unwrap_or(true) }
@@ -46,7 +46,7 @@ pub fn add(co: &Co, here: &Path, title: &str, mut o: AddOpts, after: &[String], 
         o.settings = kept;
         o.repo = repo.clone();
         let task = add_task(here, title, o)?;
-        let rec = record_of(co, "");
+        let rec = record_of(co);
         let task = update(task.s("id"), |x| { x.put("autopilot", rec.clone()); x.put("coordinator", key_of(co)); Ok(Change::Write) })?;
         let id = task.t("id");
         change(co, |ap, _| { roll(ap, now()); own_task(ap, &id, "added", now()); let n = ap.i("added") + 1; ap.put("added", n); true })?;
@@ -57,36 +57,4 @@ pub fn add(co: &Co, here: &Path, title: &str, mut o: AddOpts, after: &[String], 
 pub fn dropped_words(d: &[String]) -> String {
     if d.is_empty() { return String::new(); }
     format!(" Not applied (autopilot.mayChange does not allow it): {}.", d.join(", "))
-}
-/// `add --on <machine>` in an autopilot turn: only the main Coordinator's area reaches another machine. Its slot is taken
-/// here first, under the same locks, and given back if that machine refuses or does not answer; the task there carries
-/// this coordinator's autopilot record, with this machine and the `autopilot.repoFileWaits` in force.
-pub fn add_far(co: &Co, label: &str, title: &str, o: AddOpts, delegate: bool) -> Res<(Value, Vec<String>)> {
-    if !co.is_top() { crate::refuse!("Refused in an autopilot wake: add --on {label}. Only the main Coordinator's area reaches other machines."); }
-    let start = words(co, "autopilot.startAtOnce") == "yes" || delegate;
-    let slot = format!("{label}:?{}", crate::util::uuid());
-    let may = words(co, "autopilot.mayChange");
-    let (kept, dropped): (Vec<(String, Value)>, Vec<(String, Value)>) = o.settings.into_iter().partition(|(n, _)| may_change(&may, n));
-    with_lock_wait(LOCK, 10000, || {
-        let board = board_tasks();
-        let ap = super::record::get(co);
-        let t = today(co, &ap, &board, now());
-        if !t.adds_left() { crate::refuse!("Refused in an autopilot wake: add. Today's tasks are used: {} (autopilot.tasksPerDay).", t.say()); }
-        if start && under_way_count(&ap, &board) as i64 >= t.at_once { crate::refuse!("Refused in an autopilot wake: add. Its tasks at once are full: {} (autopilot.tasksAtOnce).", t.say()); }
-        change(co, |ap, _| { roll(ap, now()); own_task(ap, &slot, "added", now()); super::record::with_task(ap, &slot, |r| { r.put("pending", true); r.put("started", start); }); let n = ap.i("added") + 1; ap.put("added", n); true })?;
-        Ok(())
-    })?;
-    let rec = record_of(co, &crate::remote::check::hostname());
-    match crate::remote::add::add_there(label, title, &o.description, &o.repo, &kept, start, rec) {
-        Ok(j) => {
-            let id = format!("{label}:{}", j.s("id"));
-            change(co, |ap, _| { super::record::with_task(ap, &slot, |r| { r.put("id", id.as_str()); r.del("pending"); }); true })?;
-            Ok((j, dropped.into_iter().map(|(n, _)| n).collect()))
-        }
-        Err(e) => {
-            // Given back: the slot and the add of the day.
-            change(co, |ap, _| { let list: Vec<Value> = ap.arr("tasks").iter().filter(|r| r.s("id") != slot).cloned().collect(); ap.put("tasks", list); let n = (ap.i("added") - 1).max(0); ap.put("added", n); true })?;
-            Err(e)
-        }
-    }
 }

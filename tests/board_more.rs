@@ -32,7 +32,7 @@ fn a_long_message_wraps_inside_the_box_and_takes_the_rows_it_needs_never_the_tex
     let mut s = open(&w.root, 30); s.s.side = false;
     let said: Vec<String> = (1..=20).map(|i| format!("Line {i} of **what** it said, long enough to wrap in a narrow window.")).collect();
     coordinator_says(&mut s, &said.join("\n"));
-    let me = sw::board::update::heads::label(&s.s, "");
+    let me = sw::board::update::heads::label(&s.s);
     for width in [44, 80, 200] {
         let c = crate::board_chat::chat(&mut s, width);
         let body = &c.boxed[..c.boxed.len() - 2];
@@ -51,8 +51,8 @@ fn a_long_message_wraps_inside_the_box_and_takes_the_rows_it_needs_never_the_tex
     s.rows = 10;
     let c = crate::board_chat::chat(&mut s, 80);
     // folded: the box's edge names who (its ladder), and the line you type on stays
-    assert_eq!(c.lines.len(), 10); assert_eq!(c.boxed, vec!["❯ Send message to the machine coordinator".to_string()], "{:?}", c.lines);
-    assert!(c.lines.iter().any(|l| l.starts_with("╭─") && l.contains(&sw::shown::words::clean(&sw::remote::check::hostname()))), "{:?}", c.lines);
+    assert_eq!(c.lines.len(), 10); assert_eq!(c.boxed, vec!["❯ Send message to the coordinator".to_string()], "{:?}", c.lines);
+    assert!(c.lines.iter().any(|l| l.starts_with("╭─") && l.contains(&sw::shown::words::clean(&sw::util::hostname()))), "{:?}", c.lines);
     // The colours: an agent's message is in the brighter of the two greys (it has to be read), your own in the text colour.
     use sw::board::view::chat::{chat_message, Who};
     use sw::board::view::talk::Part;
@@ -71,7 +71,7 @@ fn a_very_narrow_window_keeps_the_box_whole_with_the_message_in_it() {
     let mut s = open(&w.root, 34);
     // Nothing said yet: the box's edge says who it is, and the placeholder is cut with …, inside the box.
     for width in [27, 24, 16] { let c = crate::board_chat::chat(&mut s, width); assert!(c.framed, "at {width}"); assert_eq!(c.boxed.len(), 1); assert!(has(&c.boxed[0], "^❯ A.*…$"), "at {width}: {:?}", c.boxed); }
-    let me = sw::board::update::heads::label(&s.s, "");
+    let me = sw::board::update::heads::label(&s.s);
     assert!(crate::board_chat::chat(&mut s, 80).boxed[0] == "❯ Ask it something, e.g. \"what's left to do here?\"" && crate::board_chat::chat(&mut s, 80).lines.iter().any(|l| l.starts_with("╭─") && l.contains(&format!(" {me} "))), "never ran: {:?}", crate::board_chat::chat(&mut s, 80).lines);
     s.typed("hi"); s.press(&["enter"]); drain(); s.load();
     for width in [60, 24, 23, 20, 19, 12, 8] {
@@ -91,7 +91,7 @@ fn a_very_narrow_window_keeps_the_box_whole_with_the_message_in_it() {
 /// A key as crossterm reads what a terminal sends (esc and a letter, or the kitty protocol's CSI u: the same event).
 fn key(b: &mut Board, code: KeyCode, mods: KeyModifiers) { let p = sw::board::run::input::press_of(&KeyEvent::new(code, mods)).unwrap(); b.press(&[&p.chord]); }
 fn tasks() -> String { json!(sw::store::tasks::list(sw::store::tasks::ListOpts { include_archived: true, ..Default::default() }).iter().map(|t| json!([t.s("id"), t.s("stage"), t.b("pinned"), t.b("archivedAt")])).collect::<Vec<_>>()).to_string() }
-fn shown(b: &Board) -> String { json!([b.s.chat_open, b.s.side, b.s.full, b.s.archive_view, b.s.by_repo, b.s.all_done, b.s.scope]).to_string() }
+fn shown(b: &Board) -> String { json!([b.s.chat_open, b.s.side, b.s.full, b.s.archive_view, b.s.by_repo, b.s.all_done]).to_string() }
 
 #[test]
 fn ctrl_does_something_alt_only_shows_or_hides_and_no_old_key_is_left() {
@@ -110,7 +110,6 @@ fn ctrl_does_something_alt_only_shows_or_hides_and_no_old_key_is_left() {
     // alt+m goes round whose board you see; with no other machine there is nothing to show, and it says so.
     // (The terminal board asks herdr for its machines on a thread of its own and hands the answer in as an event: here
     // the test hands it in.)
-    s.press(&["alt+m"]); let _ = sw::board::update::update(&mut s.s, sw::board::update::Event::Machines(sw::remote::machines())); assert_eq!(s.s.scope, ""); assert!(s.text().contains("No other machines."), "{}", s.text()); assert_eq!(tasks(), first);
     assert_eq!(shown(&s), start);
     // The keys that are gone do nothing at all: not their old action, not a new one, and nothing is typed.
     use KeyCode::*;

@@ -106,8 +106,8 @@ fn on_the_board_a_keyed_repos_rows_read_hsw_134_the_panel_the_chat_and_the_messa
     // No line says it was archived; the board's words that name it say the short name (the key again while it is under way).
     s.s.sel = big.clone(); s.load(); s.hold("ctrl+a"); assert!(!s.s.msg.contains("Archived"), "{}", s.s.msg);
     s.hold("ctrl+a"); assert!(s.s.msg.contains("Still archiving HSW-134"), "{}", s.s.msg); s.s.pending.clear();
-    // What another machine is sent: each task with its repo's key, so its rows there read the same.
-    let sent = |id: &str| sw::remote::remote_list().arr("tasks").iter().find(|t| t.s("id") == id).map(|t| t.at("key").clone()).unwrap_or_default();
+    // Each task is kept with its repo's key, so the commands and the board read it the same.
+    let sent = |id: &str| sw::store::keys::repo_keys().get(id.split('/').next().unwrap_or("")).cloned().map(|k| json!(k)).unwrap_or_default();
     assert_eq!(sent(&big), json!("HSW"));
     // Taken away: the key made from the repo's name again, never a bare number.
     unset_value("repo.key", &Scope::repo("proj")).unwrap(); s.s.sel = big.clone(); s.load();

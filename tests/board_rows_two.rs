@@ -40,10 +40,10 @@ fn live() -> Vec<Rec> {
 }
 fn quiet() -> Vec<Rec> { vec![done(json!({ "id": "p/8", "title": "Finished", "pr": 3 })), todo(json!({ "id": "p/9", "title": "Not begun" })), work(json!({ "id": "p/10", "title": "Put away", "msg": "Was busy.", "archivedAt": AT }))] }
 /// A board with these tasks under their headings, as a load leaves it.
-fn board(list: &[Rec], sel: &str, scope: &str) -> State {
+fn board(list: &[Rec], sel: &str) -> State {
     sw::clock::set(Some(NOW));
     let mut s = State::new(Default::default(), Default::default());
-    s.sel = sel.into(); s.scope = scope.into();
+    s.sel = sel.into();
     s.grouped = GROUPS.iter().map(|g| (g.to_string(), list.iter().filter(|r| group_of(r) == *g).cloned().collect())).collect();
     s.rows = fold_rows(&mut s);
     s
@@ -59,7 +59,7 @@ fn len(l: &str) -> usize { l.chars().count() }
 
 #[test]
 fn a_live_tasks_row_is_two_lines_the_second_what_it_says_under_its_name_a_done_to_do_or_archived_one_stays_one_line() {
-    let mut s = board(&[], "", "");
+    let mut s = board(&[], "");
     for r in live() { assert!(is_live(&r), "{}", r.s("title")); }
     for r in quiet() { assert!(!is_live(&r), "{}", r.s("title")); assert_eq!(lines(&mut s, &r, 100).len(), 1, "{}", r.s("title")); }
     let under = |s: &mut State, r: &Rec, width: usize| { let l = lines_in(s, r, std::slice::from_ref(r), width, SCREEN); assert_eq!(l.len(), 2, "{}", r.s("title")); assert!(!has(&l[0], "Reading|Running|Pass|Fail|Sand|check failed"), "{l:?}"); assert!(l.iter().all(|x| len(x) <= width)); l[1].clone() };
@@ -83,7 +83,7 @@ fn a_live_tasks_row_is_two_lines_the_second_what_it_says_under_its_name_a_done_t
 
 #[test]
 fn all_machines_a_remote_tasks_second_line_starts_under_its_tasks_name_at_every_width() {
-    let mut s = board(&[], "", "*");
+    let mut s = board(&[], "");
     let far = work(json!({ "id": "p/1", "progress": 40, "eta": 12, "host": "other-machine", "title": "Remote task", "msg": "Checking the implementation" }));
     let near = rec(Value::Object((*far).clone()), json!({ "host": "" }));
     let longer = rec(Value::Object((*far).clone()), json!({ "host": "a-much-longer-machine-name-on-the-tailnet" }));
@@ -97,11 +97,7 @@ fn all_machines_a_remote_tasks_second_line_starts_under_its_tasks_name_at_every_
             }
         }
     }
-    let head: Vec<String> = lines(&mut s, &far, 100).iter().map(|l| l.chars().take(47).collect::<String>().trim_end().to_string()).collect();
-    // The machine is its heading's, never the row's: the row is as on one machine's board.
-    assert_eq!(head, [" ◐ #1 Remote task".to_string(), format!("{}Checking the implementation", " ".repeat(6))]);
-    s.scope = String::new(); // one machine's board: the same, under the name, right of the mark
-    assert_eq!(lines(&mut s, &far, 100)[1], "      Checking the implementation");
+
 }
 
 #[test]
@@ -109,7 +105,7 @@ fn a_row_with_nothing_to_say_yet_keeps_its_second_line_which_says_something_true
     let silent = work(json!({ "id": "p/1", "title": "New one", "msg": "Just started" }));
     let waits = ready(json!({ "id": "p/2", "title": "Never reviewed" }));
     let finished = done(json!({ "id": "p/3", "title": "Finished" }));
-    let mut s = board(&[silent.clone(), waits.clone(), finished.clone()], "", "");
+    let mut s = board(&[silent.clone(), waits.clone(), finished.clone()], "");
     let one = std::slice::from_ref(&silent);
     assert_eq!(lines_in(&mut s, &silent, one, 60, SCREEN), [format!(" ◐ #1 New one{}2h", " ".repeat(45)), "      Just started".to_string()]);
     let bare = work(json!({ "id": "p/1", "title": "New one", "msg": "" }));
@@ -121,7 +117,7 @@ fn a_row_with_nothing_to_say_yet_keeps_its_second_line_which_says_something_true
     let before = list(&mut s, 60, 20, SCREEN);
     let talks = work(json!({ "id": "p/1", "title": "New one", "msg": "Reading the code." }));
     let passed = ready(json!({ "id": "p/2", "title": "Never reviewed", "review": pass() }));
-    let mut s = board(&[talks, passed, finished], "", "");
+    let mut s = board(&[talks, passed, finished], "");
     let after = list(&mut s, 60, 20, SCREEN);
     assert_eq!(before.iter().position(|l| l.contains("Finished")), after.iter().position(|l| l.contains("Finished")), "nothing below moved");
     let under: Vec<String> = after.iter().filter(|l| l.starts_with("        ")).map(|l| l.trim_end().to_string()).collect();
@@ -130,7 +126,7 @@ fn a_row_with_nothing_to_say_yet_keeps_its_second_line_which_says_something_true
 
 #[test]
 fn the_highlight_covers_both_lines_of_the_selected_row_and_the_arrow_keys_go_task_by_task() {
-    let mut s = board(&[live()[0].clone(), live()[1].clone(), quiet()[0].clone()], "p/1", "");
+    let mut s = board(&[live()[0].clone(), live()[1].clone(), quiet()[0].clone()], "p/1");
     let l = lit(&mut s, 80);
     assert_eq!(l.len(), 2, "{l:?}");
     assert!(has(&l[0], r"^[ ▌]  ◐ #\d+ Agent at work +█+░+ +40% 12m left +2h *$"), "{l:?}");
@@ -151,7 +147,7 @@ fn the_list_scrolls_by_whole_rows_no_row_is_ever_shown_half_and_the_selected_one
     let first = Regex::new(r"^[ ▌]  ◐ #\d+ +Working (\d+) ").unwrap();
     let second = Regex::new(r"^[ ▌] {8}Says (\d+)").unwrap();
     for h in [2, 3, 4, 5, 8] {
-        let mut s = board(&many, "p/1", "");
+        let mut s = board(&many, "p/1");
         let look = |s: &mut State| {
             let lines = list(s, 60, h, SCREEN);
             assert_eq!(lines.len(), h);
@@ -168,7 +164,7 @@ fn the_list_scrolls_by_whole_rows_no_row_is_ever_shown_half_and_the_selected_one
         for _ in 1..many.len() { step(&mut s, -1); look(&mut s); }
     }
     // In a list of one line there is no room for both: the selected row's first line, its name, is what shows.
-    let mut s = board(&many, "p/3", "");
+    let mut s = board(&many, "p/3");
     assert!(has(&list(&mut s, 60, 1, SCREEN)[0], r"^[ ▌]  ◐ #3  Working 3 "));
 }
 
@@ -177,7 +173,7 @@ fn a_list_taller_than_its_room_shows_no_done_row_only_the_line_that_counts_them_
     let all: Vec<Rec> = (1..=3).map(|n| work(json!({ "id": format!("p/{n}"), "title": format!("Working {n}"), "msg": "Busy." })))
         .chain((0..8).map(|n| done(json!({ "id": format!("p/{}", n + 10), "title": format!("Finished {}", n + 1), "at": AT - n * 60000 }))))
         .chain(std::iter::once(todo(json!({ "id": "p/30", "title": "Later" })))).collect();
-    let mut s = board(&all, "p/1", "");
+    let mut s = board(&all, "p/1");
     let look = |s: &mut State, h: usize| { let lines: Vec<String> = list(s, 60, h, SCREEN).iter().map(|l| l.trim_end().to_string()).collect(); let d = lines.iter().filter(|l| l.contains("Finished")).count(); let note = lines.iter().find(|l| l.contains(" done (")).cloned(); (lines, d, note) };
     let note = Some(format!("     ↓ 8 done ({} shows them)", key_name("allDone")));
     let done_rows = |s: &State| s.rows.iter().filter(|r| matches!(r, Row::Rec(o) if o.s("state") == "done")).count();
@@ -186,7 +182,7 @@ fn a_list_taller_than_its_room_shows_no_done_row_only_the_line_that_counts_them_
     look(&mut s, 8); assert_eq!(done_rows(&s), 0);
     // A selected done task folds away too, and the selection goes to its heading; pinned, it is counted with them.
     s.sel = "p/16".into(); s.rows = fold_rows(&mut s); assert!(!look(&mut s, 13).0.iter().any(|l| l.contains("Finished 7")));
-    assert_eq!(s.sel, "head:status\t\tdone");
+    assert_eq!(s.sel, "head:status\tdone");
     // While you talk to its agent it stays, and is not counted. All done, or a search, folds nothing.
     s.sel = "p/16".into(); s.reply = true; s.reply_id = "p/16".into(); s.rows = fold_rows(&mut s);
     assert!(look(&mut s, 30).0.iter().any(|l| l.contains("Finished 7"))); assert_eq!(look(&mut s, 30).2, Some(format!("     ↓ 7 done ({} shows them)", key_name("allDone"))));

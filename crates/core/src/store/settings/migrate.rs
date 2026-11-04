@@ -56,12 +56,6 @@ pub fn moved_values(o: &Obj, builtin: &[(&str, String)]) -> Obj {
     if has(o.at("merge")) { put("merge.method", o.at("merge").clone(), &mut out); }
     if o.contains_key("autoMerge") && !o.at("autoMerge").is_null() { put("merge.by", json!(if on(o.at("autoMerge")) { "itself" } else { "you" }), &mut out); }
     if has(o.at("max")) { put("board.agents", json!(o.f("max") as i64), &mut out); }
-    if has(o.at("machines")) {
-        let names: Vec<String> = text(o.at("machines")).split(|c: char| c.is_whitespace() || c == ',').filter(|x| !x.is_empty()).map(String::from).collect();
-        let v = if names.len() == 1 && off(&json!(names[0])) { "none".to_string() } else {
-            names.iter().map(|n| if has(o.at("remoteUser")) && !n.contains('@') && n != "auto" { format!("{}@{n}", o.t("remoteUser")) } else { n.clone() }).collect::<Vec<_>>().join(", ") };
-        put("board.machines", json!(v), &mut out);
-    }
     if has(o.at("theme")) { put("board.theme", o.at("theme").clone(), &mut out); }
     out
 }

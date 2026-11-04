@@ -26,10 +26,10 @@ fn review() -> Rec { work(json!({ "id": "p/2", "title": "Under review with a nam
 fn waits() -> Rec { ready(json!({ "id": "p/3", "title": "Good work", "review": pass(), "reviewRound": 1, "pr": 18 })) }
 fn fresh() -> Rec { work(json!({ "id": "p/4", "title": "Brand new", "msg": "Just started" })) }
 fn live() -> Vec<Rec> { vec![agent(), review(), waits(), fresh()] }
-fn board(list: &[Rec], sel: &str, scope: &str) -> State {
+fn board(list: &[Rec], sel: &str) -> State {
     sw::clock::set(Some(NOW));
     let mut s = State::new(Default::default(), Default::default());
-    s.sel = sel.into(); s.scope = scope.into();
+    s.sel = sel.into();
     s.whole = true; // every done row shows, as with all done: these tests are about how rows look
     s.grouped = GROUPS.iter().map(|g| (g.to_string(), list.iter().filter(|r| group_of(r) == *g).cloned().collect())).collect();
     s.rows = fold_rows(&mut s);
@@ -46,7 +46,7 @@ fn run_of(l: &str, re: &str) -> usize { Regex::new(re).unwrap().find(l).map(|m| 
 #[test]
 fn narrow_screen_a_live_rows_third_line_has_the_bar_the_percent_the_minutes_left_the_review_tag_the_pull_request_and_the_time() {
     let all = live();
-    let mut s = board(&all, "", "");
+    let mut s = board(&all, "");
     for width in [40, 44, 48, 50, 55, 79] {
         let l = lay(&mut s, &all, width, width);
         let mut rows: Vec<Vec<String>> = all.iter().map(|r| plain(&s, r, width, &l)).collect();
@@ -88,7 +88,7 @@ fn narrow_screen_a_live_rows_third_line_has_the_bar_the_percent_the_minutes_left
 fn the_third_line_is_there_under_80_columns_of_screen_and_gone_from_80_on_for_every_live_row_at_once() {
     let quiet = vec![rec(json!({ "state": "idle", "stage": "todo", "at": AT, "id": "p/8", "title": "Not begun" }), json!({})), rec(json!({ "state": "done", "stage": "done", "at": AT, "id": "p/9", "title": "Finished", "pr": 3, "reviewRound": 1, "review": pass() }), json!({}))];
     let all: Vec<Rec> = live().into_iter().chain(quiet).collect();
-    let mut s = board(&all, "", "");
+    let mut s = board(&all, "");
     assert_eq!(TALL_BELOW, 80);
     let heights = |s: &mut State, width: usize, screen: usize| { let l = lay(s, &all, width, screen); all.iter().map(|r| row_lines(s, &t(), r, width, &l).len()).collect::<Vec<_>>() };
     // (The fourth has only a time for its third line: it goes on the second, and the row is two lines.)
@@ -119,7 +119,7 @@ fn the_third_line_is_there_under_80_columns_of_screen_and_gone_from_80_on_for_ev
 #[test]
 fn in_a_width_too_small_for_all_of_the_third_line_the_time_stays_and_nothing_runs_off_the_edge() {
     let all = live();
-    let mut s = board(&all, "", "");
+    let mut s = board(&all, "");
     for width in [14, 20, 24, 30, 36] {
         let l = lay(&mut s, &all, width, width);
         for r in &all { let lines = plain(&s, r, width, &l); assert!(lines.iter().all(|x| len(x) <= width), "at {width}"); assert!(has(lines.last().unwrap(), r" 2h( ago)?$"), "at {width}: {:?}", lines.last()); }
@@ -134,7 +134,7 @@ fn in_a_width_too_small_for_all_of_the_third_line_the_time_stays_and_nothing_run
 
 #[test]
 fn all_machines_narrow_screen_a_machines_name_however_long_takes_nothing_from_the_third_line() {
-    let mut s = board(&[], "", "*");
+    let mut s = board(&[], "");
     let far = work(json!({ "id": "p/1", "title": "Fix login", "stage": "reviewing", "msg": "Running the tests", "progress": 50, "eta": 12, "reviewRound": 12, "pr": 123, "host": "very-long-machine-name-on-the-tailnet" }));
     let near = rec(Value::Object((*far).clone()), json!({ "id": "p/2", "host": "" }));
     let short = rec(Value::Object((*far).clone()), json!({ "id": "p/3", "host": "box" }));

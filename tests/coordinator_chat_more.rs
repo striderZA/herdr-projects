@@ -34,8 +34,7 @@ fn esc_hides_but_never_shows_the_chat_and_a_task_with_no_agent_is_talked_about_t
     assert!(s.text().contains("Added proj/1."));
     // Hidden: who you talk to (the box's edge), and the line you type on.
     s.press(&["alt+c"]);
-    let top = regex::escape(&crate::board_chat::top_name());
-    assert!(has(&s.text(), &format!(r"\n╭─ [^\n]*╮\n(?:│ +│\n)?│ +❯ Send message to the machine coordinator +│\n(?:│ +│\n)?╰─+╯\n[ ▌] [^\n]*{chat_key} show the latest message · \? all keys *$")), "{}", s.text());
+    assert!(has(&s.text(), &format!(r"\n╭─ [^\n]*╮\n(?:│ +│\n)?│ +❯ Send message to the coordinator +│\n(?:│ +│\n)?╰─+╯\n[ ▌] [^\n]*{chat_key} show the latest message · \? all keys *$")), "{}", s.text());
     // esc never shows the message, and never closes the board: hidden, it stays hidden, and nothing is asked.
     s.press(&["esc"]); assert!(!s.s.chat_open && s.s.ask.is_none() && !s.closed && s.s.closing.is_some());
     assert!(has(&s.text(), &format!(r"\n  {} closes the board · the Coordinator keeps running *$", regex::escape(&key_name("close")))), "{}", s.text()); s.s.closing = None;
@@ -56,7 +55,7 @@ fn esc_hides_but_never_shows_the_chat_and_a_task_with_no_agent_is_talked_about_t
     sw::actions::filing::report(&t, sw::actions::filing::Report { state: "done".into(), ..Default::default() }).unwrap();
     s.s.all_done = true; s.load(); s.s.sel = t.clone(); s.load(); s.press(&["space"]); assert!(s.s.reply); // all done: a done task has no row else
     let txt = s.screen(160).join("\n");
-    assert!(has(&txt, &format!(r"\n╭─ [^\n]*PRJ-\d+  · Agent ─*╮\n(?:│ +│\n)?│ +❯ Send message to the machine coordinator +│")), "{txt}");
+    assert!(has(&txt, &format!(r"\n╭─ [^\n]*PRJ-\d+  · Agent ─*╮\n(?:│ +│\n)?│ +❯ Send message to the coordinator +│")), "{txt}");
     s.typed("make it shorter"); s.press(&["enter"]); drain();
     assert_eq!(prompts_of(&w)[2], "make it shorter");
     assert!(has(&where_text(&w.socket), r#"\n- "make it shorter"[^\n]*Task proj/1 \("Write the docs"\) was open: for this message "it" and "this" mean that task\. It was sent with enter"#), "{}", where_text(&w.socket));
@@ -158,7 +157,7 @@ fn enter_goes_into_a_tasks_agent_the_chats_head_line_at_every_width_and_a_narrow
         n.press(&["alt+c"]); assert!(has(&n.screen(70).join("\n"), r"The agent said ─+ *\n Done\."));
         // esc leaves the whole task and nothing else: the chat stays hidden, and stays the agent's.
         n.press(&["esc"]); assert!(!n.s.full && n.s.reply && !n.s.chat_open);
-        n.press(&["alt+c", "space"]); assert!(!n.s.reply && !n.s.full); assert!(has(&n.screen(70).join("\n"), r"\n╭─  [^›\n]+  · Machine coordinator ─*╮\n(?:│ +│\n)?"), "back to the top row's: {}", n.screen(70).join("\n"));
+        n.press(&["alt+c", "space"]); assert!(!n.s.reply && !n.s.full); assert!(has(&n.screen(70).join("\n"), r"\n╭─  [^›\n]+  · Coordinator ─*╮\n(?:│ +│\n)?"), "back to the top row's: {}", n.screen(70).join("\n"));
         // alt+t alone never changes who gets your words.
         n.press(&["alt+t"]); assert!(n.s.full && !n.s.reply); assert!(has(&n.screen(70).join("\n"), r"\n╭─[^\n]*╮\n(?:│ +│\n)?│ +❯ [^\n]*│"), "{}", n.screen(70).join("\n")); // folded: the edge and the line you type on
         n.typed("for the Coordinator"); n.press(&["enter"]);

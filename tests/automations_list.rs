@@ -43,7 +43,7 @@ fn the_group_has_a_colour_of_its_own_narrow_rows_a_menu_of_its_own_and_stays_wit
     assert_eq!(ink_of(&inked[5], "automations"), Some(Ink::Auto)); assert_eq!(ink_of(&inked[6], "⟳"), Some(Ink::Auto));
     let quiet = |l: &sw::shown::ink::Inked| l.0.iter().find(|p| p.t.contains('⟳')).map(|p| p.quiet).unwrap();
     assert!(!quiet(&inked[6]) && quiet(&inked[8]), "off: the same mark, dimmed");
-    s.press(&["down"]); assert_eq!(s.s.sel, "head:status\t\tautomations", "the group's heading first: it folds as the others do"); s.press(&["down"]); assert_eq!(s.s.sel, row_id(&all[0]));
+    s.press(&["down"]); assert_eq!(s.s.sel, "head:status\tautomations", "the group's heading first: it folds as the others do"); s.press(&["down"]); assert_eq!(s.s.sel, row_id(&all[0]));
     assert_eq!(s.screen(60).last().unwrap(), "  enter open this automation · ? all keys", "the hints that give way are whole ones");
     // narrower still: what a row says wraps under its name as a live task's does, and nothing is cut with …
     let tight = s.screen(34);
@@ -112,7 +112,7 @@ fn more_automations_than_fit_the_list_says_how_many_it_does_not_show_and_the_sel
     assert!(l2.iter().any(|x| x.starts_with("▌  ⟳ on    Automation 16 ")), "{}", l2.join("\n")); assert_eq!(note(&l2), format!(" ↑ 3 more, {} automations", 16 - shown(&l2)));
     // one step up from the first automation is their heading, and one more the last task
     for _ in 0..15 { s.press(&["up"]); }
-    assert_eq!(s.s.sel, row_id(&automations()[0])); s.press(&["up"]); assert_eq!(s.s.sel, "head:status\t\tautomations");
+    assert_eq!(s.s.sel, row_id(&automations()[0])); s.press(&["up"]); assert_eq!(s.s.sel, "head:status\tautomations");
     s.press(&["up"]); like(&s.s.sel, r"^proj/\d$");
     // a short narrow window, two lines a row: still whole rows, the selected one among them
     s.rows = 16; s.press(&["down", "down", "down", "down"]);

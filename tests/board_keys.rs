@@ -76,7 +76,7 @@ fn typing_adds_a_task_tab_delegates_space_replies_and_enter_opens_the_agent() {
     assert_eq!(task("proj/1").s("stage"), "stopped");
     assert!(s2.text().contains("Stopped PRJ-1 \"Add a greeting\"."), "{}", s2.text());
     assert!(s2.s.ask.is_none());
-    let todo = s2.s.steps.iter().position(|x| x == "head:status\t\tto do").unwrap(); assert_eq!(s2.s.sel, s2.s.steps[todo + 1]);
+    let todo = s2.s.steps.iter().position(|x| x == "head:status\tto do").unwrap(); assert_eq!(s2.s.sel, s2.s.steps[todo + 1]);
     s2.s.sel = "proj/1".into(); s2.load();
     s2.press(&["ctrl+x"]);
     assert!(has(&s2.text(), r#"\n[ ▌]\? Remove PRJ-1 "Add a greeting"\?[^?]*\n   y = remove · n = keep"#), "{}", s2.text());

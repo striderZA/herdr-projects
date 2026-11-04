@@ -87,7 +87,6 @@ fn run(cmd: &str, a: &Args) -> Res<i32> {
         // Into the Coordinator's chat: herdr moves to its real pane, as for any agent. No board in between.
         "open-coordinator" => { if let Err(e) = crate::coordinator::look::go_in(&crate::herdr::cli::current_socket(), 30000) { eprintln!("{}", e.msg); return Ok(1); } return Ok(0); }
         "approve-current" => { approve_current(); return Ok(0); }
-        "remote" => return Ok(crate::remote::remote_main(&a.pos[1..])),
         "--skill" | "skill" => { print!("{}", crate::extras::skill_text::skill_text(&crate::flow::send::shim().display().to_string())); return Ok(0); }
         "help" => { print!("{}", help::HELP); return Ok(0); }
         _ if a.flags.b("help") => { print!("{}", help::HELP); return Ok(0); }

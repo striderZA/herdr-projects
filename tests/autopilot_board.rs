@@ -11,7 +11,6 @@ use sw::board::state::Whose;
 use sw::json::*;
 use sw::shown::ink::Ink;
 
-mod far;
 
 fn board(w: &World) -> Board { let mut b = open(&w.root, 40); b.s.side = false; b.load(); b }
 fn line_with<'a>(lines: &'a [String], needle: &str) -> Option<&'a String> { lines.iter().skip(2).find(|l| l.contains(needle)) } // under the header and its filter row
@@ -21,12 +20,12 @@ fn on_one_machine_the_top_rows_coordinator_is_the_top_level_one_and_its_autopilo
     let w = pilot_world();
     let id = w.add("Fix the docs index");
     let mut b = board(&w);
-    let top = sw::board::update::heads::machine_id(""); // this machine's: the only one
+    let top = sw::board::update::heads::machine_id(); // this machine's: the only one
     let lines = b.screen(140);
     assert!(!lines.iter().skip(2).take_while(|l| !l.contains("╭")).any(|l| l.trim_start_matches(['▌', ' ']).starts_with("Coordinator")), "no row of a main Coordinator's: {lines:#?}");
     // On a task's row the autopilot key is no coordinator's; on the top row it is the top-level one's.
     b.s.sel = id.clone(); b.load();
-    b.press(&["ctrl+o"]); assert!(b.text().contains("select a machine's or a project's row"), "{}", b.text());
+    b.press(&["ctrl+o"]); assert!(b.text().contains("select the top row or a project's row"), "{}", b.text());
     b.s.sel = top.clone(); b.load();
     b.press(&["ctrl+o"]);
     assert!(b.text().contains("Tell a coordinator its goal first."), "{}", b.text());
@@ -88,7 +87,7 @@ fn a_projects_row_on_autopilot_keeps_its_mark_and_says_what_autopilot_does_under
 fn on_an_empty_board_the_top_row_has_the_top_level_coordinators_autopilot() {
     let w = pilot_world();
     ok(&["autopilot", "on", "--goal", "Docs", "--autopilot.hours", "00:00-00:01"]);
-    let mut b = board(&w); assert_eq!(b.s.sel, sw::board::update::heads::machine_id(""), "no task: the top row is the selected row");
+    let mut b = board(&w); assert_eq!(b.s.sel, sw::board::update::heads::machine_id(), "no task: the top row is the selected row");
     let lines = b.screen(140);
     assert!(lines.iter().any(|l| l.starts_with("▌○ ▸ ") && l.contains("[autopilot]")), "asleep: its own mark, and its tag: {lines:#?}");
     assert!(lines.iter().any(|l| l.contains("Autopilot · asleep outside 00:00-00:01")), "{lines:#?}");
@@ -108,7 +107,7 @@ fn a_frame_of_the_board_with_coordinators_on_autopilot() {
     sw::autopilot::record::change(&proj(&w), |ap, _| { ap.put("tasks", vec![json!({ "id": id, "by": "added", "at": sw::clock::now() })]); ap.put("added", 1); true }).unwrap();
     let mut b = open(&w.root, 16); b.s.side = false; b.press(&["alt+s"]); b.load(); // wide, and narrow
     // The hostname differs by machine, and so does the filler after it on a line of the box: that filler goes.
-    let host = sw::remote::check::hostname();
+    let host = sw::util::hostname();
     // On the narrow screen the top row's summary is cut where the hostname's length says: it is left out there.
     let canon = |x: &String, narrow: bool| { let x = x.replace(&host, "HOST");
         if let Some(at) = x.find("HOST [autopilot]  ").filter(|_| narrow) { return format!("{}HOST [autopilot]  …", &x[..at]); }
@@ -125,7 +124,7 @@ fn a_coordinators_panel_beside_the_list_and_whole_and_nothing_of_autopilot_while
     let w = pilot_world();
     w.add("One");
     let mut b = open(&w.root, 50); b.s.side = true; b.press(&["alt+s"]); b.load();
-    b.s.sel = sw::board::update::heads::group_id(&b.s, "", "proj"); b.load();
+    b.s.sel = sw::board::update::heads::group_id(&b.s, "proj"); b.load();
     let panel = |b: &mut Board| b.screen(160).iter().map(|l| l.split('│').nth(1).unwrap_or("").to_string()).collect::<Vec<_>>().join("\n");
     let t = panel(&mut b);
     assert!(t.contains("proj's coordinator") && t.contains("Status") && t.contains("Settings") && !t.contains("autopilot"), "off: nothing of autopilot: {t}");
@@ -143,7 +142,7 @@ fn the_settings_page_of_a_coordinators_row_saves_for_this_time_while_on_and_as_i
     let w = pilot_world();
     w.add("One");
     let mut b = board(&w); b.press(&["alt+s"]);
-    b.s.sel = sw::board::update::heads::group_id(&b.s, "", "proj"); b.load();
+    b.s.sel = sw::board::update::heads::group_id(&b.s, "proj"); b.load();
     b.press(&["ctrl+e"]);
     assert_eq!(b.s.editing.as_ref().map(|e| e.whose.clone()), Some(Whose::Coord("project:proj".into(), "repo:proj".into())));
     b.rows = 120; let t = b.screen(140).join("\n");

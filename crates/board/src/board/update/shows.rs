@@ -1,8 +1,8 @@
 //! The filter row on top of the board: All · Coordinators · Needs you · Working · Ready · To do · Done · Automations
 //! · Pinned, each with its count. Tab moves to the next, shift+tab back, a click picks one; the list then shows only the tasks of
 //! that status. Coordinators and Automations are filters as the others are: Coordinators leaves the coordinators' own
-//! rows, which are the machines' rows and the projects', of those that run (started and not stopped, on autopilot, or
-//! failed), for the machine shown (the main Coordinator has none); Automations leaves the automations' rows, in the same places and grouping;
+//! rows, which are the top row's and the projects', of those that run (started and not stopped, on autopilot, or
+//! failed); Automations leaves the automations' rows, in the same places and grouping;
 //! Pinned leaves what is pinned, in its places and the board's grouping (pinned.rs).
 use super::heads::{machine_id, HEAD};
 use super::list::relist;
@@ -52,20 +52,14 @@ pub fn set(s: &mut State, n: usize, fx: &mut Vec<Effect>) {
     fx.push(Effect::Save);
     relist(s);
 }
-/// Enter or space on a coordinator in the list: talk to it, by its row, whichever machine's board shows (this
-/// machine's main Coordinator too: with one other machine's board shown, the chat's own Coordinator is that machine's).
+/// Enter or space on a coordinator in the list: talk to it, by its row.
 pub fn talk(s: &mut State, id: &str) {
     s.sel = id.to_string();
     super::coords::flip(s);
 }
-/// The machines whose board is in view: this one, every one that answered, or the one shown.
-pub fn hosts(s: &State) -> Vec<String> {
-    if s.scope == "*" { let mut h = vec![String::new()]; h.extend(super::remotes::others(s).into_iter().filter(|m| m.ok).map(|m| m.machine.label.clone())); h.sort_by_key(|x| super::remotes::place(s, x)); h } else { vec![s.scope.clone()] }
-}
-/// The projects of a machine ("" this one) that have a project coordinator, as far as the board knows.
-fn projects(s: &State, host: &str) -> Vec<String> {
-    let keys: Vec<String> = if host.is_empty() { s.data.coords.clone() } else { s.remotes.get(host).and_then(|m| m.coords.as_object().map(|o| o.keys().cloned().collect())).unwrap_or_default() };
-    let mut out: Vec<String> = keys.iter().filter_map(|k| k.strip_prefix("project:").map(String::from)).collect();
+/// The repos that have a project coordinator, as far as the board knows.
+fn projects(s: &State) -> Vec<String> {
+    let mut out: Vec<String> = s.data.coords.iter().filter_map(|k| k.strip_prefix("project:").map(String::from)).collect();
     out.sort_by_key(|r| r.to_lowercase());
     out
 }
@@ -86,48 +80,27 @@ pub fn needs_you(s: &State, id: &str) -> bool {
     let v = super::coords::look_of(s, &t).unwrap_or_default();
     !v.error.is_empty() || v.state == "blocked" || !v.asks.is_empty()
 }
-/// The projects' rows of the machine `host` that stand beside the tasks, though no task of theirs does: under Needs you
-/// those whose coordinators ask you, under Pinned the pinned ones (by repo, those have their own heading).
-pub fn beside(s: &State, host: &str) -> Vec<String> {
+/// The projects' rows that stand beside the tasks, though no task of theirs does: under Needs you those whose
+/// coordinators ask you, under Pinned the pinned ones (by repo, those have their own heading).
+pub fn beside(s: &State) -> Vec<String> {
     if s.archive_view { return vec![]; }
-    if s.show == NEEDS { projects_needing(s, host) } else if s.show == PINNED && !s.by_repo { super::pinned::projects_of(s, host) } else { vec![] }
+    if s.show == NEEDS { projects_needing(s) } else if s.show == PINNED && !s.by_repo { super::pinned::projects_of(s) } else { vec![] }
 }
-/// The project rows of the machine `host` whose coordinators need you.
-pub fn projects_needing(s: &State, host: &str) -> Vec<String> { projects(s, host).into_iter().filter(|r| needs_you(s, &format!("{HEAD}repo\t{host}\t{r}"))).collect() }
-/// Under Needs you: a coordinator of the machine `host` (its own, or a project's) needs you.
-pub fn host_needs(s: &State, host: &str) -> bool { s.show == NEEDS && !s.archive_view && (needs_you(s, &machine_id(host)) || !projects_needing(s, host).is_empty()) }
-/// Every coordinator in view that needs you, by its row: the top row's, each machine's, each project's.
-fn needing(s: &State) -> usize {
-    let top = usize::from(s.scope == "*" && needs_you(s, &super::top::all_id()));
-    top + hosts(s).iter().map(|h| usize::from(needs_you(s, &machine_id(h))) + projects_needing(s, h).len()).sum::<usize>()
-}
-/// How many coordinators in view run, folded away or not: the top row's, each machine's, each project's.
-fn coords_running(s: &State) -> usize {
-    let top = usize::from(s.scope == "*" && running(s, &super::top::all_id()));
-    top + hosts(s).iter().map(|h| usize::from(running(s, &machine_id(h))) + projects(s, h).iter().filter(|r| running(s, &format!("{HEAD}repo\t{h}\t{r}"))).count()).sum::<usize>()
-}
-/// The list under Coordinators: the top row, then for each machine in view its row (its machine coordinator's) and the
-/// rows of its projects, of the coordinators that run. The top row is always there, counted only while it runs.
+/// The project rows whose coordinators need you.
+pub fn projects_needing(s: &State) -> Vec<String> { projects(s).into_iter().filter(|r| needs_you(s, &format!("{HEAD}repo\t{r}"))).collect() }
+/// Every coordinator in view that needs you, by its row: the top row's, each project's.
+fn needing(s: &State) -> usize { usize::from(needs_you(s, &machine_id())) + projects_needing(s).len() }
+/// How many coordinators in view run, folded away or not: the top row's, each project's.
+fn coords_running(s: &State) -> usize { usize::from(running(s, &machine_id())) + projects(s).iter().filter(|r| running(s, &format!("{HEAD}repo\t{r}"))).count() }
+/// The list under Coordinators: the top row, then the rows of the projects whose coordinators run. The top row is
+/// always there, counted only while it runs.
 pub fn coord_rows(s: &State) -> Vec<Row> {
     let head = |name: String, id: String, machine: bool| Row::Head { name, autos: false, id, machine, folded: 0, folded_autos: 0, empty: false };
-    let mut out: Vec<Row> = vec![];
-    if s.scope == "*" {
-        let id = super::top::all_id();
-        let shut = super::heads::folded(s, &id);
-        out.push(Row::Head { name: "All machines".into(), autos: false, id, machine: false, folded: 0, folded_autos: 0, empty: false });
-        if shut { return out; }
-    }
-    for h in hosts(s) {
-        let id = machine_id(&h);
-        let projects: Vec<String> = projects(s, &h).into_iter().filter(|r| running(s, &format!("{HEAD}repo\t{h}\t{r}"))).collect();
-        // A machine whose own coordinator does not run: no row, but with every machine shown the heading of its
-        // projects' that do (not counted). The one machine shown is the top row: always there.
-        if !running(s, &id) && s.scope == "*" && projects.is_empty() { continue; }
-        // A machine's row folds its projects' rows away, as everywhere (enter, heads.rs: toggle).
-        let shut = super::heads::folded(s, &id) && !projects.is_empty();
-        out.push(Row::Head { name: super::remotes::shown(s, &h), autos: false, id, machine: true, folded: if shut { projects.len() } else { 0 }, folded_autos: 0, empty: false });
-        if shut { continue; }
-        for r in projects { out.push(head(r.clone(), format!("{HEAD}repo\t{h}\t{r}"), false)); }
-    }
+    let id = machine_id();
+    let projects: Vec<String> = projects(s).into_iter().filter(|r| running(s, &format!("{HEAD}repo\t{r}"))).collect();
+    let shut = super::heads::folded(s, &id) && !projects.is_empty();
+    let mut out = vec![Row::Head { name: crate::board::update::heads::label(s), autos: false, id: id.clone(), machine: true, folded: if shut { projects.len() } else { 0 }, folded_autos: 0, empty: false }];
+    if shut { return out; }
+    for r in projects { out.push(head(r.clone(), format!("{HEAD}repo\t{r}"), false)); }
     out
 }

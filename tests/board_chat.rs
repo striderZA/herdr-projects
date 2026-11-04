@@ -42,7 +42,7 @@ pub fn chat_kind(s: &mut common::board::Board, cols: usize) -> String {
     c.lines[t].split(" · ").nth(1).map(|k| k.split(" ─").next().unwrap_or("").trim_end_matches('╮').trim_end_matches(['─', ' ']).to_string()).unwrap_or_default()
 }
 /// The top row's coordinator's name on a board of this machine alone: `vm-str's coordinator`.
-pub fn top_name() -> String { sw::board::update::top::coordinator_of(&sw::shown::words::clean(&sw::remote::check::hostname())) }
+pub fn top_name() -> String { sw::board::update::top::coordinator_of(&sw::shown::words::clean(&sw::util::hostname())) }
 
 #[test]
 fn a_task_agents_chat_its_message_then_your_words_in_its_place_then_its_next_message() {
@@ -89,19 +89,19 @@ fn the_coordinators_chat_keeps_what_you_sent_until_it_says_something_new() {
     w.script(json!({ "coordinator": [{ "said": "Six tasks are in progress." }, { "status": "working" }] }));
     let mut s = open(&w.root, 34);
     s.typed("where do things stand?"); s.press(&["enter"]); s.load();
-    assert_eq!(chat(&mut s, 120).boxed, v(&["where do things stand?", "", &"❯ Send message to the machine coordinator".to_string()]));
-    assert!(chat(&mut s, 120).who.ends_with(&sw::shown::words::clean(&sw::remote::check::hostname())), "{}", chat(&mut s, 120).who);
+    assert_eq!(chat(&mut s, 120).boxed, v(&["where do things stand?", "", &"❯ Send message to the coordinator".to_string()]));
+    assert!(chat(&mut s, 120).who.ends_with(&sw::shown::words::clean(&sw::util::hostname())), "{}", chat(&mut s, 120).who);
     drain(); s.load();
-    assert_eq!(chat(&mut s, 120).boxed, v(&["Six tasks are in progress.", "", &"❯ Send message to the machine coordinator".to_string()]), "the answer alone, your words above it");
+    assert_eq!(chat(&mut s, 120).boxed, v(&["Six tasks are in progress.", "", &"❯ Send message to the coordinator".to_string()]), "the answer alone, your words above it");
     assert!(!chat(&mut s, 120).who.contains("Not started yet"), "it ran: {}", chat(&mut s, 120).who);
     s.typed("archive the last one"); s.press(&["enter"]); drain(); s.load();
     let look = sw::coordinator::look::look(&socket);
     assert_eq!((look.said.as_str(), look.sent.as_str()), ("Six tasks are in progress.", "archive the last one"));
-    assert_eq!(chat(&mut s, 120).boxed, v(&["archive the last one", "", &"❯ Send message to the machine coordinator".to_string()]));
+    assert_eq!(chat(&mut s, 120).boxed, v(&["archive the last one", "", &"❯ Send message to the coordinator".to_string()]));
     assert!(!s.text().contains("Six tasks"));
-    assert_eq!(chat(&mut open(&w.root, 34), 120).boxed, v(&["archive the last one", "", &"❯ Send message to the machine coordinator".to_string()]), "a board opened now shows the same");
+    assert_eq!(chat(&mut open(&w.root, 34), 120).boxed, v(&["archive the last one", "", &"❯ Send message to the coordinator".to_string()]), "a board opened now shows the same");
     sw::coordinator::requests::typed_there(&socket); s.load();
-    assert_eq!(chat(&mut s, 120).boxed, v(&["Six tasks are in progress.", "", &"❯ Send message to the machine coordinator".to_string()]));
+    assert_eq!(chat(&mut s, 120).boxed, v(&["Six tasks are in progress.", "", &"❯ Send message to the coordinator".to_string()]));
 }
 
 #[test]
@@ -111,13 +111,13 @@ fn an_answer_in_the_very_same_words_still_takes_your_words_place() {
     w.script(json!({ "coordinator": [{ "said": "Done." }, { "said": "Done." }], "worker": [{ "files": { "f.txt": "1\n" }, "commit": "1", "note": "Done." }, { "files": { "g.txt": "1\n" }, "commit": "2", "note": "Done." }] }));
     let mut s = open(&w.root, 34);
     s.typed("first request"); s.press(&["enter"]); drain(); s.load();
-    assert_eq!(chat(&mut s, 120).boxed, v(&["Done.", "", &"❯ Send message to the machine coordinator".to_string()]));
+    assert_eq!(chat(&mut s, 120).boxed, v(&["Done.", "", &"❯ Send message to the coordinator".to_string()]));
     s.typed("second request"); s.press(&["enter"]); s.load();
-    assert_eq!(chat(&mut s, 120).boxed, v(&["second request", "", &"❯ Send message to the machine coordinator".to_string()]));
+    assert_eq!(chat(&mut s, 120).boxed, v(&["second request", "", &"❯ Send message to the coordinator".to_string()]));
     drain(); s.load();
     let look = sw::coordinator::look::look(&socket);
     assert_eq!((look.state.as_str(), look.sent.as_str()), ("idle", ""));
-    assert_eq!(chat(&mut s, 120).boxed, v(&["Done.", "", &"❯ Send message to the machine coordinator".to_string()]));
+    assert_eq!(chat(&mut s, 120).boxed, v(&["Done.", "", &"❯ Send message to the coordinator".to_string()]));
     let id = w.add("Make f");
     delegate(&id); settle(&id);
     s.s.sel = id.clone(); s.load(); s.press(&["space"]);

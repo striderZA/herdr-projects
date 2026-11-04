@@ -27,7 +27,6 @@ pub fn click(s: &mut State, x: usize, y: usize, fx: &mut Vec<Effect>) {
     // A click on the filter row shows that filter (view/shows_row.rs).
     if let Some(n) = s.show_hits.iter().find(|h| h.0 == y && x >= h.1 && x < h.2).map(|h| h.3) {
         if locked(s) { return s.flash("Send or put away what you typed first: a click does not change who gets it.", Ink::Muted); }
-        if n == crate::board::view::shows_row::MACHINE { return super::remotes::next_scope(s, fx); }
         return super::shows::set(s, n, fx);
     }
     let id = if x < wide && y >= top { s.list_ids.get(y - top).cloned().unwrap_or_default() } else { String::new() };

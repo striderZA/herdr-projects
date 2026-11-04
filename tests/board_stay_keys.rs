@@ -125,20 +125,17 @@ fn the_popup_opens_on_the_task_of_the_pane_you_were_in_and_words_left_in_its_box
     // From the agent's pane: that task, shown also while the filter left from last time would hide it.
     let mut s = opened(&w.root, true, "w9:p1", None);
     assert_eq!(s.s.sel, b); assert!(s.text().contains("Second"), "{}", s.text());
-    // The popup was last looking at one other machine only: this machine's tasks show, or the task would be hidden
-    // and the chat would talk to that machine. Every machine at once has the task, and stays.
-    view_write("view-popup.json", json!({ "sel": a, "scope": "otherbox" }));
+    // The popup opens on the task of the pane it came from, whatever was selected when it closed.
+    view_write("view-popup.json", json!({ "sel": a }));
     let mut far = opened(&w.root, true, "w9:p1", None);
-    assert_eq!(far.s.scope, ""); assert_eq!(far.s.sel, b); assert!(far.text().contains("Second")); assert_eq!(far.s.current().map(|r| r.t("id")), Some(b.clone()));
-    assert_eq!(opened(&w.root, true, "w9:p5", None).s.scope, "otherbox", "from no task's pane the view is as it was left");
-    view_write("view-popup.json", json!({ "sel": a, "scope": "*" }));
-    let all = opened(&w.root, true, "w9:p1", None); assert_eq!(all.s.scope, "*"); assert_eq!(all.s.sel, b);
+    assert_eq!(far.s.sel, b); assert!(far.text().contains("Second")); assert_eq!(far.s.current().map(|r| r.t("id")), Some(b.clone()));
+    assert_eq!(opened(&w.root, true, "w9:p5", None).s.sel, sw::board::update::top::top_id(), "from no task's pane, the top row");
     view_write("view-popup.json", json!({ "sel": a, "filter": "first" }));
     // From a pane that is no task's: on the top row, whatever was selected when it closed.
-    let o = opened(&w.root, true, "w9:p5", None); assert_eq!(o.s.sel, sw::board::update::top::top_id(&o.s));
+    let o = opened(&w.root, true, "w9:p5", None); assert_eq!(o.s.sel, sw::board::update::top::top_id());
     // A board in a pane opens on the top row too, wherever you come from.
     view_write("view.json", json!({ "sel": a }));
-    let o = opened(&w.root, false, "w9:p1", None); assert_eq!(o.s.sel, sw::board::update::top::top_id(&o.s));
+    let o = opened(&w.root, false, "w9:p1", None); assert_eq!(o.s.sel, sw::board::update::top::top_id());
     // Words left in the popup's box are sent from the repo they were typed in, also when it reopens somewhere else.
     view_write("view-popup.json", json!({}));
     let other = w.base.join("elsewhere-x1"); std::fs::create_dir_all(&other).unwrap();

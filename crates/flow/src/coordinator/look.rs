@@ -119,7 +119,7 @@ pub fn go_in(co: impl Into<Co>, wait_ms: i64) -> Res<Look> {
         std::thread::sleep(std::time::Duration::from_millis(400));
     }
 }
-/// For the command line and for other machines.
+/// For the command line.
 pub fn summary(co: impl Into<Co>) -> Value {
     let co = co.into();
     let v = look(&co);

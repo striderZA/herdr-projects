@@ -1,8 +1,8 @@
 //! The text box you type in, as the board draws it. Its prompt is only ❯: who gets your words is said by its grey words
 //! while it is empty, by the hint line under it while it holds any (`enter send to #34's agent`), and by the colour of
-//! its frame: a task's agent's in that task's status colour (the very one its mark has), a machine's or a repo's
-//! coordinator's in its own colour (update/coords.rs), the Coordinator's in plain text. Inside the frame, the prompt too, all looks
-//! as with the Coordinator. Its edge names no one.
+//! its frame: a task's agent's in that task's status colour (the very one its mark has), a repo's coordinator's in its
+//! own colour (update/coords.rs), the Coordinator's in plain text. Inside the frame, the prompt too, all looks as with
+//! the Coordinator. Its edge names no one.
 use super::chat::more_word;
 use crate::board::state::{Mode, State};
 use crate::board::tags::number_tag;
@@ -14,16 +14,14 @@ use crate::shown::states::{is_agent, reviewing, status_ink};
 fn send_to(who: &str) -> String { format!("Send message to {who}") }
 /// The task a reply is for, as the hint line names it while the box holds words: its tag, or its title where it has none.
 pub fn draft_task(s: &State, r: &Obj) -> String {
-    let t = number_tag(r, &s.data.keys, &s.scope, true);
+    let t = number_tag(r, &s.data.keys);
     if t.is_empty() { format!("\"{}\"", crate::text::cut(if r.b("title") { r.s("title") } else { r.s("id") }, 20)) } else { t }
 }
-/// The other machine whose Coordinator gets the words, where the board shows another one's.
-pub fn far_coordinator(s: &State) -> Option<&str> { (!s.scope.is_empty() && s.scope != "*" && s.remotes.contains_key(&s.scope)).then_some(s.scope.as_str()) }
 /// The box's colour: who it sends to, by kind (chat_title.rs): amber a coordinator, violet a task's agent.
 pub fn box_ink(s: &State, r: Option<&Obj>) -> Ink {
     if let Some(t) = super::chat_title::title(s, r) { return t.edge; }
     let Some(r) = r.filter(|_| s.mode != Mode::Find && s.reply) else { return Ink::Text };
-    if r.b("archivedAt") || has_agent(r) || (!r.b("host") && !is_agent(r) && ["todo", "progress"].contains(&r.s("stage"))) { status_ink(r) } else { Ink::Text }
+    if r.b("archivedAt") || has_agent(r) || (!is_agent(r) && ["todo", "progress"].contains(&r.s("stage"))) { status_ink(r) } else { Ink::Text }
 }
 /// The text box's lines: a rule, its body, a rule. And where the cursor is among them.
 pub fn box_lines(s: &mut State, width: usize, max_rows: usize, r: Option<&Obj>) -> (Vec<Inked>, Option<(usize, usize)>) {
@@ -38,7 +36,7 @@ pub fn box_lines(s: &mut State, width: usize, max_rows: usize, r: Option<&Obj>) 
         else if s.mode == Mode::Find { "type to filter, archived tasks too".into() }
         else if super::chat_title::title(s, r).is_some_and(|t| t.fresh) { "Ask it something, e.g. \"what's left to do here?\"".into() }
         else if let Some(t) = super::chat_title::title(s, r).filter(|_| super::chat_title::coordinator(s).is_some()) { send_to(&t.whom()) }
-        else if replying { let r = r.unwrap(); if r.b("archivedAt") { "archived: read-only".into() } else if is_agent(r) { format!("{}{}", send_to("the agent"), if reviewing(r) { ": the review goes on unless the code changes" } else { "" }) } else if !r.b("host") && ["todo", "progress"].contains(&r.s("stage")) { "your message starts an agent on it".into() } else if let Some(c) = crate::board::update::top::top(s) { send_to(&super::chat_title::whom_of(s, &c)) } else { "what should change?".into() } }
+        else if replying { let r = r.unwrap(); if r.b("archivedAt") { "archived: read-only".into() } else if is_agent(r) { format!("{}{}", send_to("the agent"), if reviewing(r) { ": the review goes on unless the code changes" } else { "" }) } else if ["todo", "progress"].contains(&r.s("stage")) { "your message starts an agent on it".into() } else if let Some(c) = crate::board::update::top::top(s) { send_to(&super::chat_title::whom_of(&c)) } else { "what should change?".into() } }
         else { "Add a task".into() };
     // The placeholder never runs past the box: it is cut with … like any other greyed line.
     let shown = crate::text::cut(&place, width.saturating_sub(label.width() + 1).max(1));

@@ -26,10 +26,10 @@ fn todo(more: Value) -> Rec { rec(json!({ "state": "idle", "stage": "todo", "at"
 fn with(r: &Rec, more: Value) -> Rec { rec(Value::Object((**r).clone()), more) }
 fn words(n: usize, w: &str) -> String { (1..=n).map(|k| format!("{w}{k}")).collect::<Vec<_>>().join(" ") }
 fn busy() -> Rec { work(json!({ "id": "p/1", "title": "Research capy.ai and other coding agents for ideas we could use", "msg": "Researching coding agents and harnesses for ideas, reading what each one says about itself", "progress": 3 })) }
-fn board(list: &[Rec], sel: &str, scope: &str) -> State {
+fn board(list: &[Rec], sel: &str) -> State {
     sw::clock::set(Some(NOW));
     let mut s = State::new(Default::default(), Default::default());
-    s.sel = sel.into(); s.scope = scope.into();
+    s.sel = sel.into();
     s.grouped = GROUPS.iter().map(|g| (g.to_string(), list.iter().filter(|r| group_of(r) == *g).cloned().collect())).collect();
     s.rows = fold_rows(&mut s);
     s
@@ -48,7 +48,7 @@ fn narrow_screen_rows_of_different_heights_the_selected_row_is_whole_and_in_view
         .chain((0..4).map(|n| todo(json!({ "id": format!("p/{}", n + 10), "title": format!("Later {} {}", n + 1, words(n * 9, "word")).trim().to_string() }))))
         .chain((0..7).map(|n| done(json!({ "id": format!("p/{}", n + 20), "title": format!("Finished {} {}", n + 1, words(n * 4, "word")).trim().to_string(), "at": AT - n as i64 * 60000 })))).collect();
     for h in [6, 9, 14, 22, 40] {
-        let mut s = board(&many, "p/1", "");
+        let mut s = board(&many, "p/1");
         s.whole = true; s.rows = fold_rows(&mut s); // every done row shows, as with all done
         let look = |s: &mut State| {
             let d = drawn(s, 44, h);
@@ -75,7 +75,7 @@ fn narrow_screen_the_fold_counts_wrapped_lines_so_the_more_lines_still_keep_the_
     let list: Vec<Rec> = std::iter::once(busy())
         .chain((0..6).map(|n| todo(json!({ "id": format!("p/{}", n + 10), "title": format!("Later {}", n + 1) }))))
         .chain((0..8).map(|n| done(json!({ "id": format!("p/{}", n + 20), "title": format!("Finished {}", n + 1), "at": AT - n * 60000 })))).collect();
-    let mut s = board(&list, "p/10", "");
+    let mut s = board(&list, "p/10");
     struct L { lines: Vec<String>, done: usize, later: usize, more: Option<String>, folded: Option<String> }
     let look = |s: &mut State, h: usize| { let lines = plain(&drawn(s, 49, h)); L { done: lines.iter().filter(|l| l.contains("Finished")).count(), later: lines.iter().filter(|l| l.contains("Later")).count(), more: lines.iter().find(|l| l.contains("more to do")).cloned(), folded: lines.iter().find(|l| l.contains(" done (")).cloned(), lines } };
     let folded = Some(format!("    ↓ 8 done ({} shows them)", sw::board::keys::key_name("allDone")));
@@ -88,7 +88,7 @@ fn narrow_screen_the_fold_counts_wrapped_lines_so_the_more_lines_still_keep_the_
     for h in [16, 15, 14] { assert!(look(&mut s, h).lines.iter().any(|l| l.contains("Research capy")), "the live row is in view at {h}"); assert_eq!(s.top, 0); }
     // The selected row growing to its whole name takes lines from the rows that give way, not from the screen.
     let wordy: Vec<Rec> = list.iter().map(|r| if r.s("id") == "p/10" { with(r, json!({ "title": format!("Later 1 {}", words(20, "word")) })) } else { r.clone() }).collect();
-    let mut w = board(&wordy, "p/10", "");
+    let mut w = board(&wordy, "p/10");
     let lines = plain(&drawn(&mut w, 49, 16));
     assert_eq!(lines.len(), 16); assert!(lines.iter().any(|l| l.ends_with("word20")), "{}", lines.join("\n"));
     let grown = row_height(&w, wordy.iter().find(|r| r.s("id") == "p/10").unwrap(), 49, true) - 1;
@@ -97,7 +97,7 @@ fn narrow_screen_the_fold_counts_wrapped_lines_so_the_more_lines_still_keep_the_
 
 #[test]
 fn all_machines_narrow_screen_a_row_never_names_its_machine_its_heading_does_and_a_long_name_wraps_as_on_one_machine() {
-    let mut s = board(&[], "", "*");
+    let mut s = board(&[], "");
     let far = with(&busy(), json!({ "host": "very-long-machine-name-on-the-tailnet", "title": "Fix login", "msg": "Running the tests one by one" }));
     let wordy = with(&busy(), json!({ "host": "box" }));
     let pair = [far.clone(), wordy.clone()];

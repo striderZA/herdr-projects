@@ -72,25 +72,6 @@ fn after_sets_shows_and_drops_a_wait_and_stop_stops_the_waiting() {
     assert!(told.contains("- PRJ-1 \"First\" (repo proj): done. Its closing note:\n    Made the first part."), "{told}");
 }
 
-/// The door, as `herdr-projects remote <what> <request>` answers it on this machine (in this process).
-fn door(what: &str, req: Value) -> Value { sw::remote::door(what, &req).unwrap_or_else(|e| json!({ "ok": false, "msg": e.msg })) }
-
-#[test]
-fn another_machines_board_sees_the_wait_and_starts_one_early_only_when_asked() {
-    let w = world();
-    w.script(json!({ "worker": [{ "status": "working" }] }));
-    let dep = w.add("First");
-    let id = w.add("Second");
-    run(&["delegate", &id, "--after", &dep]).unwrap();
-    let sent = sw::remote::remote_list();
-    let r = sent.arr("tasks").iter().find(|t| t.s("id") == id).cloned().unwrap_or_default();
-    assert_eq!((r.s("stage"), r.s("note")), ("after", "queued after PRJ-1"));
-    let no = door("do", json!({ "action": "delegate", "id": id }));
-    assert!(no.s("msg").contains("is still queued after PRJ-1: it starts by itself once that is done"), "{no}");
-    assert_eq!(door("do", json!({ "action": "delegate", "id": id, "now": true })), json!({ "ok": true, "msg": format!("{id}: an agent is on it") }));
-    assert_ne!(settle(&id).s("stage"), "after");
-}
-
 #[test]
 fn stopping_a_task_that_waits_tells_the_tasks_that_wait_for_it_that_it_was_stopped() {
     let w = world();

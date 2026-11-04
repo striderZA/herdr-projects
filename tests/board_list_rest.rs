@@ -1,13 +1,10 @@
 //! What the old board-list tests checked that tests/board_list.rs does not: the ? menu's legend under its keys, reached
 //! with ↓ in a short window and whole in a narrow one; the side panel closed on a board's first opening, and the list's
-//! whole width without it; looking at a done task changes nothing about it; and every machine's tasks: whose they are
-//! in the header, never cut, a heading per machine, find by number, and where a far task's merge lands; a
-//! click on no row is not the board's.
+//! whole width without it; looking at a done task changes nothing about it; a click on no row is not the board's.
 use crate::common;
 use common::board::open;
 use common::*;
 use serde_json::json;
-use sw::board::update::{update, Event};
 use sw::json::*;
 
 fn has(text: &str, re: &str) -> bool { regex::Regex::new(re).unwrap().is_match(text) }
@@ -77,62 +74,6 @@ fn looking_at_a_done_task_changes_nothing_about_it() {
     let mut s = open(&w.root, 34);
     s.press(&["enter", "esc"]);
     for (n, id) in ids.iter().enumerate() { assert_eq!(task(id).b("seen"), n != 0, "{id}"); }
-}
-
-#[test]
-fn every_machines_tasks_say_whose_they_are_and_a_far_merge_says_where_it_lands() {
-    let w = world_with(Opts { repo: true, settings: json!({ "board.machines": "otherbox" }), ..Default::default() });
-    for n in 1..=3 { w.add(&format!("Task number {n}")); }
-    let mut s = open(&w.root, 24); s.s.side = false;
-    update(&mut s.s, Event::Machines(sw::remote::machines()));
-    let now = sw::clock::now();
-    let far = |items: serde_json::Value| Ok(json!({ "host": "otherbox", "version": "0.2.0", "tasks": items }));
-    update(&mut s.s, Event::Remote { label: "otherbox".into(), answer: far(json!([{ "id": "proj/1", "title": "Far away", "state": "idle", "stage": "todo", "at": now, "created": now, "snap": { "folder": "~/far" } }])) });
-    // Alt+M: every machine comes first in its round (this machine where herdr's sidebar has it).
-    while s.s.scope != "*" { s.press(&["alt+m"]); }
-    // whose board shows is the filter row's first item, never cut
-    for width in [100, 40, 24] { assert!(s.screen(width)[1].starts_with(" All machines │"), "at {width}: {}", s.screen(width)[1]); }
-    s.s.sel = "otherbox:proj/1".into(); s.load();
-    let t = s.screen(100).join("\n");
-    // Each machine a step in under All machines, its status groups a step in under that: the row's tag is the number alone.
-    assert!(has(&t, r"\n   (○ |  )?▾ otherbox *\n     ▾ to do\n▌    ○ #1 +Far away "), "{t}"); assert!(!t.contains("otherbox#1") && !t.contains("otherbox Far away"));
-    s.press(&["ctrl+f"]); s.typed("1");
-    assert!(s.s.rows.iter().any(|r| matches!(r, sw::board::state::Row::Rec(o) if o.s("host") == "otherbox")), "find takes the number alone: no machine in it");
-    s.press(&["esc"]);
-    // another machine's work: the merge question says where it lands there; an older one that does not say still gets one
-    let item = |lands: Option<&str>| { let mut snap = json!({ "folder": "~/far" }); if let Some(l) = lands { snap["landsOn"] = json!(l); } json!([{ "id": "proj/7", "title": "Remote merge", "state": "blocked", "kind": "permission", "stage": "approval", "agent": "claude", "app": "claude", "at": now, "created": now, "snap": snap }]) };
-    update(&mut s.s, Event::Remote { label: "otherbox".into(), answer: far(item(Some("trunk"))) });
-    s.s.sel = "otherbox:proj/7".into(); s.load();
-    s.press(&["ctrl+l"]);
-    let ask = s.s.ask.clone().unwrap_or_else(|| panic!("{}", s.text()));
-    assert_eq!(ask.q, "Merge otherbox#7 \"Remote merge\" into trunk on otherbox?"); assert!(ask.detail.contains("A merge cannot be undone."), "{}", ask.detail);
-    s.press(&["n"]);
-    update(&mut s.s, Event::Remote { label: "otherbox".into(), answer: far(item(None)) });
-    s.load(); s.press(&["ctrl+l"]);
-    assert_eq!(s.s.ask.as_ref().map(|a| a.q.clone()).unwrap_or_default(), "Merge otherbox#7 \"Remote merge\" into its main branch on otherbox?");
-    s.press(&["n"]);
-}
-
-#[test]
-fn machine_names_too_long_for_a_line_are_shown_whole_never_cut() {
-    let long = ["a-very-long-machine-name-on-the-tailnet", "another-extremely-long-machine-name-there"];
-    let w = world_with(Opts { repo: true, settings: json!({ "board.machines": long.join(", ") }), ..Default::default() });
-    w.add("Mine");
-    let mut s = open(&w.root, 24); s.s.side = false;
-    update(&mut s.s, Event::Machines(sw::remote::machines()));
-    for m in long { update(&mut s.s, Event::Remote { label: m.into(), answer: Ok(json!({ "host": m, "version": "0.2.0", "tasks": [] })) }); }
-    while s.s.scope != "*" { s.press(&["alt+m"]); }
-    // every machine: each under a heading of its own, its name whole
-    for width in [80, 50] {
-        let t = s.screen(width).join("\n");
-        for name in long { assert!(t.lines().any(|l| l.contains(&format!("▾ {name}")) || l.contains(&format!("▸ {name}"))), "{name} whole at {width}: {t}"); }
-    }
-    // one machine by itself: its name is the filter row's first item, whole
-    for name in long {
-        while s.s.scope != name { s.press(&["alt+m"]); }
-        let l = s.screen(50)[1].clone();
-        assert!(l.starts_with(&format!(" {name} │")), "{l}");
-    }
 }
 
 #[test]

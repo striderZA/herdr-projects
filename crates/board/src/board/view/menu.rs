@@ -20,7 +20,7 @@ pub fn menu_lines(s: &mut State, t: &Theme, width: usize, h: usize) -> Vec<Inked
     let col = plain.iter().map(|(k, _)| k.clone()).chain(list.iter().map(|i| i.key.clone())).chain(std::iter::once("65% 2m left".to_string())).map(|k| crate::text::width(&k) + 2).max().unwrap_or(8).max(8);
     let room = width.saturating_sub(col + 4).max(8);
     let entry = |key: &str, words: &str| -> Vec<Inked> { Inked::plain(words).wrap(room).into_iter().enumerate().map(|(n, l)| Inked::plain("   ").add(if n > 0 { Inked::spaces(col) } else { Inked::of(crate::text::pad(key, col), Ink::Text) }).add(l.recolor(Ink::Muted))).collect() };
-    let for_ = match (&r, &auto) { (Some(r), _) => format!("  for {}", crate::text::cut(&name_say(r, &s.data.keys, &s.scope, 60), width.saturating_sub(12).max(8))), (None, Some(a)) => format!("  for {}", crate::text::cut(&format!("the automation \"{}\"", a.s("name")), width.saturating_sub(12).max(8))), _ => String::new() };
+    let for_ = match (&r, &auto) { (Some(r), _) => format!("  for {}", crate::text::cut(&name_say(r, &s.data.keys, 60), width.saturating_sub(12).max(8))), (None, Some(a)) => format!("  for {}", crate::text::cut(&format!("the automation \"{}\"", a.s("name")), width.saturating_sub(12).max(8))), _ => String::new() };
     let title = Inked::plain(" ").add(Inked::plain("Menu").bold()).add(Inked::of(for_, Ink::Muted));
     let at = s.menu.as_ref().unwrap().at;
     let mut lines: Vec<Inked> = vec![];

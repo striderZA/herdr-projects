@@ -5,7 +5,7 @@
 use super::care::in_area;
 use super::limits::board_tasks;
 use crate::clock::now;
-use crate::coordinator::co::{named, Co, Level};
+use crate::coordinator::co::Co;
 use crate::json::*;
 use crate::store::keys::{repo_keys, say_id};
 
@@ -15,16 +15,13 @@ const NOTE: usize = 300;
 fn note_of(t: &Obj) -> String { std::fs::read_to_string(crate::flow::task::note_file(t)).unwrap_or_default().trim().to_string() }
 /// Who added a task, in words (also in every `details`).
 pub fn added_by(t: &Obj) -> String {
-    if t.at("autopilot").is_object() { return format!("the {}'s autopilot{}", t.at("autopilot").s("name"), if t.at("autopilot").b("machine") { format!(" on {}", t.at("autopilot").s("machine")) } else { String::new() }); }
+    if t.at("autopilot").is_object() { return format!("the {}'s autopilot", t.at("autopilot").s("name")); }
     if t.at("automation").is_object() { return format!("the automation \"{}\"", t.at("automation").s("name")); }
     if t.b("coordinator") { return format!("the {}, asked by the human", coordinator_name(t)); }
     "the human".into()
 }
-/// The coordinator whose pane added it, by its name: another machine's task names that machine.
-fn coordinator_name(t: &Obj) -> String {
-    let co = super::record::co_of("", t.s("coordinator"));
-    match (&co.level, t.b("host")) { (Level::Machine, true) => named(t.s("host")), (_, true) => format!("{} on {}", co.name(), t.s("host")), _ => co.name() }
-}
+/// The coordinator whose pane added it, by its name.
+fn coordinator_name(t: &Obj) -> String { super::record::co_of("", t.s("coordinator")).name() }
 fn ended_at(t: &Obj) -> i64 { [t.i("archivedAt"), t.i("mergedAt"), t.i("at"), t.i("updated")].into_iter().max().unwrap_or(0) }
 fn past(co: &Co) -> Vec<Obj> {
     let since = now() - DAYS * 86_400_000;

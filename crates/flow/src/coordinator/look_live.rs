@@ -1,6 +1,6 @@
 //! What a coordinator's row says of it, as a task's mark and time say of its agent: what it asks you while it waits
 //! for you (its question, or that it wants your OK: the mark `?` or `!`), when its turn began and when it last said
-//! something. Worked out where it runs, and sent with its tasks to another machine.
+//! something. Worked out where it runs.
 use super::look::Look;
 
 /// The last line of something said, kept to one line.

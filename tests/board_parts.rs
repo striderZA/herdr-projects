@@ -58,20 +58,20 @@ fn done_comes_last_below_to_do_with_its_fold_line_at_the_bottom() {
     let shape = |s: &common::board::Board| -> Vec<String> { s.s.rows.iter().map(|r| match r { Row::Head { name, .. } => name.clone(), Row::Note(n) => n.clone(), Row::Rec(o) => o.t("id"), Row::Auto(a) => a.t("row") }).collect() };
     let note = |n: usize| format!("↓ {n} done ({} shows them)", key_name("allDone"));
     // No done task shows: one line under the done heading counts them (update/list.rs). Under the top row, this machine's.
-    let by_status: Vec<String> = vec![sw::board::update::remotes::shown(&s.s, ""), "needs you".into(), asks.clone(), "working".into(), working.clone(), "to do".into(), newer.clone(), older.clone(), "done".into(), note(7)];
+    let by_status: Vec<String> = vec![sw::board::update::heads::label(&s.s), "needs you".into(), asks.clone(), "working".into(), working.clone(), "to do".into(), newer.clone(), older.clone(), "done".into(), note(7)];
     assert_eq!(shape(&s), by_status);
     s.s.sel = older.clone(); s.load();
-    s.press(&["down"]); assert_eq!(s.s.sel, "head:status\t\tdone", "the arrows stop on a heading too");
-    s.press(&["down"]); assert_eq!(s.s.sel, "head:status\t\tdone", "and on no done task");
+    s.press(&["down"]); assert_eq!(s.s.sel, "head:status\tdone", "the arrows stop on a heading too");
+    s.press(&["down"]); assert_eq!(s.s.sel, "head:status\tdone", "and on no done task");
     s.press(&["up", "up", "up", "up"]); assert_eq!(s.s.sel, working);
     s.press(&["down", "down", "down"]); assert_eq!(s.s.sel, older);
     s.press(&["alt+s"]); assert!(s.s.by_repo); assert_eq!(s.s.sel, older);
-    let by_repo: Vec<String> = vec![sw::board::update::remotes::shown(&s.s, ""), "proj".into(), asks.clone(), working.clone(), newer.clone(), older.clone(), note(7)];
+    let by_repo: Vec<String> = vec![sw::board::update::heads::label(&s.s), "proj".into(), asks.clone(), working.clone(), newer.clone(), older.clone(), note(7)];
     assert_eq!(shape(&s), by_repo);
-    s.press(&["alt+s", "alt+s"]); assert_eq!(s.s.sel, older); assert_eq!(shape(&s), by_status); // by machine, then by status
+    s.press(&["alt+s"]); assert_eq!(s.s.sel, older); assert_eq!(shape(&s), by_status); // by status again
     // A pinned done task stays among the done ones, where it always sorts (a pin moves nothing).
     sw::actions::filing::pin(&done[6]).unwrap(); s.press(&["alt+d"]); s.load();
-    let mut pinned: Vec<String> = vec![sw::board::update::remotes::shown(&s.s, ""), "needs you".into(), asks.clone(), "working".into(), working.clone(), "to do".into(), newer.clone(), older.clone(), "done".into()];
+    let mut pinned: Vec<String> = vec![sw::board::update::heads::label(&s.s), "needs you".into(), asks.clone(), "working".into(), working.clone(), "to do".into(), newer.clone(), older.clone(), "done".into()];
     pinned.extend(done[..7].iter().cloned());
     assert_eq!(shape(&s), pinned, "all done: every one of them");
     s.s.sel = newer.clone(); s.load();
@@ -198,7 +198,7 @@ fn a_selected_or_pinned_done_task_is_folded_away_and_counted_too() {
     s.press(&["alt+d"]);
     let t = text(&mut s);
     assert!(!t.contains("✓") && t.contains(&note(3)), "{t}");
-    assert_eq!(s.s.sel, "head:status\t\tdone");
+    assert_eq!(s.s.sel, "head:status\tdone");
     // Pinned, it stays among the done ones (a pin moves nothing): folded away all the same, and counted.
     sw::actions::filing::pin(&ids[1]).unwrap(); s.load();
     let t = text(&mut s);

@@ -138,7 +138,7 @@ fn on_a_nearly_full_disk_a_start_sweeps_then_waits_in_the_queue_with_a_plain_lin
     delegate(&id);
     let t = settle(&id);
     assert_eq!(t.s("stage"), "queued");
-    let host = sw::remote::check::hostname();
+    let host = sw::util::hostname();
     assert!(t.s("msg").starts_with(&format!("Disk nearly full on {host}: 3.1 GB free on ")), "{}", t.s("msg"));
     assert!(t.s("msg").contains("this task starts once 5.0 GB is free (board.diskFree). Free some space: herdr-projects sweep"), "{}", t.s("msg"));
     assert!(!t.b("worktree") && !calls(&w).iter().any(|c| c.starts_with("agent start")), "nothing was started");
@@ -155,19 +155,6 @@ fn on_a_nearly_full_disk_a_start_sweeps_then_waits_in_the_queue_with_a_plain_lin
     sw::store::settings::change::set_value("board.diskFree", &json!(0), &sw::store::settings::lookup::Scope::you()).unwrap();
     unsafe { std::env::set_var("HERDR_PROJECTS_FREE", "1") };
     assert!(sw::leftovers::room::low(&t).is_none());
-}
-
-#[test]
-fn herdr_projects_machines_says_each_machine_s_free_disk() {
-    let r = json!({ "here": { "label": "vm-str", "here": true, "ok": true, "version": "1.2.12", "shell": "/bin/bash", "free": 778_000_000u64 },
-        "machines": [{ "label": "vm-a", "target": "me@vm-a", "ok": true, "version": "1.2.12", "tasks": 2, "free": 21_000_000_000u64 }, { "label": "vm-b", "target": "me@vm-b", "ok": true, "version": "1.2.0", "tasks": 1, "free": null }] });
-    let said = sw::remote::check::say(&r);
-    assert!(said.contains("vm-str  this machine: a login shell (/bin/bash) finds herdr-projects 1.2.12 · 778 MB free\n"), "{said}");
-    assert!(said.contains("vm-a    answers · herdr-projects 1.2.12 · 2 tasks · 21 GB free  (me@vm-a)"), "{said}");
-    assert!(said.contains("vm-b    answers · herdr-projects 1.2.0 · 1 task  (me@vm-b)"), "an older one says nothing of it: {said}");
-    let w = world();
-    assert_eq!(sw::remote::remote_list().at("free"), &json!(1_000_000_000_000u64));
-    drop(w);
 }
 
 #[test]
@@ -208,7 +195,7 @@ fn a_disk_smaller_than_twice_board_disk_free_needs_half_of_itself_free_and_its_l
     delegate(&b);
     let t = settle(&b);
     assert_eq!(t.s("stage"), "queued");
-    let host = sw::remote::check::hostname();
+    let host = sw::util::hostname();
     assert!(t.s("msg").starts_with(&format!("Disk nearly full on {host}: 1.2 GB free on ")), "{}", t.s("msg"));
     assert!(regex::Regex::new(r"; this task starts once 1\.7 GB is free \(\S+ is only 3\.4 GB in all, so it needs 1\.7 GB free, not the 5\.0 GB of board\.diskFree\)\. Free some space: herdr-projects sweep").unwrap().is_match(t.s("msg")), "{}", t.s("msg"));
     assert!(t.at("diskWait").s("on").starts_with('/'), "the disk it waits for: {}", t.at("diskWait"));

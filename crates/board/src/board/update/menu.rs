@@ -17,7 +17,6 @@ const MINE: &str = "your own settings: what every task starts from";
 pub fn label(s: &State, k: K, r: Option<&Obj>) -> String {
     if r.is_none() { if let Some(w) = super::pilot::menu_label(s, k) { return w; } } // a coordinator's row
     let st = |x: &str| r.map(|r| r.s("stage") == x).unwrap_or(false);
-    let next_scope = super::remotes::scope_next(s);
     match k {
         K::Yes => if st("pick") { "yes: keep the selected attempt".into() } else { "yes: approve the merge, say yes, retry, take it as it is".into() },
         K::SendBack => "send it back: tell the agent to fix it, or to continue".into(),
@@ -34,7 +33,7 @@ pub fn label(s: &State, k: K, r: Option<&Obj>) -> String {
             (Some(e), _) if e.whose.mine() => "back from your settings".into(),
             (Some(_), _) => "back from this task's settings".into(),
             (None, Some(_)) => "this task's settings: see and change each one".into(),
-            (None, None) => match super::edit::whose_here(s) { Ok(Whose::Repo(repo)) => format!("your settings for {}: what its tasks start from", crate::shown::words::repo_label(&repo)), Ok(_) => MINE.into(), Err(why) => why },
+            (None, None) => match super::edit::whose_here(s) { Whose::Repo(repo) => format!("your settings for {}: what its tasks start from", crate::shown::words::repo_label(&repo)), _ => MINE.into() },
         },
         K::Undo => if s.draft_away.is_some() { "undo: bring back what you typed".into() } else if s.archive_undo.is_some() { "undo the archive".into() } else { "undo".into() },
         K::Find => "find: show only the tasks that match".into(),
@@ -46,13 +45,8 @@ pub fn label(s: &State, k: K, r: Option<&Obj>) -> String {
         K::Side => format!("{} the side panel: this task, beside the list", if s.side { "hide" } else { "show" }),
         K::Panel => if s.full { "back to the list".into() } else { "show the whole task, full screen".into() },
         K::ArchiveView => format!("{} the archive", if s.archive_view { "hide" } else { "show" }),
-        K::ByRepo => if s.by_machine { "group by status".into() } else if s.by_repo { "group by machine: each machine's tasks under its name".into() } else { "group by repo: see which repo each task is in".into() },
+        K::ByRepo => if s.by_repo { "group by status".into() } else { "group by repo: see which repo each task is in".into() },
         K::AllDone => if s.all_done { "hide the done tasks".into() } else { "show all done".into() },
-        K::Scope => {
-            let to = if super::remotes::seeks(s) { "look for other machines".to_string() } else if next_scope.is_empty() { "show this machine's tasks only".to_string() } else if next_scope == "*" { "show every machine's tasks".into() } else { format!("show only {next_scope}'s tasks") };
-            let now = if s.scope.is_empty() { "this machine".to_string() } else if s.scope == "*" { "every machine".into() } else { format!("only {}", s.scope) };
-            format!("{to} (now: {now})")
-        }
         _ => String::new(),
     }
 }

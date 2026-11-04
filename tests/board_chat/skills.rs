@@ -73,7 +73,7 @@ fn a_repos_coordinator_lists_the_skills_of_its_repo_and_the_coordinator_not() {
     w.add("Fix the login");
     let mut s = open(&w.root, 34);
     s.press(&["alt+s"]);
-    s.s.sel = sw::board::update::heads::group_id(&s.s, "", "proj"); s.load();
+    s.s.sel = sw::board::update::heads::group_id(&s.s, "proj"); s.load();
     s.press(&["space"]);
     s.typed("/tri");
     assert!(s.text().contains("/triage  Sort the open issues"), "{}", s.text());

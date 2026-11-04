@@ -202,11 +202,6 @@ impl Herdr {
             .map(|j| if j.at("result").at("plugins").is_array() { j.at("result").arr("plugins").to_vec() } else { j.arr("plugins").to_vec() }).unwrap_or_default()
     }
     pub fn plugin_config_dir(&self, id: &str) -> String { run_raw(None, &args(&["plugin", "config-dir", id]), 5000, "").map(|s| s.trim().to_string()).unwrap_or_default() }
-    pub fn machines(&self) -> Vec<Value> {
-        let Some(j) = run_raw(None, &args(&["machine", "list", "--json"]), 30000, "").ok().and_then(|t| serde_json::from_str::<Value>(&t).ok()) else { return vec![] };
-        if let Some(a) = j.as_array() { return a.clone(); }
-        if j.at("machines").is_array() { j.arr("machines").to_vec() } else { j.at("result").arr("machines").to_vec() }
-    }
 }
 /// Takes a pane's terminal back from whatever else is attached to it.
 pub fn take_terminal(h: &Herdr, pane: &str, cols: u16, rows: u16) -> HRes<()> {

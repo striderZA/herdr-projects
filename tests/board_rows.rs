@@ -104,17 +104,7 @@ fn a_tight_row_keeps_the_tasks_name_then_the_columns_on_the_right_what_a_live_ta
     assert!(has(&rows[0], r"Fix login +█+░+ +55% {2}PR#3 +6m$") && has(&rows[1], r"board +█+░+ +20% +6m$"), "{rows:?}");
     let rows = draw(&mut s, &records, 75);
     assert!(has(&rows[0], r"Fix login +55% {2}PR#3 +6m$") && has(&rows[1], r"Fix layout for task names in narrow terminal board +20% +6m$"), "the long name has no room for a bar: neither row has one: {rows:?}");
-    // All machines: the machine is the heading's, never in the row's tag (a long machine name takes nothing from it).
-    s.scope = "*".into();
-    let far = with(&records[0], json!({ "host": "very-long-machine-name-on-the-tailnet" }));
-    let one = |s: &mut State, w: usize| { let l = lay(s, &t, std::slice::from_ref(&far), w, 200); row(s, &t, &far, w, &l).text() };
-    assert!(has(&one(&mut s, 120), r"^ ◐ #8 Fix login +█"), "{}", one(&mut s, 120));
-    assert!(has(&one(&mut s, 53), r"^ ◐ #8 Fix login +(█+░+ +)?55% {2}PR#3 +6m$"), "{}", one(&mut s, 53));
-    assert!(has(&one(&mut s, 44), r"^ ◐ (#8 )?Fix login +(█+░+ +)?(55% {2})?PR#3 +6m$"), "{}", one(&mut s, 44));
-    assert!(has(&one(&mut s, 29), r"^ \S (#8 )?Fix login +(55% {2})?PR#3 +6m$"), "{}", one(&mut s, 29));
-    assert!(has(&one(&mut s, 27), r"^ \S (#8 )?Fix login +PR#3 +6m$"), "{}", one(&mut s, 27));
-    assert!(has(&one(&mut s, 18), r"^ \S Fix login +6m$"), "too narrow for the task's number: it went too: {}", one(&mut s, 18));
-    for width in [200, 60, 40, 30, 24, 16] { assert!(len(&one(&mut s, width)) <= width, "fits {width}"); }
+
 }
 
 #[test]

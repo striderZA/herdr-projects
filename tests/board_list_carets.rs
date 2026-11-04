@@ -29,7 +29,7 @@ fn a_heading_that_folds_has_a_caret_that_says_which_way() {
     let caret = inked[todo].0.iter().find(|p| p.t.contains('▾')).map(|p| p.c);
     assert_eq!(caret, Some(Ink::Muted));
     // Folded (←): `▸`, and how many tasks it holds.
-    s.s.sel = "head:status\t\tto do".into(); s.load();
+    s.s.sel = "head:status\tto do".into(); s.load();
     s.press(&["left"]);
     let lines = s.screen(80);
     assert!(lines.iter().any(|l| l == "▌  ▸ to do  2 tasks"), "{}", lines.join("\n"));
@@ -42,11 +42,11 @@ fn a_heading_that_folds_has_a_caret_that_says_which_way() {
     }
     s.press(&["right"]);
     // The automations' heading folded: `1 automation`, its row gone.
-    for _ in 0..5 { if s.s.sel == "head:status\t\tautomations" { break; } s.press(&["down"]); }
+    for _ in 0..5 { if s.s.sel == "head:status\tautomations" { break; } s.press(&["down"]); }
     s.press(&["left"]);
     let lines = s.screen(80);
     assert!(lines.iter().any(|l| l == "▌  ▸ automations  1 automation") && !lines.iter().any(|l| l.contains("Nightly")), "{}", lines.join("\n"));
-    s.press(&["right"]); for _ in 0..5 { if s.s.sel == "head:status\t\tto do" { break; } s.press(&["up"]); }
+    s.press(&["right"]); for _ in 0..5 { if s.s.sel == "head:status\tto do" { break; } s.press(&["up"]); }
     let narrow = s.screen(12);
     assert!(narrow.iter().any(|l| l.starts_with("▌ ▾ to do")), "{}", narrow.join("\n"));
 }

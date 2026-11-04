@@ -13,7 +13,6 @@ pub fn tick(s: &mut State, now: i64, fx: &mut Vec<Effect>) {
     s.ticks += 1;
     if let Some((until, _)) = s.closing { if now >= until { s.closing = None; } }
     if s.leaving && now >= s.leave_at { fx.push(Effect::Close); }
-    if s.all() && s.ticks % 5 == 0 { fx.push(Effect::Poll(false)); }
     // herdr is asked what it shows of the board's pane every two seconds (size.rs).
     if s.ticks % 2 == 0 && !s.ctx.pane.is_empty() { s.size.ask = true; }
     if super::pending::tick(s) { relist(s); }

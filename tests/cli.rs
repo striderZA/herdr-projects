@@ -59,7 +59,7 @@ fn real_programs_a_flag_a_command_does_not_know_is_refused_with_the_nearest_righ
     refused(&w, &["--archived"], r"herdr-projects does not know --archived\. It takes: --skill, --json, --help");
     refused(&w, &["nonsense", "--x"], r#"Unknown command "nonsense""#);
     refused(&w, &["help", "--bogus"], r"help does not know --bogus\. It takes: --json, --help");
-    for hidden in ["hook", "keeper", "keeper-work", "open", "open-coordinator", "approve-current", "run", "turn-ended", "plan-written", "skill", "remote"] { refused(&w, &[hidden, "--bogus"], &format!("{hidden} does not know --bogus")); }
+    for hidden in ["hook", "keeper", "keeper-work", "open", "open-coordinator", "approve-current", "run", "turn-ended", "plan-written", "skill"] { refused(&w, &[hidden, "--bogus"], &format!("{hidden} does not know --bogus")); }
     refused(&w, &["turn-ended", "--id", "x", "--rol", "agent"], r"turn-ended does not know --rol\. Did you mean --role\?");
     refused(&w, &["automations", "list", "--review.wen", "never"], r"automations list does not know --review\.wen: it takes no settings \(and the setting is named review\.when\)\. It takes: --json, --help");
     refused(&w, &["automations", "on", "n", "--prompt", "p"], r"automations on does not know --prompt");

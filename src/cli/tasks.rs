@@ -40,8 +40,6 @@ pub fn command(cmd: &str, a: &Args) -> Res<(Value, String)> {
     // Who runs it decides what is allowed (autopilot/allow.rs): Some, a coordinator's autopilot turn.
     let me = caller();
     let pilot = crate::autopilot::allow::guard(cmd, pos, flags, me.as_ref().map(|(t, r)| (t, *r)))?;
-    // Another machine's task (`vm-b:web/7`): the action is that machine's (remote/act.rs).
-    if let Some(out) = crate::remote::act::far_command(cmd, pos, flags, pilot.is_some())? { if let Some(co) = &pilot { crate::autopilot::allow::note(co, cmd, pos); } return Ok(out); }
     let out = match cmd {
         "add" | "new" => {
             need(1, "a title")?;
@@ -50,8 +48,6 @@ pub fn command(cmd: &str, a: &Args) -> Res<(Value, String)> {
             // What it is to wait for is checked before it is added: a refused --after adds nothing.
             let after = flag("after").map(|r| crate::after::checked(None, &crate::after::refs_of(&r))).transpose()?;
             let opts = filing::AddOpts { description: flag("desc").or_else(|| flag("description")).unwrap_or_default(), repo: flag("repo").unwrap_or_default(), research, settings, from };
-            // On another machine the board knows (remote/add.rs); in an autopilot turn within its limits (autopilot/add.rs).
-            if let Some(on) = flag("on") { return add_on(&on, &rest(1), opts, flags.b("delegate"), pilot.as_ref()); }
             // In an autopilot turn: within its limits, and started at once by `autopilot.startAtOnce` (autopilot/add.rs).
             let (t, start, dropped) = match &pilot {
                 Some(co) => { let a = crate::autopilot::add::add(co, &here, &rest(1), opts, after.as_deref().unwrap_or(&[]), flags.b("delegate"))?; (a.task, a.start, crate::autopilot::add::dropped_words(&a.dropped)) }
@@ -129,13 +125,12 @@ pub fn command(cmd: &str, a: &Args) -> Res<(Value, String)> {
         "fix" => said(finish_line::send_failure(&need(1, "an id")?)?),
         "finish" => said(finish_line::finish_anyway(&need(1, "an id")?)?),
         "details" => { let mut d = tidy(finish_line::details(&need(1, "an id")?)?); if pilot.is_some() { crate::autopilot::history::with_note(&mut d); } let s = serde_json::to_string_pretty(&d).unwrap_or_default(); (d, s) }
-        // A task, a machine or a project, here or on another machine (cli/pins.rs).
+        // A task or a project (cli/pins.rs).
         "pin" | "unpin" => super::pins::command(cmd, pos, flags, &shown_of)?,
         // A round of work is over: every done task of a repo (or of every repo) in one go.
         "archive" if flags.b("done") => {
             if pos.len() > 1 { crate::fail!("archive --done takes no id: it archives every done task (of --repo NAME). Try: herdr-projects help"); }
             if flags.has("repo") && flag("repo").is_none() { crate::fail!("--repo needs a repo's name: herdr-projects archive --done --repo NAME"); }
-            if flags.has("on") { crate::fail!("--on goes with a whole project: herdr-projects archive --repo NAME --on MACHINE"); }
             let r = archive_done::archive_done(flag("repo").as_deref())?;
             (r.json(), r.said)
         }
@@ -143,14 +138,10 @@ pub fn command(cmd: &str, a: &Args) -> Res<(Value, String)> {
         "archive" | "restore" | "unarchive" if flags.has("repo") => {
             if pos.len() > 1 { crate::fail!("{cmd} --repo NAME takes no id: it {cmd}s the whole project. Try: herdr-projects help"); }
             let Some(repo) = flag("repo") else { crate::fail!("--repo needs a repo's name: herdr-projects {cmd} --repo NAME") };
-            // Another machine's project: done there, by that machine itself (remote/projects.rs).
-            if flags.has("on") && flag("on").is_none() { crate::fail!("--on needs a machine's name: herdr-projects {cmd} --repo NAME --on MACHINE"); }
-            if let Some(on) = flag("on").filter(|on| !crate::after::circle::is_me(on)) { return crate::remote::projects::command(&on, cmd == "archive", &repo); }
             let (said, ids) = if cmd == "archive" { archive_project::archive_project(&repo)? } else { archive_project::restore_project(&repo)? };
             let mut out = obj(json!({ "repo": repo })); out.put(if cmd == "archive" { "archived" } else { "restored" }, ids);
             (Value::Object(out), said)
         }
-        "archive" | "restore" | "unarchive" if flags.has("on") => crate::fail!("--on goes with a whole project: herdr-projects {cmd} --repo NAME --on MACHINE"),
         "archive" => { let t = archive::archive(&need(1, "an id")?)?; (shown_of(t.s("id")), format!("{}: archived", t.s("id"))) }
         "restore" | "unarchive" => { let t = archive::restore(&need(1, "an id")?)?; (shown_of(t.s("id")), format!("{}: restored", t.s("id"))) }
         "clear" => {
@@ -159,7 +150,7 @@ pub fn command(cmd: &str, a: &Args) -> Res<(Value, String)> {
             (json!({ "id": id, "kept": kept, "stillRunning": ends.left }), crate::leftovers::then_say(&text, &ends.said()))
         }
         "set" | "unset" | "show" => {
-            let coord = if flags.b("main-coordinator") { Some("main".to_string()) } else if flags.b("machine-coordinator") { Some("machine".into()) } else { flag("project-coordinator").map(|r| format!("project:{r}")) };
+            let coord = if flags.b("main-coordinator") { Some("main".to_string()) } else { flag("project-coordinator").map(|r| format!("project:{r}")) };
             if flags.has("project-coordinator") && coord.is_none() { crate::fail!("--project-coordinator needs a repo's name: herdr-projects {cmd} <name> --project-coordinator <repo>"); }
             let w = Where { task: flag("task"), repo: flag("repo"), automation: flag("automation"), coord };
             settings_command(cmd, pos, &w, if pos.len() > 2 { Some(json!(rest(2))) } else { None })?
@@ -169,7 +160,6 @@ pub fn command(cmd: &str, a: &Args) -> Res<(Value, String)> {
         "coordinator" => coordinator(a, &here, me.as_ref())?,
         "autopilot" => crate::autopilot::command::autopilot_command(&pos[1..], flags)?,
         "sweep" => { let r = crate::leftovers::sweep::sweep_with(flags.b("dry")); let s = crate::leftovers::sweep::say(&r); (r, s) }
-        "machines" => { let r = crate::remote::check::check(20000); let s = crate::remote::check::say(&r); (r, s) }
         "remove-extras" => {
             let r = obj(crate::extras::remove_extras());
             let text = format!("Removed: the how-to files{}. The how-to is not written again and the key question will not be asked again.", if r.b("blocks") { " and the plugin's blocks in herdr's config (a backup is beside it)" } else { "" });
@@ -183,22 +173,11 @@ pub fn command(cmd: &str, a: &Args) -> Res<(Value, String)> {
     Ok(out)
 }
 mod finish_line_said { pub use crate::actions::shared::Said; }
-fn add_on(on: &str, title: &str, mut o: crate::actions::filing::AddOpts, delegate: bool, pilot: Option<&crate::coordinator::co::Co>) -> Res<(Value, String)> {
-    if let Some(r) = o.research { o.settings.push(("research.only".into(), json!(r))); }
-    let (j, dropped) = match pilot {
-        Some(co) => crate::autopilot::add::add_far(co, on, title, o, delegate)?,
-        None => (crate::remote::add::add_there(on, title, &o.description, &o.repo, &o.settings, delegate, Value::Null)?, vec![]),
-    };
-    let said = format!("{}{}", j.s("msg"), crate::autopilot::add::dropped_words(&dropped));
-    Ok((j, said))
-}
-
 fn coordinator(a: &Args, here: &std::path::Path, me: Option<&(Obj, &str)>) -> Res<(Value, String)> {
     use crate::coordinator::{look, requests as r, state, who};
     let flag = |k: &str| a.flags.get(k).map(text).unwrap_or_default();
-    // Which one: the top-level Coordinator, this machine's (--machine), or a repo's (--project <repo>).
-    let socket = if a.flags.b("project") { let repo = flag("project"); crate::coordinator::co::Co::project(&current_socket(), &crate::store::repos::known_repos().keys().find(|k| k.to_lowercase() == repo.to_lowercase()).cloned().unwrap_or(repo)).key() }
-        else if a.flags.b("machine") { crate::coordinator::co::Co::machine(&current_socket()).key() } else { current_socket() };
+    // Which one: the top-level Coordinator, or a repo's (--project <repo>).
+    let socket = if a.flags.b("project") { let repo = flag("project"); crate::coordinator::co::Co::project(&current_socket(), &crate::store::repos::known_repos().keys().find(|k| k.to_lowercase() == repo.to_lowercase()).cloned().unwrap_or(repo)).key() } else { current_socket() };
     let name = crate::coordinator::co::Co::from(&socket).name();
     let what = a.pos.get(1).map(|s| s.as_str()).unwrap_or("status");
     let rest = a.pos.iter().skip(2).cloned().collect::<Vec<_>>().join(" ");

@@ -15,24 +15,10 @@ use crate::shown::ink::Ink;
 use crate::shown::states::{failed_review, failure_for, is_agent, stuck_finishing};
 use crate::shown::words::{clean, pr_number};
 
-pub fn name(s: &State, r: &Obj) -> String { name_say(r, &s.data.keys, &s.scope, 40) }
+pub fn name(s: &State, r: &Obj) -> String { name_say(r, &s.data.keys, 40) }
 pub fn go(_s: &mut State, j: Job, fx: &mut Vec<Effect>) { fx.push(Effect::Run(j)); }
-fn far(s: &State, r: &Obj, action: &str, extra: Value, quiet: bool) -> Job {
-    let m = s.remotes.get(r.s("host")).map(|m| m.machine.clone()).unwrap_or_default();
-    let mut req = obj(extra); req.put("id", r.t("rid"));
-    Job::Far { machine: m, host: r.t("host"), action: action.into(), req: Value::Object(req), quiet }
-}
-/// The same action on whichever machine has the task, said while it is on its way there.
-fn act(s: &mut State, r: &Obj, action: &str, extra: Value, local: Job, fx: &mut Vec<Effect>) {
-    if r.b("host") {
-        let doing = match action { "pin" => if r.b("pinned") { "Unpinning" } else { "Pinning" }, "archive" => "Archiving", "restore" => "Restoring", "delegate" => "Putting an agent on", "stop" => "Stopping", "clear" => "Removing", "approve" => "Merging", "set" => "Changing a setting of", _ => "Sending to" };
-        let tag = crate::board::tags::id_say(r, &s.data.keys, &s.scope);
-        s.flash(format!("{doing} {tag} on {}…", r.s("host")), Ink::Muted);
-        fx.push(Effect::Run(far(s, r, action, extra, false)));
-    } else { fx.push(Effect::Run(local)); }
-}
 /// A reply to this task goes to an agent of its own (not, with its task named, to the Coordinator).
-pub fn has_agent(r: &Obj) -> bool { is_agent(r) && (r.b("host") || crate::flow::task::is_agent_task(r) || crate::flow::git::cleaned_up(r) || r.s("stage") == "attempts") }
+pub fn has_agent(r: &Obj) -> bool { is_agent(r) && (crate::flow::task::is_agent_task(r) || crate::flow::git::cleaned_up(r) || r.s("stage") == "attempts") }
 
 // ---- enter and tab ---------------------------------------------------------------------------------------------------
 pub fn enter(s: &mut State, text: &str, r: Option<&Obj>, fx: &mut Vec<Effect>) {
@@ -47,9 +33,9 @@ pub fn enter(s: &mut State, text: &str, r: Option<&Obj>, fx: &mut Vec<Effect>) {
     let reply_to = if s.reply { r.cloned() } else { None };
     match &reply_to {
         // A reply to one of this machine's tasks that never had an agent starts one with that message.
-        Some(r) if !r.b("host") && !is_agent(r) && ["todo", "progress"].contains(&r.s("stage")) => fx.push(Effect::Run(Job::Tell { id: r.t("id"), text: words.trim().to_string(), fresh: true })),
+        Some(r) if !is_agent(r) && ["todo", "progress"].contains(&r.s("stage")) => fx.push(Effect::Run(Job::Tell { id: r.t("id"), text: words.trim().to_string(), fresh: true })),
         Some(r) if has_agent(r) => {
-            if r.b("host") { fx.push(Effect::Run(far(s, r, "tell", json!({ "text": words.trim() }), false))); } else { fx.push(Effect::Run(Job::Tell { id: r.t("id"), text: words.trim().to_string(), fresh: false })); }
+            fx.push(Effect::Run(Job::Tell { id: r.t("id"), text: words.trim().to_string(), fresh: false }));
             super::chat::note_sent(s, r.s("id"), words.trim()); // yours in its chat at once, not when it got there
         }
         _ => dispatch(s, words.trim(), false, reply_to.as_ref(), fx),
@@ -64,31 +50,17 @@ pub fn tab(s: &mut State, text: &str, r: Option<&Obj>, fx: &mut Vec<Effect>) {
     let n = name(s, r);
     // One that waits for other tasks to be done starts by itself: early only on a yes.
     if r.s("stage") == crate::after::STAGE {
-        let job = if r.b("host") { far(s, r, "delegate", json!({ "now": true }), false) } else { Job::Delegate { id: r.t("id"), name: n.clone(), now: true } };
+        let job = Job::Delegate { id: r.t("id"), name: n.clone(), now: true };
         let why = if r.b("afterBlocked") { format!("It waits for you: {}.", r.s("afterBlocked")) } else { format!("It {}.", crate::after::waiting_words(r).unwrap_or_default()) };
         return confirm(s, format!("Start {n} now?"), job, Valid::Always, vec![("sayYes", "start now".into()), ("sayNo", "let it wait".into())], why, false);
     }
-    act(s, r, "delegate", json!({}), Job::Delegate { id: r.t("id"), name: n, now: false }, fx);
+    go(s, Job::Delegate { id: r.t("id"), name: n, now: false }, fx);
 }
-/// What you typed, for the Coordinator: this machine's one long-lived agent, or another machine's (for a task of
-/// theirs you have open, or when the words start with its name: "@vm-a fix the build"). With no Coordinator what you
-/// type is added as a task, word for word.
+/// What you typed, for the Coordinator: this machine's one long-lived agent. With no Coordinator what you type is
+/// added as a task, word for word.
 pub fn dispatch(s: &mut State, text: &str, delegate: bool, about: Option<&Obj>, fx: &mut Vec<Effect>) {
-    let named = crate::re!(r"^@?([A-Za-z0-9_.-]+)[:\s]\s*([\s\S]+)$").captures(text).map(|c| (c[1].to_string(), c[2].to_string()));
-    let at_named = named.as_ref().filter(|(m, _)| s.all() && (text.starts_with('@') || text[m.len()..].starts_with(':'))).and_then(|(m, _)| s.remotes.get(m)).map(|m| m.machine.label.clone());
-    let there = match about { Some(a) if a.b("host") => Some(a.t("host")), Some(_) => at_named, None => at_named.or_else(|| s.remotes.get(&s.scope).map(|m| m.machine.label.clone())) };
-    if let Some(label) = there.filter(|l| s.remotes.contains_key(l)) {
-        let named_here = named.as_ref().map(|(m, _)| *m == label).unwrap_or(false);
-        let words = if about.map(|a| a.b("host")).unwrap_or(false) || !named_here { text.to_string() } else { named.unwrap().1 };
-        let m = s.remotes[&label].machine.clone();
-        // To the Coordinator of the machine whose board shows: the chat shows it as yours at once.
-        if about.is_none() { if let Some(t) = super::coords::far_top(s).filter(|t| t.host == label) { super::chat::note_coord(s, &t, &words); } }
-        fx.push(Effect::Run(Job::Dispatch { machine: m, text: words, delegate, about: about.filter(|a| a.b("host")).map(|a| a.t("rid")).unwrap_or_default(), to: String::new() }));
-        fx.push(Effect::Load);
-        return;
-    }
     if !s.data.can_dispatch {
-        if let Some(a) = about.filter(|a| !a.b("host")) { fx.push(Effect::Run(Job::Describe { id: a.t("id"), text: text.into() })); return; }
+        if let Some(a) = about { fx.push(Effect::Run(Job::Describe { id: a.t("id"), text: text.into() })); return; }
         fx.push(Effect::Run(Job::Add { cwd: s.ctx.cwd.clone(), text: text.into(), delegate }));
         return;
     }
@@ -98,17 +70,6 @@ pub fn dispatch(s: &mut State, text: &str, delegate: bool, about: Option<&Obj>, 
 /// Into the selected task's agent: its real herdr pane (attempts.rs: the selected attempt's while one is picked).
 pub fn open_agent(s: &mut State, r: &Obj, fx: &mut Vec<Effect>) {
     if r.b("archivedAt") { return open_panel(s); }
-    if r.b("host") {
-        if !r.at("link").b("pane") { return s.flash(format!("No agent has been on this yet. {} puts one on it.", key_name("delegate")), Ink::Yellow); }
-        // Looked at through a remote view this terminal must not become that agent's: the way back would not get through.
-        if s.guest || s.viewed { return s.flash(format!("In that view, pick its agent in the sidebar under {}: “{}”. From here herdr's key for the way back would not get through while the view shows this pane.", r.s("host"), clean(if r.b("title") { r.s("title") } else { r.s("rid") })), Ink::Yellow); }
-        s.stick = r.t("id");
-        s.flash(format!("{}: opening…", r.s("host")), Ink::Muted);
-        // In a herdr window that machine's herdr puts it in front; outside one (plain SSH) this terminal attaches.
-        let mut j = far(s, r, "reopen", json!({ "pane": r.at("link").t("pane"), "focus": s.ctx.in_herdr }), true);
-        if let Job::Far { req, .. } = &mut j { req.as_object_mut().unwrap().put("pane", r.at("link").t("pane")); }
-        return fx.push(Effect::Run(j));
-    }
     let mut target = r.clone();
     if !crate::flow::task::is_agent_task(r) { if let Some(c) = attempt_now(s, r) {
         if !crate::flow::task::is_agent_task(&c) { return s.flash(format!("Attempt {} has no terminal {}.", c.s("letter"), if c.s("stage") == "queued" { "yet: it waits for a free slot" } else { "any more" }), Ink::Yellow); }
@@ -133,18 +94,18 @@ pub fn yes(s: &mut State, r: &Obj, fx: &mut Vec<Effect>) {
         // GitHub's checks failed on what would merge (land/checks.rs): a yes is a merge anyway, and asks as one.
         let checks = crate::land::checks::failed_on(r);
         let failed = bad_review || checks.is_some();
-        let onto = if r.b("host") { format!("{} on {}", if r.at("snap").b("landsOn") { r.at("snap").t("landsOn") } else { "its main branch".into() }, clean(r.s("host"))) } else if r.at("snap").b("landsOn") { r.at("snap").t("landsOn") } else { "main".into() };
-        let tag = number_tag(r, &s.data.keys, &s.scope, true);
+        let onto = if r.at("snap").b("landsOn") { r.at("snap").t("landsOn") } else { "main".into() };
+        let tag = number_tag(r, &s.data.keys);
         let what = [tag, format!("\"{}\"", clean(if r.b("title") { r.s("title") } else { r.s("id") }))].into_iter().filter(|x| !x.is_empty()).collect::<Vec<_>>().join(" ");
         let pr = pr_number(r);
         let seen = (r.at("pr").clone(), r.at("reviewedHead").clone());
-        let job = if r.b("host") { far(s, r, "approve", json!({ "seen": [seen.0, seen.1], "anyway": failed }), false) } else { Job::Approve { id: id.clone(), seen: Some(seen), anyway: failed } };
+        let job = Job::Approve { id: id.clone(), seen: Some(seen), anyway: failed };
         let mark = merge_mark(s, &id);
         let detail = format!("{}{}A merge cannot be undone.", if bad_review { format!("Its last review failed{}. ", if tally.is_empty() { String::new() } else { format!(": {tally}") }) } else { String::new() }, checks.map(|c| format!("{}{}. ", c[..1].to_uppercase(), &c[1..])).unwrap_or_default());
         return confirm(s, format!("Merge {what}{} into {onto}?", if pr.is_empty() { String::new() } else { format!(" ({pr})") }), job, Valid::Mark(id, mark),
             vec![("sayYes", if failed { "merge anyway" } else { "merge" }.into()), ("sayNo", "do not merge".into())], detail, true);
     }
-    let simple = |s: &mut State, action: &str, local: Job, fx: &mut Vec<Effect>| act(s, r, action, json!({}), local, fx);
+    let simple = |s: &mut State, _action: &str, local: Job, fx: &mut Vec<Effect>| go(s, local, fx);
     if is_agent(r) && r.s("state") == "blocked" && r.s("kind") == "permission" { return simple(s, "approve", Job::Approve { id, seen: None, anyway: false }, fx); }
     // A chat-only task that waits for your next message: yes ends the conversation, as it is (finish/chat_only.rs).
     if st("asks") && r.s("kind") != "auth" && crate::chat_only::is_chat(r) { return simple(s, "finish", Job::FinishAnyway { id }, fx); }
@@ -161,14 +122,14 @@ pub fn yes(s: &mut State, r: &Obj, fx: &mut Vec<Effect>) {
 pub fn send_back(s: &mut State, r: &Obj, fx: &mut Vec<Effect>) {
     if r.b("archivedAt") { return s.flash(read_only(), Ink::Yellow); }
     let id = r.t("id");
-    if r.s("stage") == "stopped" && r.b("limitStop") { return act(s, r, "retry", json!({}), Job::CarryOn { id }, fx); }
+    if r.s("stage") == "stopped" && r.b("limitStop") { return go(s, Job::CarryOn { id }, fx); }
     let failure = failure_for(r);
     if let Some(f) = &failure { if !f.b("agentCanFix") && !(r.s("stage") == "failed" && r.at("failure").b("auth")) { return s.flash(format!("This needs you first. {}", f.s("next")), Ink::Yellow); } }
     let review = r.at("review");
     if failure.is_none() && r.s("state") != "error" && !(review.b("text") && crate::gate::sendable(review)) { return s.flash("Nothing to send back here.", Ink::Muted); }
     let fix = failure.as_ref().map(|f| f.b("agentCanFix")).unwrap_or(false);
-    let (action, local) = if fix { ("fix", Job::SendFailure { id }) } else if r.s("state") == "error" { ("retry", Job::SendError { id }) } else { ("review", Job::SendReview { id }) };
-    act(s, r, action, json!({}), local, fx);
+    let local = if fix { Job::SendFailure { id } } else if r.s("state") == "error" { Job::SendError { id } } else { Job::SendReview { id } };
+    go(s, local, fx);
 }
 /// An agent is on it right now: at work, in a step of the finish line, waiting for you to answer it, or queued (for a
 /// slot, or after other tasks: stop stops the waiting).
@@ -181,17 +142,17 @@ pub fn running(r: &Obj) -> bool {
 pub fn stop(s: &mut State, r: &Obj, fx: &mut Vec<Effect>) {
     if !running(r) { return remove(s, r); }
     let said = format!("Stopped {}.", name(s, r));
-    act(s, r, "stop", json!({}), Job::Stop { id: r.t("id"), said }, fx);
+    go(s, Job::Stop { id: r.t("id"), said }, fx);
 }
 /// The question shows the whole title and what is really lost.
 pub fn remove(s: &mut State, r: &Obj) {
-    let tree = if r.b("host") { r.at("snap").t("tree") } else { r.at("snap").t("tree") };
+    let tree = r.at("snap").t("tree");
     let lost = format!("This cannot be undone. The task goes, with its description{} and what its agent said{}. {}{}",
         if r.b("review") || r.b("reviewRound") { ", its reviews" } else { "" }, if running(r) { "; its agent is stopped" } else { "" },
         if tree.is_empty() { "It has no worktree.".to_string() } else { format!("Its worktree {tree} goes too; work in it that is not saved or not merged is kept.") },
         if r.b("archivedAt") { String::new() } else { format!(" {} only archives it.", key_name("archive")) });
-    let n = name_say(r, &s.data.keys, &s.scope, usize::MAX);
-    let job = if r.b("host") { far(s, r, "clear", json!({}), false) } else { Job::Clear { id: r.t("id"), name: name(s, r) } };
+    let n = name_say(r, &s.data.keys, usize::MAX);
+    let job = Job::Clear { id: r.t("id"), name: name(s, r) };
     confirm(s, format!("Remove {n}?"), job, Valid::Always, vec![("sayYes", "remove".into()), ("sayNo", "keep".into())], lost, true);
 }
 pub fn undo(s: &mut State, fx: &mut Vec<Effect>) {
@@ -218,7 +179,7 @@ pub fn undo(s: &mut State, fx: &mut Vec<Effect>) {
     }
     let Some(r) = s.archive_undo.take() else { return s.flash("Nothing to undo.", Ink::Muted) };
     let said = format!("Restored {}.", name(s, &r));
-    act(s, &r, "restore", json!({}), Job::Restore { id: r.t("id"), said }, fx);
+    go(s, Job::Restore { id: r.t("id"), said }, fx);
 }
 pub fn archive_selected(s: &mut State, r: &Obj, fx: &mut Vec<Effect>) {
     let archiving = !r.b("archivedAt");
@@ -226,12 +187,12 @@ pub fn archive_selected(s: &mut State, r: &Obj, fx: &mut Vec<Effect>) {
     let n = name(s, r);
     let said = if archiving { format!("Archived {n}. {} undoes it; {} shows the archive.", key_name("undo"), key_name("archiveView")) } else { format!("Restored {n}.") };
     let local = if archiving { Job::Archive { id: r.t("id"), said } } else { Job::Restore { id: r.t("id"), said } };
-    act(s, r, if archiving { "archive" } else { "restore" }, json!({}), local, fx);
+    go(s, local, fx);
 }
 pub fn pin(s: &mut State, r: &Obj, fx: &mut Vec<Effect>) {
     if r.b("archivedAt") { return s.flash(read_only(), Ink::Yellow); }
     let n = name(s, r);
-    act(s, r, "pin", json!({}), Job::Pin { id: r.t("id"), name: n, key: key_name("pin") }, fx);
+    go(s, Job::Pin { id: r.t("id"), name: n, key: key_name("pin") }, fx);
 }
 /// The one key that changes who you talk to: the selected task's agent, and back to the Coordinator.
 pub fn flip_reply(s: &mut State, r: Option<&Obj>) {
@@ -258,7 +219,7 @@ pub fn toggle_side(s: &mut State, fx: &mut Vec<Effect>) {
     s.flash(if s.side { format!("Side panel on. {} hides it.", key_name("side")) } else { format!("Side panel off. {} shows it.", key_name("side")) }, Ink::Muted);
 }
 pub fn fold_panel(s: &mut State) { s.full = false; s.editing = None; s.panel_top = 0; relist(s); }
-pub fn open_panel(s: &mut State) { if s.current().is_none() && s.job().is_none() && super::pilot::selected(s).is_none() { return s.flash("Select a task first.", Ink::Muted); } s.full = true; s.panel_top = 0; }
+pub fn open_panel(s: &mut State) { if s.current().is_none() && super::pilot::selected(s).is_none() { return s.flash("Select a task first.", Ink::Muted); } s.full = true; s.panel_top = 0; }
 pub fn scroll_panel(s: &mut State, by: i64) { let last = s.panel_length.saturating_sub(s.panel_height) as i64; s.panel_top = (s.panel_top as i64 + by).clamp(0, last.max(0)) as usize; }
 pub fn free_size(s: &mut State, fx: &mut Vec<Effect>) {
     let by: Vec<i64> = s.held.as_ref().filter(|_| !s.guest).map(|h| h.by.iter().map(|b| b.0).collect()).unwrap_or_default();
@@ -291,8 +252,8 @@ pub fn pick_selected(s: &mut State, r: &Obj) {
     let Some(c) = attempt_now(s, r) else { return s.flash("This task has no attempts.", Ink::Muted) };
     let letter = c.t("letter");
     if standing_of(&c, s.now) != "passed" { return s.flash(format!("Attempt {letter} did not pass the check, so it cannot be kept. Move to one that passed."), Ink::Yellow); }
-    let job = if r.b("host") { far(s, r, "pick", json!({ "letter": letter }), false) } else { Job::Pick { id: r.t("id"), letter: letter.clone() } };
-    let tag = number_tag(r, &s.data.keys, &s.scope, true);
+    let job = Job::Pick { id: r.t("id"), letter: letter.clone() };
+    let tag = number_tag(r, &s.data.keys);
     confirm(s, format!("Keep attempt {letter} ({}) of {tag} \"{}\"?", agent_word(&c), clean(if r.b("title") { r.s("title") } else { r.s("id") })), job, Valid::Always,
         vec![("sayYes", format!("keep {letter}")), ("sayNo", "not yet".into())], "Only this one is reviewed, pushed and merged. The other attempts' tabs close; their worktrees stay until the task is done.".into(), false);
 }

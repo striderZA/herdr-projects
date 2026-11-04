@@ -17,9 +17,9 @@ fn could_be(d: &str) -> bool { d.starts_with(['/', '$']) && d[1..].chars().all(|
 /// enter sends them (actions.rs), while the draft could be a skill's start. "" for nobody.
 pub fn wanted(s: &State) -> String {
     if s.mode != Mode::New || s.editing.is_some() || s.ask.is_some() || s.menu.is_some() || !could_be(&s.value()) { return String::new(); }
-    if let Some(t) = super::coords::talking(s) { return if t.host.is_empty() { format!("coord\t{}", t.to) } else { String::new() }; }
-    if s.reply { return s.current().filter(|r| !r.b("host") && !r.b("archivedAt") && has_agent(r)).map(|r| format!("task\t{}", r.s("id"))).unwrap_or_default(); }
-    if s.data.can_dispatch && crate::board::view::textbox::far_coordinator(s).is_none() { "coord\t".into() } else { String::new() }
+    if let Some(t) = super::coords::talking(s) { return format!("coord\t{}", t.to); }
+    if s.reply { return s.current().filter(|r| !r.b("archivedAt") && has_agent(r)).map(|r| format!("task\t{}", r.s("id"))).unwrap_or_default(); }
+    if s.data.can_dispatch { "coord\t".into() } else { String::new() }
 }
 /// What the list shows now: the entries that match the draft, best first. Empty: no list.
 pub fn shown(s: &State) -> Vec<&Skill> {

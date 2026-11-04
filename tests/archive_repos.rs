@@ -12,7 +12,6 @@ use sw::cli::flags::parse;
 use sw::json::*;
 
 /// Another machine's project, archived and restored from this board and from the shell (`--on`).
-mod far_machine;
 
 fn argv(args: &[&str]) -> Vec<String> { args.iter().map(|s| s.to_string()).collect() }
 /// The command run in this process, in the world's repo: what --json prints and what a person reads.
@@ -115,11 +114,9 @@ fn a_whole_project_goes_to_the_archive_from_the_shell_and_comes_back_with_its_ta
     s.press(&["alt+a"]);
     let text = s.text();
     assert!(text.contains("archive · 1 project, 8 archived") && text.contains("▾ proj · PRJ") && text.contains("Done one") && text.contains("Archived before"), "{text}");
-    for way in ["by machine", "by status"] {
-        s.press(&["alt+s"]); assert_eq!(s.s.by_machine, way == "by machine");
-        let text = s.text();
-        assert!(text.contains("▾ proj · PRJ") && text.contains("Done one"), "{way} too: {text}");
-    }
+    s.press(&["alt+s"]); assert!(!s.s.by_repo);
+    let text = s.text();
+    assert!(text.contains("▾ proj · PRJ") && text.contains("Done one"), "by status too: {text}");
     // Back from the shell: every task as it was, the one stopped then still stopped, the one archived before still archived.
     let (json, text) = run(&w, &["restore", "--repo", "proj"]).unwrap();
     assert_eq!(text, format!("Restored proj and its 7 tasks. Stopped when it was archived, and still: {busy}. Its automation is on again."));
@@ -141,11 +138,11 @@ fn the_archive_key_on_a_projects_row_asks_first_then_archives_it_and_restores_it
     let ids = round(&w);
     let mut s = open(&w.root, 40); s.s.side = false;
     // Grouped by status, a heading is no project's: the key says where it works.
-    s.s.sel = group_id(&s.s, "", "done"); s.load();
+    s.s.sel = group_id(&s.s, "done"); s.load();
     s.press(&["ctrl+a"]);
     assert!(s.s.ask.is_none() && s.s.msg.contains("On a project's row") && s.s.msg.contains(&key_name("byRepo")), "{}", s.s.msg);
     s.press(&["alt+s"]); assert!(s.s.by_repo);
-    let head = group_id(&s.s, "", "proj");
+    let head = group_id(&s.s, "proj");
     s.s.sel = head.clone(); s.load();
     let text = s.screen(120).join("\n");
     assert!(text.contains(&format!("{} archive", key_name("archive"))), "the hint line says so: {text}");

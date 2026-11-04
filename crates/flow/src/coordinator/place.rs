@@ -1,5 +1,5 @@
 //! Where a coordinator lives in herdr: a tab of its own, named after it. The top-level Coordinator's (`Coordinator`)
-//! and the machine coordinator's are in the home space (`~`); a project coordinator's is in its repo's own space. A
+//! the Coordinator's is in the home space (`~`); a project coordinator's is in its repo's own space. A
 //! top-level one still in the space of its own it had before is moved over. Checked on herdr 0.9.3: a space is labelled after the folder of
 //! its first tab's pane, so the space the tab was last put in is remembered; `pane move --new-tab` carries a running
 //! agent over as it is, gives the pane a new id, and closes the space it left when that was its last pane.

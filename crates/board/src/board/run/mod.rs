@@ -1,6 +1,6 @@
 //! The board running in a terminal: the threads that read keys and the mouse, tick once a second, read the tasks and
 //! run jobs; the loop that feeds each event to `update`, does what it answers and draws. Nothing slow runs on the loop:
-//! a key is answered from what was last read, and what has to wait (herdr, git, another machine) is a thread's.
+//! a key is answered from what was last read, and what has to wait (herdr, git) is a thread's.
 pub mod draw;
 pub mod held;
 pub mod input;
@@ -24,27 +24,17 @@ static STOP: AtomicBool = AtomicBool::new(false);
 extern "C" fn on_signal(_: i32) { STOP.store(true, Ordering::SeqCst); }
 
 /// What the loop keeps beside the board's state: the terminal, the theme, the threads' handles.
-pub struct Run { pub tx: Sender<Msg>, pub wants: Arc<Mutex<Wants>>, pub load: Arc<(Mutex<bool>, std::sync::Condvar)>, pub machines_at: i64 }
+pub struct Run { pub tx: Sender<Msg>, pub wants: Arc<Mutex<Wants>>, pub load: Arc<(Mutex<bool>, std::sync::Condvar)> }
 impl Run {
     fn kick(&self) { let (m, c) = &*self.load; *m.lock().unwrap() = true; c.notify_one(); }
 }
 fn spawn_job(tx: &Sender<Msg>, j: crate::board::job::Job) { let tx = tx.clone(); std::thread::spawn(move || { let d = crate::board::job::run(j); let _ = tx.send(Msg::Ev(Event::Done(d))); }); }
-fn poll(s: &mut crate::board::state::State, run: &mut Run, now_too: bool) {
-    let now = crate::clock::now();
-    if now - run.machines_at > 60000 { run.machines_at = now; let tx = run.tx.clone(); std::thread::spawn(move || { let _ = tx.send(Msg::Ev(Event::Machines(crate::remote::machines()))); }); }
-    for (label, m) in s.remotes.iter_mut() {
-        if m.busy || (!now_too && !m.ok && now - m.fail_at < 30000) { continue; }
-        m.busy = true;
-        let (tx, mc, label) = (run.tx.clone(), m.machine.clone(), label.clone());
-        std::thread::spawn(move || { let a = crate::remote::ask_list(&mc, 20000); let _ = tx.send(Msg::Ev(Event::Remote { label, answer: a })); });
-    }
-}
 pub fn open_board(folder: &std::path::Path) -> i32 {
     let (mut s, theme, named) = start::prepare(folder);
     let (tx, rx) = channel::<Msg>();
     let wants = Arc::new(Mutex::new(Wants { ids: vec![s.sel.clone()], cwd: s.ctx.cwd.clone(), own_pane: place::own_name(), coord: String::new(), mine: None, looks: vec![], skills: String::new() }));
     let load = Arc::new((Mutex::new(true), std::sync::Condvar::new()));
-    let mut run = Run { tx: tx.clone(), wants: wants.clone(), load: load.clone(), machines_at: 0 };
+    let run = Run { tx: tx.clone(), wants: wants.clone(), load: load.clone() };
     start::threads(&tx, &wants, &load);
     unsafe { for sig in [libc::SIGTERM, libc::SIGHUP] { libc::signal(sig, on_signal as *const () as usize); } }
     term::guard_panics();
@@ -56,7 +46,6 @@ pub fn open_board(folder: &std::path::Path) -> i32 {
     let mut close = false;
     let mut reload = false;
     let (asking, mut woke_for) = (Arc::new(AtomicBool::new(false)), 0i64);
-    if s.all() { poll(&mut s, &mut run, true); }
     loop {
         let size = terminal.size().unwrap_or_default();
         let _ = crossterm::execute!(std::io::stdout(), crossterm::terminal::BeginSynchronizedUpdate);
@@ -94,7 +83,6 @@ pub fn open_board(folder: &std::path::Path) -> i32 {
                     Effect::Run(j) => spawn_job(&tx, j),
                     Effect::Load => run.kick(),
                     Effect::Save => prefs::save(&s),
-                    Effect::Poll(now) => poll(&mut s, &mut run, now),
                     Effect::Bell => { use std::io::Write; let _ = std::io::stdout().write_all(b"\x07"); }
                     Effect::Osc(bytes) => { use std::io::Write; let _ = std::io::stdout().write_all(bytes.as_bytes()); }
                     Effect::Close => close = true,
@@ -107,8 +95,7 @@ pub fn open_board(folder: &std::path::Path) -> i32 {
                         let _ = term::enter();
                         let _ = terminal.clear();
                         run.kick();
-                        if s.all() { poll(&mut s, &mut run, true); }
-                    }
+                                        }
                 }
             }
         }

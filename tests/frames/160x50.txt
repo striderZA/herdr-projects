@@ -187,7 +187,6 @@
    alt+a        show the archive
    alt+s        group by repo: see which repo each task is in
    alt+d        show all done
-   alt+m        look for other machines (now: this machine)
 
  on a row
    ◐            an agent works
@@ -196,7 +195,8 @@
    ◷            queued: for a free slot (Q#1 next) or after other tasks
    ?            asks you
    !            asks for your OK
- ↓ 12 more
+   @            needs a login
+ ↓ 11 more
 
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 ❯ Add a task

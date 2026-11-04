@@ -24,16 +24,7 @@ pub fn room(co: &Co, ap: &Obj, board: &[Obj], now: i64) -> bool {
     let t = today(co, ap, board, now);
     t.slots_left() && (t.adds_left() || (words(co, "autopilot.scope") == "all" && yours_to_start(co, board) > 0))
 }
-/// Every task of this machine, as kept (archived ones too: an archived task is over), and those of other machines an
-/// open board heard lately (heard.rs), named `label:id` with their machine in `host`.
-pub fn board_tasks() -> Vec<Obj> {
-    let mut all = crate::store::tasks::list(crate::store::tasks::ListOpts { include_archived: true, ..Default::default() });
-    all.extend(super::heard::far_tasks(crate::clock::now()));
-    all
-}
-/// A task by its id, its number or its tag here, or another machine's (`vm-b:web/7`) as an open board last heard it.
-pub fn find_task(id: &str) -> crate::err::Res<Obj> {
-    if let Ok(t) = crate::store::tasks::find(id) { return Ok(t); }
-    if crate::after::far::split(id).is_some() { if let Some(t) = super::heard::far_tasks(crate::clock::now()).into_iter().find(|t| t.s("id").eq_ignore_ascii_case(id)) { return Ok(t); } }
-    crate::fail!("No task {id}. Another machine's task is named by its machine first (vm-b:web/7), and is known here as a board last heard it.")
-}
+/// Every task of this machine, as kept (archived ones too: an archived task is over).
+pub fn board_tasks() -> Vec<Obj> { crate::store::tasks::list(crate::store::tasks::ListOpts { include_archived: true, ..Default::default() }) }
+/// A task by its id, its number or its tag here.
+pub fn find_task(id: &str) -> crate::err::Res<Obj> { crate::store::tasks::find(id) }

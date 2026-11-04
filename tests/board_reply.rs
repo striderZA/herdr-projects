@@ -85,7 +85,7 @@ fn a_reply_put_away_comes_back_as_a_reply_to_the_same_task_never_as_a_new_task()
     // a new task that was put away comes back as a new task, never as a reply
     s.typed("buy milk"); s.press(&["esc", "space"]); assert!(s.s.reply);
     s.press(&["ctrl+z"]); assert!(s.s.reply && s.s.value().is_empty());
-    assert!(flat(&s.text()).contains(&format!("Those words were for the top row's coordinator. space goes back to it, then {} brings them back.", key_name("undo"))), "{}", flat(&s.text()));
+    assert!(flat(&s.text()).contains("Those words were for") && flat(&s.text()).contains(&format!("space goes back to it, then {} brings them back.", key_name("undo"))), "{}", flat(&s.text()));
     s.press(&["space", "ctrl+z"]); assert!(!s.s.reply);
     assert!(has(&s.text(), r"\n─[^\n]*\n❯ buy milk"));
     s.press(&["esc"]);
@@ -148,26 +148,16 @@ fn a_reply_to_work_that_was_merged_and_cleaned_up_starts_a_new_round() {
 fn a_row_with_no_task_talks_to_the_coordinator_and_never_becomes_a_reply_to_the_task_you_were_on() {
     let w = world_with(Opts { repo: true, settings: json!({ "review.when": "never" }), ..Default::default() });
     let alpha = w.add("Alpha");
-    let job = sw::store::inbox::new_dispatch("@vm-a build it", obj(json!({ "remote": "vm-a" }))).unwrap();
-    let jid = job.t("id");
     let mut s = open(&w.root, 34); s.s.sel = alpha.clone(); s.load(); s.screen(120);
-    let on_job = |s: &mut common::board::Board| { for _ in 0..5 { if s.s.sel == jid { break; } s.press(&["down"]); } assert_eq!(s.s.sel, jid); };
-    let on_alpha = |s: &mut common::board::Board| { for _ in 0..5 { if s.s.sel == alpha { break; } s.press(&["up"]); } assert_eq!(s.s.sel, alpha); };
-    s.typed("only for the Coordinator"); s.press(&["esc", "space"]); assert_eq!(s.s.reply_id, alpha);
-    on_job(&mut s); assert!(s.s.reply && s.s.reply_id.is_empty());
-    assert!(has(&s.text(), r"\n─+\n❯ "));
-    s.press(&["ctrl+z"]); s.load();
-    assert_eq!(s.s.value(), "only for the Coordinator"); assert!(s.s.draft_away.is_none());
-    s.press(&["esc"]);
+    assert!(!s.s.reply);
+    // Words typed on a task's row, with space not pressed, are the Coordinator's: put away, they stay its own.
+    s.typed("only for the Coordinator"); s.press(&["esc"]);
     assert_eq!(s.s.draft_away.as_ref().map(|d| (d.text.clone(), d.to.clone())), Some(("only for the Coordinator".into(), String::new())));
-    on_alpha(&mut s); assert_eq!(s.s.reply_id, alpha); s.press(&["ctrl+z"]);
-    assert!(s.s.value().is_empty());
-    assert!(flat(&s.text()).contains(&format!("Those words were for the top row's coordinator. space goes back to it, then {} brings them back.", key_name("undo"))), "{}", flat(&s.text()));
-    s.s.draft_away = None; on_job(&mut s); s.typed("typed on the row"); s.load(); assert_eq!(s.s.value(), "typed on the row");
-    sw::store::inbox::clear_dispatch(&jid); s.load();
-    assert!(s.s.sel == alpha && s.s.value().is_empty());
-    assert_eq!(s.s.draft_away.as_ref().map(|d| (d.text.clone(), d.to.clone())), Some(("typed on the row".into(), String::new())));
-    assert!(flat(&s.text()).contains("The row you were on is gone. Nothing was sent; your words for its coordinator are put away."));
-    s.press(&["enter"]);
-    assert_eq!(task(&alpha).s("stage"), "todo"); assert_eq!(sw::store::tasks::list(Default::default()).len(), 1);
+    assert!(s.s.reply_id.is_empty());
+    // They come back as a draft of their own, never as a reply to the task that happened to be selected.
+    s.press(&["ctrl+z"]);
+    assert_eq!(s.s.value(), "only for the Coordinator");
+    assert!(!s.s.reply && s.s.reply_id.is_empty());
+    assert!(s.s.draft_away.is_none());
+    assert_eq!(task(&alpha).s("stage"), "todo");
 }

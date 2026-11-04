@@ -40,13 +40,11 @@ fn a_task_a_project_coordinator_adds_in_another_repo_names_that_coordinator_in_d
 #[test]
 fn each_coordinator_is_named_by_its_level_and_another_machines_by_that_machine() {
     let _w = pilot_world();
-    let host = sw::remote::check::hostname();
+    let host = sw::util::hostname();
+    let _ = host;
     for (t, want) in [
         (json!({ "coordinator": "main" }), "the Coordinator, asked by the human".to_string()),
-        (json!({ "coordinator": "machine" }), format!("the {host} coordinator, asked by the human")),
         (json!({ "coordinator": "project:proj" }), "the proj coordinator, asked by the human".into()),
-        (json!({ "coordinator": "machine", "host": "vm-b" }), "the vm-b coordinator, asked by the human".into()),
-        (json!({ "coordinator": "project:web", "host": "vm-b" }), "the web coordinator on vm-b, asked by the human".into()),
         (json!({ "coordinator": "project:proj", "autopilot": { "name": "proj coordinator" } }), "the proj coordinator's autopilot".into()),
     ] { assert_eq!(added_by(t.as_object().unwrap()), want, "{t}"); }
 }

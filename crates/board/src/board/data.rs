@@ -1,54 +1,43 @@
 //! What the board reads, read away from the keyboard: by the loader, once a second and after anything you did, on a
 //! thread of its own. The board's state takes it in as one event, so a key press never waits for a file, herdr or git.
 //! A task the board looks closer at (the selected one, the one the chat talks to) has a `snap` of what only a closer
-//! look gives: its settings and where each comes from, its conversation, its screen, its plan: the same `snap`
-//! another machine sends with its tasks (remote.rs), so both are drawn alike.
+//! look gives: its settings and where each comes from, its conversation, its screen, its plan.
 use crate::agents::screen_text::screen_text;
 use crate::coordinator::look::{look, screen, Look};
 use crate::flow::{live::board, talk::task_talk, task::is_agent_task};
 use crate::herdr::cli::{current_socket, session_name};
 use crate::json::*;
 use crate::shown::states::as_row;
-use crate::store::{automations::automations, inbox::{clear_dispatch, dispatches}, keys::{repo_keys, Keys}, marks::tilde, repos::{branch_of, can_worktree, folder_of, known_repos, repo_of}, settings::{lookup::{in_repo, setting, Scope}, show::{problems, problems_in, rows}}};
+use crate::store::{automations::automations, keys::{repo_keys, Keys}, marks::tilde, repos::{branch_of, can_worktree, folder_of, known_repos, repo_of}, settings::{lookup::{in_repo, setting, Scope}, show::{problems, problems_in, rows}}};
 use std::collections::BTreeMap;
-
-/// Another machine, as the board knows it: its tasks as rows, its automations, its Coordinator as it sent it
-/// (coordinator/far.rs) and its machine's and repos' coordinators (`coords`, by level), and why it did not answer; `sidebar`: its herdr list of machines as it last sent it
-/// (remote/sidebar.rs), None from one that sends none; `pilots`: its coordinators' autopilot by level (autopilot/far.rs),
-/// Null from a machine on an older version; `archived`: its archived projects (remote/projects.rs); `pins`: whether it
-/// and which of its projects are pinned (store/pins.rs).
-#[derive(Clone, Debug, Default)]
-pub struct Remote { pub machine: crate::remote::Machine, pub items: Vec<crate::board::state::Rec>, pub autos: Vec<Obj>, pub ok: bool, pub busy: bool, pub fail_at: i64, pub why: Option<Value>, pub version: String, pub coord: Value, pub coords: Value, pub pilots: Value, pub sidebar: Option<Vec<crate::remote::sidebar::Entry>>, pub archived: Vec<String>, pub pins: crate::store::pins::Pins }
 
 #[derive(Clone, Debug, Default)]
 pub struct Data {
     /// This machine's tasks, archived ones too, as rows.
     pub items: Vec<crate::board::state::Rec>,
-    /// This machine's automations, each with what its row and panel show (`shown`, as another machine sends it).
+    /// This machine's automations, each with what its row and panel show (`shown`).
     pub autos: Vec<Obj>,
-    /// Words on their way to another machine's Coordinator.
-    pub jobs: Vec<Obj>,
     pub coord: Look, pub coord_screen: String, pub can_dispatch: bool,
-    /// The machine's or a repo's coordinator of this machine the chat talks to: its level ("machine",
-    /// "project:<repo>"), how it stands, and its screen (update/coords.rs).
+    /// A repo's coordinator the chat talks to: its level ("project:<repo>"), how it stands, and its screen
+    /// (update/coords.rs).
     pub sub: Option<(String, Look, String)>,
     /// How this machine's other coordinators stand, by level, as far as the board wants them (update/coords.rs:
-    /// looks_wanted): the marks on machines' and projects' rows, the selected one's panel.
+    /// looks_wanted): the marks on projects' rows, the selected one's panel.
     pub looks: BTreeMap<String, Look>,
-    /// This machine's coordinators that were ever talked to, by level ("machine", "project:<repo>"): one folder read.
+    /// This machine's project coordinators that were ever talked to, by level ("project:<repo>"): one folder read.
     pub coords: Vec<String>,
-    /// This machine's coordinators' autopilot as each shows it, by level ("" the main one, "machine", "project:<repo>").
+    /// This machine's coordinators' autopilot as each shows it, by level ("" the main one, "project:<repo>").
     pub pilots: Value,
     pub keys: Keys, pub repos: Vec<String>, pub roots: BTreeMap<String, String>, pub session: String, pub notify: String,
     /// The known repos that keep their heading by repo with no task in view (`used_lately`).
     pub lately: Vec<String>,
     /// This machine's archived projects (store/archived_repos.rs): off the board, each a heading in the archive.
     pub archived: Vec<String>,
-    /// Whether this machine and which of its projects are pinned (store/pins.rs): a mark on their rows, and the Pinned filter.
+    /// Which of this machine's projects are pinned (store/pins.rs): a mark on their rows, and the Pinned filter.
     pub pins: crate::store::pins::Pins,
     /// The repo the board is in (where it was opened, or where a draft was typed), its folder, and the tasks' file.
     pub repo: String, pub repo_root: String,
-    /// This machine's name, for its heading on the board of every machine.
+    /// This machine's name, for its row on the board.
     pub host: String,
     /// herdr's approve action asked this board to ask about a task; a line the board key left for this board.
     pub approve: String, pub heard: Option<(String, String)>,
@@ -91,10 +80,6 @@ pub fn load(wants: &Wants) -> Data {
     let lately = used_lately(&items, &roots, &socket, now).into_iter().filter(|r| !archived.contains(r)).collect();
     let items = items.into_iter().map(std::sync::Arc::new).collect();
     let autos: Vec<Obj> = automations().into_iter().filter(|a| !archived.iter().any(|r| r == a.s("repo"))).map(|a| shown_auto(a, now)).collect();
-    let jobs: Vec<Obj> = dispatches();
-    // A finished instruction is forgotten without a word: its row goes, and what it did is on the board.
-    for j in &jobs { if j.s("state") == "done" { clear_dispatch(j.s("id")); } }
-    let jobs = jobs.into_iter().filter(|j| j.s("state") != "done").rev().collect();
     let coord = look(&socket);
     let coord_screen = if !coord.readable && coord.status.is_some() { screen_text(&screen(&coord, &socket)) } else { String::new() };
     let sub = (!wants.coord.is_empty()).then(|| { let co = crate::coordinator::co::Co::of(&socket, &wants.coord); let v = look(&co); let sc = if !v.readable && v.status.is_some() { screen_text(&screen(&v, &co)) } else { String::new() }; (wants.coord.clone(), v, sc) });
@@ -104,17 +89,17 @@ pub fn load(wants: &Wants) -> Data {
     let coords = crate::coordinator::state::all(&socket).into_iter().filter(|c| !c.is_top() && c.repo().is_none_or(|r| roots.get(r).is_some_and(|f| std::path::Path::new(f).is_dir()) && !archived.iter().any(|a| a == r))).map(|c| c.to()).collect();
     let skills = crate::board::skills::read(&wants.skills, &socket, &coord, sub.as_ref());
     Data {
-        items, autos, jobs, coord, coord_screen, sub, looks, coords, can_dispatch: crate::coordinator::who::ready(&socket), keys: repo_keys(), repos: roots.keys().cloned().collect(), roots, lately, archived, pins: crate::store::pins::pins(),
+        items, autos, coord, coord_screen, sub, looks, coords, can_dispatch: crate::coordinator::who::ready(&socket), keys: repo_keys(), repos: roots.keys().cloned().collect(), roots, lately, archived, pins: crate::store::pins::pins(),
         session: session_name(&socket), notify: setting("board.notify", None).as_str().unwrap_or("").to_string(),
-        repo: here.0, repo_root: here.1, host: crate::remote::check::hostname(),
+        repo: here.0, repo_root: here.1, host: crate::util::hostname(),
         approve: crate::actions::finish_line::take_approve(&socket, &wants.own_pane), heard: crate::board::run::say::heard(&wants.own_pane, &socket),
-        mine: wants.mine.as_ref().map(|r| (r.clone(), mine(r))), skills, pilots: crate::autopilot::far::sent(&socket, now), loaded: true, seq,
+        mine: wants.mine.as_ref().map(|r| (r.clone(), mine(r))), skills, pilots: crate::autopilot::shown::views(&socket, now), loaded: true, seq,
     }
 }
-/// How this machine's coordinators of these levels stand ("*": every one that was ever talked to, and the machine's).
+/// How this machine's coordinators of these levels stand ("*": every one that was ever talked to).
 fn looks(socket: &str, wanted: &[String]) -> BTreeMap<String, Look> {
     let mut levels: Vec<String> = wanted.iter().filter(|w| *w != "*").cloned().collect();
-    if wanted.iter().any(|w| w == "*") { levels.push("machine".into()); levels.extend(crate::coordinator::state::all(socket).into_iter().filter(|c| !c.is_top()).map(|c| c.to())); }
+    if wanted.iter().any(|w| w == "*") { levels.extend(crate::coordinator::state::all(socket).into_iter().filter(|c| !c.is_top()).map(|c| c.to())); }
     levels.sort(); levels.dedup();
     levels.into_iter().filter(|l| !l.is_empty()).map(|l| { let v = look(crate::coordinator::co::Co::of(socket, &l)); (l, v) }).collect()
 }

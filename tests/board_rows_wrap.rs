@@ -27,10 +27,10 @@ fn long() -> Rec { todo(json!({ "id": "p/2", "title": "Rethink how the Coordinat
 fn brief() -> Rec { todo(json!({ "id": "p/3", "title": "Bring the board to a narrow window" })) }
 fn old() -> Rec { done(json!({ "id": "p/4", "title": "Third row line on narrow screens for progress and more" })) }
 fn all() -> Vec<Rec> { vec![busy(), long(), brief(), old()] }
-fn board(list: &[Rec], sel: &str, scope: &str) -> State {
+fn board(list: &[Rec], sel: &str) -> State {
     sw::clock::set(Some(NOW));
     let mut s = State::new(Default::default(), Default::default());
-    s.sel = sel.into(); s.scope = scope.into();
+    s.sel = sel.into();
     s.whole = true; // every done row shows, as with all done: these tests are about how rows look
     s.grouped = GROUPS.iter().map(|g| (g.to_string(), list.iter().filter(|r| group_of(r) == *g).cloned().collect())).collect();
     s.rows = fold_rows(&mut s);
@@ -47,7 +47,7 @@ fn len(l: &str) -> usize { l.chars().count() }
 #[test]
 fn narrow_screen_a_live_tasks_name_and_what_it_says_wrap_to_two_lines_each_under_the_name_and_are_cut_only_after_the_second() {
     let list = all();
-    let mut s = board(&list, "", "");
+    let mut s = board(&list, "");
     let b = busy();
     let r52 = rows(&mut s, &b, &list, 52);
     assert_eq!(r52[..4], [" ◐ #1 Research capy.ai and other coding agents for", "      ideas we could use", "      Researching coding agents and harnesses for", "      ideas, reading what each one says about itself"]);
@@ -72,7 +72,7 @@ fn narrow_screen_the_selected_row_shows_its_whole_name_on_as_many_lines_as_it_ne
         let title = format!("{} end", words(40, "word"));
         let rc = with(&r, json!({ "title": title }));
         let list: Vec<Rec> = all().into_iter().map(|x| if x.s("id") == r.s("id") { rc.clone() } else { x }).collect();
-        let mut s = board(&list, r.s("id"), "");
+        let mut s = board(&list, r.s("id"));
         let lines = rows(&mut s, &rc, &list, 52);
         let working = group_of(&rc) == "working";
         let name = &lines[..if working { lines.len() - 3 } else { lines.len() }];
@@ -85,7 +85,7 @@ fn narrow_screen_the_selected_row_shows_its_whole_name_on_as_many_lines_as_it_ne
         assert_eq!(back.len(), if working { 5 } else { 1 }); assert!(back[if working { 1 } else { 0 }].ends_with('…'), "{back:?}");
     }
     // In the list: the highlight covers every line of it, each to the edge, and its neighbours stay one line.
-    let mut s = board(&all(), "p/2", "");
+    let mut s = board(&all(), "p/2");
     let d = drawn(&mut s, 52, 30);
     let shown: Vec<String> = plain(&d).into_iter().filter(|l| has(l, "Rethink|told before|Bring")).collect();
     // One step in under the top row (update/depth.rs).
@@ -96,7 +96,7 @@ fn narrow_screen_the_selected_row_shows_its_whole_name_on_as_many_lines_as_it_ne
 
 #[test]
 fn narrow_screen_to_do_and_done_rows_stay_one_line_and_go_without_their_time_so_the_name_has_that_room() {
-    let mut s = board(&all(), "", "");
+    let mut s = board(&all(), "");
     let narrow = plain(&drawn(&mut s, 52, 30));
     let wide = plain(&drawn(&mut s, 140, 30));
     let lg = long();
@@ -108,6 +108,6 @@ fn narrow_screen_to_do_and_done_rows_stay_one_line_and_go_without_their_time_so_
     assert_eq!(wide.iter().filter(|l| l.ends_with(" 5h ago")).count(), 3);
     assert!(has(wide.iter().find(|l| l.contains("Research")).unwrap(), r"^[ ▌] +◐ #\d+ Research.* 5h$"));
     assert_eq!(wide.iter().filter(|l| !l.trim().is_empty()).count(), 1 + 3 + 5, "the top row, three headings, five lines of rows");
-    let mut sel = board(&all(), "p/2", "");
+    let mut sel = board(&all(), "p/2");
     assert_eq!(plain(&drawn(&mut sel, 140, 30)).iter().filter(|l| !l.trim().is_empty()).count(), 1 + 3 + 5, "the selected row does not wrap on a wide screen");
 }

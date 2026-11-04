@@ -20,9 +20,6 @@ pub enum Event {
     Tick(i64),
     Loaded(Box<Data>),
     Done(Done),
-    /// Another machine's answer to "list": its tasks and automations, or why it did not answer.
-    Remote { label: String, answer: Result<serde_json::Value, serde_json::Value> },
-    Machines(Vec<crate::remote::Machine>),
     /// What holds the board's terminal at another size, as last looked at.
     Held(Option<super::state::Held>, Option<bool>),
     /// The program changed under the board: its new stamp.
@@ -40,8 +37,6 @@ pub enum Effect {
     Load,
     /// Save what comes back when the board opens again: selection, filter, draft, panel, chat.
     Save,
-    /// Ask other machines for their tasks (`now`: also one that did not answer a moment ago).
-    Poll(bool),
     Bell,
     /// Bytes for the terminal itself: the tasks told to it (OSC 7501).
     Osc(String),
@@ -64,8 +59,6 @@ pub fn update(s: &mut State, ev: Event) -> Vec<Effect> {
         Event::Tick(now) => beat::tick(s, now, &mut fx),
         Event::Loaded(d) => beat::loaded(s, *d, &mut fx),
         Event::Done(d) => done::apply(s, d, &mut fx),
-        Event::Remote { label, answer } => remotes::answered(s, &label, answer),
-        Event::Machines(list) => remotes::machines(s, list, &mut fx),
         Event::Held(h, viewed) => beat::held(s, h, viewed),
         Event::Stamp(st) => beat::stamp(s, st, &mut fx),
         Event::Shown { term, shown, by } => { let now = s.now; size::see(s, (term.0 as usize, term.1 as usize), shown, by, now, &mut fx) }
@@ -103,7 +96,6 @@ pub mod paste;
 pub mod pending;
 pub mod pilot;
 pub mod pinned;
-pub mod remotes;
 pub mod setup;
 pub mod shows;
 pub mod size;

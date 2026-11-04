@@ -27,7 +27,7 @@ pub fn note_sent(s: &mut State, id: &str, text: &str) {
 }
 /// Where a coordinator's last words stand: something new said, or an error, moves it.
 fn talk_mark(v: &Look) -> String { format!("{:?}|{}|{}", v.talk.last().map(|m| (m.you, &m.text)), v.said, v.error) }
-/// Your words to a coordinator the chat shows (a heading's, or another machine's Coordinator), the moment you send them.
+/// Your words to a coordinator the chat shows (a heading's, or the top row's), the moment you send them.
 pub fn note_coord(s: &mut State, t: &Target, text: &str) {
     let v = super::coords::look_of(s, t).unwrap_or_default();
     // Words sent it just before, which may still be on their way: they keep no row over the chat either.
@@ -35,14 +35,6 @@ pub fn note_coord(s: &mut State, t: &Target, text: &str) {
     let before = before[before.len().saturating_sub(8)..].to_vec();
     s.just_sent.insert(t.key(), Sent { text: text.into(), over: (talk_mark(&v), Value::Null, Value::Null), at: s.now, before });
 }
-/// Another machine's dispatch that carries `text`, sent the coordinator kept under `key`.
-fn carries(j: &Obj, key: &str, text: &str) -> bool {
-    let host = key.strip_prefix("co:").and_then(|k| k.split('\t').next()).unwrap_or_default();
-    !host.is_empty() && j.s("remote") == host && j.s("text") == format!("@{host} {text}")
-}
-/// A dispatch on its way that the chat shows as your words (or that went just before them): no row of its own over the
-/// chat. One that failed has one.
-pub fn in_chat(s: &State, j: &Obj) -> bool { j.s("state") != "error" && s.just_sent.iter().any(|(k, x)| x.before.iter().chain([&x.text]).any(|t| carries(j, k, t))) }
 /// What you just sent this coordinator, while its own conversation does not show it yet (`v`: the coordinator as the
 /// chat reads it now). It goes when that conversation has your words, says something new once they are there, or the
 /// words did not get there.
@@ -50,9 +42,7 @@ pub fn coord_sent(s: &mut State, t: &Target, v: &Look) -> String {
     let key = t.key();
     let Some(sent) = s.just_sent.get(&key).cloned() else { return String::new() };
     let head: String = sent.text.chars().take(200).collect(); // as much as a queued message keeps of them
-    let on_way = s.data.jobs.iter().any(|j| carries(j, &key, &sent.text) && j.s("state") != "error");
-    let failed = s.data.jobs.iter().any(|j| carries(j, &key, &sent.text) && j.s("state") == "error" && j.f("created") as i64 >= sent.at);
-    if failed || v.sent.contains(&head) || (!on_way && talk_mark(v) != sent.over.0) { s.just_sent.remove(&key); return String::new(); }
+    if v.sent.contains(&head) || talk_mark(v) != sent.over.0 { s.just_sent.remove(&key); return String::new(); }
     sent.text
 }
 /// What you just sent this task's agent, while it has said nothing new since.

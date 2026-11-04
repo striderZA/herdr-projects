@@ -46,10 +46,10 @@ fn tab_turn_of(pane: &str, co: &Co) -> bool {
     if open.is_empty() || !open.iter().all(|x| x.b("delegate")) { return false; }
     Herdr::new(Some(socket.to_string())).agent_get(c.s("pane")).ok().flatten().map(|a| crate::herdr::turns::same_turn(&a, c.at("mark").at("seq"))).unwrap_or(false)
 }
-/// The Coordinator's own folder (or one inside it) is never where the human is working, nor the machine coordinator's.
+/// The Coordinator's own folder (or one inside it) is never where the human is working.
 pub fn in_home(dir: &Path, socket: &str) -> bool {
     let real = |p: &Path| std::fs::canonicalize(p).unwrap_or_else(|_| crate::store::files::absolute(p));
-    [Co::top(socket), Co::machine(socket)].iter().any(|co| real(dir).starts_with(real(&home(co))))
+    real(dir).starts_with(real(&home(Co::top(socket))))
 }
 /// The pump is told which herdr session it serves: the keeper ticks for several from one process.
 pub fn kick(co: impl Into<Co>) {

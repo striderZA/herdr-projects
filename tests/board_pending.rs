@@ -127,52 +127,12 @@ fn a_job_that_fails_says_so_in_red_on_its_row_and_in_its_panel() {
 }
 
 #[test]
-fn another_machines_row_waits_for_that_machine_to_show_what_was_done() {
-    let w = world_with(Opts { repo: true, settings: json!({ "board.machines": "otherbox" }), ..Default::default() });
-    w.add("Mine");
-    let mut s = open(&w.root, 40); s.s.side = true;
-    update(&mut s.s, Event::Machines(sw::remote::machines()));
-    let now = sw::clock::now();
-    let theirs = |stage: &str, state: &str| Ok(json!({ "host": "otherbox", "version": "0.2.0", "tasks": [{ "id": "proj/151", "title": "Theirs", "state": state, "stage": stage, "at": now, "created": now }] }));
-    update(&mut s.s, Event::Remote { label: "otherbox".into(), answer: theirs("todo", "idle") });
-    // Alt+M round to every machine (it comes first in the round; this machine where herdr's sidebar has it).
-    for _ in 0..4 { if s.s.scope == "*" { break; } s.press(&["alt+m"]); }
-    assert_eq!(s.s.scope, "*");
-    s.s.sel = "otherbox:proj/151".into(); sw::board::update::list::relist(&mut s.s);
-    let fx = s.hold("ctrl+s");
-    assert!(matches!(jobs(&fx).as_slice(), [Job::Far { action, .. }] if action == "delegate"), "{fx:?}");
-    assert!(has(&row(&s.screen(120), "Theirs"), r"Starting…"), "{}", s.text());
-    // That machine answered the action; its list, asked before, still shows the task as it was: the word stays.
-    let fx = update(&mut s.s, Event::Done(Done { about: "otherbox:proj/151".into(), kind: "far:delegate".into(), ..Done::say("An agent is on it.", sw::shown::ink::Ink::Green) }));
-    assert!(fx.contains(&Effect::Poll(true)), "that machine is asked again at once: {fx:?}");
-    update(&mut s.s, Event::Remote { label: "otherbox".into(), answer: theirs("todo", "idle") });
-    assert!(has(&row(&s.screen(120), "Theirs"), r"Starting…"), "{}", s.text());
-    // Then it shows the agent on it.
-    update(&mut s.s, Event::Remote { label: "otherbox".into(), answer: theirs("progress", "working") });
-    assert!(s.s.pending.is_empty() && !s.text().contains("Starting…"), "{}", s.text());
-    // The task went to the working group: the selection stayed where you were, on this machine's task.
-    assert_ne!(s.s.sel, "otherbox:proj/151");
-    // A stop that machine refuses: red on the row, and the message says why.
-    s.s.pending.clear();
-    s.s.sel = "otherbox:proj/151".into(); sw::board::update::list::relist(&mut s.s);
-    let fx = s.hold("ctrl+x");
-    assert!(has(&row(&s.screen(120), "Theirs"), r"Stopping…"), "{}", s.text());
-    assert_eq!(jobs(&fx).len(), 1);
-    update(&mut s.s, Event::Done(Done { about: "otherbox:proj/151".into(), kind: "far:stop".into(), ..Done::fail("otherbox did not answer.") }));
-    assert!(has(&row(&s.screen(120), "Theirs"), r"Could not stop: otherbox did not answer\."), "{}", s.text());
-    // Esc dismisses the error, and the row is its own again.
-    s.press(&["esc"]);
-    assert!(s.s.pending.is_empty() && !s.text().contains("Could not stop"), "{}", s.text());
-}
-
-#[test]
 fn every_action_a_key_starts_has_its_words_and_open_or_talk_never_waits() {
     let w = world();
     let id = w.add("Any");
     let mut s = open(&w.root, 34);
     s.s.sel = id.clone(); s.load();
     let i = || id.clone();
-    let far = |action: &str, req: serde_json::Value| Job::Far { machine: Default::default(), host: "vm".into(), action: action.into(), req, quiet: false };
     let all = vec![
         (Job::Delegate { id: i(), name: "x".into(), now: false }, "Starting…", "Could not start"), (Job::Tell { id: i(), text: "go".into(), fresh: true }, "Starting…", "Could not start"),
         (Job::Tell { id: i(), text: "go".into(), fresh: false }, "Sending…", "Could not send"), (Job::Approve { id: i(), seen: Some((json!(null), json!("abc"))), anyway: false }, "Merging…", "Could not merge"),
@@ -184,19 +144,17 @@ fn every_action_a_key_starts_has_its_words_and_open_or_talk_never_waits() {
         (Job::Clear { id: i(), name: String::new() }, "Removing…", "Could not remove"), (Job::Pick { id: i(), letter: "B".into() }, "Keeping attempt B…", "Could not keep attempt B"),
         (Job::OpenAgent { id: i(), popup: false }, "Opening…", "Could not open"), (Job::AutoFire { id: "a1".into() }, "Firing…", "Could not fire"),
         (Job::AutoTurn { id: "a1".into(), on: false }, "Turning off…", "Could not turn off"), (Job::AutoRemove { id: "a1".into(), name: String::new() }, "Removing…", "Could not remove"),
-        (far("delegate", json!({ "id": "proj/1" })), "Starting…", "Could not start"), (far("stop", json!({ "id": "proj/1" })), "Stopping…", "Could not stop"),
-        (far("approve", json!({ "id": "proj/1", "seen": [null, "abc"] })), "Merging…", "Could not merge"), (far("approve", json!({ "id": "proj/1", "seen": [] })), "Approving…", "Could not approve"),
-        (far("again", json!({ "id": "proj/1" })), "Trying again…", "Could not try again"), (far("finish", json!({ "id": "proj/1" })), "Finishing as it is…", "Could not finish it"),
-        (far("fix", json!({ "id": "proj/1" })), "Sending back…", "Could not send it back"), (far("clear", json!({ "id": "proj/1" })), "Removing…", "Could not remove"),
-        (far("archive", json!({ "id": "proj/1" })), "Archiving…", "Could not archive"), (far("restore", json!({ "id": "proj/1" })), "Restoring…", "Could not restore"),
-        (far("pick", json!({ "id": "proj/1", "letter": "A" })), "Keeping attempt A…", "Could not keep attempt A"), (far("auto-run", json!({ "id": "a1" })), "Firing…", "Could not fire"),
-        (far("auto-turn", json!({ "id": "a1", "on": true })), "Turning on…", "Could not turn on"), (far("reopen", json!({ "id": "proj/1" })), "Opening…", "Could not open"),
+
+
+
+
+
+
     ];
     for (j, word, fail) in all {
         assert_eq!(sw::board::update::pending::words(&s.s, &j), Some((word.to_string(), fail.to_string())), "{j:?}");
         assert!(!j.about().is_empty(), "{j:?}");
     }
-    assert_eq!(Job::Far { machine: Default::default(), host: "vm".into(), action: "auto-run".into(), req: json!({ "id": "a1" }), quiet: false }.about(), "vm:auto:a1");
     // A setting changed, or words on their way to a Coordinator, are not a row's: they show nothing there.
     assert_eq!(sw::board::update::pending::words(&s.s, &Job::Set { id: i(), name: "x".into(), value: None, whose: Default::default() }), None);
     // Opening its agent says "Opening…" until it answers, and goes then: nothing of it is read back.

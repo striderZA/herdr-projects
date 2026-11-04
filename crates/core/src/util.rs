@@ -61,6 +61,8 @@ macro_rules! re { ($s:expr) => {{ static R: std::sync::OnceLock<regex::Regex> = 
 pub fn env_set(k: &str) -> bool { std::env::var(k).map(|v| !v.is_empty()).unwrap_or(false) }
 /// Its value when it says something.
 pub fn env_val(k: &str) -> Option<String> { std::env::var(k).ok().filter(|v| !v.is_empty()) }
+/// This machine's own name, as the system gives it.
+pub fn hostname() -> String { let mut b = [0u8; 256]; unsafe { libc::gethostname(b.as_mut_ptr() as *mut libc::c_char, b.len()); } String::from_utf8_lossy(&b[..b.iter().position(|c| *c == 0).unwrap_or(0)]).into_owned() }
 fn parts(v: &str) -> Vec<u64> { v.trim_start_matches('v').split('.').map(|p| p.chars().take_while(|c| c.is_ascii_digit()).collect::<String>().parse().unwrap_or(0)).collect() }
 /// Versions compared part by part as numbers (0.10.0 is newer than 0.9.1): true when `a` is newer than `b`.
 pub fn newer(a: &str, b: &str) -> bool {

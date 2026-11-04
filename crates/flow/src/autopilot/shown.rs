@@ -117,3 +117,12 @@ pub fn view(co: &Co, now: i64) -> Value {
         "lastId": last_id(&ap), "status": status(co, &ap, &board, now), "added": added_words(co, &ap, &board, now),
         "settings": settings_of(co).into_iter().map(|(l, v, o)| json!({ "label": l, "value": v, "once": o })).collect::<Vec<_>>(), "wakes": wakes })
 }
+
+/// Every coordinator of this herdr session that ran, and each repo's that never did, as its autopilot shows now, by
+/// level ("" the main one, "project:<repo>").
+pub fn views(socket: &str, now: i64) -> Value {
+    use crate::coordinator::co::Co;
+    let mut all: Obj = crate::coordinator::state::all(socket).into_iter().map(|co| (co.to(), super::shown::view(&co, now))).collect();
+    for co in crate::store::repos::known_repos().into_iter().map(|(r, _)| Co::project(socket, &r)) { all.entry(co.to()).or_insert_with(|| json!({ "on": false })); }
+    Value::Object(all)
+}

@@ -10,7 +10,7 @@
 
 ╭─  HOST ╮
 │                                                                                                  │
-│  ❯ Send message to the machine coordinator                                                       │
+│  ❯ Send message to the coordinator                                                               │
 │                                                                                                  │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
   ctrl+s put an agent on this task · space talk about this task · ? all keys
@@ -27,7 +27,7 @@
 
 ╭─  HOST ╮
 │                                                      │
-│  ❯ Send message to the machine coordinator           │
+│  ❯ Send message to the coordinator                   │
 │                                                      │
 ╰──────────────────────────────────────────────────────╯
   ctrl+s put an agent on this task · ? all keys

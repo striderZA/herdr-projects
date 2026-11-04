@@ -1,6 +1,6 @@
 //! One automation, whole: beside the list and full screen. Its prompt, its trigger, where its tasks go, its settings
 //! (its own marked), and its firings, newest first, each with the task it made. The arrows pick a firing there, and
-//! enter on one goes to its task. Drawn with the task panel's own kit; another machine's from what it sent.
+//! enter on one goes to its task. Drawn with the task panel's own kit.
 use super::kit::Kit;
 use super::READ;
 use crate::board::keys::key_name;

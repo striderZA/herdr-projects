@@ -37,7 +37,7 @@ fn a_repo_a_plain_folder_the_home_folder_and_the_root_each_get_a_key_the_moment_
     // Named as the human would: team-paperwork, gtm-skills, open-crm.
     for (name, key) in [("team-paperwork", "TPW"), ("gtm-skills", "SKL"), ("open-crm", "CRM")] { let t = add_in(&folder(&w, name), "A task"); assert_eq!(short(&t), format!("{key}-1"), "{name}"); }
     // Every list of the board reads the key: never a bare number.
-    b.s.scope.clear(); b.load(); let text = b.text();
+    b.load(); let text = b.text();
     assert!(!regex::Regex::new(r"[ ▌]\S #\d").unwrap().is_match(&text), "{text}");
 }
 

@@ -10,7 +10,6 @@ use sw::board::keys::key_name;
 use sw::board::state::Held;
 use sw::board::update::size::Shown;
 use sw::board::update::{update, Effect, Event};
-use sw::json::*;
 
 fn has(text: &str, re: &str) -> bool { regex::Regex::new(re).unwrap().is_match(text) }
 fn squash(lines: &[String]) -> String { regex::Regex::new(r"\s+").unwrap().replace_all(&lines.join(" "), " ").to_string() }
@@ -105,23 +104,5 @@ fn a_remote_view_somebody_looks_through_keeps_the_terminal() {
     // one that is back right after the board disconnected it has a browser behind it: it keeps the terminal
     a.s.size.took_back_at = sw::clock::now();
     assert_eq!(see(&mut a, old.clone()) + see(&mut a, old.clone()), 0); assert!(a.s.guest);
-    // a view whose terminal has the very size of herdr's window holds nothing, and is a view all the same: the input
-    // line's enter is dropped and the terminal is not turned into another machine's agent
-    let theirs = obj(json!({ "id": "vm-a:far/1", "host": "vm-a", "rid": "far/1", "title": "Theirs", "link": { "pane": "w1:p1" }, "machine": { "version": "0.2.0" } }));
-    {
-        let mut b = open(&w.root, 78); b.s.ctx.pane = "w1:p1".into();
-        for _ in 0..2 { update(&mut b.s, Event::Shown { term: (184, 78), shown: tall, by: Some(vec![(3, 900)]) }); }
-        assert!(!b.s.guest && !b.s.viewed);
-        update(&mut b.s, Event::Held(None, Some(true))); assert!(b.s.viewed); // what the runtime's look says of the views on its terminal
-        b.press(&["?", "enter"]); assert!(b.s.menu.is_some()); b.press(&["esc"]);
-        let mut fx = vec![];
-        sw::board::update::actions::open_agent(&mut b.s, &theirs, &mut fx);
-        assert!(fx.is_empty() && b.s.msg.starts_with("In that view, pick its agent in the sidebar under vm-a"), "{}", b.s.msg);
-        update(&mut b.s, Event::Held(None, None)); assert!(b.s.viewed, "herdr gave no answer: what was known stands");
-        update(&mut b.s, Event::Held(None, Some(false))); assert!(!b.s.viewed);
-    }
-    // from such a view the board does not turn its terminal into another machine's agent: the way back would not get through
-    let mut fx = vec![];
-    sw::board::update::actions::open_agent(&mut a.s, &theirs, &mut fx);
-    assert!(a.s.msg.starts_with("In that view, pick its agent in the sidebar under vm-a: “Theirs”."), "{}", a.s.msg);
+
 }

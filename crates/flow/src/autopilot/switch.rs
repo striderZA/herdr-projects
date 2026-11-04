@@ -1,5 +1,5 @@
 //! Turning autopilot on and off: one function each, which every way of switching goes through (the keys, the commands,
-//! another machine). On needs a goal (saved as that coordinator's own) and a coordinator that can run
+//! project). On needs a goal (saved as that coordinator's own) and a coordinator that can run
 //! unattended (`coordinator.access` not `ask`); this time's values last until it goes off. Turning on is a wake, and so
 //! is `on` while it is on, which changes what it names. Off drops this time's values and the reasons waiting, and takes
 //! a wake not yet typed out of the queue; a turn under way goes on, but may write nothing more.
@@ -64,11 +64,11 @@ pub fn off(co: &Co) -> Res<String> {
     change(co, |ap, c| { pull_back(c, ap, false); ap.put("on", false); ap.put("once", Obj::new()); ap.put("pending", Vec::<Value>::new()); ap.put("needsYou", false); ap.put("wake", Value::Null); true })?;
     Ok(format!("Autopilot off for the {}. Its chat stays; {} turns it on again.", co.name(), crate::board::keys::key_name("autopilot")))
 }
-/// Every coordinator of this machine off. Another machine's are turned off there.
+/// Every coordinator of this machine off.
 pub fn off_all(socket: &str) -> Res<String> {
     let mut n = vec![];
     for co in crate::coordinator::state::all(socket) { if is_on(&co) { off(&co)?; n.push(co.name()); } }
-    Ok(if n.is_empty() { "No coordinator on this machine was on autopilot (another machine's are turned off there).".into() } else { format!("Autopilot off for {} on this machine: {}. Another machine's are turned off there.", if n.len() == 1 { "one coordinator".to_string() } else { format!("{} coordinators", n.len()) }, n.join(", ")) })
+    Ok(if n.is_empty() { "No coordinator was on autopilot.".into() } else { format!("Autopilot off for {}: {}.", if n.len() == 1 { "one coordinator".to_string() } else { format!("{} coordinators", n.len()) }, n.join(", ")) })
 }
 /// One of this time's values from the settings page, while autopilot is on: set (checked as `on` checks it) or put back
 /// (None: this time's value goes, and the coordinator's own or yours counts again). No wake.

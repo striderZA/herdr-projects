@@ -62,11 +62,11 @@ fn ready_to_approve_the_merge_asks_first_the_menu_acts_remove_asks_and_messages_
     let text = s.text();
     assert!(text.starts_with(" Menu  for PRJ-2 \"Other\""), "{text}");
     let keys: Vec<String> = text.split("\n on a row").next().unwrap().lines().filter(|l| has(l, r"^ (❯| ) \S")).map(|l| l.chars().skip(3).take(8).collect::<String>().trim().to_string()).filter(|x| !x.is_empty()).collect();
-    assert_eq!(keys, vec!["↑ ↓", "← →", "pgup pgd", "tab", "enter", "space", "esc", "?", "y  n", "/", "ctrl+l", "ctrl+r", "ctrl+s", "ctrl+x", "ctrl+a", "ctrl+p", "ctrl+e", "ctrl+z", "ctrl+f", "ctrl+c", "alt+c", "alt+k", "alt+j", "alt+p", "alt+t", "alt+a", "alt+s", "alt+d", "alt+m"]);
+    assert_eq!(keys, vec!["↑ ↓", "← →", "pgup pgd", "tab", "enter", "space", "esc", "?", "y  n", "/", "ctrl+l", "ctrl+r", "ctrl+s", "ctrl+x", "ctrl+a", "ctrl+p", "ctrl+e", "ctrl+z", "ctrl+f", "ctrl+c", "alt+c", "alt+k", "alt+j", "alt+p", "alt+t", "alt+a", "alt+s", "alt+d"]);
     assert_eq!(s.s.menu.as_ref().unwrap().at, -1, "no line is picked when the menu opens");
     s.press(&["enter"]); assert!(s.s.menu.is_some());
     let k = |id: &str| regex::escape(&key_name(id));
-    for line in [format!("{} +remove this task", k("stop")), format!("{} +archive this task", k("archive")), format!(r"{} +look for other machines \(now: this machine\)", k("scope")), "◆ +ready to approve".into(), "@ +needs a login".into()] { assert!(has(&text, &line), "{line}: {text}"); }
+    for line in [format!("{} +remove this task", k("stop")), format!("{} +archive this task", k("archive")), "◆ +ready to approve".into(), "@ +needs a login".into()] { assert!(has(&text, &line), "{line}: {text}"); }
     assert!(has(&text, r"\n[ ▌]  y  n +answer a question: y yes, n or esc no \(enter never confirms\)"));
     s.press(&["x", "ctrl+l"]); assert!(s.s.menu.is_some(), "a stray key neither acts nor closes the menu");
     s.press(&["down", "down", "down", "down", "down", "enter"]);

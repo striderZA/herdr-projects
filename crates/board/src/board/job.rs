@@ -16,8 +16,8 @@ pub enum Job {
     SendFailure { id: String }, SendError { id: String }, SendReview { id: String },
     Stop { id: String, said: String },
     Pin { id: String, name: String, key: String },
-    /// This machine (`repo` empty) or one of its projects pinned (`on`) or unpinned; `to`: its coordinator's level, for its row.
-    PinPlace { repo: String, on: bool, to: String },
+    /// One of this machine's projects pinned (`on`) or unpinned.
+    PinPlace { repo: String, on: bool },
     Archive { id: String, said: String }, Restore { id: String, said: String },
     /// This machine's project `repo` with its tasks, to the archive and back; `said` follows what it says it did.
     ArchiveProject { repo: String, said: String }, RestoreProject { repo: String, said: String },
@@ -27,11 +27,6 @@ pub enum Job {
     CoordSend { cwd: String, text: String, delegate: bool, about: String, to: String },
     Add { cwd: String, text: String, delegate: bool },
     Describe { id: String, text: String },
-    /// Words for another machine's Coordinator: a row of their own until that machine has them.
-    Dispatch { machine: crate::remote::Machine, text: String, delegate: bool, about: String, to: String },
-    StopDispatch { id: String },
-    /// One of the exact actions, on a task or an automation of another machine.
-    Far { machine: crate::remote::Machine, host: String, action: String, req: Value, quiet: bool },
     AutoTurn { id: String, on: bool }, AutoFire { id: String }, AutoRemove { id: String, name: String },
     /// A coordinator of this machine (`to`, as the coordinator code names its level) on autopilot, or off (autopilot/).
     Pilot { to: String, on: bool },
@@ -61,24 +56,17 @@ impl Job {
             | Job::SendFailure { id } | Job::SendError { id } | Job::SendReview { id } | Job::Stop { id, .. } | Job::Pin { id, .. } | Job::Archive { id, .. }
             | Job::Restore { id, .. } | Job::Clear { id, .. } | Job::Pick { id, .. } | Job::Describe { id, .. } | Job::OpenAgent { id, .. } => id.clone(),
             Job::AutoTurn { id, .. } | Job::AutoFire { id } | Job::AutoRemove { id, .. } => format!("auto:{id}"),
-            Job::Far { host, action, req, .. } if action.starts_with("auto-") => format!("{host}:auto:{}", req.s("id")),
             // A coordinator's row, by its coordinator (coords.rs: Target::key): started, stopped, autopilot, gone into.
             Job::CoordRun { to, .. } | Job::Pilot { to, .. } | Job::CoordOpen { to, .. } => format!("co:\t{to}"),
             // A project archived or restored: its row, the project coordinator's.
             Job::ArchiveProject { repo, .. } | Job::RestoreProject { repo, .. } => format!("co:\tproject:{repo}"),
-            // A machine or a project pinned: its row, its coordinator's.
-            Job::PinPlace { to, .. } => format!("co:\t{to}"),
-            Job::Far { host, action, req, .. } if crate::remote::pins::is_pin_action(action) => format!("co:{host}\t{}", req.s("to")),
-            Job::Far { host, action, req, .. } if action.starts_with("coordinator-") || action.starts_with("autopilot-") => format!("co:{host}\t{}", req.s("to")),
-            Job::Far { host, action, req, .. } if action.starts_with("project-") => format!("co:{host}\tproject:{}", req.s("repo")),
-            Job::Far { host, req, .. } => format!("{host}:{}", req.s("id")),
+            // A project pinned: its row, its coordinator's.
+            Job::PinPlace { repo, .. } => format!("co:\tproject:{repo}"),
             _ => String::new(),
         }
     }
-    /// Which job this is, to tell two jobs on one row apart: its variant ("Stop"), or another machine's action ("far:stop").
-    pub fn kind(&self) -> String {
-        match self { Job::Far { action, .. } => format!("far:{action}"), j => format!("{j:?}").split([' ', '{', '(']).next().unwrap_or("").to_string() }
-    }
+    /// Which job this is, to tell two jobs on one row apart: its variant ("Stop").
+    pub fn kind(&self) -> String { format!("{self:?}").split([' ', '{', '(']).next().unwrap_or("").to_string() }
 }
 /// What follows a job, for the board to take in.
 #[derive(Clone, Debug, PartialEq)]
@@ -93,14 +81,10 @@ pub enum Then {
     Unsent { text: String, to: String },
     /// The board is in herdr's popup and an agent was opened: it closes.
     Leave,
-    /// This terminal becomes the agent's until you detach (outside a herdr client, or another machine's agent on an
-    /// older plugin).
+    /// This terminal becomes the agent's until you detach (outside a herdr client).
     Attach { command: String, args: Vec<String>, id: String },
     /// An agent of this machine was opened in herdr, and the board stays where it is.
     Opened(String),
-    /// Another machine's herdr put this task's agent (`agent`; else its bare terminal) in front: the board stays and
-    /// says to pick that machine in herdr's sidebar.
-    OpenedThere { id: String, host: String, agent: bool },
     /// A paste-it-yourself text the first run could not write.
     Paste(String),
     /// The first run: which of its two choices are still to be asked (a refused one); both settled: the screen goes.
@@ -132,7 +116,6 @@ pub fn run(job: Job) -> Done {
         Job::CoordSend { text, about, .. } => Some((text.clone(), about.clone())),
         Job::Add { text, .. } => Some((text.clone(), String::new())),
         Job::Describe { id, text } => Some((text.clone(), id.clone())),
-        Job::Far { host, action, req, .. } if action == "tell" => Some((req.t("text"), format!("{host}:{}", req.s("id")))),
         _ => None,
     };
     let (about, kind) = (job.about(), job.kind());
@@ -165,7 +148,7 @@ fn run_one(job: Job) -> Done {
             Job::SendReview { id } => green(finish_line::send_review(&id)?.msg),
             Job::Stop { id, said } => { let s = talk::stop(&id)?; Done::say(talk::stopped(&said, &s.msg), Ink::Yellow) }
             Job::Pin { id, name, key } => { let t = filing::pin(&id)?; Done::say(if t.b("pinned") { format!("Pinned {name}. {key} unpins it.") } else { format!("Unpinned {name}.") }, Ink::Muted) }
-            Job::PinPlace { repo, on, .. } => Done::say(crate::actions::pins::pin_here((!repo.is_empty()).then_some(repo.as_str()), on)?.1, Ink::Muted),
+            Job::PinPlace { repo, on } => Done::say(crate::actions::pins::pin_here(&repo, on)?.1, Ink::Muted),
             Job::Archive { id, said } => { archive::archive(&id)?; Done::say(said, Ink::Green).and(Then::Archived(id)) }
             Job::ArchiveProject { repo, said } => { let (r, _) = crate::actions::archive_project::archive_project(&repo)?; Done::say(format!("{r}{said}"), if r.contains("Still on the board") { Ink::Yellow } else { Ink::Green }) }
             Job::RestoreProject { repo, said } => { let (r, _) = crate::actions::archive_project::restore_project(&repo)?; Done::say(format!("{r}{said}"), Ink::Green) }
@@ -189,9 +172,6 @@ fn run_one(job: Job) -> Done {
                 filing::describe(&id, &desc)?;
                 green(format!("{id}: updated (description)"))
             }
-            Job::Dispatch { machine, text, delegate, about, to } => super::job_far::dispatch(machine, text, delegate, about, to),
-            Job::StopDispatch { id } => { crate::watcher::stop_dispatch(&id); Done::say("Stopped.", Ink::Yellow) }
-            Job::Far { machine, host, action, req, quiet } => super::job_far::far(&machine, &host, &action, req, quiet),
             Job::AutoTurn { id, on } => { let (w, ink) = crate::automations::show::turned_words(&crate::automations::list::turn(&id, on)?); Done::say(w, ink) }
             Job::AutoFire { id } => { let a = crate::automations::list::find(&id)?; let f = crate::automations::fire::fire(&id, crate::automations::told::Cause::Run, crate::clock::now())?; let (w, ink) = crate::automations::show::fired_words(&a, &f); Done::say(w, ink) }
             Job::Pilot { to, on } => {

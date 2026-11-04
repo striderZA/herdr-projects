@@ -13,7 +13,7 @@ fn the_hint_line_names_the_task_once_and_says_what_esc_goes_back_from() {
     let w = world_with(Opts { repo: true, settings: json!({ "review.when": "never" }), ..Default::default() });
     let mut s = open(&w.root, 34); s.s.side = false;
     // the board opens on its top row, this machine's: with no coordinator here, nothing to talk to, go into or start
-    assert_eq!(s.s.sel, sw::board::update::top::top_id(&s.s));
+    assert_eq!(s.s.sel, sw::board::update::top::top_id());
     assert_eq!(hints(&mut s, 120), "? all keys");
     let id = w.add("Add a greeting"); w.add("Other");
     s.s.sel = id.clone(); s.load();
@@ -35,9 +35,6 @@ fn the_hint_line_names_the_task_once_and_says_what_esc_goes_back_from() {
     assert_eq!(hints(&mut s, 120), "ctrl+s put an agent on this task · ctrl+x put it back in to do · ? all keys");
     assert_eq!(sw::board::update::menu::items(&s.s).into_iter().find(|i| i.key == "ctrl+x").map(|i| i.label).unwrap_or_default(), "put this task back in to do");
     s.press(&["?"]); assert_eq!(hints(&mut s, 120), "↑↓ pick a key · enter press it · esc close the menu"); s.press(&["esc"]);
-    let job = sw::store::inbox::new_dispatch("@far fix the build", obj(json!({ "remote": "far" }))).unwrap();
-    s.load(); s.s.sel = job.t("id");
-    assert_eq!(hints(&mut s, 120), "ctrl+x stop sending this · enter take the words back to change · ? all keys");
 }
 
 #[test]
@@ -83,14 +80,5 @@ fn while_you_type_the_hint_line_says_who_gets_the_words_and_the_box_edge_names_n
     assert_eq!(hints(&mut s, 60), "enter send, and start an agent on PRJ-1 · esc put away");
     assert_eq!(hints(&mut s, 32), "enter send to PRJ-1");
     s.press(&["esc", "space"]);
-    // the board of another machine: its machine coordinator (the top row's) gets the words, and the line names it
-    s.press(&["esc"]);
-    s.s.remotes.insert("vm-a".into(), sw::board::data::Remote { machine: sw::remote::Machine { label: "vm-a".into(), target: "me@vm-a".into(), ..Default::default() }, ok: true, coord: json!({ "state": "idle" }), coords: json!({}), ..Default::default() });
-    s.s.scope = "vm-a".into();
-    s.typed("fix the build");
-    let text = s.screen(120).join("\n");
-    let last = text.lines().last().unwrap().trim();
-    assert!(last.starts_with("enter send to ") && last.contains("vm-a's coordinator · "), "{text}");
-    assert!(!text.contains("To: "), "{text}");
-    assert_eq!(hints(&mut s, 32), "enter send");
+
 }

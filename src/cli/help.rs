@@ -2,12 +2,11 @@
 pub const HELP: &str = r#"herdr-projects: a work board for herdr
 
   herdr-projects                     open the board here (in herdr: bind a key to the plugin action "open")
-  herdr-projects add <title> [--desc TEXT] [--repo NAME|PATH] [--delegate] [--after ID[,ID…]] [--<setting> VALUE ...] [--research|--no-research] [--chat|--no-chat] [--on MACHINE]
+  herdr-projects add <title> [--desc TEXT] [--repo NAME|PATH] [--delegate] [--after ID[,ID…]] [--<setting> VALUE ...] [--research|--no-research] [--chat|--no-chat]
                                       (--research: research only, short for --research.only true. Its agent changes
                                        nothing in the repo; the result is a report. --no-research: not research only,
                                        where a default says it is. --chat: chat only, short for --chat.only true: a
-                                       conversation that changes nothing and ends only when you say: finish <id>.
-                                       --on: add it on another machine the board knows, as that machine adds its own)
+                                       conversation that changes nothing and ends only when you say: finish <id>.)
   herdr-projects list [--archived] [--all] [--pinned] [--query TEXT] [--json]
   herdr-projects report <id> --state idle|working|blocked|done|error [--kind question|permission|auth] [--msg TEXT] [--title TEXT]
                          [--progress 0-100] [--eta MINUTES]   (your own task, with --state working: how far, and minutes left)
@@ -18,8 +17,7 @@ pub const HELP: &str = r#"herdr-projects: a work board for herdr
   herdr-projects delegate <id> [--after ID[,ID…]|--now] [--<setting> VALUE ...] [--research|--no-research] [--chat|--no-chat]
                                       any work setting, for this task only: --reviewer.agent claude --merge.by itself
                                       (a refused option changes nothing on the task)
-                                      --after: start only once those tasks (of any repo here, or of another machine:
-                                       vm-str:ELA-3) are done, by itself;
+                                      --after: start only once those tasks (of any repo here) are done, by itself;
                                       --now: start a task that waits without waiting
   herdr-projects after <id> [ID[,ID…] | --clear]   what a task waits for: shown, changed, or dropped (it starts then)
   herdr-projects tell <id> <text>              send a message to the task's agent
@@ -37,17 +35,16 @@ pub const HELP: &str = r#"herdr-projects: a work board for herdr
                                                 on a chat-only task: end the conversation, as it is
   herdr-projects details <id>                  failure details, review, next steps, and what it used against its limits
   herdr-projects archive|restore|clear <id>
-  herdr-projects pin|unpin <id | machine | project> [--on MACHINE]
-                                                pin a task, a machine or a project (or unpin it): it gets a yellow pin mark ★ and
-                                                shows under the board's Pinned filter. --on MACHINE: a project of another machine
+  herdr-projects pin|unpin <id | project>
+                                                pin a task or a project (or unpin it): it gets a yellow pin mark ★ and
+                                                shows under the board's Pinned filter
   herdr-projects archive --done [--repo NAME]  archive every done task of that repo (or of every repo) in one go; one
                                                 that works, waits, is to do or is pinned stays, and is counted
-  herdr-projects archive|restore --repo NAME [--on MACHINE]
+  herdr-projects archive|restore --repo NAME
                                                 archive a whole project with its tasks (what works or waits is stopped
                                                 first; its coordinator stops, its automations go off), or bring it back
                                                 with its tasks as they were. Nothing on disk or GitHub is deleted.
-                                                --on MACHINE: a project of another machine, done there
-  herdr-projects set <name> <value> [--repo NAME | --task ID | --automation NAME | --main-coordinator | --machine-coordinator | --project-coordinator REPO]
+  herdr-projects set <name> <value> [--repo NAME | --task ID | --automation NAME | --main-coordinator | --project-coordinator REPO]
                                       change a setting: for you, for your entry for one repo, for one task, for an automation,
                                       or for one coordinator (its coordinator.* and autopilot.* settings)
   herdr-projects unset <name> [--repo NAME | --task ID | the same coordinator flags]
@@ -70,27 +67,24 @@ pub const HELP: &str = r#"herdr-projects: a work board for herdr
   herdr-projects coordinator new [--agent KIND[/MODEL]] [--effort E]
                                                 a fresh one; with options, that choice is for this one only
   herdr-projects coordinator stop              close it; the next message starts it again where it left off (words still waiting go in then)
-  herdr-projects coordinator --machine …       the same for this machine's machine coordinator
   herdr-projects coordinator --project REPO …  the same for a repo's project coordinator
   herdr-projects autopilot                     every coordinator of this machine, with its autopilot (docs/autopilot.md)
-  herdr-projects autopilot show [--machine | --project REPO]
+  herdr-projects autopilot show [--project REPO]
                                                 one coordinator's autopilot as it stands now: goal, today's counts,
                                                 its tasks under way, its settings
-  herdr-projects autopilot on [--machine | --project REPO] [--goal TEXT] [--autopilot.<name> VALUE …]
+  herdr-projects autopilot on [--project REPO] [--goal TEXT] [--autopilot.<name> VALUE …]
                                                 put a coordinator on autopilot: the board wakes it to work toward its goal,
                                                 within its limits; the values given are for this time only
-  herdr-projects autopilot off [--machine | --project REPO | --all]
+  herdr-projects autopilot off [--project REPO | --all]
                                                 off again (--all: every coordinator of this machine)
   herdr-projects --skill                       instructions an agent can load
-  herdr-projects machines                      other machines: whether each answers, its version and free disk, or why not
-                                                and what to do; and whether another machine could ask this one
   herdr-projects sweep [--dry]                 remove what ended tasks left behind now: their temporary files, agents'
                                                 files for worktrees that are gone, old build output (docs/disk-space.md);
                                                 --dry: only say what would go
   herdr-projects version                       this program's version, and where it is
   herdr-projects install                       write the launcher in the data folder (agents and hooks run it) for this program
   herdr-projects doctor                        the health check: the program and its launcher, the plugin in herdr, the
-                                                agent programs and their settings, other machines, disk space, leftovers
+                                                agent programs and their settings, disk space, leftovers
                                                 to clean, older installs; each problem with what to do (exits 1 on one)
   herdr-projects update [VERSION]              this program, in place, from the newest release (or that version)
   herdr-projects remove-extras                 take out what the plugin added outside its own folders (the how-to

@@ -6,7 +6,6 @@ use super::row_tall::tall_at;
 use crate::board::keys::key_name;
 use crate::board::state::{Mode, Rec, Row, State};
 use crate::board::theme::Theme;
-use crate::board::update::coords::{MACHINE_INK, REPO_HEAD_INK};
 use crate::board::update::heads::is_head;
 use crate::board::update::list::{counts, fold_rows};
 use crate::json::*;
@@ -24,8 +23,6 @@ pub fn hl(t: &Theme, line: &Inked, width: usize) -> Inked {
 /// The header says where you are: the repo new tasks go to (whose board shows is the filter row's first item). Under it the filter row, with how many tasks each holds (shows_row.rs), where the list part has `h` lines enough
 /// for it; a find has a line of its own under that.
 pub fn head_lines(s: &mut State, t: &Theme, w: usize, h: usize) -> Vec<Inked> {
-    // Whose board shows is the filter row's first item (shows_row.rs), not the header's.
-    let scope = String::new();
     let n = counts(s);
     let c = |k: &str| n.get(k).copied().unwrap_or(0);
     // The counts of each status are on the filter row; the archive has none, so its count stays here.
@@ -33,21 +30,14 @@ pub fn head_lines(s: &mut State, t: &Theme, w: usize, h: usize) -> Vec<Inked> {
     let where_ = if s.archive_view { "archive".to_string() } else { crate::board::tags::repo_with_key(&repo_label(&s.data.repo), s.data.keys.get(&s.data.repo).map(|k| k.as_str()).unwrap_or("")) };
     let projects = match crate::board::update::heads::archived_heads(s).len() { 0 => String::new(), 1 => "1 project, ".into(), p => format!("{p} projects, ") };
     let tally: Vec<String> = if s.archive_view { vec![format!("{projects}{} archived", c("archived"))] } else { vec![] };
-    let mut rest: Vec<String> = vec![];
-    if s.scope.is_empty() || s.scope == "*" || s.archive_view { rest.push(where_); }
+    let mut rest: Vec<String> = vec![where_];
     rest.extend(tally);
     if !s.data.session.is_empty() && s.data.session != "default" { rest.push(format!("session {}", s.data.session)); }
     let rest = rest.join(" · ");
-    // The board's name gives way before whose tasks these are; names too long for the line go on to the next, whole.
-    let name = Inked::plain(" ").add(Inked::plain("herdr-projects").bold()).add(Inked::plain("  "));
-    let lead = if !scope.is_empty() && name.width() + crate::text::width(&scope) > w { Inked::plain(" ") } else { name };
-    let named: Vec<Inked> = if scope.is_empty() { vec![Inked::new()] } else { Inked::of(scope.clone(), Ink::Accent).wrap(w.saturating_sub(lead.width()).max(4)) };
-    let first = lead.add(named[0].clone());
-    let left = w as i64 - first.width() as i64 - if scope.is_empty() { 0 } else { 3 };
-    let more: Vec<Inked> = named[1..].iter().map(|l| Inked::plain(" ").add(l.clone())).collect();
-    let tail = if !rest.is_empty() && more.is_empty() && left >= 4 { Inked::of(format!("{}{}", if scope.is_empty() { "" } else { " · " }, crate::text::cut(&rest, left as usize)), Ink::Muted) } else { Inked::new() };
+    let first = Inked::plain(" ").add(Inked::plain("herdr-projects").bold()).add(Inked::plain("  "));
+    let left = w as i64 - first.width() as i64;
+    let tail = if !rest.is_empty() && left >= 4 { Inked::of(crate::text::cut(&rest, left.saturating_sub(2) as usize), Ink::Muted) } else { Inked::new() };
     let mut head = vec![first.add(tail)];
-    head.extend(more);
     // In a window too short for it, the filter row gives way before the list's rows do.
     if !s.archive_view && h >= 6 { let (row, hits) = super::shows_row::shows_line(s, t, w); let y = head.len(); s.show_hits = hits.into_iter().map(|(a, b, n)| (y, a, b, n)).collect(); head.push(row); } else { s.show_hits.clear(); }
     let f = (if s.mode == Mode::Find { s.value() } else { s.filter.clone() }).trim().to_string();
@@ -56,31 +46,13 @@ pub fn head_lines(s: &mut State, t: &Theme, w: usize, h: usize) -> Vec<Inked> {
     head.push(Inked::plain(" ").add(Inked::of(crate::text::cut(&format!("filter \"{f}\" · {found} of {} · {} {}", s.items.len(), key_name("back"), if s.mode == Mode::Find { "cancels" } else { "clears" }), w.saturating_sub(1).max(1)), Ink::Accent)));
     head
 }
-/// The machines in view whose tasks could not be read (or have not come yet), each with why: what the list says
-/// where their tasks would be. On that machine's own board the whole of it follows.
-pub fn unread_lines(s: &State, width: usize) -> Vec<Inked> {
-    let all = crate::board::update::remotes::in_view(s);
-    let whole = s.scope != "*";
-    let mut out = vec![];
-    for m in all.into_iter().filter(|m| !m.ok) {
-        let (line, detail): (String, Vec<String>) = match &m.why {
-            Some(w) => { let mut d = vec![]; if w.b("said") { d.push("What came back:".to_string()); d.extend(w.s("said").lines().map(|l| format!("  {l}"))); d.push(String::new()); } d.extend(w.arr("detail").iter().map(text)); (format!("{}: its tasks cannot be read: {}.", m.machine.label, w.s("line")), d) }
-            None => (format!("{}: asking for its tasks…", m.machine.label), vec![]),
-        };
-        let more = if !detail.is_empty() && !whole { format!(" More: {}.", key_name("scope")) } else { String::new() };
-        out.extend(Inked::of(format!("{line}{more}"), if detail.is_empty() { Ink::Muted } else { Ink::Yellow }).wrap(width.saturating_sub(2).max(10)).into_iter().map(|l| Inked::plain(" ").add(l)));
-        if whole && !detail.is_empty() { out.push(Inked::new()); for d in detail { out.extend(Inked::of(d, Ink::Soft).wrap(width.saturating_sub(4).max(10)).into_iter().map(|l| Inked::plain("   ").add(l))); } }
-    }
-    out
-}
-/// A heading's line. A machine's in bold accent, a rule after it to the edge; a repo's in bold plain text, as loud as the
-/// titles under it; a status group's in its colour, a machine's automations' in theirs. Each has a caret in the marks'
-/// column, `▾` open, `▸` folded (then with how many tasks and automations it holds: `7 tasks, 1 automation`; a machine
-/// with nothing in view: `0 tasks`).
+/// A heading's line. The top row in bold plain text; a repo's in bold plain text, as loud as the titles under it; a
+/// status group's in its colour, the automations' in theirs. Each has a caret in the marks' column, `▾` open, `▸`
+/// folded (then with how many tasks and automations it holds: `7 tasks, 1 automation`; the top row with nothing in
+/// view: `0 tasks`).
 /// A repo's heading has its key beside its name, dimmed (`gtm-agent · AGT`): the first thing to go where room is short.
-/// A machine's or a project's row (and `All machines`) is its coordinator's, drawn as a task's row (view/pilot.rs), with
-/// a status line under it while on autopilot. The top row says what it holds, open or folded: `4 machines · 420 tasks`,
-/// `9 projects · 30 tasks`.
+/// The top row and a project's row are their coordinator's, drawn as a task's row (view/pilot.rs), with a status line
+/// under it while on autopilot. The top row says what it holds, open or folded: `9 projects · 30 tasks`.
 fn heading(s: &State, t: &Theme, rows: &[Row], at: usize, width: usize) -> Vec<Inked> {
     let r = &rows[at];
     let Row::Head { id, .. } = r else { return vec![Inked::new()] };
@@ -92,10 +64,10 @@ fn heading(s: &State, t: &Theme, rows: &[Row], at: usize, width: usize) -> Vec<I
 pub fn heading_words(s: &State, t: &Theme, rows: &[Row], at: usize) -> (Inked, Option<super::pilot::Shown>) {
     let r = &rows[at];
     let Row::Head { name, autos, machine, folded, folded_autos, id, .. } = r else { return (Inked::new(), None) };
-    let top = *id == crate::board::update::top::top_id(s);
+    let top = *id == crate::board::update::top::top_id();
     let project = id.starts_with(&format!("{}repo\t", crate::board::update::heads::HEAD));
     let key = if s.by_repo || (project && s.archive_view) { crate::board::tags::heading_key(s, at) } else { String::new() };
-    let named = if *autos { Inked::of(name.clone(), Ink::Auto) } else if *machine || top { Inked::of(name.clone(), MACHINE_INK).bold() } else if s.by_repo || project { Inked::of(crate::board::update::heads::repo_shown(s, id.split('\t').nth(1).unwrap_or(""), name), REPO_HEAD_INK) } else { Inked::of(name.clone(), group_ink(name)) };
+    let named = if *autos { Inked::of(name.clone(), Ink::Auto) } else if *machine || top { Inked::of(name.clone(), Ink::Plain).bold() } else if s.by_repo || project { Inked::of(crate::board::update::heads::repo_shown(name), Ink::Plain) } else { Inked::of(name.clone(), group_ink(name)) };
     let mut named = if key.is_empty() { named } else { named.add(Inked::of(format!(" · {key}"), Ink::Muted)) };
     // A pinned machine or project: the pin mark after its name, as a pinned task's (update/pinned.rs).
     if crate::board::update::pinned::head_pinned(s, id) { named = named.add(crate::board::update::pinned::ink()); }
@@ -107,16 +79,15 @@ pub fn heading_words(s: &State, t: &Theme, rows: &[Row], at: usize) -> (Inked, O
     let holds = if crate::board::update::shows::coords(s) { format!("{folded} project coordinator{}", if *folded == 1 { "" } else { "s" }) } else { crate::board::update::heads::holds(*folded, *folded_autos) };
     let pilots = crate::board::update::pilot::on_under(s, id);
     let pilots = |sep: &str| if pilots == 0 { String::new() } else { format!("{sep}{pilots} on autopilot") };
-    if top { named = named.add(Inked::of(format!("  {}{}", top_says(s), pilots(" · ")), Ink::Muted)); } else if r.shut() { named = named.add(Inked::of(format!("  {holds}{}", pilots(", ")), Ink::Muted)); }
+    if r.shut() { named = named.add(Inked::of(format!("  {holds}{}", pilots(", ")), Ink::Muted)); } else if top { named = named.add(Inked::of(format!("  {}{}", top_says(s), pilots(" · ")), Ink::Muted)); }
     (named, shown)
 }
-/// What the top row holds: every machine's (`4 machines · 420 tasks`), or the one machine's (`9 projects · 30 tasks`).
+/// What the top row holds: `9 projects · 30 tasks`.
 fn top_says(s: &State) -> String {
     let n = |k: usize, what: &str| format!("{k} {what}{}", if k == 1 { "" } else { "s" });
+    if crate::board::update::shows::coords(s) { return n(s.data.coords.iter().filter(|c| c.starts_with("project:")).count(), "project coordinator"); }
     let tasks = s.show_n.first().copied().unwrap_or(0);
-    if s.scope == "*" { return format!("{} · {}", n(crate::board::update::shows::hosts(s).len(), "machine"), n(tasks, "task")); }
-    let items = if s.scope.is_empty() { &s.data.items } else { match s.remotes.get(&s.scope) { Some(m) => &m.items, None => return n(tasks, "task") } };
-    let mut repos: Vec<&str> = items.iter().filter(|r| !r.b("archivedAt")).map(|r| (if r.b("rid") { r.s("rid") } else { r.s("id") }).split('/').next().unwrap_or("")).collect();
+    let mut repos: Vec<&str> = s.data.items.iter().filter(|r| !r.b("archivedAt")).map(|r| r.s("id").split('/').next().unwrap_or("")).collect();
     repos.sort(); repos.dedup();
     format!("{} · {}", n(repos.len(), "project"), n(tasks, "task"))
 }
@@ -133,26 +104,17 @@ pub fn list_lines(s: &mut State, t: &Theme, width: usize, h: usize, screen: usiz
     let tall = tall_at(screen);
     // The room the list has decides how many to-dos show: when it changes, they are folded again.
     if h != s.list_room || tall != s.list_tall || width != s.list_width || s.sel != s.fold_sel { s.list_room = h; s.list_tall = tall; s.list_width = width; s.rows = fold_rows(s); }
-    let unread = unread_lines(s, width);
     let has_rows = !s.rows.is_empty();
     if !has_rows {
         let none = none_lines(s, width);
         let mut all = vec![Inked::new()];
-        all.extend(unread.iter().cloned());
-        if unread.is_empty() || s.scope == "*" { if !unread.is_empty() { all.push(Inked::new()); } all.extend(none); }
-        s.unread_max = all.len().saturating_sub(h);
-        s.unread_top = s.unread_top.min(s.unread_max);
-        let top = s.unread_top;
-        let mut out: Vec<Inked> = all.iter().skip(top).take(h).cloned().collect();
-        let more = |x: String| Inked::plain(" ").add(Inked::of(crate::text::cut(&x, width.saturating_sub(1).max(1)), Ink::Muted));
-        if top > 0 && !out.is_empty() { out[0] = more(format!("↑ more above ({})", key_name("up"))); }
-        if top + h < all.len() && out.len() > 1 { let n = out.len() - 1; out[n] = more(format!("↓ more below ({})", key_name("down"))); }
+        all.extend(none);
+        let mut out: Vec<Inked> = all.iter().take(h).cloned().collect();
         while out.len() < h { out.push(Inked::new()); }
         s.list_ids = vec![String::new(); h];
         return out;
     }
-    s.unread_max = 0;
-    let mut lines: Vec<L> = if unread.is_empty() { vec![] } else { std::iter::once(line(Inked::new())).chain(unread.into_iter().map(line)).collect() };
+    let mut lines: Vec<L> = vec![];
     // One layout for the displayed list, across groups: the columns line up down the whole list.
     let mut sections: Vec<Vec<Rec>> = vec![];
     let auto_rec = |a: &Obj| Rec::new(obj(json!({ "id": a.s("row"), "auto": a })));
@@ -192,7 +154,7 @@ pub fn list_lines(s: &mut State, t: &Theme, width: usize, h: usize, screen: usiz
         }
     }
     // Only the top row left (nothing yet, nothing that matches): what the list says stands under it.
-    let top_alone = matches!(rows.as_slice(), [Row::Head { id, folded: 0, .. }] if *id == crate::board::update::top::top_id(s));
+    let top_alone = matches!(rows.as_slice(), [Row::Head { id, folded: 0, .. }] if *id == crate::board::update::top::top_id());
     if top_alone { lines.push(line(Inked::new())); lines.extend(none_lines(s, width).into_iter().map(line)); }
     // A list longer than its room keeps its last line to say how many tasks are not shown (not in a list of a few lines).
     let cut_any = lines.len() > h && h >= 8;

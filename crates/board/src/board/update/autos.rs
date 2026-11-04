@@ -22,30 +22,21 @@ pub fn auto_help(k: K) -> Option<&'static str> {
     match k { K::Enter => Some("send what is typed; with nothing typed, open this automation (on a firing in it: go to the task it made)"), K::Talk => Some("turn this automation on or off"), _ => None }
 }
 pub fn firings(a: &Obj) -> Vec<Value> { a.at("shown").arr("firings").to_vec() }
-pub fn can_set(a: &Obj) -> bool { !a.b("host") || !a.at("shown").arr("settings").is_empty() }
-fn far(s: &mut State, a: &Obj, action: &str, extra: Value, fx: &mut Vec<Effect>) {
-    let doing = match action { "auto-turn" => if extra.b("on") { "Turning on" } else { "Turning off" }, "auto-run" => "Firing", "auto-remove" => "Removing", _ => "Changing a setting of" };
-    s.flash(format!("{doing} \"{}\" on {}…", a.s("name"), a.s("host")), Ink::Muted);
-    let m = s.remotes.get(a.s("host")).map(|m| m.machine.clone()).unwrap_or_default();
-    let mut req = obj(extra); req.put("id", a.t("id"));
-    fx.push(Effect::Run(Job::Far { machine: m, host: a.t("host"), action: action.into(), req: Value::Object(req), quiet: false }));
-}
-pub fn toggle(s: &mut State, a: &Obj, fx: &mut Vec<Effect>) { if a.b("host") { return far(s, a, "auto-turn", json!({ "on": !a.b("on") }), fx); } fx.push(Effect::Run(Job::AutoTurn { id: a.t("id"), on: !a.b("on") })); }
+pub fn can_set(_a: &Obj) -> bool { true }
+pub fn toggle(s: &mut State, a: &Obj, fx: &mut Vec<Effect>) { let _ = s; fx.push(Effect::Run(Job::AutoTurn { id: a.t("id"), on: !a.b("on") })); }
 pub fn fire(s: &mut State, a: &Obj, fx: &mut Vec<Effect>) {
     if !a.b("on") { return s.flash(format!("\"{}\" is off, and off it never fires. {} turns it on.", a.s("name"), key_name("talk")), Ink::Yellow); }
-    if a.b("host") { return far(s, a, "auto-run", json!({}), fx); }
     fx.push(Effect::Run(Job::AutoFire { id: a.t("id") }));
 }
 pub fn remove(s: &mut State, a: &Obj) {
-    let job = if a.b("host") { let m = s.remotes.get(a.s("host")).map(|m| m.machine.clone()).unwrap_or_default(); Job::Far { machine: m, host: a.t("host"), action: "auto-remove".into(), req: json!({ "id": a.t("id") }), quiet: false } } else { Job::AutoRemove { id: a.t("id"), name: a.t("name") } };
-    let q = format!("Remove the automation \"{}\"{}? The tasks it made stay.", crate::text::cut(&clean(a.s("name")), 32), if a.b("host") { format!(" on {}", a.s("host")) } else { String::new() });
+    let job = Job::AutoRemove { id: a.t("id"), name: a.t("name") };
+    let q = format!("Remove the automation \"{}\"? The tasks it made stay.", crate::text::cut(&clean(a.s("name")), 32));
     confirm(s, q, job, Valid::Always, vec![], String::new(), false);
 }
 /// The whole automation, and back to the list.
 pub fn fold(s: &mut State) { s.auto_open = !s.auto_open; s.full = false; s.editing = None; s.auto_at = -1; s.panel_top = 0; }
 pub fn settings(s: &mut State, a: &Obj) {
     if s.editing.as_ref().map(|e| e.whose == Whose::Auto).unwrap_or(false) { s.editing = None; s.panel_top = 0; return; }
-    if !can_set(a) { return s.flash(format!("Its settings are changed on {}: herdr-projects set <name> <value> --automation \"{}\"", a.s("host"), a.s("name")), Ink::Yellow); }
     s.editing = Some(Editing { id: a.t("row"), at: 0, typing: String::new(), whose: Whose::Auto }); s.auto_open = true; s.full = false; s.panel_top = 0;
 }
 /// Enter on a firing: to the task it made, on the board.
@@ -68,7 +59,7 @@ pub fn key(s: &mut State, p: &Press, fx: &mut Vec<Effect>) -> bool {
     if is(p, K::Enter) {
         let f = if open { usize::try_from(s.auto_at).ok().and_then(|n| firings(&a).get(n).cloned()) } else { None };
         if !open { fold(s); }
-        else if let Some(t) = f.as_ref().filter(|f| f.b("task")) { let id = if a.b("host") { format!("{}:{}", a.s("host"), t.s("task")) } else { t.t("task") }; go_to(s, &id); }
+        else if let Some(t) = f.as_ref().filter(|f| f.b("task")) { let id = t.t("task"); go_to(s, &id); }
         else { s.flash(if f.is_some() { "That firing was skipped: it made no task.".to_string() } else { format!("{} pick a firing; {} then goes to the task it made.", pair(K::Up), name(K::Enter)) }, Ink::Muted); }
         return true;
     }

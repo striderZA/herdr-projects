@@ -1,16 +1,14 @@
-//! The filter row under the header: `vm-str │ All 48   Coordinators 4   Needs you 3   Working 2   Ready 1   To do 12
-//! Done 30   Automations 2   Pinned 3`, whose board first (where there is another machine: `All machines`, or one machine),
-//! the one shown lit, the others greyed with their counts (a count of tasks that need you in red). Where it has no
-//! room, the names are said shorter (then shortest), those with nothing in them go, and where that is still too long only the one
-//! shown stands, with the key that moves on. Where each is drawn is kept for a click (update/mouse.rs).
+//! The filter row under the header: `All 48   Coordinators 4   Needs you 3   Working 2   Ready 1   To do 12
+//! Done 30   Automations 2   Pinned 3`, the one shown lit, the others greyed with their counts (a count of tasks that
+//! need you in red). Where it has no room, the names are said shorter (then shortest), those with nothing in them go,
+//! and where that is still too long only the one shown stands, with the key that moves on. Where each is drawn is kept
+//! for a click (update/mouse.rs).
 use crate::board::keys::key_name;
 use crate::board::state::State;
 use crate::board::theme::Theme;
 use crate::board::update::shows::SHOWS;
 use crate::shown::ink::{Ink, Inked};
 
-/// What a click on the machine item says it is, among the filters' places.
-pub const MACHINE: usize = usize::MAX;
 pub const SHORT: [&str; 9] = ["All", "Coords", "Needs", "Working", "Ready", "To do", "Done", "Autos", "Pinned"];
 const TINY: [&str; 9] = ["All", "Co", "Need", "Work", "Rdy", "Todo", "Done", "Au", "Pin"];
 /// Each filter's own colour, the one its rows and marks have: lit, it is the highlight's.
@@ -18,20 +16,10 @@ pub const INKS: [Ink; 9] = [Ink::Text, Ink::Accent, Ink::Red, Ink::Yellow, Ink::
 /// The row, `w` cells wide, and where each filter landed: (first cell, last cell, which).
 pub fn shows_line(s: &State, _t: &Theme, w: usize) -> (Inked, Vec<(usize, usize, usize)>) {
     // `only`: 0 every filter, 1 those with something in them (and the one shown), 2 the one shown alone.
-    // Whose board: the first item, where there is another machine (alt+m goes round, a click too).
-    let machine = (!s.remotes.is_empty() || s.all()).then(|| {
-        let named = if s.scope == "*" { "All machines".to_string() } else { crate::board::update::remotes::shown(s, &s.scope) };
-        let ok = s.scope.is_empty() || s.scope == "*" || s.remotes.get(&s.scope).is_some_and(|m| m.ok);
-        // In the base colour, no caret (yellow while that machine does not answer); a cell of room each side as every item.
-        // One machine picked lights it as the filter shown is lit; All machines stays plain.
-        let item = Inked::of(format!(" {named} "), if ok { Ink::Text } else { Ink::Yellow });
-        if s.scope == "*" { item } else { item.bold().inv() }
-    });
     // Every item keeps a cell of room on each side, lit or not: the lit one's highlight takes it (` Needs you 1 `), and
     // the row does not move when another is lit.
     let lay = |names: &[&str], only: u8| {
         let (mut line, mut hits) = (Inked::new(), vec![]);
-        if let Some(m) = &machine { line = line.add(m.clone()); hits.push((0, line.width(), MACHINE)); line = line.add(Inked::of("│", Ink::Muted)); }
         let mut first = true;
         for (n, name) in names.iter().enumerate() {
             let count = s.show_n.get(n).copied().unwrap_or(0);

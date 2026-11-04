@@ -1,7 +1,7 @@
 //! A coordinator in the task panel's form: beside the list (`Alt+P`) and full screen (`Alt+T`). `Status`: where its
 //! chat stands, and while autopilot is on its state, goal and today's counts; its latest message. `Settings`: its
 //! program, model and effort, and while on autopilot's in plain words, `*` on this time's values. Full screen, while on,
-//! also its last wakes. While off, nothing of autopilot shows. Another machine's as that machine sent it.
+//! also its last wakes. While off, nothing of autopilot shows.
 use super::kit::Kit;
 use super::READ;
 use crate::board::keys::key_name;
@@ -36,7 +36,7 @@ pub fn coord_panel(s: &State, t: &Target, width: usize, full: bool) -> Vec<Inked
         st.extend(k.fact_text("Today", v.s("today")));
     } else if ["none", "exited"].contains(&chat.as_str()) { st.extend(k.fact("State", vec![Kit::dim(chat_words)])); } else { st.extend(k.fact_text("State", &chat_words)); }
     // Its latest message, unless the chat under the list shows it already.
-    let chat_shows = crate::board::update::coords::talking(s).map(|c| c == *t).unwrap_or(t.host.is_empty() && t.to.is_empty() && !s.reply);
+    let chat_shows = crate::board::update::coords::talking(s).map(|c| c == *t).unwrap_or(t.to.is_empty() && !s.reply);
     if let (Some(l), false) = (&look, chat_shows) { if !l.said.is_empty() { let said = if full { l.said.clone() } else { crate::shown::words::brief(&l.said, 300, " …") }; st.extend(k.fact_text("Last", &said)); } }
     k.part(st);
     let mut set = vec![k.head("Settings", None)];
@@ -55,8 +55,7 @@ pub fn coord_panel(s: &State, t: &Target, width: usize, full: bool) -> Vec<Inked
         }
         if once { set.push(Inked::of("*", Ink::Accent).add(Kit::dim(" this time only"))); }
     }
-    if full && t.host.is_empty() { set.extend(k.wrap(&format!("{} changes them", key_name("settings"))).into_iter().map(|l| l.recolor(Ink::Muted))); }
-    if full && !t.host.is_empty() { set.extend(k.wrap(&format!("Changed on {}: herdr-projects set <name> <value> {} there", t.host, flag(t))).into_iter().map(|l| l.recolor(Ink::Muted))); }
+    if full { set.extend(k.wrap(&format!("{} changes them", key_name("settings"))).into_iter().map(|l| l.recolor(Ink::Muted))); }
     k.part(set);
     if full && on {
         let mut w = vec![k.head("Wakes", None)];
@@ -75,7 +74,7 @@ pub fn coord_panel(s: &State, t: &Target, width: usize, full: bool) -> Vec<Inked
     Kit::out(body)
 }
 /// The flag a command names this coordinator by on its machine.
-pub fn flag(t: &Target) -> String { match t.to.strip_prefix("project:") { Some(r) => format!("--project-coordinator {r}"), None if t.to == "machine" => "--machine-coordinator".into(), None => "--main-coordinator".into() } }
+pub fn flag(t: &Target) -> String { match t.to.strip_prefix("project:") { Some(r) => format!("--project-coordinator {r}"), None => "--main-coordinator".into() } }
 /// The coordinator whole, full screen.
 pub fn coord_full(s: &mut State, t: &Target, width: usize, h: usize) -> Vec<Inked> {
     let lines = coord_panel(s, t, width.min(READ), true);

@@ -3,7 +3,7 @@
 //! watcher/pace.rs) the last screen lines go to the helper, which answers a line and a percent. One call covers every
 //! agent whose look is due, and only one call runs at a time on the machine (watcher/one.rs). A screen that says what
 //! it said at the last look costs no call. What a look finds is kept on the task (`watch`); the sidebar is told by
-//! flow/sidebar.rs. Also here: stopping an instruction sent to another machine's Coordinator.
+//! flow/sidebar.rs.
 pub mod one;
 pub mod pace;
 pub mod prompt;
@@ -145,16 +145,4 @@ pub fn watch_tick_with(tasks: &[Obj], now_ms: i64, load: Option<f64>, run: Run) 
             let _ = update(id, |c| { if c.s("stage") != stage || turn_of(c) != *turn || watcher_off() { return Ok(Change::Keep); } c.put("watch", watch); Ok(Change::Write) });
         }
     }));
-}
-
-/// Instructions sent to another machine's Coordinator: a row on this board until that machine answers. Stopped here.
-pub fn stop_dispatch(id: &str) {
-    use crate::store::inbox::{clear_dispatch, get_dispatch};
-    if let Some(d) = get_dispatch(id) {
-        if crate::store::files::marker_alive(&json!({ "pid": d.at("pid"), "start": d.at("pidStart") })) {
-            let pid = d.i("pid") as i32;
-            unsafe { if libc::kill(-pid, libc::SIGTERM) != 0 { libc::kill(pid, libc::SIGTERM); } }
-        }
-    }
-    clear_dispatch(id);
 }

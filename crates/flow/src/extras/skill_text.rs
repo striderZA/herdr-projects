@@ -44,7 +44,7 @@ Every command accepts `--json`. Below, `herdr-projects` stands for that path.
   `--workspace.from here` (start from their current commit), `--workspace.from develop` (start from that branch at the
   remote and land on it: the pull request merges into it). A refused option changes nothing on the task.
 - One task after another: `--after <id>[,<id>…]` says a task may not start before those tasks (of any repo on this
-  machine, or on another machine the board knows, named with its machine first: `vm-str:ELA-3`) are done. Alone
+  machine) are done. Alone
   (`add --after`) it is only that: the task stays in to do and never starts by itself. Delegated (`add --after …
   --delegate`, `delegate <id> --after …`) it is queued after them and starts by itself once they are done, its agent
   told what they did. `after <id> <id>[,…]` changes what it waits for, `after <id> --clear` drops the wait;
@@ -86,8 +86,7 @@ Every command accepts `--json`. Below, `herdr-projects` stands for that path.
   list and starts nothing. `clear <id>` stops its agent and removes the task; a worktree with unsaved or unmerged work
   is kept on disk, and it says where (only when the human plainly asks). `archive --done [--repo NAME]` archives every done task of that repo (or of every
   repo) in one go; one that works, waits, is to do or is pinned stays. `archive --repo NAME` archives a whole project
-  with its tasks (stopping their agents and its coordinator) and `restore --repo NAME` brings it back as it was
-  (`--on MACHINE`: a project of another machine, done there): only when the human asks.
+  with its tasks (stopping their agents and its coordinator) and `restore --repo NAME` brings it back as it was: only when the human asks.
 
 If you are an agent or a reviewer the board itself started on a task, your rules were given to you at the start, and
 they come first: do nothing to the board beyond your own task unless a human explicitly told you to. An explicit

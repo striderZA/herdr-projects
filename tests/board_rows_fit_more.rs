@@ -149,15 +149,5 @@ fn minutes_left_are_never_wider_than_nine_cells_and_a_machines_name_beside_a_tas
     assert!(has(&draw(&mut s, &pair(999), 80).rows[1], r"% 999m left +2h$"));
     assert!(has(&draw(&mut s, &pair(1000), 80).rows[1], r"% 17h left +2h$"));
     assert!(has(&draw(&mut s, &pair(10_000_000), 80).rows[1], r"% 999h left +2h$"));
-    // All machines: a machine's name is its heading's, never on a row, so it takes no room the row's words were promised.
-    s.scope = "*".into();
-    let far = vec![todo(json!({ "id": "p/1", "title": "A title that is forty cells long, exactly", "host": "long-machine-name", "msg": "X", "progress": 50, "eta": 1 })), todo(json!({ "id": "p/2", "title": "Fix login", "host": "long-machine-name", "msg": "X", "progress": 50, "eta": 1 }))];
-    for width in 30..=120 {
-        draw(&mut s, &far, width); // with a machine's name before it a line does not start with its task's name: found by it anywhere
-        let all: Vec<String> = list_lines(&mut s, &Theme::default_dark(false), width, 20, 200).iter().map(|l| l.text()).collect();
-        let lines: Vec<String> = far.iter().map(|r| { let head: String = r.s("title").chars().take(6).collect(); all.iter().find(|l| l.contains(&head)).cloned().unwrap_or_default() }).collect();
-        let said: Vec<bool> = lines.iter().map(|l| has(l, r" {2}X( |$)")).collect();
-        assert_eq!(said[0], said[1], "only one row says X at {width}:\n{}", lines.join("\n"));
-        assert!(lines.iter().all(|l| l.chars().count() <= width && !l.contains("long-mach")));
-    }
+
 }

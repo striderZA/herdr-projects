@@ -1,5 +1,5 @@
 //! Which tasks a coordinator on autopilot may look after, and which of them need looking after. Its area: the main
-//! Coordinator everything this board shows, a machine coordinator its machine's repos, a project coordinator its repo.
+//! Coordinator everything this board shows, a project coordinator its repo.
 //! It may look after the tasks it added and, under `autopilot.scope all`, your to-do tasks it started; never a task of
 //! yours it did not start. One needs looking after when it failed (the check, the review after its rounds, a limit, its
 //! agent's program exiting, its setup) or its agent waits with a question; under `autopilot.approve yes`, also when it
@@ -11,10 +11,9 @@ use crate::status_words::review_failed;
 use crate::store::repos::git_out;
 use crate::store::settings::places::REPO_FILE;
 
-/// Is this task in the coordinator's area? A task of another machine carries its machine (`host`): only the main
-/// Coordinator's area reaches it.
+/// Is this task in the coordinator's area?
 pub fn in_area(co: &Co, t: &Obj) -> bool {
-    match &co.level { Level::Top => true, Level::Machine => !t.b("host"), Level::Project(r) => !t.b("host") && repo_of(t) == *r }
+    match &co.level { Level::Top => true, Level::Project(r) => repo_of(t) == *r }
 }
 fn repo_of(t: &Obj) -> String { if t.b("repo") { t.t("repo") } else { t.s("id").split('/').next().unwrap_or("").to_string() } }
 /// Over: merged, done, stopped by you, or archived. A task over is under way no more.
@@ -49,10 +48,8 @@ pub fn touches_repo_file(t: &Obj) -> bool {
 /// May it look after this task: one of its own, not left to you.
 pub fn may_look_after(ap: &Obj, t: &Obj) -> bool { task_rec(ap, t.s("id")).map(|r| !r.b("left")).unwrap_or(false) }
 /// Its own tasks that are under way, of those on the board.
-/// A slot taken for an add on another machine that has not answered yet (add.rs) counts too, and so does a task of
-/// another machine it started there while no board hears that machine, until it is seen over.
 pub fn under_way_count(ap: &Obj, board: &[Obj]) -> usize {
-    tasks(ap).iter().filter(|r| r.b("pending") || match board.iter().find(|t| t.s("id") == r.s("id")) { Some(t) => under_way(t), None => crate::after::far::is_far(r.s("id")) && r.b("started") && !r.b("over") }).count()
+    tasks(ap).iter().filter(|r| board.iter().find(|t| t.s("id") == r.s("id")).is_some_and(under_way)).count()
 }
 /// Its tasks that need looking after now, with why.
 pub fn needing(ap: &Obj, board: &[Obj], approve: bool) -> Vec<(String, &'static str)> {
@@ -62,17 +59,12 @@ pub fn needing(ap: &Obj, board: &[Obj], approve: bool) -> Vec<(String, &'static 
 /// it the nearest coordinator to them on autopilot with `scope all`.
 pub fn yours_to_start(co: &Co, board: &[Obj]) -> usize { board.iter().filter(|t| is_yours_to_start(co, t)).count() }
 pub fn is_yours_to_start(co: &Co, t: &Obj) -> bool {
-    in_area(co, t) && !t.b("host") && t.s("stage") == "todo" && !t.b("archivedAt") && !t.at("autopilot").is_object() && !t.b("startedOnce") && nearest_all(&co.socket, t).map(|n| n == *co).unwrap_or(false)
+    in_area(co, t) && t.s("stage") == "todo" && !t.b("archivedAt") && !t.at("autopilot").is_object() && !t.b("startedOnce") && nearest_all(&co.socket, t).map(|n| n == *co).unwrap_or(false)
 }
-/// The coordinator a to-do task of yours goes to under `autopilot.scope all`: the nearest on autopilot with `scope all`
-/// on the task's own machine: its repo's, then the machine's, then the main Coordinator.
+/// The coordinator a to-do task of yours goes to under `autopilot.scope all`: the nearest on autopilot with `scope all`:
+/// its repo's, then the main Coordinator.
 pub fn nearest_all(socket: &str, t: &Obj) -> Option<Co> {
-    [Co::project(socket, &repo_of(t)), Co::machine(socket), Co::top(socket)].into_iter().find(|c| super::record::is_on(c) && super::record::words(c, "autopilot.scope") == "all")
+    [Co::project(socket, &repo_of(t)), Co::top(socket)].into_iter().find(|c| super::record::is_on(c) && super::record::words(c, "autopilot.scope") == "all")
 }
 /// Did this coordinator add the task (from its own pane, in any turn)?
-/// A task of another machine is its own when its autopilot record names this machine.
-pub fn added_by(co: &Co, t: &Obj) -> bool {
-    let a = t.at("autopilot");
-    let here = if t.b("host") { a.s("machine") == crate::remote::check::hostname() } else { a.s("machine").is_empty() };
-    (t.s("coordinator") == key_of(co) && !t.b("host")) || (a.s("coordinator") == key_of(co) && here)
-}
+pub fn added_by(co: &Co, t: &Obj) -> bool { t.s("coordinator") == key_of(co) || t.at("autopilot").s("coordinator") == key_of(co) }

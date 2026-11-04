@@ -48,9 +48,9 @@ pub fn panel(s: &mut State, t: &Theme, r: &Obj, width: usize, full: bool, fit: u
     let mut k = Kit::new(width);
     if !r.has("title") { return job_panel(&mut k, r, s.now, t); }
     let agent = crate::shown::states::is_agent(r);
-    let c = Ctx { now: s.now, full, tag: crate::board::tags::number_tag(r, &s.data.keys, &s.scope, true), mark: super::fields::mark(t, r), agent, failure: crate::shown::states::failure_for(r),
+    let c = Ctx { now: s.now, full, tag: crate::board::tags::number_tag(r, &s.data.keys), mark: super::fields::mark(t, r), agent, failure: crate::shown::states::failure_for(r),
         attempt: if crate::board::update::actions::choosing(s, r) { crate::board::update::actions::attempt_sel(s, r) } else { String::new() }, repo_root: s.data.repo_root.clone(),
-        repo_key: if r.b("host") { r.t("key") } else { s.data.keys.get(r.s("id").split('/').next().unwrap_or("")).cloned().unwrap_or_default() } };
+        repo_key: s.data.keys.get(r.s("id").split('/').next().unwrap_or("")).cloned().unwrap_or_default() };
     let mut cut = false;
     let (title, mut top, top_part, told) = status::status(&mut k, &c, r);
     // The description: whole on the full screen, its first few hundred characters beside the list.
@@ -156,7 +156,7 @@ pub fn full_panel(s: &mut State, t: &Theme, r: &Obj, width: usize, h: usize) -> 
     if editing { s.panel_top = s.edit_line.min(s.panel_top.max((s.edit_line + 1).saturating_sub(s.panel_height))); }
     s.panel_top = s.panel_top.min(lines.len().saturating_sub(s.panel_height));
     let end = lines.len().min(s.panel_top + s.panel_height);
-    let name = if r.has("title") { crate::text::cut(&crate::board::tags::name_say(r, &s.data.keys, &s.scope, 60), width.saturating_sub(40).max(8)) } else { crate::shown::words::id_label(r.s("id")) };
+    let name = if r.has("title") { crate::text::cut(&crate::board::tags::name_say(r, &s.data.keys, 60), width.saturating_sub(40).max(8)) } else { crate::shown::words::id_label(r.s("id")) };
     let left = Inked::plain(" ").add(Inked::plain(if editing { "Settings" } else { "Task details" }).bold()).add(Inked::of(format!("  {name}"), Ink::Muted));
     let right = if lines.len() > s.panel_height { Inked::of(format!("lines {}–{end} of {} ", s.panel_top + 1, lines.len()), Ink::Muted) } else { Inked::new() };
     let gap = width.saturating_sub(left.width() + right.width()).max(2);

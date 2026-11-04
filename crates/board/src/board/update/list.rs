@@ -1,8 +1,8 @@
 //! The task list from what was read: which rows there are, under which headings, which one is selected. The selection
 //! stays on its task while other rows move; when its own task moves (to another group, elsewhere in the list, out of
 //! it) the selection stays where you were working (landing.rs). Pure: what was read comes in with the state (data.rs).
-use super::heads::{autos_in, group_id, host_of, is_head, machine_id, parts};
-use super::landing::{land, AUTOS, JOBS};
+use super::heads::{autos_in, group_id, is_head, machine_id, parts};
+use super::landing::land;
 use crate::board::state::{Away, Mode, Rec, Row, SelRow, State};
 use crate::board::tags::number_tag;
 use crate::board::keys::key_name;
@@ -24,26 +24,22 @@ fn repo_name(r: &Obj) -> &str { repo_of(if r.b("rid") { r.s("rid") } else { r.s(
 pub fn filter_now(s: &State) -> String { (if s.mode == Mode::Find { s.value() } else { s.filter.clone() }).trim().to_lowercase() }
 /// A task's tags as find takes them: `hsw-134`, `#134`, `134`.
 fn tags(s: &State, r: &Obj) -> Vec<String> {
-    let tag = number_tag(r, &s.data.keys, &s.scope, false).to_lowercase();
+    let tag = number_tag(r, &s.data.keys).to_lowercase();
     if tag.is_empty() { return vec![]; }
     let n = tag.rsplit(['#', '-']).next().unwrap_or("").to_string();
     vec![tag, format!("#{n}"), n]
 }
-/// The automations of whoever's board shows, machine by machine in the order of herdr's sidebar. None in the archive.
-/// Each stands in its machine's part of the list: its own group there, or under its repo (heads.rs: autos_in).
+/// This machine's automations. None in the archive. Each stands in the list: its own group, or under its repo
+/// (heads.rs: autos_in).
 pub fn autos_shown(s: &State, f: &str) -> Vec<Obj> {
     if s.archive_view { return vec![]; }
-    let mut all: Vec<Obj> = if s.scope.is_empty() || s.scope == "*" { s.data.autos.iter().map(|a| { let mut a = a.clone(); let row = format!("auto:{}", a.s("id")); a.put("row", row); a.put("host", ""); a }).collect() } else { vec![] };
-    for m in super::remotes::in_view(s) { all.extend(m.autos.iter().cloned()); }
-    all.sort_by_key(|a| super::remotes::place(s, a.s("host")));
+    let all: Vec<Obj> = s.data.autos.iter().map(|a| { let mut a = a.clone(); let row = format!("auto:{}", a.s("id")); a.put("row", row); a }).collect();
     if f.is_empty() { return all; }
-    all.into_iter().filter(|a| { let r = a.at("rowNow"); format!("automation {} {} {} {} {}", r.s("name"), r.s("trigger"), r.s("repo"), r.s("state"), a.s("host")).to_lowercase().contains(f) }).collect()
+    all.into_iter().filter(|a| { let r = a.at("rowNow"); format!("automation {} {} {} {}", r.s("name"), r.s("trigger"), r.s("repo"), r.s("state")).to_lowercase().contains(f) }).collect()
 }
 /// What the list is made of, from the items: call after anything changed what shows (a load, a key, a filter).
 pub fn relist(s: &mut State) {
-    super::remotes::reorder(s);
-    let mine = &s.data.items;
-    s.items = if s.scope.is_empty() { mine.clone() } else if s.scope == "*" { mine.iter().cloned().chain(super::remotes::others(s).into_iter().flat_map(|m| m.items.iter().cloned())).collect() } else { s.remotes.get(&s.scope).map(|m| m.items.clone()).unwrap_or_default() };
+    s.items = s.data.items.clone();
     // The filter row counts every task in view; the list keeps those of the filter shown (shows.rs).
     let all = s.items.clone();
     s.show_n = super::shows::counts(s, &all);
@@ -51,11 +47,10 @@ pub fn relist(s: &mut State) {
     let mut keep = keep.into_iter();
     s.items.retain(|_| keep.next().unwrap_or(true));
     super::pending::overlay(s);
-    s.jobs = if s.archive_view { vec![] } else { s.data.jobs.iter().filter(|j| !super::chat::in_chat(s, j)).cloned().collect() };
     let f = filter_now(s);
     s.autos = if super::shows::keeps_all(s) { autos_shown(s, &f) } else { vec![] };
     super::pending::overlay_autos(s);
-    let layout = serde_json::to_string(&json!([s.scope, s.by_repo, s.all_done, s.archive_view, f, s.show, s.by_machine])).unwrap_or_default();
+    let layout = serde_json::to_string(&json!([s.by_repo, s.all_done, s.archive_view, f, s.show])).unwrap_or_default();
     // The task the selection is held on (or that the panel shows whole, in the same list) keeps its row whatever it has
     // become meanwhile.
     let held = |r: &Obj| r.s("id") == s.sel && (r.s("id") == s.stick || (s.full && layout == s.selection_layout));
@@ -64,22 +59,19 @@ pub fn relist(s: &mut State) {
         let hay = format!("{} {} {} {} {} {} {} {} {} {}", tags(s, r).join(" "), r.s("id"), r.s("title"), r.s("msg"), r.t("state"), r.s("app"), if r.b("archivedAt") { "archived" } else { "" }, r.s("description"), r.at("failure").s("title"), r.at("failure").s("detail"));
         hay.to_lowercase().contains(&f)
     }).collect() };
-    // In the archive, an archived project (of any machine in view) stands under its own heading whatever the grouping,
-    // with its tasks; alone (`0 tasks`) when it has none, but not while a find narrows the list.
+    // In the archive, an archived project stands under its own heading whatever the grouping, with its tasks; alone
+    // (`0 tasks`) when it has none, but not while a find narrows the list.
     let projects = super::heads::archived_heads(s);
-    let in_project = |r: &Rec| projects.iter().any(|(h, p)| *h == host_of(r) && p == repo_name(r));
-    let mut names: Vec<String> = projects.iter().map(|(_, p)| p.clone()).collect(); names.sort(); names.dedup();
+    let in_project = |r: &Rec| projects.iter().any(|p| p == repo_name(r));
+    let mut names: Vec<String> = projects.clone(); names.sort(); names.dedup();
     let project_groups: Vec<(String, Vec<Rec>)> = names.iter().map(|p| (p.clone(), shown.iter().filter(|r| in_project(r) && repo_name(r) == p).cloned().collect::<Vec<_>>())).filter(|(_, l)| f.is_empty() || !l.is_empty()).collect();
     let rest: Vec<Rec> = shown.iter().filter(|r| !in_project(r)).cloned().collect();
-    s.grouped = if s.by_machine {
-        // By machine: each machine's tasks under its heading alone (heads.rs: parts), by how much they need you.
-        project_groups.into_iter().chain([("tasks".to_string(), rest), (AUTOMATIONS.to_string(), vec![])]).collect()
-    } else if s.by_repo {
+    s.grouped = if s.by_repo {
         let mut names: Vec<String> = vec![];
         for r in &shown { let g = repo_name(r).to_string(); if !names.contains(&g) { names.push(g); } }
         for a in &s.autos { let g = a.t("repo"); if !names.contains(&g) { names.push(g); } }
         // A repo used lately with no task in view keeps its heading, for its project coordinator (heads.rs: empty_repo).
-        if s.scope.is_empty() || s.scope == "*" { for g in &s.data.lately { if super::heads::empty_repo(s, "", g) && !names.contains(g) { names.push(g.clone()); } } }
+        for g in &s.data.lately { if super::heads::empty_repo(s, g) && !names.contains(g) { names.push(g.clone()); } }
         for g in project_groups.iter().map(|(g, _)| g.clone()).chain(super::pinned::names(s)) { if !names.contains(&g) { names.push(g); } } // and a pinned project's, under Pinned
         let here = s.data.repo.clone();
         names.sort_by(|a, b| if *a == here { std::cmp::Ordering::Less } else if *b == here { std::cmp::Ordering::Greater } else { a.to_lowercase().cmp(&b.to_lowercase()).then(b.cmp(a)) });
@@ -106,14 +98,13 @@ pub fn relist(s: &mut State) {
     s.rows = lay_rows(s); // a selection on a folded done task is moved below, after its landing
     // Every row the arrows stop on (the to-dos a long list folds too), with the heading it stands under.
     let mut under: std::collections::HashMap<String, String> = std::collections::HashMap::new();
-    for (name, recs) in &s.grouped { for r in recs { let host = if s.scope == "*" { host_of(r) } else { s.scope.clone() }; under.insert(r.t("id"), group_id(s, &host, name)); } }
+    for (name, recs) in &s.grouped { for r in recs { under.insert(r.t("id"), group_id(s, name)); } }
     let recs: std::collections::HashMap<&str, &Rec> = s.items.iter().map(|r| (r.s("id"), r)).collect();
     let autos: std::collections::HashMap<&str, &Obj> = s.autos.iter().map(|a| (a.s("row"), a)).collect();
     // An automation's row stands under its machine's automations (landing.rs: AUTOS), so that one removed lands on its kin.
     let selectable: Vec<(Rec, String)> = s.steps.iter().filter_map(|id| if is_head(id) { Some((Rec::new(obj(json!({ "id": id, "state": "heading" }))), id.clone())) }
-            else if let Some(a) = autos.get(id.as_str()) { Some((Rec::new(obj(json!({ "id": id, "state": "automation", "created": a.at("created") }))), format!("{AUTOS}\t{}", a.s("host")))) }
-            else { recs.get(id.as_str()).map(|r| ((*r).clone(), under.get(id).cloned().unwrap_or_default())) })
-        .chain(s.jobs.iter().cloned().map(|j| (Rec::new(j), JOBS.to_string()))).collect();
+            else if let Some(a) = autos.get(id.as_str()) { Some((Rec::new(obj(json!({ "id": id, "state": "automation", "created": a.at("created") }))), super::landing::AUTOS.to_string())) }
+            else { recs.get(id.as_str()).map(|r| ((*r).clone(), under.get(id).cloned().unwrap_or_default())) }).collect();
     let folded_heads: Vec<String> = s.rows.iter().filter_map(|r| match r { Row::Head { id, .. } if r.shut() => Some(id.clone()), _ => None }).collect();
     // Only the selected task's ordering data matters: new rows, progress and other tasks moving never steal the selection.
     let base: std::collections::HashMap<String, i64> = s.items.iter().enumerate().map(|(n, r)| (r.t("id"), n as i64)).collect();
@@ -182,12 +173,11 @@ pub fn fold_rows(s: &mut State) -> Vec<Row> {
 }
 /// The selected task is open: you talk to its agent, or read it whole.
 fn open_on(s: &State) -> bool { s.full || (s.reply && s.reply_id == s.sel) }
-/// A selected done task folded away: the selection goes to its heading (by machine, its machine's), else the first row.
+/// A selected done task folded away: the selection goes to its heading, else the first row.
 fn to_heading(s: &mut State) -> bool {
     if s.whole || open_on(s) || s.steps.contains(&s.sel) { return false; }
     let parts = parts(s, &s.grouped);
-    let at = parts.iter().find_map(|p| p.groups.iter().find(|(_, recs)| recs.iter().any(|r| r.s("id") == s.sel && is_done(r)))
-        .map(|(name, _)| if s.by_machine && name != AUTOMATIONS { machine_id(&p.host) } else { group_id(s, &p.host, name) }));
+    let at = parts.iter().find_map(|p| p.groups.iter().find(|(_, recs)| recs.iter().any(|r| r.s("id") == s.sel && is_done(r))).map(|(name, _)| group_id(s, name)));
     let Some(head) = at else { return false };
     s.sel = if s.steps.contains(&head) { head } else { s.steps.first().cloned().unwrap_or_default() };
     true
@@ -202,50 +192,38 @@ fn lay_rows(s: &mut State) -> Vec<Row> {
     let held = open_on(s);
     let lay = |todos: usize, s: &State| -> Vec<Row> {
         let mut rows = vec![];
-        // With every machine shown, the top row is `All machines` (top.rs); folded, it is the whole list.
-        if s.scope == "*" && !s.archive_view {
-            let (tasks, autos) = (groups.iter().map(|(_, r)| r.len()).sum::<usize>(), s.autos.len());
-            let shut = super::heads::folded(s, &super::top::all_id());
-            rows.push(Row::Head { name: "All machines".into(), autos: false, id: super::top::all_id(), machine: false, folded: if shut { tasks + autos } else { 0 }, folded_autos: if shut { autos } else { 0 }, empty: false });
-            if shut { return rows; }
-        }
         for p in &parts {
-            let autos: Vec<Vec<Obj>> = p.groups.iter().map(|(name, _)| autos_in(s, &p.host, name)).collect();
+            let autos: Vec<Vec<Obj>> = p.groups.iter().map(|(name, _)| autos_in(s, name)).collect();
             let n_autos: usize = autos.iter().map(|a| a.len()).sum();
             let n: usize = p.groups.iter().map(|(_, recs)| recs.len()).sum::<usize>() + n_autos;
-            let bare = |name: &str, recs: &[Rec], autos: &[Obj]| recs.is_empty() && autos.is_empty() && (super::heads::empty_repo(s, &p.host, name) || super::heads::archived_head(s, &p.host, name));
+            let bare = |name: &str, recs: &[Rec], autos: &[Obj]| recs.is_empty() && autos.is_empty() && (super::heads::empty_repo(s, name) || super::heads::archived_head(s, name));
             let has_bare = p.groups.iter().zip(&autos).any(|((name, recs), a)| bare(name, recs, a));
-            // A machine's heading, with every machine shown: folded, its one line stands for all its groups. One with
-            // nothing in view shows folded (`0 tasks`), so that its machine coordinator is still a space away.
-            // The one machine shown is the top row: always there.
-            // One other machine shown that does not answer has no row: it says why above the list.
-            let unread = s.scope != "*" && !super::top::answered(s);
-            if p.heading && !unread && (n > 0 || has_bare || super::heads::empty_shown(s) || super::top::answered(s) || super::shows::host_needs(s, &p.host) || super::pinned::shows_machine(s, &p.host)) {
-                let id = machine_id(&p.host);
-                // Only empty repos' headings under it: nothing to fold.
+            // The top row is this machine's, always there: folded, its one line stands for all its groups; with
+            // nothing in view it says so (`0 tasks`), so that its coordinator is still a space away.
+            if p.heading {
+                let id = machine_id();
                 let shut = super::heads::folded(s, &id) && n > 0;
-                rows.push(Row::Head { name: super::remotes::shown(s, &p.host), autos: false, id, machine: true, folded: if shut { n } else { 0 }, folded_autos: if shut { n_autos } else { 0 }, empty: n == 0 && !has_bare });
+                rows.push(Row::Head { name: super::heads::label(s), autos: false, id, machine: true, folded: if shut { n } else { 0 }, folded_autos: if shut { n_autos } else { 0 }, empty: n == 0 && !has_bare });
                 if shut { continue; }
             }
             // Under Needs you, the projects whose coordinators ask you stand beside the tasks, though no task of theirs
             // does; under Pinned, the pinned projects (shows.rs: beside).
-            for r in super::shows::beside(s, &p.host) {
+            for r in super::shows::beside(s) {
                 if s.by_repo && p.groups.iter().any(|(name, recs)| *name == r && !recs.is_empty()) { continue; }
-                rows.push(Row::Head { id: format!("{}repo\t{}\t{r}", super::heads::HEAD, p.host), name: r, autos: false, machine: false, folded: 0, folded_autos: 0, empty: false });
+                rows.push(Row::Head { id: format!("{}repo\t{r}", super::heads::HEAD), name: r, autos: false, machine: false, folded: 0, folded_autos: 0, empty: false });
             }
             if n == 0 && !has_bare { continue; }
             for ((name, recs), autos) in p.groups.iter().zip(&autos) {
                 // A repo used lately with nothing in view (or an archived one, in the archive): its heading alone, folded (`0 tasks`).
                 let empty = bare(name, recs, autos);
                 if recs.is_empty() && autos.is_empty() && !empty { continue; }
-                let id = group_id(s, &p.host, name);
+                let id = group_id(s, name);
                 let shut = super::heads::folded(s, &id) && !empty;
                 let own = !s.by_repo && name == AUTOMATIONS;
-                // By machine, the machine's heading is the tasks' own: no group heading under it but its automations'.
-                if !(s.by_machine && name != AUTOMATIONS) || super::heads::archived_head(s, &p.host, name) { rows.push(Row::Head { name: name.clone(), autos: own, id, machine: false, folded: if shut { recs.len() + autos.len() } else { 0 }, folded_autos: if shut { autos.len() } else { 0 }, empty }); }
+                rows.push(Row::Head { name: name.clone(), autos: own, id, machine: false, folded: if shut { recs.len() + autos.len() } else { 0 }, folded_autos: if shut { autos.len() } else { 0 }, empty });
                 if shut || empty { continue; }
                 let mut list = recs.clone();
-                list.sort_by(|a, b| (if s.by_repo || s.by_machine { rank(a).cmp(&rank(b)) } else { std::cmp::Ordering::Equal })
+                list.sort_by(|a, b| (if s.by_repo { rank(a).cmp(&rank(b)) } else { std::cmp::Ordering::Equal })
                     .then_with(|| if a.b("archivedAt") && b.b("archivedAt") { b.i("archivedAt").cmp(&a.i("archivedAt")) } else { std::cmp::Ordering::Equal })
                     .then_with(|| if is_done(a) && is_done(b) { b.i("at").cmp(&a.i("at")) } else { std::cmp::Ordering::Equal }));
                 let done: Vec<&Rec> = list.iter().filter(|r| is_done(r)).collect();
@@ -282,12 +260,8 @@ fn lay_rows(s: &mut State) -> Vec<Row> {
 pub fn step_id(r: &Row) -> Option<String> { match r { Row::Rec(o) => Some(o.t("id")), Row::Auto(a) => Some(a.t("row")), Row::Head { id, .. } if !id.is_empty() => Some(id.clone()), _ => None } }
 /// Up or down `d` rows: through every task (folded to-dos too) and automation, then words on their way.
 pub fn step(s: &mut State, d: i64) {
-    let mut ids: Vec<String> = if s.steps.is_empty() { s.rows.iter().filter_map(step_id).collect() } else { s.steps.clone() };
-    ids.extend(s.jobs.iter().map(|j| j.t("id")));
+    let ids: Vec<String> = if s.steps.is_empty() { s.rows.iter().filter_map(step_id).collect() } else { s.steps.clone() };
     let at = ids.iter().position(|i| *i == s.sel).map(|n| n as i64).unwrap_or(-1);
-    // No task to move to: what the list says instead (why a machine does not answer) scrolls.
-    let has_rec = s.rows.iter().any(|r| matches!(r, Row::Rec(_)));
-    if !has_rec && s.unread_max > 0 && (if d > 0 { s.unread_top < s.unread_max } else { s.unread_top > 0 && at <= 0 }) { s.unread_top = (s.unread_top as i64 + d * 3).clamp(0, s.unread_max as i64) as usize; return; }
     if !ids.is_empty() { s.sel = ids[(at + d).clamp(0, ids.len() as i64 - 1) as usize].clone(); }
     s.rows = fold_rows(s);
 }

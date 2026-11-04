@@ -217,7 +217,6 @@
    alt+a        show the archive
    alt+s        group by repo: see which repo each task is in
    alt+d        show all done
-   alt+m        look for other machines (now: this machine)
 
  on a row
    ◐            an agent works
@@ -236,7 +235,8 @@
    R#2          the review it is on or last had, coloured by where it stands: passed, failed, the reviewer working
    PR#16        its pull request: green when its checks pass, red when they fail
    [auto]       made by an automation; [research]: research only, nothing is merged
- ↓ 2 more
+   [chat]       a conversation: it changes nothing and ends when you say
+   [autopilot]  a coordinator on autopilot (a machine's or a project's row): the line under it says what it does
 
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 ❯ Add a task

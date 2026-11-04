@@ -120,23 +120,6 @@ fn a_task_queued_after_many_says_so_on_one_line_cut_as_any_other_line_is() {
 }
 
 #[test]
-fn another_machines_row_says_what_it_waits_for_as_that_machine_names_it() {
-    let w = world_with(Opts { repo: true, ..Default::default() });
-    let (dep, id) = (w.add("Comes first"), w.add("Comes after"));
-    run(&["delegate", &id, "--after", &dep]).unwrap();
-    // Sent to another machine's board: the queued line and each task's name, as this machine says them.
-    let sent = sw::remote::remote_list();
-    let r = sent.arr("tasks").iter().find(|t| t.s("id") == id).and_then(|t| t.as_object().cloned()).unwrap();
-    assert_eq!((r.s("afterLine"), r.at("afterNames")), ("queued after PRJ-1", &json!({ dep.clone(): "PRJ-1" })));
-    // The board that shows it does not know that repo's key (it is that machine's): the row and the panel say what
-    // was sent, never the bare id they would work out themselves.
-    let mut far = r.clone();
-    far.put("host", "vm-str"); far.put("afterLine", "queued after AGT-3"); far.put("afterNames", json!({ dep.clone(): "AGT-3" }));
-    assert_eq!(sw::shown::row_says::sentence(&as_row(&far)).text(), "Queued after AGT-3");
-    assert_eq!(sw::after::panel_line(&far), Some(("Starts after", "AGT-3".to_string())));
-}
-
-#[test]
 fn list_says_the_wait_only_of_a_task_in_to_do_never_over_what_a_started_one_says() {
     let w = world();
     let (dep, id) = (w.add("Comes first"), w.add("Comes after"));

@@ -13,10 +13,10 @@ use crate::store::settings::coord::Coord;
 use crate::store::settings::lookup::{lookup, Scope};
 use crate::store::settings::places::yours;
 
-/// Its key in config.json's `coordinators`, and in a task's autopilot record: "main", "machine", "project:<repo>".
+/// Its key in config.json's `coordinators`, and in a task's autopilot record: "main", "project:<repo>".
 pub fn key_of(co: &Co) -> String { co.settings_key() }
 /// The coordinator a key names, in this herdr session.
-pub fn co_of(socket: &str, key: &str) -> Co { match key { "main" | "" => Co::top(socket), "machine" => Co::machine(socket), k => Co::project(socket, k.strip_prefix("project:").unwrap_or(k)) } }
+pub fn co_of(socket: &str, key: &str) -> Co { match key { "main" | "" => Co::top(socket), k => Co::project(socket, k.strip_prefix("project:").unwrap_or(k)) } }
 /// Its record now (empty: never on).
 pub fn get(co: &Co) -> Obj { state::get(co).and_then(|c| c.o("autopilot").cloned()).unwrap_or_default() }
 pub fn is_on(co: &Co) -> bool { get(co).b("on") }

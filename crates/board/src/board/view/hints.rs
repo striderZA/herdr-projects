@@ -64,13 +64,12 @@ pub fn hints(s: &State, r: Option<&Obj>, who: Option<&Who>) -> (Vec<Hint>, Optio
     let closes = esc_step(s).is_empty() && s.ctx.popup && !crate::board::update::chat::shown(s);
     let back: Vec<Hint> = if !esc_step(s).is_empty() { vec![plain(esc.clone(), esc_step(s))] } else if closes { vec![Hint { key: esc.clone(), words: "close".into(), stays: true, ..Default::default() }] } else { vec![] };
     let leave: Option<Vec<Hint>> = if s.full { let mut v = vec![]; if s.panel_length > s.panel_height { v.push(Hint { key: arrows.clone(), words: "scroll the task".into(), stays: true, ..Default::default() }); } v.extend(back.clone()); Some(v) } else { None };
-    if s.job().is_some() { let mut v = vec![hk(K::Stop, "stop sending this"), plain(enter, "take the words back to change")]; v.extend(leave.unwrap_or(vec![more])); return (v, chat_key); }
     if let Some(a) = s.auto() { return (auto_hints(s, a, &back, &more), chat_key); }
     if let Some(w) = crate::board::update::heads::says(s) {
         // A machine's or a repo's heading: space talks to its coordinator, and back.
         // Space on a row talks to its coordinator; on the one it talks to, back to the top row's (none on the top row).
         let here = crate::board::update::coords::of_head(s, &s.sel);
-        let talk = if super::chat_title::coordinator(s) == here { (s.sel != crate::board::update::top::top_id(s)).then(|| Hint { stays: true, ..hk(K::Talk, &back_words(s)) }) } else { here.filter(|c| head.as_ref() != Some(c)).map(|c| Hint { lit: c.name.clone(), ..hk(K::Talk, &format!("talk to {}", c.name)) }) };
+        let talk = if super::chat_title::coordinator(s) == here { (s.sel != crate::board::update::top::top_id()).then(|| Hint { stays: true, ..hk(K::Talk, &back_words(s)) }) } else { here.filter(|c| head.as_ref() != Some(c)).map(|c| Hint { lit: c.name.clone(), ..hk(K::Talk, &format!("talk to {}", c.name)) }) };
         // Enter folds and unfolds it; the open key goes into its coordinator, where it has one.
         let fold = crate::board::update::heads::fold_says(s);
         let mut v: Vec<Hint> = (!fold.is_empty()).then(|| hk(K::Enter, &fold)).into_iter().collect();
@@ -156,5 +155,5 @@ fn auto_hints(s: &State, a: &Obj, back: &[Hint], more: &Hint) -> Vec<Hint> {
     v.push(Hint { key: name(K::Back), words: "back to the list".into(), stays: true, ..Default::default() });
     v
 }
-/// Space again: back to the top row's coordinator (All machines', or the one machine's).
+/// Space again: back to the top row's Coordinator.
 fn back_words(s: &State) -> String { crate::board::update::top::top(s).map(|t| format!("back to {}", t.name)).unwrap_or_else(|| "back".into()) }

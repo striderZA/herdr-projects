@@ -47,7 +47,7 @@ fn waiting_line(l: &Low) -> String {
     let on = crate::store::marks::tilde(&l.mount().display().to_string());
     let why = match l.total { Some(total) if l.need < needed() => format!("{on} is only {} in all, so it needs {} free, not the {} of board.diskFree", gb(total), gb(l.need), gb(needed())), _ => "board.diskFree".into() };
     format!("Disk nearly full on {}: {} free on {on}; this task starts once {} is free ({why}). Free some space: herdr-projects sweep, and herdr-projects doctor lists more that can go.",
-        crate::remote::check::hostname(), gb(l.free), gb(l.need))
+        crate::util::hostname(), gb(l.free), gb(l.need))
 }
 /// Before a start: room, or the sweep first (at most once in ten minutes), or the disk the task waits for.
 pub fn make_room(t: &Task) -> Result<(), Low> {

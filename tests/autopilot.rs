@@ -16,7 +16,6 @@ mod added_by;
 /// Idle with room: its timer wakes it all the same, backs off after wakes that added nothing, and its row says so.
 mod idle;
 /// One that never ran: sent as off, and `Tab` from another machine starts it.
-mod never_ran;
 /// A pane id herdr handed out again: a done task's old pane given to a coordinator is the coordinator's.
 mod pane_reuse;
 /// A wake's turn while herdr leaves completion_seq out: still the wake's, and what it starts is counted.
@@ -137,9 +136,6 @@ fn nothing_of_a_coordinators_settings_is_read_from_the_repos_own_file_and_repos_
         assert_eq!(from(&Co::project(&w.socket, name), "autopilot.gap"), ("30m".into(), "this coordinator".into()));
     }
     assert_eq!(from(&Co::top(&w.socket), "autopilot.gap").0, "10m");
-    assert_eq!(from(&Co::machine(&w.socket), "autopilot.gap").0, "10m");
-    ok(&["set", "autopilot.gap", "20m", "--machine-coordinator"]);
-    assert_eq!(from(&Co::machine(&w.socket), "autopilot.gap").0, "20m");
     assert_eq!(from(&Co::project(&w.socket, "machine"), "autopilot.gap").0, "30m");
     assert!(refused(&["set", "autopilot.gap", "20m", "--project-coordinator", "nope"]).contains("No repo \"nope\""));
 }
@@ -238,7 +234,7 @@ fn ask_first_access_refuses_it_stop_says_it_is_still_on_and_a_new_chat_keeps_it(
 #[test]
 fn every_coordinators_rules_say_what_a_wake_is_and_hold_every_exception_for_one() {
     let w = pilot_world();
-    for co in [Co::top(&w.socket), Co::machine(&w.socket), proj(&w)] {
+    for co in [Co::top(&w.socket), proj(&w)] {
         let rules = sw::coordinator::rules::rules_of(&co, "board");
         assert_eq!(rules.matches(sw::coordinator::rules_autopilot::EXCEPT).count(), 3, "{rules}");
         assert!(rules.contains("An autopilot wake is a message that starts with the exact words \"Autopilot:\""));

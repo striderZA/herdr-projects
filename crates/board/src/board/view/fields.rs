@@ -102,8 +102,8 @@ pub fn fields(s: &State, t: &Theme, r: &Obj, now: i64) -> F {
         let a = auto(r);
         let row = a.at("rowNow");
         let ink = |x: String| Inked::of(x, Ink::Muted);
-        let made = if row.b("made") { let id = if a.b("host") { format!("{}:{}", a.s("host"), row.s("made")) } else { row.t("made") }; s.items.iter().find(|x| x.s("id") == id).cloned() } else { None };
-        let tag = made.map(|m| mark(t, &m).add(Inked::plain(" ")).add(Inked::of(crate::board::tags::number_tag(&m, &s.data.keys, &s.scope, false), Ink::Muted))).unwrap_or_default();
+        let made = if row.b("made") { let id = row.t("made"); s.items.iter().find(|x| x.s("id") == id).cloned() } else { None };
+        let tag = made.map(|m| mark(t, &m).add(Inked::plain(" ")).add(Inked::of(crate::board::tags::number_tag(&m, &s.data.keys), Ink::Muted))).unwrap_or_default();
         return F { tag, lead: ink(row.t("lead")), elapsed: row.t("age"), ago: row.b("ago"), never: !row.b("age"), when: row.t("when"), ..Default::default() };
     }
     let f = row_fields(r, now);

@@ -1,5 +1,5 @@
 //! The crate sw-flow (crates/flow), on sw-core: the flow of a task (delegating, the finish line, landing), the keeper
-//! and what it runs, other machines, automations, autopilot on the coordinators. With it, the parts of the board's
+//! and what it runs, automations, autopilot on the coordinators. With it, the parts of the board's
 //! screen that this flow uses: the keys' table and the theme.
 //! Which crate holds what, and why: docs/crates.md.
 pub use sw_core::*;
@@ -25,7 +25,6 @@ pub mod leftovers;
 pub mod limits;
 pub mod notify;
 pub mod plan;
-pub mod remote;
 pub mod runner;
 pub mod shown;
 pub mod state;

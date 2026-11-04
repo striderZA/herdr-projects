@@ -40,13 +40,7 @@ fn each_thing_sent_to_a_tasks_agent_is_under_the_name_of_who_sent_it() {
     for _ in 0..12 { s.press(&["alt+k"]); b.extend(crate::board_chat::chat(&mut s, 120).boxed); }
     for name in ["Board:", "Coordinator:"] { assert!(b.iter().any(|l| l == name), "{name} in {b:?}"); }
     assert!(!b.iter().any(|l| l.starts_with("To the")), "{b:?}");
-    // another machine's task: its machine says who sent what
-    let snap = sw::remote::remote_list().at("tasks").as_array().unwrap().iter().find(|x| x.s("id") == id).unwrap().at("snap").clone();
-    let mut far = r.clone(); far.insert("host".into(), json!("vm-a")); far.insert("snap".into(), snap);
-    assert_eq!(sent_by(&far).into_iter().map(|p| p.0).collect::<Vec<_>>(), vec!["Board", "You", "Coordinator", "Board"]);
-    // a machine that does not say who: all of it is yours, never "To the agent"
-    let mut old = r.clone(); old.insert("host".into(), json!("vm-b")); old.insert("snap".into(), json!({ "talk": { "who": "agent", "readable": true, "list": [{ "who": "you", "text": "Do it" }, { "who": "them", "text": "Done." }] } }));
-    assert_eq!(sent_by(&old), vec![("You".to_string(), "Do it".to_string())]);
+    let _ = r;
 }
 
 fn of(id: &str, sent: &[(&str, i64)]) -> Vec<String> { senders(id).of(sent) }

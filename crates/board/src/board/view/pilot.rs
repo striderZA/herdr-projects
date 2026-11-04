@@ -1,4 +1,4 @@
-//! A machine's or a project's row (and `All machines`) as the list draws it: its coordinator, as a task's row is its
+//! The top row and a project's row as the list draws it: its coordinator, as a task's row is its
 //! agent. The same marks as tasks, in the marks' column left of the caret, in their colours: `○` idle (also one that
 //! never ran or was stopped), `◐` working, `?` it asks you (`!` it wants your OK), `✗` it could not start. On autopilot
 //! it keeps that mark: autopilot shows only in the board's own patterns, a dimmed `[autopilot]` after its name (as a
@@ -20,12 +20,8 @@ pub const PILOT_TAG: &str = "[autopilot]";
 /// The row of the coordinator a heading stands for. None for a heading with none (a status group's).
 pub fn shown(s: &State, t: &Theme, id: &str) -> Option<Shown> {
     let c = of_head(s, id)?;
-    // No coordinator can run here (`coordinator.agent none`): this machine's rows are headings only.
-    if c.host.is_empty() && !s.data.can_dispatch { return None; }
-    // Another machine that sends nothing of its coordinators (an older version): the column blank. One it sends nothing of
-    // never ran there: `○`.
-    let sends = c.host.is_empty() || s.remotes.get(&c.host).is_some_and(|m| m.coords.is_object() && !m.coord.b("off"));
-    if !sends { return Some(Shown { mark: Inked::plain(" "), label: "", time: Inked::new(), on: false, under: Inked::new() }); }
+    // No coordinator can run here (`coordinator.agent none`): the rows are headings only.
+    if !s.data.can_dispatch { return None; }
     let v = look_of(s, &c).unwrap_or_default();
     let p = view(s, &c);
     let on = p.b("on");

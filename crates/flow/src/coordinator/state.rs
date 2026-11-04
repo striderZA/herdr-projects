@@ -6,11 +6,11 @@ use crate::json::*;
 use crate::store::files::{data_dir, marker_alive, read_obj, with_lock_wait, write_json};
 use std::path::PathBuf;
 
-/// The top-level Coordinator's folder holds the others': `machine/`, and `projects/<repo>/` for each repo.
+/// The top-level Coordinator's folder holds the others': `projects/<repo>/` for each repo.
 pub fn dir_of(co: impl Into<Co>) -> PathBuf {
     let co = co.into();
     let top = data_dir().join("coordinator").join(session_name(&co.socket));
-    match &co.level { Level::Top => top, Level::Machine => top.join("machine"), Level::Project(_) => top.join("projects").join(co.suffix().trim_start_matches("-project-")) }
+    match &co.level { Level::Top => top, Level::Project(_) => top.join("projects").join(co.suffix().trim_start_matches("-project-")) }
 }
 fn file_of(co: &Co) -> PathBuf { dir_of(co).join("state.json") }
 pub fn get(co: impl Into<Co>) -> Option<Obj> { read_obj(&file_of(&co.into())) }
@@ -27,21 +27,19 @@ pub fn change(co: impl Into<Co>, f: impl FnOnce(&mut Obj) -> bool) -> Res<Obj> {
         Ok(c)
     })
 }
-/// Where it runs. The top-level one and the machine's: a folder of their own (HERDR_PROJECTS_COORDINATOR_DIR names
-/// another for the top-level one, used for nothing else); a folder nothing else chats in is how a conversation is told
-/// from any other. A project coordinator: its repo's own folder, at its main level.
+/// Where it runs. The top-level one: a folder of its own (HERDR_PROJECTS_COORDINATOR_DIR names another for it, used for
+/// nothing else); a folder nothing else chats in is how a conversation is told from any other. A project coordinator:
+/// its repo's own folder, at its main level.
 pub fn home(co: impl Into<Co>) -> PathBuf {
     let co = co.into();
     match &co.level {
         Level::Top => std::env::var("HERDR_PROJECTS_COORDINATOR_DIR").ok().filter(|s| !s.is_empty()).map(PathBuf::from).unwrap_or_else(|| dir_of(&co).join("chat")),
-        Level::Machine => dir_of(&co).join("chat"),
         Level::Project(_) => co.root().unwrap_or_else(|| dir_of(&co).join("chat")),
     }
 }
-/// Every coordinator of this herdr session: the top-level one, and each other one that was ever talked to.
+/// Every coordinator of this herdr session: the top-level one, and each project's that was ever talked to.
 pub fn all(socket: &str) -> Vec<Co> {
     let mut out = vec![Co::top(socket)];
-    if get(Co::machine(socket)).is_some() { out.push(Co::machine(socket)); }
     let projects = dir_of(Co::top(socket)).join("projects");
     let mut names: Vec<String> = std::fs::read_dir(&projects).map(|d| d.flatten().filter(|e| e.path().join("state.json").exists()).map(|e| e.file_name().to_string_lossy().into_owned()).collect()).unwrap_or_default();
     names.sort();

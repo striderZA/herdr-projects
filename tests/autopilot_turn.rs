@@ -136,9 +136,8 @@ fn unlisted_commands_are_refused_with_the_rule_and_off_is_always_allowed() {
     let w = pilot_world();
     let co = in_wake(&w, &[]);
     assert!(refused(&["set", "review.rounds", "1"]).contains("An autopilot turn cannot change settings"));
-    assert!(refused(&["coordinator", "tell", "--machine", "hello"]).contains("Messages to another coordinator"));
+    assert!(refused(&["coordinator", "tell", "hello", "--project", "proj"]).contains("Messages to another coordinator"));
     assert!(refused(&["autopilot", "on", "--project", "proj", "--autopilot.tasksPerDay", "50"]).contains("cannot widen its own powers"));
-    assert!(refused(&["autopilot", "on", "--machine"]).contains("autopilot.switchOthers yes would allow it"));
     assert!(refused(&["rename", "proj/1", "x"]).contains("That command is not one an autopilot wake may run"));
     assert!(refused(&["automations", "add", "x", "--prompt", "y", "--schedule", "every 2h"]).contains("not one an autopilot wake may run"));
     ok(&["list"]); ok(&["autopilot"]);
@@ -148,21 +147,6 @@ fn unlisted_commands_are_refused_with_the_rule_and_off_is_always_allowed() {
     ok(&["list"]);
     in_pane(&w, "");
     let _ = co;
-}
-
-#[test]
-fn switch_others_lets_it_turn_another_on_with_its_saved_goal_only_and_off_all_covers_this_machine() {
-    let w = pilot_world();
-    ok(&["set", "autopilot.goal", "Keep the machine tidy", "--machine-coordinator"]);
-    let co = in_wake(&w, &["--autopilot.switchOthers", "yes"]);
-    assert!(refused(&["autopilot", "on", "--machine", "--goal", "Other"]).contains("no --goal"));
-    assert!(refused(&["autopilot", "on", "--machine", "--autopilot.every", "1h"]).contains("no values for this time"));
-    assert!(ok(&["autopilot", "on", "--machine"]).starts_with("Autopilot on for the"));
-    assert!(sw::autopilot::record::is_on(&Co::machine(&w.socket)));
-    let said = ok(&["autopilot", "off", "--all"]);
-    assert!(said.contains("2 coordinators") && said.contains("this machine"), "{said}");
-    assert!(!sw::autopilot::record::is_on(&co));
-    in_pane(&w, "");
 }
 
 #[test]

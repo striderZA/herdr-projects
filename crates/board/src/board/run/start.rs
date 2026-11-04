@@ -63,12 +63,12 @@ pub fn view(mut ctx: Ctx, folder: &std::path::Path) -> State {
     let data = quick_data(&ctx.cwd);
     let mut s = State::new(ctx, data);
     prefs::apply(&mut s, &p);
-    // It opens on the top row (All machines, or the one machine shown), so the chat starts with its coordinator.
-    s.sel = crate::board::update::top::top_id(&s);
+    // It opens on the top row (this machine), so the chat starts with its coordinator.
+    s.sel = crate::board::update::top::top_id();
     // Words left in the box when it closed were typed for the repo it was in then: the board stays there.
     if !p.s("draft").trim().is_empty() { crate::board::update::setup::to_repo_of(&mut s, p.s("cwd")); }
     // The popup opens on the task that belongs to where you are: the one whose agent runs in the pane you came from.
-    if s.ctx.popup && !s.ctx.from.is_empty() { if let Some(t) = place::task_at(&s.ctx.from).filter(|t| !t.b("archivedAt")) { s.sel = t.t("id"); s.stick = t.t("id"); if !s.scope.is_empty() && s.scope != "*" { s.scope.clear(); } } }
+    if s.ctx.popup && !s.ctx.from.is_empty() { if let Some(t) = place::task_at(&s.ctx.from).filter(|t| !t.b("archivedAt")) { s.sel = t.t("id"); s.stick = t.t("id"); } }
     relist(&mut s);
     s
 }

@@ -34,8 +34,8 @@ One setting is neither: `repo.key`, a fact about one repo.
 3. **A coordinator's setting is looked up as a work setting is, in its own order:**
    **this time → this coordinator → you → built in.** The same function does it.
    - **This coordinator** is the `coordinators` part of your `config.json`, keyed as the coordinators are:
-     `{"coordinators": {"main": {…}, "machine": {…}, "projects": {"<repo>": {…}}}}`. `set`, `unset` and `show` take
-     `--main-coordinator`, `--machine-coordinator` or `--project-coordinator <repo>`.
+     `{"coordinators": {"main": {…}, "projects": {"<repo>": {…}}}}`. `set`, `unset` and `show` take
+     `--main-coordinator` or `--project-coordinator <repo>`.
    - **This time** is the `autopilot.*` values given with `autopilot on`, kept until autopilot goes off. A
      `coordinator.*` value is never for this time.
    - `autopilot.goal` is for one coordinator only: never yours, never for this time.
@@ -111,7 +111,7 @@ herdr-projects set <name> <value>                you
 herdr-projects set <name> <value> --repo <name>  your entry for that repo
 herdr-projects set <name> <value> --task <id>    one task
 herdr-projects set <name> <value> --automation <name>   the tasks one automation makes (automations.md)
-herdr-projects set <name> <value> --main-coordinator     one coordinator's own (also --machine-coordinator,
+herdr-projects set <name> <value> --main-coordinator     one coordinator's own (also
                                                          --project-coordinator <repo>): coordinator.* and autopilot.*
 herdr-projects unset <name>  [--repo … | --task … | --automation … | a coordinator's flag]   back to what it would be
 herdr-projects show                              your settings, the changed ones marked
@@ -129,12 +129,11 @@ herdr-projects delegate <id> --reviewer.agent claude --merge.by itself
 - `*` marks the rows set for this task only. Every other row is plain: where its value comes from is `show <id>`'s;
 - what cannot apply to the task (fast mode for a program that has none) is not offered.
 
-**Your own settings on the board**: `Ctrl+E` on this machine's heading (or on a status group's) opens the same page for
+**Your own settings on the board**: `Ctrl+E` on the top row (or on a status group's) opens the same page for
 yours, what every task starts from, work and board settings both; on a repo's heading (grouped by repo) your entry for
 that repo. The `?` menu has a line for yours under the task's. A change there is the one `set` (or `set --repo`) makes,
 with the same checks, and `Ctrl+U` is `unset`. `*` marks what you set; every other row says where it comes from
-(`built in`, `you`, `the repo's file`). A task with no answer of its own follows at once. Another machine's settings
-are changed on that machine.
+(`built in`, `you`, `the repo's file`). A task with no answer of its own follows at once.
 
 ## The list
 
@@ -168,7 +167,7 @@ are changed on that machine.
 | `autopilot.tasksPerDay` | `5` | this time, coordinator, you | the most tasks it adds in one day (this machine's time zone) |
 | `autopilot.tasksAtOnce` | `2` | this time, coordinator, you | the most tasks under way that it added or started: from start (or adding, when chained) until merged, done, stopped or archived; waiting for you counts. Under `autopilot.scope all`, your tasks it started count |
 | `autopilot.mayChange` | `none` | this time, coordinator, you | which task settings it may give the tasks it adds: exact names (`worker.effort`) and areas (`review.*`), or `none`. Never `merge.*`, `limit.*` or `autopilot.*`; a bare `*` is refused. A setting it is not allowed is not applied, and its answer names it |
-| `autopilot.scope` | `own` | this time, coordinator, you | `own`: it looks after only the tasks it added. `all`: it may also start your to-do tasks in its area, on its own machine, and then looks after them. A task of yours it did not start is never its to look after |
+| `autopilot.scope` | `own` | this time, coordinator, you | `own`: it looks after only the tasks it added. `all`: it may also start your to-do tasks in its area, and then looks after them. A task of yours it did not start is never its to look after |
 | `autopilot.approve` | `no` | this time, coordinator, you | whether it may say yes (a plan, a merge) for the tasks it may look after. `no`: your `merge.by` alone decides. `yes`: it can merge under `merge.by you`, the one setting that overrides `merge.by`. Never for a task held by `autopilot.repoFileWaits`, never `--anyway` |
 | `autopilot.switchOthers` | `no` | this time, coordinator, you | whether, on its own, it may turn other coordinators' autopilot on (only with that one's saved goal and settings). Turning off is always allowed; its rules use this to judge whether an unasked off of another is fine |
 | `autopilot.releases` | `no` | this time, coordinator, you | whether it may add a release task (a version bump, a tag, a publish). `no`: it says when it thinks one is due. A rule it is told, as a task's purpose cannot be checked by code |
@@ -212,19 +211,12 @@ are changed on that machine.
 | `board.agents` | `4` | you only | how many agents work at once |
 | `board.diskFree` | `5` | you only | how many GB a disk the board writes to (the repo's, the worktrees', the board's data, the temporary files) keeps free, never more than half of that disk (a `/tmp` of 3.4 GB in all keeps 1.7 GB): under it, a task about to start (its worktree, its setup, its agent) first sweeps what ended tasks left, and still under it waits in the queue (`waiting for disk space, Q#1`) with a plain line (`Disk nearly full on vm-str: 3.1 GB free …`) instead of failing half-way through a build; it starts by itself once there is room. `0`: never waits. More: [disk space](disk-space.md) |
 | `board.oldBuilds` | `7` | you only | after how many days without a change a done or archived task's kept worktree loses its build output (`target/`, `node_modules/`, `.next/`: only what git ignores) in the daily sweep; the next build makes it again. `0`: never. More: [disk space](disk-space.md) |
-| `board.machines` | `auto` | you only | other machines: `auto` (herdr's saved machines), names (`exedev@vm-a, vm-b`) or `none` |
 | `board.open` | `tab` | you only | what the board key opens. `tab`: the board in a herdr tab of its own, which stays when you go into an agent; pressed on the board itself, the key takes you back to where you came from. `popup`: the board as herdr's popup, a framed window in the middle of herdr's screen, over whatever is there (in a window under 110 columns or 30 rows it takes the whole pane: a margin would cost half the board); the key again or `Esc` closes it, as its hint line says (`esc close`), it closes when you go into an agent, and it is never left behind on a tab. More: [the board](board.md) |
 | `board.notify` | `none` | you only | when a task needs you, is ready to approve, or failed: `bell` rings the terminal bell, a command is run with `HERDR_PROJECTS_ID`, `HERDR_PROJECTS_TITLE` and `HERDR_PROJECTS_EVENT` (`needs you`, `ready to approve` or `failed`) in its environment, `none` does neither |
 | `board.keys` | `none` | you only | your own chord for some of the board's keys, when the one it comes with does not reach it (a window manager or a terminal that takes `Alt`): `name=chord` pairs, each name a key's from the tables in [keys](keys.md#all-the-keys), such as `chatMessage=ctrl+g, chatScrollUp=ctrl+up, chatScrollDown=ctrl+down`, or `none`. The key then answers to your chord only, and the `?` menu, the hint line and the board's messages name it so. A chord another key of the board has, or the key that opens the board (or herdr's prefix, when that key starts with it), is refused with the key it would clash with: move that one too, in the same value. A plain character only for a key that is one already (`talk`, `menu`, `sayYes`, `sayNo`): any other is typed into the text box. The text box's own keys cannot be moved. Yours only: never per repo, and never from a repo's file. More: [your own keys](keys.md#your-own-keys) |
-| `board.keyStyle` | `auto` | you only | how the board writes its keys, in the hint line, the `?` menu and its messages: as on the keyboard you type on. `mac`: the Option key's chords are written `opt+…`, not `alt+…`; `ctrl` stays `ctrl`, as a Mac's terminal passes Control on and never Cmd. `pc`: `alt`. `auto`: by the system the board runs on, so a board on a Linux machine you reach over SSH from a Mac says `alt`: set `mac` there. The keys themselves stay the same. More: [key names on a Mac](keys.md#key-names-on-a-mac) |
+| `board.keyStyle` | `auto` | you only | how the board writes its keys, in the hint line, the `?` menu and its messages: as on the keyboard you type on. `mac`: the Option key's chords are written `opt+…`, not `alt+…`; `ctrl` stays `ctrl`, as a Mac's terminal passes Control on and never Cmd. `pc`: `alt`. `auto`: by the system the board runs on, so a board on a Linux machine you use from a Mac says `alt`: set `mac` there. The keys themselves stay the same. More: [key names on a Mac](keys.md#key-names-on-a-mac) |
 | `board.theme` | `herdr` | you only | the board's colours. `herdr`: herdr's own theme, read from this machine's `config.toml` and resolved as herdr does, so with no theme set there it is herdr's default (Catppuccin); `dark` or `light` picks that theme's dark or light one by hand; the name of one of herdr's themes (`nord`, `gruvbox`, … and `terminal` for the terminal's own colours) is that theme whatever the config says, for a herdr opened from another machine whose config names another one. More: [colours](colours.md) |
 <!-- /made:settings -->
-
-## Other machines
-
-A task's work settings travel with it. The machine you are on works out what you set for it (you, and your entry for its
-repo) and sends that along with whatever starts its agent. Board settings stay with each machine
-([other machines](other-machines.md)).
 
 ## What is fixed
 

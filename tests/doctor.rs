@@ -1,10 +1,10 @@
 //! `herdr-projects doctor` (HP-32), on what each area found: the program and its launcher, herdr's plugin, the agent
-//! programs, other machines and the disks; each problem one line with what to do, and the count at the end.
+//! programs and the disks; each problem one line with what to do, and the count at the end.
 use crate::common;
 use common::*;
 use serde_json::json;
 use std::path::{Path, PathBuf};
-use sw::doctor::{agents, disk, machines, plugin, program, problems, say, Found};
+use sw::doctor::{agents, disk, plugin, program, problems, say, Found};
 
 fn program_file(p: &Path) { std::fs::create_dir_all(p.parent().unwrap()).unwrap(); std::fs::write(p, "#!/bin/sh\n").unwrap(); use std::os::unix::fs::PermissionsExt; std::fs::set_permissions(p, std::fs::Permissions::from_mode(0o755)).unwrap(); }
 fn launcher_for(p: &Path) -> String { format!("#!/bin/sh\nexport HERDR_PROJECTS_DATA_DIR='/d'\nexec {} \"$@\"\n", sw::util::shq(&p.display().to_string())) }
@@ -158,23 +158,6 @@ fn a_version_command_that_hangs_is_said_and_never_asked_again_at_once() {
     let p = agents::ask("claude", vec!["worker.agent".into()]);
     assert!(p.found && p.late && p.sign == agents::Sign::Unknown, "{p:?}");
     assert_eq!(bad(&agents::check(&[p])), ["claude did not say its version in time: `claude --version` hangs (worker.agent) → Run `claude --version` in a terminal here to see why, and fix or reinstall claude."]);
-}
-
-#[test]
-fn other_machines_must_answer_and_be_able_to_ask_this_one() {
-    let _w = world();
-    assert_eq!(machines::check(None)[0], Found::ok("No other machines to reach"));
-    let r = json!({ "here": { "label": "me", "here": true, "ok": false, "why": { "line": "a login shell does not find herdr-projects", "detail": ["Put it on the PATH in ~/.profile."] } },
-        "machines": [
-            { "label": "vm-a", "target": "a.ts.net", "ok": true, "version": "1.1.0", "tasks": 1 },
-            { "label": "vm-b", "target": "b.ts.net", "ok": false, "why": { "line": "ssh could not connect", "detail": ["", "Check that it is on: ssh b.ts.net"] } },
-            { "label": "vm-c", "target": "c.ts.net", "ok": true, "version": "", "tasks": 0 }] });
-    let f = machines::check(Some(&r));
-    assert_eq!(bad(&f), [
-        "Other machines cannot ask this one: a login shell does not find herdr-projects → Put it on the PATH in ~/.profile.",
-        "vm-b (b.ts.net) does not answer: ssh could not connect → Check that it is on: ssh b.ts.net",
-        "vm-c answers, but runs an older herdr-projects → Run herdr-projects update on vm-c."]);
-    assert!(f.contains(&Found::ok("vm-a answers: herdr-projects 1.1.0, 1 task")));
 }
 
 #[test]

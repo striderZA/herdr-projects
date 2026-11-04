@@ -1,6 +1,6 @@
 //! A task's conversation as the board shows it: its agent's, or its reviewer's while the task is under review. Only
 //! the words (agents/talk.rs): what was sent to the program and what it said. The same reading for this machine's
-//! board and for the one another machine asks for (remote/).
+//! board.
 use super::send::prompt_tail;
 use crate::agents::talk::{can_read_talk, talk_of};
 use crate::json::*;

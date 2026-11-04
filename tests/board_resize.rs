@@ -51,7 +51,7 @@ fn resizing_keeps_the_chat_on_the_last_line_and_the_working_rows_columns_at_the_
             assert_eq!(said.join(" ").trim(), "Tasks 31 and 32 are both waiting.", "{note}");
         }
         // Who you talk to: one machine's own coordinator, its name on the box's edge. No keys, no program.
-        let me = sw::board::update::heads::label(&s.s, "");
+        let me = sw::board::update::heads::label(&s.s);
         assert!(lines[head].contains(&format!(" {me} ")) || (columns < 60 && lines[head].starts_with("╭─")), "{note}: {:?}", lines[head]);
         // The working row: its columns sit at the window's right edge, however wide the window is.
         let row = lines.iter().position(|l| l.contains("Pin the chat to the bottom"));

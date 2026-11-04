@@ -48,18 +48,16 @@ pub fn mine_read<'a>(s: &'a State, w: &Whose) -> Option<&'a Value> { s.data.mine
 pub fn wanted(s: &State) -> Option<String> { s.editing.as_ref().filter(|e| e.whose.mine()).map(|e| e.whose.wanted()) }
 /// Whether the page shows yours (or your entry for a repo) right now.
 pub fn mine_open(s: &State) -> bool { s.full && s.editing.as_ref().map(|e| e.whose.mine() && e.id == s.sel).unwrap_or(false) }
-/// Whose settings a key opens with nothing but a heading (or nothing) selected: this machine's heading and its status
-/// groups' are yours, a repo's heading your entry for it. Another machine's are set on that machine: Err says so.
-pub fn whose_here(s: &State) -> Result<Whose, String> {
+/// Whose settings a key opens with nothing but a heading (or nothing) selected: the top row's and its status groups'
+/// are yours, a repo's heading your entry for it.
+pub fn whose_here(s: &State) -> Whose {
     if let Some(w) = super::edit_coord::whose_of(s) { return w; }
-    let parts: Vec<&str> = s.sel.splitn(3, '\t').collect();
-    if !super::heads::is_head(&s.sel) || parts.len() < 2 { return Ok(Whose::You); }
-    if !parts[1].is_empty() { return Err(format!("Your settings on {0} are changed on {0} itself: herdr-projects set <name> <value> there.", parts[1])); }
-    match (parts[0], parts.get(2)) { (h, Some(repo)) if h.ends_with("repo") && s.data.repos.iter().any(|r| r == repo) => Ok(Whose::Repo(repo.to_string())), _ => Ok(Whose::You) }
+    let repo = s.sel.strip_prefix(super::heads::HEAD).and_then(|r| r.strip_prefix("repo\t"));
+    match repo { Some(r) if s.data.repos.iter().any(|x| x == r) => Whose::Repo(r.to_string()), _ => Whose::You }
 }
 pub fn open(s: &mut State, r: Option<&Obj>, fx: &mut Vec<Effect>) {
     if r.map(|r| !r.has("title")).unwrap_or(false) { return s.flash("Select a task first.", Ink::Muted); }
-    let Some(r) = r else { return match whose_here(s) { Ok(w) => open_mine(s, w, fx), Err(why) => { super::edit_coord::far(s); s.flash(why, Ink::Yellow) } } };
+    let Some(r) = r else { return open_mine(s, whose_here(s), fx) };
     if s.editing.as_ref().map(|e| e.id == r.s("id") && e.whose == Whose::Task).unwrap_or(false) { return leave(s); }
     let at = s.editing.as_ref().map(|e| e.at).unwrap_or(0);
     s.editing = Some(Editing { id: r.t("id"), at, typing: String::new(), whose: Whose::Task });
@@ -86,12 +84,6 @@ pub fn save(s: &mut State, name: &str, value: Option<String>, fx: &mut Vec<Effec
     let r = if auto { s.auto().cloned() } else { s.current().cloned() };
     let Some(r) = r else { return };
     if r.b("archivedAt") { return s.flash(read_only(), Ink::Yellow); }
-    if r.b("host") {
-        let m = s.remotes.get(r.s("host")).map(|m| m.machine.clone()).unwrap_or_default();
-        let (action, id) = if auto { ("auto-set", r.t("id")) } else { ("set", r.t("rid")) };
-        fx.push(Effect::Run(Job::Far { machine: m, host: r.t("host"), action: action.into(), req: json!({ "id": id, "name": name, "value": value }), quiet: false }));
-        return;
-    }
     fx.push(Effect::Run(Job::Set { id: r.t("id"), name: name.into(), value, whose }));
     fx.push(Effect::Load);
 }

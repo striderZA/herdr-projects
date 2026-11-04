@@ -142,7 +142,7 @@ fn a_review_under_way_shows_what_the_reviewer_says_never_its_screen_and_a_workin
     assert!(regex::Regex::new(r"The reviewer says ─+ *\n[^\n]*One fault left: the header is cut\.").unwrap().is_match(&wide) && !regex::Regex::new("The agent said|On its screen").unwrap().is_match(&wide), "{wide}");
     s.press(&["space"]); s.s.side = false;
     // another machine gets the same: the conversation travels with the task
-    let sent = sw::remote::remote_list().at("tasks").as_array().unwrap().iter().find(|x| x.s("id") == id).unwrap().at("snap").at("talk").clone();
+    let sent = sw::board::data::snap(&sw::store::tasks::find(&id).unwrap()).at("talk").clone();
     assert_eq!(sent.s("who"), "reviewer"); assert_eq!(sent.arr("list").last().unwrap().s("text"), "One fault left: the header is cut.");
     // the review ends: the chat is the agent's again
     sw::store::tasks::update(&id, |t| { t.put("stage", "approval"); t.obj_mut("link").put("reviewer", Value::Null); Ok(sw::store::tasks::Change::Write) }).unwrap(); s.load();

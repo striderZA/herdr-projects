@@ -11,9 +11,9 @@ use sw::board::update::landing::{land, AUTOS};
 use sw::board::update::list::relist;
 use sw::json::*;
 
-const TODO: &str = "head:status\t\tto do";
-const NEEDS: &str = "head:status\t\tneeds you";
-const WORKING: &str = "head:status\t\tworking";
+const TODO: &str = "head:status\tto do";
+const NEEDS: &str = "head:status\tneeds you";
+const WORKING: &str = "head:status\tworking";
 
 fn board(w: &World, sel: &str) -> Board { let mut s = open(&w.root, 40); s.s.sel = sel.into(); s.load(); relist(&mut s.s); s }
 /// The tasks under the heading `head`, top to bottom, as the list shows them.
@@ -95,12 +95,12 @@ fn under_a_filter_and_grouped_by_repo_the_selection_stays_on_the_row_where_you_w
     assert_eq!(s.s.filter, "alpha"); assert_eq!(under(&s, TODO), vec![d.clone(), c.clone(), a.clone()]); assert_eq!(s.s.sel, c);
     s.press(&["ctrl+a"]);
     assert!(task(&c).b("archivedAt")); assert_eq!(s.s.sel, a);
-    assert_eq!(under(&s, "head:status\t\tarchived"), vec![c.clone()], "still shown: it matches");
+    assert_eq!(under(&s, "head:status\tarchived"), vec![c.clone()], "still shown: it matches");
     s.press(&["ctrl+z"]); s.s.filter.clear(); relist(&mut s.s);
     // Grouped by repo, a task archived leaves its repo's group: the selection is on the task below it.
     let mut r = board(&w, &c);
     r.press(&["alt+s"]); assert!(r.s.by_repo);
-    let head = "head:repo\t\tproj";
+    let head = "head:repo\tproj";
     let before = under(&r, head);
     let at = before.iter().position(|x| *x == c).unwrap();
     r.press(&["ctrl+a"]);
@@ -132,7 +132,7 @@ fn the_only_task_there_is_keeps_the_selection_wherever_it_moves() {
     let only = w.add("Alone");
     let mut o = board(&w, &only);
     o.press(&["ctrl+p"]); assert!(task(&only).b("pinned")); assert_eq!(o.s.sel, only);
-    o.press(&["ctrl+a"]); assert!(task(&only).b("archivedAt")); assert_eq!(o.s.sel, sw::board::update::top::top_id(&o.s), "no task left: the top row");
+    o.press(&["ctrl+a"]); assert!(task(&only).b("archivedAt")); assert_eq!(o.s.sel, sw::board::update::top::top_id(), "no task left: the top row");
 }
 
 #[test]

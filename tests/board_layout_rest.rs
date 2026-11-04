@@ -35,7 +35,7 @@ fn a_longer_message_from_the_coordinator_grows_the_chat_block_upwards_and_it_sta
     // The Coordinator, as the loader read it: idle, having said one line; then six.
     let says = |s: &mut Board, said: &str| { s.s.data.can_dispatch = true; s.s.chat_open = true; s.s.data.coord = sw::coordinator::look::Look { state: "idle".into(), readable: true, said: said.into(), ..Default::default() }; };
     // One machine: its row is the top row, and its coordinator the top-level one (update/top.rs).
-    let me = sw::board::update::heads::label(&s.s, "");
+    let me = sw::board::update::heads::label(&s.s);
     says(&mut s, "Fine.");
     let short = pinned(&mut s, 84, &me, "a one-line message");
     says(&mut s, &(1..=6).map(|i| format!("Line {i} of what it said.")).collect::<Vec<_>>().join("\n"));
@@ -46,7 +46,7 @@ fn a_longer_message_from_the_coordinator_grows_the_chat_block_upwards_and_it_sta
     let boxed: Vec<String> = s.screen(120)[long.0 + 1..long.0 + 11].iter().map(|l| regex::Regex::new(r" +│$").unwrap().replace(l, "").into_owned()).collect();
     let mut want: Vec<String> = vec!["│".to_string()];
     want.extend((1..=6).map(|i| format!("│  Line {i} of what it said.")));
-    want.extend(["│".to_string(), "│  ❯ Send message to the machine coordinator".to_string(), "│".to_string()]);
+    want.extend(["│".to_string(), "│  ❯ Send message to the coordinator".to_string(), "│".to_string()]);
     assert_eq!(boxed, want);
     for rows in [200, 30, 84] { pinned(&mut s, rows, &me, "long message, resized"); }
     assert_eq!(pinned(&mut s, 84, &me, "long message, back"), long);

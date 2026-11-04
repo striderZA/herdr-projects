@@ -45,13 +45,7 @@ fn under_review_another_machine_and_a_dialog_say_what_the_reviewer_says() {
     let mut s = common::board::open(&w.root, 34); s.s.side = false;
     s.s.sel = id.clone(); s.load(); s.press(&["space"]);
     assert_eq!(boxed(&mut s)[..2].to_vec(), vec!["Reviewer:", "One fault left: the header is cut."]);
-    // another machine's task: what that machine sent; one on an older version sends none, and that is said
     let r = s.s.current().unwrap().clone();
-    let sent = sw::remote::remote_list().at("tasks").as_array().unwrap().iter().find(|x| x.s("id") == id).unwrap().at("snap").at("talk").clone();
-    let far = talk(&with(&r, json!({ "host": "vm-a", "link": { "pane": "w1:p1" }, "snap": { "talk": sent } })));
-    assert_eq!(far.who, "reviewer"); assert_eq!(far.parts.last().map(|p| (p.by.clone(), p.text.clone())), Some(("Reviewer".into(), "One fault left: the header is cut.".into())));
-    let old = talk(&with(&r, json!({ "host": "vm-a", "snap": {} })));
-    assert!(old.parts.last().unwrap().text.contains("vm-a runs an older herdr-projects"), "{:?}", old.parts);
     // the reviewer's screen (read where its program cannot be) is the one it shows now, not tied to the agent's turn,
     // which stands still during a review: a new frame is there at the next read
     assert!(sw::board::screens::screen_of(&r).contains("OpenAI Codex"), "{}", sw::board::screens::screen_of(&r));

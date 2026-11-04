@@ -73,7 +73,7 @@ fn a_terminal_held_at_another_size_the_board_draws_inside_what_is_shown_and_take
     // the line you type on, an empty row.
     assert_eq!(lines[53], format!("╰{}╯", "─".repeat(409))); assert!(has(&lines[52], r"^│ +│$")); assert!(has(&lines[51], r"^│ +❯ .* │$")); assert!(has(&lines[50], r"^│ +│$"));
     assert!(has(&lines[49], r"^│ +Tasks 31 and 32 are both waiting\. +│$"), "{}", lines[49]);
-    let me = sw::board::update::heads::label(&s.s, "");
+    let me = sw::board::update::heads::label(&s.s);
     assert!(has(&lines[48], r"^│ +│$") && has(&lines[47], r"^╭─ .*╮$") && lines[47].contains(&format!(" {me} ")), "{}", lines[47]);
     for n in 47..=52 { assert_eq!(sw::text::width(&lines[n]), 411); }
     assert!(has(&pin(&lines), r"Pin the chat to the bottom +█+░+ +55% 12m left {2}PR#3 {2}6m$"), "the columns are back in view: {}", pin(&lines));

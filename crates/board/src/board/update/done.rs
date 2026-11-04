@@ -8,7 +8,7 @@ use crate::board::state::{Away, State};
 use crate::shown::ink::Ink;
 
 pub fn apply(s: &mut State, d: Done, fx: &mut Vec<Effect>) {
-    super::pending::answered(s, &d, fx);
+    super::pending::answered(s, &d);
     // Words that did not get there no longer stand in the chat as yours.
     if !d.ok && ["Tell", "far:tell"].contains(&d.kind.as_str()) { s.just_sent.remove(&d.about); }
     // Delivered: your words stand in the chat until the agent says something after this.
@@ -35,12 +35,6 @@ pub fn apply(s: &mut State, d: Done, fx: &mut Vec<Effect>) {
                 let title = s.items.iter().find(|r| r.s("id") == id).map(|r| crate::shown::words::clean(if r.b("title") { r.s("title") } else { r.s("id") })).unwrap_or_else(|| id.clone());
                 // Only where to find it, when it is not in front of you: no line that says it was done.
                 if s.guest || s.viewed { s.flash(format!("Opened {id}'s agent in herdr's own window. In that view, pick it in the sidebar: “{title}”."), Ink::Muted); }
-            }
-            Then::OpenedThere { id, host, agent } => {
-                fx.push(Effect::Save);
-                let title = s.items.iter().find(|r| r.s("id") == id).map(|r| crate::shown::words::clean(if r.b("title") { r.s("title") } else { r.s("rid") })).unwrap_or_else(|| id.clone());
-                let what = if agent { "its agent" } else { "its terminal (its agent has exited)" };
-                s.flash(format!("{host}: {what} is in front there. Pick {host} in herdr's sidebar to go to it: “{title}”; Local there brings you back here."), Ink::Muted);
             }
             Then::Attach { command, args, .. } => fx.push(Effect::Attach { command, args }),
             Then::Copy(text) => fx.push(super::link::copy(&text)),

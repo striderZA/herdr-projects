@@ -9,7 +9,7 @@ use crate::store::settings::show::{problems, rows, show_text};
 use crate::store::settings::values::{check, say};
 use crate::store::tasks::{find, get};
 
-/// Which of you, a repo, a coordinator (its key: "main", "machine", "project:<repo>") or a task a command means.
+/// Which of you, a repo, a coordinator (its key: "main", "project:<repo>") or a task a command means.
 pub struct Where { pub task: Option<String>, pub repo: Option<String>, pub automation: Option<String>, pub coord: Option<String> }
 /// Returns what the command line prints: the value for --json, and the text.
 pub fn settings_command(cmd: &str, pos: &[String], w: &Where, value: Option<Value>) -> Res<(Value, String)> {

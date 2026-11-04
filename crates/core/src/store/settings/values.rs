@@ -211,16 +211,6 @@ fn check_ty(e: &Entry, v: &Value) -> Res<Value> {
             let out: Vec<String> = items.iter().map(|x| x.trim().to_string()).filter(|x| !x.is_empty()).collect();
             Ok(if out.is_empty() { json!(NONE) } else { json!(out) })
         }
-        Ty::Machines => {
-            let names: Vec<String> = match v { Value::Array(a) => a.iter().map(text).collect(), _ => split_words(&word(v)) }.into_iter().map(|x| x.trim().to_string()).filter(|x| !x.is_empty()).collect();
-            if names.is_empty() { return refuse(format!("{name} must be auto, none, or machine names.")); }
-            if names.len() == 1 && ["auto", NONE].contains(&names[0].to_lowercase().as_str()) { return Ok(json!(names[0].to_lowercase())); }
-            let ok_name = |x: &str| { let (user, host) = match x.split_once('@') { Some((u, h)) => (Some(u), h), None => (None, x) };
-                let part = |s: &str| !s.is_empty() && s.chars().all(|c| c.is_ascii_alphanumeric() || "_.-".contains(c));
-                user.map(part).unwrap_or(true) && part(host) && !["auto", NONE].contains(&x.to_lowercase().as_str()) };
-            if let Some(bad) = names.iter().find(|x| !ok_name(x)) { return refuse(format!("{name}: \"{bad}\" is not a machine name (host or user@host). Other values: auto, none.")); }
-            Ok(json!(names.join(", ")))
-        }
         Ty::Attempts => {
             let w = match v { Value::Number(_) => text(v), Value::Array(a) => a.iter().map(text).collect::<Vec<_>>().join(", "), _ => word(v) };
             if !w.is_empty() && w.bytes().all(|b| b.is_ascii_digit()) {
