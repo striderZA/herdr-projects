@@ -16,7 +16,7 @@ fn delegate_makes_a_worktree_space_with_the_agent_in_its_root_pane_and_the_rules
     assert_eq!(task(&id).s("stage"), "starting");
     let t = settle(&id);
     assert_eq!(t.s("stage"), "working");
-    assert_eq!(t.s("branch"), "work/1-add-a-greeting");
+    assert_eq!(t.s("branch"), "feat/1-add-a-greeting");
     assert!(std::path::Path::new(t.s("worktree")).exists() && t.s("worktree") != w.root_str());
     assert_eq!(t.at("link").s("socket"), w.socket);
     assert!(t.at("link").b("pane") && t.at("link").b("workspace") && t.at("link").b("ownsWorkspace"));
@@ -100,7 +100,7 @@ fn the_finish_line_checks_reviews_waits_for_approval_and_approve_merges_and_clea
     assert_eq!(t.s("msg"), "Merged into main.");
     assert_eq!(read(&w.root.join("hello.txt")), "hello\n");
     assert!(git(&w.root, &["log", "-1", "--format=%B"]).contains("Add a greeting\n\nTask: PRJ-1 (proj/1)"));
-    assert_eq!(git(&w.root, &["branch", "--list", "work/*"]), "");
+    assert_eq!(git(&w.root, &["branch", "--list", "feat/*"]), "");
     assert_eq!(w.state().arr("workspaces").iter().filter(|x| x.at("worktree").b("is_linked_worktree")).count(), 0);
     assert_eq!(row(&id).s("state"), "done");
 }

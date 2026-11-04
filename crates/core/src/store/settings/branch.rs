@@ -1,5 +1,6 @@
-//! The task branch's name (`workspace.branch`): a pattern with `{n}`, `{slug}` and `{key}` in it, checked by git's own
-//! `check-ref-format` with sample values put in, refused with the nearest pattern git takes, and filled in for a task.
+//! The task branch's name (`workspace.branch`): a pattern with `{type}`, `{n}`, `{slug}` and `{key}` in it, checked by
+//! git's own `check-ref-format` with sample values put in, refused with the nearest pattern git takes, and filled in
+//! for a task. The starts a pattern names (for telling the board's branches from others) are here too.
 use super::values::nearest;
 use crate::err::{Error, Res};
 use crate::json::*;
@@ -7,9 +8,9 @@ use std::collections::HashMap;
 use std::process::{Command, Stdio};
 use std::sync::Mutex;
 
-pub const PLACEHOLDERS: [&str; 3] = ["n", "slug", "key"];
-/// What a pattern is checked with: a task's number, its title as a slug, its repo's key and number.
-const SAMPLE: [(&str, &str); 3] = [("n", "123"), ("slug", "fix-the-login"), ("key", "ABC-123")];
+pub const PLACEHOLDERS: [&str; 4] = ["n", "slug", "key", "type"];
+/// What a pattern is checked with: a task's kind, its number, its title as a slug, its repo's key and number.
+const SAMPLE: [(&str, &str); 4] = [("n", "123"), ("slug", "fix-the-login"), ("key", "ABC-123"), ("type", "feat")];
 static SAID: Mutex<Option<HashMap<String, bool>>> = Mutex::new(None);
 
 /// A branch name git takes (`git check-ref-format --branch`). Asked again for every read of a setting, so each answer
@@ -37,7 +38,7 @@ fn parts(pattern: &str) -> Result<Vec<Part>, String> {
     Ok(out)
 }
 /// The pattern with each placeholder filled in. A placeholder that comes out empty (a title with no letters) takes one
-/// separator next to it along, so `work/{n}-{slug}` is `work/7`, never `work/7-`.
+/// separator next to it along, so `feat/{n}-{slug}` is `feat/7`, never `feat/7-`.
 fn fill(parts: &[Part], value: impl Fn(&str) -> String) -> String {
     let mut out = String::new();
     let mut drop_next = false;
@@ -93,31 +94,42 @@ fn mended(pattern: &str) -> String {
     let comp = |c: &str| { let mut c = c.trim_start_matches('.'); while let Some(x) = c.strip_suffix(".lock") { c = x.trim_end_matches('.'); } c.to_string() };
     let comps: Vec<String> = s.split('/').map(comp).filter(|c| !c.is_empty()).collect();
     let mut s = comps.join("/").trim_start_matches(['-', '/']).trim_end_matches(['.', '/']).to_string();
-    if !s.contains("{n}") && !s.contains("{key}") { s = if s.is_empty() { "work/{n}".into() } else { format!("{s}-{{n}}") }; }
+    if !s.contains("{n}") && !s.contains("{key}") { s = if s.is_empty() { "{type}/{n}".into() } else { format!("{s}-{{n}}") }; }
     match parts(&s) { Ok(ps) if git_takes(&sample(&ps)) => s, _ => BUILT_IN.into() }
 }
-const BUILT_IN: &str = "work/{n}-{slug}";
+const BUILT_IN: &str = "{type}/{n}-{slug}";
 fn refuse<T>(msg: String) -> Res<T> { Err(Error::refused(msg)) }
 /// A pattern as kept, or refused with the nearest one git takes.
 pub fn check(name: &str, v: &Value) -> Res<Value> {
-    let Value::String(s) = v else { return refuse(format!("{name} is a branch name with {{n}}, {{slug}} or {{key}} in it, such as {BUILT_IN}.")) };
+    let Value::String(s) = v else { return refuse(format!("{name} is a branch name with {{type}}, {{n}}, {{slug}} or {{key}} in it, such as {BUILT_IN}.")) };
     let w = s.trim();
     let near = || format!(" Did you mean {}?", mended(w));
     let ps = match parts(w) { Ok(p) => p, Err(why) => return refuse(format!("{name}: \"{w}\" {why}.{}", near())) };
     if let Some(h) = ps.iter().find_map(|p| match p { Part::Hole(h) if !PLACEHOLDERS.contains(&h.as_str()) => Some(h), _ => None }) {
-        return refuse(format!("{name}: no placeholder {{{h}}}. It takes {{n}} (the task's number), {{slug}} (its title) and {{key}} (its repo's key and number, ABC-123).{}", near()));
+        return refuse(format!("{name}: no placeholder {{{h}}}. It takes {{type}} (the kind of work its title says), {{n}} (the task's number), {{slug}} (its title) and {{key}} (its repo's key and number, ABC-123).{}", near()));
     }
     let numbered = ps.iter().any(|p| matches!(p, Part::Hole(h) if h == "n" || h == "key"));
     if numbered && git_takes(&sample(&ps)) { return Ok(json!(w)); }
     if !numbered { return refuse(format!("{name} needs {{n}} or {{key}} in it, so that each task's branch is its own, not \"{w}\".{}", near())); }
     refuse(format!("{name}: \"{w}\" is not a branch name git takes (it would make {}).{}", sample(&ps), near()))
 }
-/// A task's branch from the pattern: its number (an attempt's letter included: `7b`), its title as a slug, its repo's
-/// key with the number (`ABC-7b`; the number alone in a repo with no key). "" when the pattern cannot be read.
-pub fn branch_of(pattern: &str, n: &str, slug: &str, key: &str) -> String {
+/// A task's branch from the pattern: its kind (`{type}`), its number (an attempt's letter included: `7b`), its title as
+/// a slug, its repo's key with the number (`ABC-7b`; the number alone in a repo with no key). "" when the pattern cannot
+/// be read.
+pub fn branch_of(pattern: &str, n: &str, slug: &str, key: &str, kind: &str) -> String {
     let Ok(ps) = parts(pattern) else { return String::new() };
     let keyed = if key.is_empty() { n.to_string() } else { format!("{key}-{n}") };
-    fill(&ps, |h| match h { "n" => n.to_string(), "slug" => slug.to_string(), "key" => keyed.clone(), _ => String::new() })
+    fill(&ps, |h| match h { "n" => n.to_string(), "slug" => slug.to_string(), "key" => keyed.clone(), "type" => kind.to_string(), _ => String::new() })
+}
+/// How branches a pattern names start, for telling the board's from others: `work/` of `work/{n}-{slug}`, and every kind
+/// of `{type}` in front (`feat/`, `fix/`, …). "" when the pattern cannot be read.
+pub fn starts(pattern: &str) -> Vec<String> {
+    let Ok(ps) = parts(pattern) else { return vec![] };
+    let words = |i: usize| ps.get(i).map(|p| match p { Part::Words(w) => w.clone(), Part::Hole(_) => String::new() }).unwrap_or_default();
+    match ps.first() {
+        Some(Part::Hole(h)) if h == "type" => crate::store::settings::branch_kind::KINDS.iter().map(|k| format!("{k}{}", words(1))).collect(),
+        _ => vec![words(0)],
+    }
 }
 
 #[cfg(test)]
@@ -140,8 +152,20 @@ mod tests {
             let near = e.msg.rsplit_once("Did you mean ").and_then(|(_, n)| n.strip_suffix('?')).unwrap_or_else(|| panic!("{bad}: {}", e.msg));
             assert!(check("workspace.branch", &json!(near)).is_ok(), "{bad} -> {near}");
         }
-        assert_eq!(branch_of("work/{n}-{slug}", "7", "", ""), "work/7");
-        assert_eq!(branch_of("{slug}/{key}", "7b", "", "ABC"), "ABC-7b");
-        assert_eq!(branch_of("u/{key}/{slug}", "7", "x", ""), "u/7/x");
+        assert_eq!(branch_of("work/{n}-{slug}", "7", "", "", "fix"), "work/7");
+        assert_eq!(branch_of("{type}/{n}-{slug}", "7b", "", "ABC", "fix"), "fix/7b");
+        assert_eq!(branch_of("{slug}/{key}", "7b", "", "ABC", "feat"), "ABC-7b");
+        assert_eq!(branch_of("u/{key}/{slug}", "7", "x", "", "docs"), "u/7/x");
+        assert_eq!(branch_of("{type}/{key}", "7", "", "ABC", "feat"), "feat/ABC-7");
+    }
+    #[test]
+    fn starts_of_a_pattern() {
+        assert!(check("workspace.branch", &json!("{type}/{n}-{slug}")).is_ok());
+        let typed = starts("{type}/{n}-{slug}");
+        assert_eq!((typed[0].as_str(), typed[1].as_str(), typed.len()), ("feat/", "fix/", 11));
+        assert_eq!(starts("{type}/x{n}")[2], "docs/x");
+        assert_eq!(starts("work/{n}-{slug}"), vec!["work/".to_string()]);
+        assert_eq!(starts("team/{type}/{n}"), vec!["team/".to_string()]);
+        assert_eq!(starts("{n}-{slug}"), vec![String::new()]);
     }
 }

@@ -32,7 +32,7 @@ fn archivable(w: &World) -> Value {
 fn a_pull_request_the_agent_opened_itself_is_taken_on_and_merged_as_usual() {
     let w = pr_world();
     let url = "https://github.com/o/r/pull/9";
-    w.gh_says(json!({ "createFail": "a pull request for branch \"work/1-own-pr\" into branch \"main\" already exists:\nhttps://github.com/o/r/pull/9", "prs": [{ "number": 9, "url": url, "state": "OPEN" }] }));
+    w.gh_says(json!({ "createFail": "a pull request for branch \"feat/1-own-pr\" into branch \"main\" already exists:\nhttps://github.com/o/r/pull/9", "prs": [{ "number": 9, "url": url, "state": "OPEN" }] }));
     let id = to_approval(&w, "Own PR");
     let t = task(&id);
     assert_eq!(t.s("pr"), url);
@@ -48,7 +48,7 @@ fn a_pull_request_the_agent_opened_itself_is_taken_on_and_merged_as_usual() {
 fn a_pull_request_the_agent_opened_itself_gets_the_closes_lines_it_lacks() {
     let w = pr_world();
     let url = "https://github.com/o/r/pull/9";
-    w.gh_says(json!({ "createFail": "a pull request for branch \"work/1-own-pr\" into branch \"main\" already exists", "prs": [{ "number": 9, "url": url, "state": "OPEN" }],
+    w.gh_says(json!({ "createFail": "a pull request for branch \"feat/1-own-pr\" into branch \"main\" already exists", "prs": [{ "number": 9, "url": url, "state": "OPEN" }],
         "view": { "state": "OPEN", "body": "Mine. Fixes #4", "statusCheckRollup": [], "comments": [], "reviews": [], "author": { "login": "me" } } }));
     w.script(json!({ "worker": [{ "files": { "f.txt": "v1\n" }, "commit": "v1", "note": "Did v1." }] }));
     let id = sw::actions::filing::add(&w.root, "Own PR", sw::actions::filing::AddOpts { settings: vec![("merge.closes".into(), json!("4, 5"))], ..Default::default() }).unwrap().t("id");

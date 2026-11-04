@@ -42,7 +42,7 @@ fn the_check_filter_keeps_the_others_worktree_and_branch_and_an_ignored_unsaved_
     // removing the task never takes unsaved work with it: the attempt's branch stays beside its worktree
     std::fs::write(Path::new(a.s("worktree")).join("unsaved.txt"), "mine\n").unwrap();
     sw::actions::archive::clear(&id).unwrap();
-    like(&git(&w.root, &["branch", "--list", "work/1a-*"]), r"work/1a-one-passes");
+    like(&git(&w.root, &["branch", "--list", "feat/1a-*"]), r"feat/1a-one-passes");
 }
 
 #[test]

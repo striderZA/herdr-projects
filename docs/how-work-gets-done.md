@@ -14,16 +14,21 @@ All of this runs with the board open or closed.
 ## Delegating
 
 - **In a git repo**, the plugin asks Herdr for a worktree space (`herdr worktree create`), on its own branch
-  (`work/<n>-<title>`), started from the remote's default branch (or from your commit, with `--workspace.from here`, or
-  from another branch at the remote, with `--workspace.from develop`). A task in a repo never works in your checkout.
+  (`{type}/<n>-<title>`, `feat/7-fix-the-login`), started from the remote's default branch (or from your commit, with
+  `--workspace.from here`, or from another branch at the remote, with `--workspace.from develop`). A task in a repo
+  never works in your checkout.
 - **Tasks of one repo can start at the same moment.** Herdr is handed the commit the task starts from, not
   `origin/main`, so git writes no upstream into the repo's shared `.git/config` at the start (the push at the finish
   sets it). Another git command holding that file anyway (`could not lock config file`) is waited out, five tries in
   under four seconds, and a start that fails still removes the empty branch it made, so the next start takes the name.
-- **The branch's name is `workspace.branch`**, `work/{n}-{slug}` unless you set it: for you, for one repo, or for one
-  task, never in the repo's own file. `{n}` is the task's number (`7`, or `7b` for an attempt), `{slug}` its title
-  (`fix-the-login`), `{key}` its repo's key and number (`KIC-7`). So `feat/{key}-{slug}` makes `feat/KIC-7-fix-the-login`.
-  A name git would not take is refused, with the nearest one it does. A name already taken gets `-2` after it.
+- **The branch's name is `workspace.branch`**, `{type}/{n}-{slug}` unless you set it: for you, for one repo, or for one
+  task, never in the repo's own file. `{type}` is the kind of work the task's title says: a conventional prefix
+  (`fix: the login`, `refactor(ui): …`) or the first word in it that names one (`fix`, `refactor`, `docs`, `test`,
+  `perf`, `build`, `ci`, `chore`, `style`, `revert`), and `feat` when none does. `{n}` is the task's number (`7`, or
+  `7b` for an attempt), `{slug}` its title (`fix-the-login`), `{key}` its repo's key and number (`KIC-7`). So
+  `fix/{key}-{slug}` makes `fix/KIC-7-fix-the-login`, and a title with no type at all is `feat/7-…`. A type of your own
+  for one task, one repo or you: name it in the pattern there (`fix/{n}-{slug}`). A name git would not take is refused,
+  with the nearest one it does. A name already taken gets `-2` after it.
 - **Started from a named branch** (`workspace.from develop`, for a long branch with small tasks on top), the task lands
   there too. The branch is fetched from origin on every start (10 seconds at most, never asking for a password); one
   origin does not have is refused with the reason, and the task waits as failed. If origin cannot be reached, the copy it

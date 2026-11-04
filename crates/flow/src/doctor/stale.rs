@@ -22,8 +22,11 @@ pub struct Left { pub path: PathBuf, pub repo: PathBuf, pub why: Why, pub bytes:
 pub fn cache_dir() -> PathBuf {
     std::env::var("XDG_CACHE_HOME").ok().filter(|v| !v.is_empty()).map(PathBuf::from).unwrap_or_else(|| crate::store::files::user_home().join(".cache")).join("herdr-projects")
 }
-/// A task branch's fixed start (`work/` of `work/{n}-{slug}`): a branch that starts so is the board's.
-fn branch_start() -> String { setting_text("workspace.branch", None).split('{').next().unwrap_or("").to_string() }
+/// The starts of the branches a pattern names (`work/` of `work/{n}-{slug}`, each kind of `{type}/…`): a branch that
+/// starts so is the board's.
+fn branch_starts() -> Vec<String> {
+    crate::store::settings::branch::starts(&setting_text("workspace.branch", None)).into_iter().filter(|s| !s.is_empty()).collect()
+}
 /// Kept warm builds no longer `current`, an hour after they last changed (the setup removes them only when it runs).
 pub fn old_builds(cache: &Path) -> Vec<PathBuf> {
     let mut out = vec![];
@@ -50,7 +53,7 @@ pub fn ask(cache: &Path) -> Vec<Left> {
         let id = crate::store::keys::say_id(t.s("id"), &crate::store::keys::repo_keys());
         out.push(Left { path: PathBuf::from(&wt), repo: crate::store::repos::folder_of(t.s("id")), why: Why::Finished(format!("{id}, which is {}", if t.b("archivedAt") { "archived" } else { "done" })), bytes: 0, more: false });
     }
-    let start = branch_start();
+    let starts = branch_starts();
     for (_, f) in known_repos() {
         let repo = PathBuf::from(text(&f));
         if !is_repo(&repo) { continue; }
@@ -60,7 +63,7 @@ pub fn ask(cache: &Path) -> Vec<Left> {
             let (Some(path), false) = (get("worktree "), i == 0) else { continue };
             let branch = get("branch refs/heads/").unwrap_or_default();
             if w.lines().any(|l| l.starts_with("prunable")) { out.push(Left { path: path.into(), repo: repo.clone(), why: Why::Gone, bytes: 0, more: false }); continue; }
-            if start.is_empty() || !branch.starts_with(&start) || owned.contains(&real(&path)) { continue; }
+            if starts.is_empty() || !starts.iter().any(|s| branch.starts_with(s)) || owned.contains(&real(&path)) { continue; }
             out.push(Left { path: path.into(), repo: repo.clone(), why: Why::NoTask(branch), bytes: 0, more: false });
         }
     }

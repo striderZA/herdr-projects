@@ -98,7 +98,7 @@ fn delegating_a_landed_task_again_starts_a_new_round_in_a_fresh_worktree_never_i
     w.script(json!({ "worker": [{ "status": "working" }] }));
     delegate(&id);
     let t = settle(&id);
-    assert_eq!((t.s("stage"), t.s("branch")), ("working", "work/1-work"));
+    assert_eq!((t.s("stage"), t.s("branch")), ("working", "feat/1-work"));
     assert!(t.b("worktree") && t.s("worktree") != w.root_str() && Path::new(t.s("worktree")).exists());
     let p = w.pane_of(&t);
     assert_ne!(p.s("cwd"), w.root_str());

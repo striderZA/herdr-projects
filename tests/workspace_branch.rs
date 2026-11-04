@@ -1,6 +1,6 @@
-//! The task branch's name, `workspace.branch`: built in as ever, a pattern of yours, your repo's or the task's own with
-//! `{n}`, `{slug}` and `{key}` filled in, `-2` when it is taken, never from the repo's own file, and a name git would
-//! not take refused with the nearest one it does.
+//! The task branch's name, `workspace.branch`: built in as ever, `{type}` from what its title says, a pattern of
+//! yours, your repo's or the task's own with `{n}`, `{slug}` and `{key}` filled in, `-2` when it is taken, never from
+//! the repo's own file, and a name git would not take refused with the nearest one it does.
 use crate::common;
 use common::*;
 use serde_json::json;
@@ -23,10 +23,25 @@ fn a_task_works_on_the_branch_its_pattern_names() {
 }
 
 #[test]
+fn the_kind_of_work_the_title_says_names_the_branch() {
+    let w = world();
+    set_value("workspace.branch", &json!("{type}/{n}-{slug}"), &Scope::you()).unwrap();
+    let fix = w.add("Fix the login");
+    assert_eq!(free_branch(&w.root, &task(&fix)), "fix/1-fix-the-login");
+    let refactor = w.add("Refactor: one file");
+    assert_eq!(free_branch(&w.root, &task(&refactor)), "refactor/2-refactor-one-file");
+    let feat = w.add("Add a greeting");
+    assert_eq!(free_branch(&w.root, &task(&feat)), "feat/3-add-a-greeting");
+    // A type of your own: name it in the pattern, for one task.
+    set_value("workspace.branch", &json!("chore/{n}-{slug}"), &Scope::task(&task(&fix))).unwrap();
+    assert_eq!(free_branch(&w.root, &task(&fix)), "chore/1-fix-the-login");
+}
+
+#[test]
 fn the_places_name_it_and_a_taken_name_gets_a_number_after_it() {
     let w = world();
     let id = w.add("Fix the login");
-    assert_eq!(free_branch(&w.root, &task(&id)), "work/1-fix-the-login", "built in: today's name");
+    assert_eq!(free_branch(&w.root, &task(&id)), "fix/1-fix-the-login", "built in: the kind its title says");
     set_value("workspace.branch", &json!("u/{n}"), &Scope::you()).unwrap();
     set_value("workspace.branch", &json!("repo/{n}-{slug}"), &Scope::repo("proj")).unwrap();
     assert_eq!(free_branch(&w.root, &task(&id)), "repo/1-fix-the-login", "your entry for the repo wins over you");

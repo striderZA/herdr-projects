@@ -35,10 +35,11 @@ pub fn worktree_roots(tasks: &[Task]) -> Vec<PathBuf> {
     add_roots(&mut v, &trees);
     v
 }
-/// How task branches start, as a folder name has it (`work/` is `work-`): of each task's pattern and yours.
+/// How task branches start, as a folder name has it (`work/` is `work-`, `feat/` is `feat-`): of each task's pattern
+/// and yours.
 pub fn branch_starts(tasks: &[Task]) -> Vec<String> {
-    let start = |t: Option<&Task>| crate::store::settings::lookup::setting_text("workspace.branch", t).split('{').next().unwrap_or("").to_string();
-    let mut v: Vec<String> = std::iter::once(start(None)).chain(tasks.iter().map(|t| start(Some(t)))).map(|s| slug(Path::new(&s))).filter(|s| s.len() > 1).collect();
+    let of = |t: Option<&Task>| crate::store::settings::branch::starts(&crate::store::settings::lookup::setting_text("workspace.branch", t));
+    let mut v: Vec<String> = std::iter::once(None).chain(tasks.iter().map(Some)).flat_map(of).map(|s| slug(Path::new(&s))).filter(|s| s.len() > 1).collect();
     v.sort(); v.dedup();
     v
 }

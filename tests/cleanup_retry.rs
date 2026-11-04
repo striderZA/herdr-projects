@@ -55,7 +55,7 @@ fn a_clean_up_put_off_because_the_space_was_in_use_is_tried_again_by_itself_once
     assert_eq!(pass(&w, &id), 1);
     let c = task(&id);
     assert!(c.b("cleaned") && !c.b("tidy") && !c.b("kept")); assert_eq!(c.s("msg"), "Merged into main."); assert!(!Path::new(t.s("worktree")).exists());
-    assert_eq!(w.state().arr("workspaces").len(), 0); assert_eq!(git(&w.root, &["branch", "--list", "work/*"]), "");
+    assert_eq!(w.state().arr("workspaces").len(), 0); assert_eq!(git(&w.root, &["branch", "--list", "feat/*"]), "");
     assert_eq!(pass(&w, &id), 0, "and then it is over");
     // herdr did not answer: cleaned up as soon as it does
     w.script(json!({ "worker": [{ "files": { "u.txt": "x\n" }, "commit": "u", "note": "Did it." }] }));

@@ -63,7 +63,7 @@ fn a_finished_task_leaves_herdrs_sidebar_the_repo_space_herdr_opened_goes_with_t
     assert_eq!(settle(&d).s("stage"), "approval");
     done(&d);
     let t = settle(&d);
-    assert!(kept(&t).contains("unmerged work on work/"), "{}", kept(&t)); assert!(Path::new(t.s("worktree")).exists()); assert!(!t.b("cleaned"));
+    assert!(kept(&t).contains(&format!("unmerged work on {}", t.s("branch"))), "{}", kept(&t)); assert!(Path::new(t.s("worktree")).exists()); assert!(!t.b("cleaned"));
     assert_eq!(ws_ids(&w), vec!["mine"]);
     w.script(json!({ "worker": [{ "files": { "d2.txt": "d\n" }, "commit": "d2", "note": "Did more." }] }));
     let said = talk::tell(&d, "go on", false).unwrap().msg;
@@ -82,7 +82,7 @@ fn the_repo_space_is_left_alone_while_a_command_of_yours_runs_in_it_a_reply_to_c
     delegate(&id);
     let t = settle(&id);
     assert_eq!(t.s("stage"), "done", "{}", t.at("failure")); assert!(t.b("cleaned"));
-    assert_eq!(w.state().arr("workspaces").len(), 0); assert_eq!(git(&w.root, &["branch", "--list", "work/*"]), "");
+    assert_eq!(w.state().arr("workspaces").len(), 0); assert_eq!(git(&w.root, &["branch", "--list", "feat/*"]), "");
     w.script(json!({ "worker": [{ "files": { "n.txt": "n\n" }, "commit": "n", "note": "Did n." }] }));
     let said = talk::tell(&id, "then add n", false).unwrap().msg;
     assert!(said.contains("new round"), "{said}");

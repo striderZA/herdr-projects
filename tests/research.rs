@@ -28,7 +28,7 @@ fn a_research_task_that_changed_the_repo_is_sent_back_and_after_its_rounds_waits
     assert_eq!(said.matches("This task is research only, and you changed the repo").count(), 1);
     assert!(said.contains(&format!("save the report in {}/ (outside the repo)", sw::store::files::reports_dir().join("proj").join("1").display())), "{said}");
     assert!(!t.b("pr"));
-    assert_eq!(git(&w.root, &["ls-remote", "origin"]).lines().filter(|l| l.contains("work/")).count(), 0, "nothing pushed");
+    assert_eq!(git(&w.root, &["ls-remote", "origin"]).lines().filter(|l| l.contains(t.s("branch"))).count(), 0, "nothing pushed");
     let tree = std::path::Path::new(t.s("worktree"));
     assert!(tree.join("notes.txt").exists(), "left as the agent left it");
     // Every change undone, the step is tried again: done, with nothing to merge, and the line says no report was found.

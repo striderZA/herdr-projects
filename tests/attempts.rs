@@ -23,7 +23,7 @@ fn a_council_of_agents_the_reviewer_picks_and_the_task_runs_to_its_merge() {
     assert_eq!(t.s("stage"), "done", "{}", t.at("failure"));
     assert_eq!(git(&w.root, &["show", "HEAD:f.txt"]), "v2");
     assert_eq!(kids(&id).len(), 0, "done and tidied: the others went with it");
-    assert_eq!(git(&w.root, &["branch", "--list", "work/*"]), "");
+    assert_eq!(git(&w.root, &["branch", "--list", "feat/*"]), "");
 }
 
 #[test]
@@ -41,7 +41,7 @@ fn one_row_times_three_pick_one_the_panel_and_the_approve_key_keeps_the_selected
     assert_eq!(r.s("stage"), "pick", "`merge.by itself` still stops for the choice");
     assert_eq!((sw::shown::states::group_of(&r), sw::shown::states::standing(&r)), ("needs you", "pick one".to_string()));
     let cs = kids(&id);
-    assert_eq!(cs.iter().map(|c| c.t("branch")).collect::<Vec<_>>(), vec!["work/1a-greet", "work/1b-greet", "work/1c-greet"]);
+    assert_eq!(cs.iter().map(|c| c.t("branch")).collect::<Vec<_>>(), vec!["feat/1a-greet", "feat/1b-greet", "feat/1c-greet"]);
     assert_eq!(cs.iter().map(|c| read(&std::path::Path::new(c.s("worktree")).join("f.txt"))).collect::<Vec<_>>(), vec!["v1\n", "v2\n", "v3\n"]);
     assert_eq!(cs.iter().map(|c| c.at("link").t("workspace")).collect::<std::collections::BTreeSet<_>>().len(), 1);
     assert!(sw::actions::finish_line::approve(&id, None, false).unwrap_err().msg.contains("waits for you to pick one of its attempts"));
@@ -88,7 +88,7 @@ fn one_row_times_three_pick_one_the_panel_and_the_approve_key_keeps_the_selected
     sw::store::settings::change::set_value("merge.by", &json!("you"), &sw::store::settings::lookup::Scope::task(&task(&id))).unwrap();
     let done = settle_all(&id);
     assert_eq!(done.s("stage"), "approval", "{}", done.at("failure"));
-    assert_eq!((done.s("branch"), done.s("agent")), ("work/1c-greet", "claude"));
+    assert_eq!((done.s("branch"), done.s("agent")), ("feat/1c-greet", "claude"));
     b.load();
     let shown = b.text();
     assert!(regex::Regex::new(r"Chosen +C · by you").unwrap().is_match(&shown), "{shown}");

@@ -21,7 +21,7 @@ fn aged(p: &Path, secs: u64) { std::fs::File::open(p).unwrap().set_modified(std:
 fn a_done_task_s_worktree_is_a_leftover_unless_its_clean_up_is_to_come_or_off() {
     let w = world();
     let id = w.add("one");
-    let wt = worktree(&w, "work/1-one", "work-1-one");
+    let wt = worktree(&w, "feat/1-one", "feat-1-one");
     let cache = w.base.join("cache");
     update(&id, |t| { t.put("stage", "progress"); t.put("worktree", wt.as_str()); Ok(Change::Write) }).unwrap();
     assert_eq!(whys(&ask(&cache)), [], "a task at work keeps its worktree");
@@ -46,15 +46,15 @@ fn a_task_branch_no_task_has_and_a_folder_git_lost_are_leftovers() {
     let w = world();
     w.add("one"); // the repo is known to the board
     let cache = w.base.join("cache");
-    worktree(&w, "work/9-nobody", "work-9-nobody");
+    worktree(&w, "feat/9-nobody", "feat-9-nobody");
     worktree(&w, "mine", "mine"); // your own branch: not the board's
-    let gone = worktree(&w, "work/8-gone", "work-8-gone");
+    let gone = worktree(&w, "feat/8-gone", "feat-8-gone");
     std::fs::remove_dir_all(&gone).unwrap();
     let mut left = ask(&cache);
-    left.sort_by_key(|l| l.path.ends_with("work-8-gone"));
-    assert_eq!(whys(&left), [Why::NoTask("work/9-nobody".into()), Why::Gone], "{left:?}");
+    left.sort_by_key(|l| l.path.ends_with("feat-8-gone"));
+    assert_eq!(whys(&left), [Why::NoTask("feat/9-nobody".into()), Why::Gone], "{left:?}");
     let f = check(&left);
-    assert!(f[0].what.starts_with("No task has the worktree on work/9-nobody: "), "{:?}", f[0]);
+    assert!(f[0].what.starts_with("No task has the worktree on feat/9-nobody: "), "{:?}", f[0]);
     assert!(f[1].what.contains("whose folder is gone") && f[1].fix.starts_with("Run: git -C ") && f[1].fix.ends_with(" worktree prune"), "{:?}", f[1]);
 }
 
