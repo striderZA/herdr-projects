@@ -51,17 +51,16 @@ pub fn head_lines(s: &mut State, t: &Theme, w: usize, h: usize) -> Vec<Inked> {
 /// folded (then with how many tasks and automations it holds: `7 tasks, 1 automation`; the top row with nothing in
 /// view: `0 tasks`).
 /// A repo's heading has its key beside its name, dimmed (`gtm-agent · AGT`): the first thing to go where room is short.
-/// The top row and a project's row are their coordinator's, drawn as a task's row (view/pilot.rs), with a status line
-/// under it while on autopilot. The top row says what it holds, open or folded: `9 projects · 30 tasks`.
+/// The top row says what it holds, open or folded: `9 projects · 30 tasks`.
 fn heading(s: &State, t: &Theme, rows: &[Row], at: usize, width: usize) -> Vec<Inked> {
     let r = &rows[at];
     let Row::Head { id, .. } = r else { return vec![Inked::new()] };
     let caret = if id.is_empty() { Inked::plain("  ") } else { Inked::of(if r.shut() { "▸ " } else { "▾ " }, Ink::Muted) };
     let (named, row) = heading_words(s, t, rows, at);
-    super::pilot::placed(caret, named, row, width)
+    super::coord_row::placed(caret, named, row, width)
 }
-/// A heading's words, in their inks, and its coordinator's row (view/pilot.rs): what the board draws after the caret.
-pub fn heading_words(s: &State, t: &Theme, rows: &[Row], at: usize) -> (Inked, Option<super::pilot::Shown>) {
+/// A heading's words, in their inks, and its coordinator's row: what the board draws after the caret.
+pub fn heading_words(s: &State, t: &Theme, rows: &[Row], at: usize) -> (Inked, Option<super::coord_row::Shown>) {
     let r = &rows[at];
     let Row::Head { name, autos, machine, folded, folded_autos, id, .. } = r else { return (Inked::new(), None) };
     let top = *id == crate::board::update::top::top_id();
@@ -71,16 +70,10 @@ pub fn heading_words(s: &State, t: &Theme, rows: &[Row], at: usize) -> (Inked, O
     let mut named = if key.is_empty() { named } else { named.add(Inked::of(format!(" · {key}"), Ink::Muted)) };
     // A pinned machine or project: the pin mark after its name, as a pinned task's (update/pinned.rs).
     if crate::board::update::pinned::head_pinned(s, id) { named = named.add(crate::board::update::pinned::ink()); }
-    // Its coordinator on autopilot: a tag after its name, dimmed as a task's `[research]` (view/pilot.rs).
-    let shown = super::pilot::shown(s, t, id);
-    if shown.as_ref().is_some_and(|x| x.on) { named = named.add(Inked::of(format!(" {}", super::pilot::PILOT_TAG), Ink::Muted)); }
-    // What a folded row holds: its tasks and automations; under Coordinators its projects' coordinators. A machine's
-    // row and the top row also say how many of the coordinators they stand over are on autopilot.
+    // What a folded row holds: its tasks and automations; under Coordinators its projects' coordinators.
     let holds = if crate::board::update::shows::coords(s) { format!("{folded} project coordinator{}", if *folded == 1 { "" } else { "s" }) } else { crate::board::update::heads::holds(*folded, *folded_autos) };
-    let pilots = crate::board::update::pilot::on_under(s, id);
-    let pilots = |sep: &str| if pilots == 0 { String::new() } else { format!("{sep}{pilots} on autopilot") };
-    if r.shut() { named = named.add(Inked::of(format!("  {holds}{}", pilots(", ")), Ink::Muted)); } else if top { named = named.add(Inked::of(format!("  {}{}", top_says(s), pilots(" · ")), Ink::Muted)); }
-    (named, shown)
+    if r.shut() { named = named.add(Inked::of(format!("  {holds}"), Ink::Muted)); } else if top { named = named.add(Inked::of(format!("  {}", top_says(s)), Ink::Muted)); }
+    (named, super::coord_row::shown(s, t, id))
 }
 /// What the top row holds: `9 projects · 30 tasks`.
 fn top_says(s: &State) -> String {
@@ -138,7 +131,7 @@ pub fn list_lines(s: &mut State, t: &Theme, width: usize, h: usize, screen: usiz
             Row::Head { id, .. } => {
                 // Every row sits tight, a heading too: its indent and its ink say its level. An open one at the foot of
                 // what shows goes; a folded one is a row.
-                // A coordinator's status line (on autopilot) is the second line of its row, as a task's is.
+                // A heading is one line.
                 let all = heading(s, t, &rows, k, width);
                 let sel = !id.is_empty() && *id == s.sel;
                 let n = all.len();

@@ -94,7 +94,6 @@ pub mod menu;
 pub mod mouse;
 pub mod paste;
 pub mod pending;
-pub mod pilot;
 pub mod pinned;
 pub mod setup;
 pub mod shows;

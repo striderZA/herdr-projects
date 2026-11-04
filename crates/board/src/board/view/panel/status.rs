@@ -68,13 +68,6 @@ pub fn status(k: &mut Kit, c: &Ctx, r: &Obj) -> (usize, Top, usize, String) {
     }
     let who = if under { String::new() } else if r.b("app") { if !c.agent && r.s("app") == crate::store::files::me() { "you".into() } else { r.t("app") } } else { String::new() };
     if !who.is_empty() { rows.push(("who", k.fact("On it", vec![Kit::quiet(clean(&who))]))); }
-    // Every hand-over the task had, in plain words: beside the list the latest, full screen all of them.
-    let overs = r.arr("handovers");
-    if !overs.is_empty() {
-        let shown: Vec<&Value> = if c.full { overs.iter().collect() } else { overs.iter().rev().take(1).collect() };
-        let lines: Vec<Inked> = shown.iter().flat_map(|h| Kit::wrap_at(&format!("{} · {} ago", crate::store::handovers::handover_line(h), age(c.now - h.i("at"))), k.room)).map(|l| l.recolor(Ink::Soft)).collect();
-        rows.push(("over", k.fact("Took over", lines)));
-    }
     let made = crate::automations::told::made_by_words(r);
     if !made.is_empty() { rows.push(("made", k.fact("Made by", Kit::wrap_at(&made, k.room).into_iter().map(|l| l.recolor(Ink::Soft)).collect()))); }
     let st = crate::re!(r"(\d+) files? changed(?:, (\d+) insertions?\(\+\))?(?:, (\d+) deletions?\(-\))?");

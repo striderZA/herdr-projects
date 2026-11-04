@@ -28,8 +28,6 @@ pub enum Job {
     Add { cwd: String, text: String, delegate: bool },
     Describe { id: String, text: String },
     AutoTurn { id: String, on: bool }, AutoFire { id: String }, AutoRemove { id: String, name: String },
-    /// A coordinator of this machine (`to`, as the coordinator code names its level) on autopilot, or off (autopilot/).
-    Pilot { to: String, on: bool },
     /// A coordinator of this machine started (in its own conversation) or stopped, as an agent on a task is.
     CoordRun { to: String, name: String, on: bool },
     /// Going into a coordinator of this machine (enter on its row): started first when it is not running.
@@ -56,8 +54,8 @@ impl Job {
             | Job::SendFailure { id } | Job::SendError { id } | Job::SendReview { id } | Job::Stop { id, .. } | Job::Pin { id, .. } | Job::Archive { id, .. }
             | Job::Restore { id, .. } | Job::Clear { id, .. } | Job::Pick { id, .. } | Job::Describe { id, .. } | Job::OpenAgent { id, .. } => id.clone(),
             Job::AutoTurn { id, .. } | Job::AutoFire { id } | Job::AutoRemove { id, .. } => format!("auto:{id}"),
-            // A coordinator's row, by its coordinator (coords.rs: Target::key): started, stopped, autopilot, gone into.
-            Job::CoordRun { to, .. } | Job::Pilot { to, .. } | Job::CoordOpen { to, .. } => format!("co:\t{to}"),
+            // A coordinator's row, by its coordinator (coords.rs: Target::key): started, stopped, gone into.
+            Job::CoordRun { to, .. } | Job::CoordOpen { to, .. } => format!("co:\t{to}"),
             // A project archived or restored: its row, the project coordinator's.
             Job::ArchiveProject { repo, .. } | Job::RestoreProject { repo, .. } => format!("co:\tproject:{repo}"),
             // A project pinned: its row, its coordinator's.
@@ -174,11 +172,6 @@ fn run_one(job: Job) -> Done {
             }
             Job::AutoTurn { id, on } => { let (w, ink) = crate::automations::show::turned_words(&crate::automations::list::turn(&id, on)?); Done::say(w, ink) }
             Job::AutoFire { id } => { let a = crate::automations::list::find(&id)?; let f = crate::automations::fire::fire(&id, crate::automations::told::Cause::Run, crate::clock::now())?; let (w, ink) = crate::automations::show::fired_words(&a, &f); Done::say(w, ink) }
-            Job::Pilot { to, on } => {
-                let co = crate::coordinator::co::Co::of(&crate::herdr::cli::current_socket(), &to);
-                // On says nothing: its heading shows it (view/pilot.rs).
-                if on { crate::autopilot::switch::on(&co, None, &[])?; Done::default() } else { Done::say(crate::autopilot::switch::off(&co)?, Ink::Yellow) }
-            }
             Job::CoordRun { to, name, on } => {
                 let co = crate::coordinator::co::Co::of(&crate::herdr::cli::current_socket(), &to);
                 if on { crate::coordinator::requests::restart(&co)?; Done::say(format!("Starting {name}, in its own conversation."), Ink::Muted) } else { crate::coordinator::requests::stop(&co)?; Done::say(format!("Stopped {name}. Your next message starts it again."), Ink::Muted) }

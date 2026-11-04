@@ -26,8 +26,6 @@ pub struct Data {
     pub looks: BTreeMap<String, Look>,
     /// This machine's project coordinators that were ever talked to, by level ("project:<repo>"): one folder read.
     pub coords: Vec<String>,
-    /// This machine's coordinators' autopilot as each shows it, by level ("" the main one, "project:<repo>").
-    pub pilots: Value,
     pub keys: Keys, pub repos: Vec<String>, pub roots: BTreeMap<String, String>, pub session: String, pub notify: String,
     /// The known repos that keep their heading by repo with no task in view (`used_lately`).
     pub lately: Vec<String>,
@@ -93,7 +91,7 @@ pub fn load(wants: &Wants) -> Data {
         session: session_name(&socket), notify: setting("board.notify", None).as_str().unwrap_or("").to_string(),
         repo: here.0, repo_root: here.1, host: crate::util::hostname(),
         approve: crate::actions::finish_line::take_approve(&socket, &wants.own_pane), heard: crate::board::run::say::heard(&wants.own_pane, &socket),
-        mine: wants.mine.as_ref().map(|r| (r.clone(), mine(r))), skills, pilots: crate::autopilot::shown::views(&socket, now), loaded: true, seq,
+        mine: wants.mine.as_ref().map(|r| (r.clone(), mine(r))), skills, loaded: true, seq,
     }
 }
 /// How this machine's coordinators of these levels stand ("*": every one that was ever talked to).
@@ -139,16 +137,15 @@ pub fn mine(repo: &str) -> Value {
     let scope = if repo.is_empty() { Scope::you() } else { Scope::repo(repo) };
     json!({ "settings": rows(&scope).iter().map(|r| r.json()).collect::<Vec<_>>(), "problems": problems_in(&scope) })
 }
-/// A coordinator's settings page (`key\tthen`, update/edit_coord.rs): its own rows (`own` for its own and this time's,
-/// `once` for this time's), whether autopilot is on, and the rows of the place under them (yours, your entry for a repo).
+/// A coordinator's settings page (`key\tthen`, update/edit_coord.rs): its own rows (`own`), and the rows of the place
+/// under them (yours, your entry for a repo).
 fn coord_rows(spec: &str) -> Value {
     let (key, then) = spec.split_once('\t').unwrap_or((spec, ""));
-    let co = crate::coordinator::co::Co::of(&current_socket(), if key == "main" { "" } else { key });
-    let scope = crate::autopilot::record::scope_of(&co);
-    let own: Vec<Value> = rows(&scope).iter().map(|r| { let mut j = r.json(); j["own"] = json!(r.place == "coord" || r.place == "once"); j["once"] = json!(r.place == "once"); j }).collect();
+    let scope = Scope::coord(crate::store::settings::coord::Coord::of(if key == "main" { "" } else { key }));
+    let own: Vec<Value> = rows(&scope).iter().map(|r| { let mut j = r.json(); j["own"] = json!(r.place == "coord"); j["once"] = json!(false); j }).collect();
     let under = match then { "you" => mine(""), t => t.strip_prefix("repo:").map(mine).unwrap_or(json!({ "settings": [], "problems": [] })) };
     let mut problems = problems_in(&scope); problems.extend(strings(under.at("problems")));
-    json!({ "coord": own, "settings": under.at("settings"), "problems": problems, "on": crate::autopilot::record::is_on(&co) })
+    json!({ "coord": own, "settings": under.at("settings"), "problems": problems })
 }
 /// A closer look at one task of this machine.
 pub fn snap(t: &Obj) -> Value {

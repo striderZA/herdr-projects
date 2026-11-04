@@ -48,7 +48,7 @@ pub fn reviews(k: &mut Kit, c: &Ctx, r: &Obj) -> bool {
         let q = quiet_review(r, e, *e == last);
         k.flow(vec![verdict_mark(e, q).add(Inked::plain(" ")).add(verdict(e, true, q).bold()), if e.b("at") { Kit::dim(format!("{} ago", age(c.now - e.i("at")))) } else { Inked::new() },
             if c.full && e.b("head") { Kit::dim(format!("at {}", &e.t("head").chars().take(7).collect::<String>())) } else { Inked::new() },
-            if e.b("by") && crate::store::handovers::last_handover(r, "reviewer").is_some() { Kit::dim(format!("by {}", e.s("by"))) } else { Inked::new() }], None, " · ")
+            ], None, " · ")
     };
     // A review that still stood after main was merged in says so, with what ran instead.
     let kept = |e: &Value| -> Vec<Inked> {

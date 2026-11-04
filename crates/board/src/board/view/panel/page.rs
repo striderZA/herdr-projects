@@ -61,8 +61,7 @@ pub fn settings_page(s: &mut State, t: &Theme, r: Option<&Obj>, width: usize) ->
     let w = { let e = s.editing.as_mut().unwrap(); e.at = e.at.min(all.len().saturating_sub(1)); e.whose.clone() };
     let typing = s.editing.as_ref().unwrap().typing.clone();
     let at = s.editing.as_ref().unwrap().at;
-    let whose = match &w { Whose::Auto => "this automation only", Whose::Task => "this task only", Whose::You => "set by you", Whose::Repo(_) => "said in your entry for this repo", Whose::Coord(..) => match w.then() { Whose::You => "its own: this coordinator's (or this time's, while its autopilot is on), and below it set by you", Whose::Repo(_) => "its own: this coordinator's (or this time's, while its autopilot is on), and below it said in your entry for this repo", _ => "this coordinator's own (or this time's, while its autopilot is on)" } };
-    let coord_on = matches!(w, Whose::Coord(..)) && crate::board::update::edit_coord::on(s, &w);
+    let whose = match &w { Whose::Auto => "this automation only", Whose::Task => "this task only", Whose::You => "set by you", Whose::Repo(_) => "said in your entry for this repo", Whose::Coord(..) => match w.then() { Whose::You => "its own: this coordinator's, and below it set by you", Whose::Repo(_) => "its own: this coordinator's, and below it said in your entry for this repo", _ => "this coordinator's own" } };
     let label = |x: &Obj| entry_of(x.s("name")).map(|e| e.label.clone()).unwrap_or_else(|| x.t("name"));
     // Yours: where a row not your own comes from, unless something says more of it.
     let from = |x: &Obj| if w.mine() && (!x.b("own") || x.b("once")) { x.t("from") } else { String::new() };
@@ -96,7 +95,6 @@ pub fn settings_page(s: &mut State, t: &Theme, r: Option<&Obj>, width: usize) ->
     }
     lines.push(Inked::new());
     lines.push(Inked::plain(" ").add(Inked::of("*", Ink::Accent)).add(Inked::of(format!(" {whose}"), Ink::Muted)).cut(width));
-    if coord_on { lines.extend(Inked::of("While its autopilot is on, an autopilot row is saved for this time; turn autopilot off, or tell the coordinator, to keep it. Its goal is always its own.", Ink::Muted).wrap(width.saturating_sub(2).max(10)).into_iter().map(|l| Inked::plain(" ").add(l))); }
     let bad = match (&w, r) { (Whose::Task, Some(r)) => r.at("snap").arr("problems").to_vec(), (w, _) if w.mine() => crate::board::update::edit::mine_read(s, w).map(|v| v.arr("problems").to_vec()).unwrap_or_default(), _ => vec![] };
     if !w.mine() { lines.push(Inked::of(format!(" Your own settings, which every task starts from: {} on a heading", key_name("settings")), Ink::Muted).cut(width)); }
     for bad in bad { lines.push(Inked::of(format!(" Not counted: {}", text(&bad)), Ink::Yellow).cut(width)); }

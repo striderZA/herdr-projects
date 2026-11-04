@@ -35,8 +35,8 @@ pub fn words(s: &State, j: &Job) -> Option<(String, String)> {
         Job::OpenAgent { .. } => w("Opening", "open"),
         Job::AutoTurn { on, .. } => if *on { w("Turning on", "turn on") } else { w("Turning off", "turn off") },
         Job::AutoFire { .. } => w("Firing", "fire"),
-        // A coordinator's row: started or stopped, its autopilot turned on or off, gone into.
-        Job::CoordRun { on, .. } | Job::Pilot { on, .. } => if *on { w("Starting", "start") } else { w("Stopping", "stop") },
+        // A coordinator's row: started or stopped, gone into.
+        Job::CoordRun { on, .. } => if *on { w("Starting", "start") } else { w("Stopping", "stop") },
         Job::CoordOpen { .. } => w("Opening", "open"),
         _ => None,
     }
