@@ -1,4 +1,4 @@
-//! The skills of the other programs the herdr web UI lists them for, read as it reads them (agents/skills/): OpenCode,
+//! The skills of the other programs, read as their programs keep them (agents/skills/): OpenCode,
 //! Devin, Grok, Hermes, omp and Antigravity (agy), each from its own places and by its own rules.
 use crate::common;
 use common::*;

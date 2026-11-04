@@ -1,16 +1,11 @@
 //! herdr's config is read however it is written (tables, inline tables, dotted keys, the whole of TOML), a file that
-//! cannot be read gives herdr's defaults, and the review page takes the same theme and follows the browser.
+//! cannot be read gives herdr's defaults.
 use crate::common;
-use sw::board::theme::page::page_theme_of;
 use sw::board::theme::{read_config, resolve, Resolved, Seen, C};
 use sw::herdr::palette::parse_color;
 
 fn cfg(s: &str) -> toml::Table { s.parse().unwrap_or_else(|e| panic!("{s}: {e}")) }
 fn res(c: &toml::Table) -> Resolved { resolve(c, None, "herdr", Seen::default()) }
-/// The page's colours without the board's own `--c-*` list, which the old page did not have.
-fn page(c: &str, want: &str) -> String { regex::Regex::new(r";--c-[a-z0-9-]+:#[0-9a-f]{6}").unwrap().replace_all(&page_theme_of(&cfg(c), want), "").into_owned() }
-fn like(s: &str, re: &str) { assert!(regex::Regex::new(re).unwrap().is_match(s), "{s}\n  does not match {re}"); }
-
 #[test]
 fn herdrs_config_is_read_however_it_is_written_tables_inline_tables_dotted_keys() {
     let want = cfg("[theme]\nname = \"nord\"\nauto_switch = true\n[theme.custom]\nred = \"#010203\"\naccent = \"#040506\"\n[theme.custom.light]\ntext = \"#070809\"\n");
@@ -59,21 +54,4 @@ fn the_whole_of_toml_is_read_so_nothing_herdr_accepts_is_lost() {
     let odd = cfg("[__proto__]\nstatus_indicators = \"dots\"\npolluted = true\n[constructor.prototype]\npolluted = true\n[a]\ntoString = \"t\"\n[[__proto__.list]]\npolluted = true\n[ui]\n\"__proto__\".accent = \"red\"\n");
     assert_eq!(odd["a"]["toString"].as_str(), Some("t"));
     assert!(res(&odd).symbols); assert_eq!(res(&odd).pal.accent, C::Rgb(0x89b4fa));
-}
-
-#[test]
-fn the_review_page_takes_the_same_theme_and_follows_the_browser_where_herdr_follows_the_terminal() {
-    assert_eq!(page("", "herdr"), ":root{color-scheme:dark;--bg:#181825;--ink:#cdd6f4;--muted:#a6adc8;--line:#45475a;--accent:#89b4fa;--well:#313244;--ok:#a6e3a1;--bad:#f38ba8}");
-    // The board's own colours follow on the same page, for the web board.
-    like(&page_theme_of(&toml::Table::new(), "herdr"), r"--bad:#f38ba8;--c-panel-bg:#181825;.*--c-review:#[0-9a-f]{6};.*\}$");
-    like(&page("[theme]\nname = \"gruvbox-light\"\n[theme.custom]\ngreen = \"#010203\"\n", "auto"), r"^:root\{color-scheme:light;--bg:#fbf1c7;--ink:#3c3836;.*--ok:#010203;--bad:#9d0006\}$");
-    like(&page("[theme]\nname = \"gruvbox\"\n", "light"), r"^:root\{color-scheme:light;--bg:#fbf1c7;");
-    let both = page("[theme]\nname = \"nord\"\nauto_switch = true\nlight_name = \"one-light\"\n", "auto");
-    like(&both, r"^:root\{color-scheme:dark;--bg:#2e3440;.*\}@media \(prefers-color-scheme:light\)\{:root\{color-scheme:light;--bg:#fafafa;.*\}\}$");
-    // Colours given by name are kept on the page too; only the terminal theme's own colours give way to the browser's.
-    like(&page("[theme.custom]\ngreen = \"red\"\naccent = \"lightmagenta\"\ntext = \"reset\"\n", "auto"), r"--ink:#cdd6f4;.*--accent:#ff00ff;.*--ok:#cd0000;--bad:#f38ba8\}$");
-    like(&page("[theme]\nname = \"terminal\"\n[theme.custom]\ngreen = \"red\"\n", "auto"), r"--ok:#cd0000;--bad:#f38ba8\}@media.*--ok:#cd0000;--bad:#d20f39\}\}$");
-    for (c, w) in [("[theme]\nname = \"terminal\"\n", "auto"), ("", "terminal"), ("[theme]\nname = \"nord\"\n", "terminal")] {
-        like(&page(c, w), r"--bg:#181825;.*prefers-color-scheme:light.*--bg:#eff1f5;--ink:#4c4f69;"); // the terminal's colours mean the browser's
-    }
 }

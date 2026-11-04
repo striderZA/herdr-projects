@@ -34,7 +34,7 @@ pub fn click(s: &mut State, x: usize, y: usize, fx: &mut Vec<Effect>) {
     if id.is_empty() { return; }
     if locked(s) { if id != s.sel { s.flash("Send or put away what you typed first: a click does not change who gets it.", Ink::Muted); } return; }
     s.stick.clear();
-    // A click on a heading folds it or unfolds it, as on the web board.
+    // A click on a heading folds it or unfolds it.
     if super::heads::is_head(&id) { super::heads::toggle(s, &id, fx); return super::list::sync_reply(s); }
     s.sel = id;
     super::list::relist(s);

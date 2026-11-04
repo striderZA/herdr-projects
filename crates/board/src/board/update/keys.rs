@@ -13,7 +13,7 @@ use crate::shown::ink::Ink;
 
 /// Closing takes ctrl+c twice: this long the first one is remembered.
 pub const CLOSE_WAIT: i64 = 2000;
-/// A view that types into the pane from an input line (herdr's web UI on a phone) sends what was typed and then an
+/// A view that types into the pane from an input line (a remote view on a phone) sends what was typed and then an
 /// enter of its own, 120 ms later: behind a one-letter key of the board that enter is dropped, while such a view is
 /// attached to the board's terminal.
 const LINE_ENTER: i64 = 250;
@@ -104,7 +104,6 @@ fn answer(s: &mut State, p: &Press, esc: bool, close: bool, fx: &mut Vec<Effect>
     if is(p, K::SayYes) {
         if !super::ask::still_valid(s, &a.valid) { s.ask = None; s.flash(format!("It changed while you were asked, so nothing was merged. Look at it again, then {}.", key_name("yes")), Ink::Yellow); return; }
         s.ask = None;
-        if a.yes == Job::WebUiLink { s.flash("Pointing the web UI's link at the board's front door…", Ink::Muted); } // it takes a moment
         return act::go(s, a.yes, fx);
     }
     if is(p, K::SayNo) { if let Some(no) = a.no { s.ask = None; return act::go(s, no, fx); } }
@@ -145,7 +144,6 @@ pub fn run_as(s: &mut State, k: K, p: &Press, r: Option<&Obj>, fx: &mut Vec<Effe
         K::Find => { s.mode = Mode::Find; s.full = false; let f = s.filter.clone(); s.input.set_text(&f); }
         K::Free => act::free_size(s, fx),
         K::Close => s.closing = Some((s.now + CLOSE_WAIT, false)),
-        K::Call => super::call::toggle(s, fx),
         K::ChatMessage => super::chat::toggle(s, fx),
         K::ChatScrollUp => { let by = super::chat::page(s); super::chat::scroll(s, -by); }
         K::ChatScrollDown => { let by = super::chat::page(s); super::chat::scroll(s, by); }

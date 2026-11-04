@@ -1,7 +1,7 @@
 //! A task done several times at once (attempts.by, attempts.pick): one row, a worktree and tab for each attempt, the
 //! check as a filter, the reviewer's comparison, your pick (`pick <id> <letter>`, the approve key), and what is kept.
 use crate::common;
-use common::board::{open, web};
+use common::board::open;
 use common::*;
 use serde_json::json;
 use sw::json::*;
@@ -57,22 +57,6 @@ fn one_row_times_three_pick_one_the_panel_and_the_approve_key_keeps_the_selected
     assert!(meta.iter().any(|m| m.contains("--display-agent pick one")), "{}", meta.join("\n"));
     let last = b.lines().last().cloned().unwrap_or_default();
     assert!(last.contains(&format!("{} keep attempt B · {} the next attempt · alt+o open attempt B's agent", sw::board::keys::key_name("yes"), sw::board::keys::key_name("nextAttempt"))), "{last}");
-    // The web board: the same row, the same part, and the keys as buttons.
-    web(&w, "pick", json!({ "id": id }));
-    let s = web(&w, "board", json!({}));
-    let row = s.at("list").arr("groups").iter().flat_map(|g| g.arr("rows").to_vec()).find(|x| x.s("id") == id).unwrap();
-    let group = s.at("list").arr("groups").iter().find(|g| g.arr("rows").iter().any(|x| x.s("id") == id)).unwrap().t("name");
-    assert_eq!((group, row.t("title"), row.arr("says").iter().map(|p| p.t("t")).collect::<String>()), ("needs you".into(), "Greet ×3".into(), "Pick one of 3 · the reviewer recommends B".into()));
-    assert_eq!(s.arr("actions").iter().take(2).map(|x| (x.t("id"), x.t("label"))).collect::<Vec<_>>(), vec![("yes".into(), "keep attempt B".into()), ("nextAttempt".into(), "the next attempt".into())]);
-    let s = web(&w, "pick", json!({ "id": id, "open": true }));
-    let labels: Vec<String> = s.at("panel").arr("parts").iter().find(|x| x.s("head") == "Pick one of 3").unwrap().arr("items").iter().filter(|x| x.s("k") == "fact").map(|x| x.s("label").trim().to_string()).collect();
-    assert_eq!(labels, vec!["Reviewer", "A", "B ›", "C"]);
-    web(&w, "pick", json!({ "id": id }));
-    web(&w, "press", json!({ "id": "nextAttempt" }));
-    let s = web(&w, "press", json!({ "id": "yes" }));
-    assert!(s.at("ask").s("q").contains("Keep attempt C (claude)"), "{}", s.at("ask"));
-    web(&w, "press", json!({ "id": "sayNo" }));
-    assert_eq!(task(&id).s("stage"), "pick");
     // On the terminal board: ctrl+n moves on, and the approve key keeps the selected one after a yes.
     b.press(&["ctrl+n"]);
     assert!(regex::Regex::new(r"  C › +claude").unwrap().is_match(&b.text()));

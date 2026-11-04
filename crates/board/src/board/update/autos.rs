@@ -44,7 +44,6 @@ pub fn remove(s: &mut State, a: &Obj) {
 /// The whole automation, and back to the list.
 pub fn fold(s: &mut State) { s.auto_open = !s.auto_open; s.full = false; s.editing = None; s.auto_at = -1; s.panel_top = 0; }
 pub fn settings(s: &mut State, a: &Obj) {
-    if s.ctx.web { return super::web::auto_settings(s); }
     if s.editing.as_ref().map(|e| e.whose == Whose::Auto).unwrap_or(false) { s.editing = None; s.panel_top = 0; return; }
     if !can_set(a) { return s.flash(format!("Its settings are changed on {}: herdr-projects set <name> <value> --automation \"{}\"", a.s("host"), a.s("name")), Ink::Yellow); }
     s.editing = Some(Editing { id: a.t("row"), at: 0, typing: String::new(), whose: Whose::Auto }); s.auto_open = true; s.full = false; s.panel_top = 0;

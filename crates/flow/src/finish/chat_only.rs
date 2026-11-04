@@ -20,7 +20,7 @@ use std::path::Path;
 pub fn turn_waits(g: &mut Guard, said: &str) -> Res<bool> {
     let t = g.check()?;
     if !is_chat(&t) { return Ok(false); }
-    let report = keep_report(&t, || crate::review_page::artifact_base(t.s("id")));
+    let report = keep_report(&t);
     let last = said.lines().map(str::trim).filter(|l| !l.is_empty()).last().unwrap_or("").to_string();
     let w = g.set(|t| {
         t.put("stage", "asks"); t.put("kind", "question"); t.put("msg", if last.is_empty() { "Your turn".to_string() } else { one_line(&last, 2048) });

@@ -20,14 +20,14 @@ pub struct Here { pub names: Vec<String>, pub session: String }
 /// This machine's own herdr list, as another machine is sent it with the tasks: herdr's order, disabled ones too.
 pub fn sent() -> Value { json!(crate::herdr::Herdr::new(None).machines().iter().filter(|m| m.is_object()).take(64).map(|m| entry(m, resolve(&m.t("target")))).collect::<Vec<_>>()) }
 fn entry(m: &Value, resolved: String) -> Value {
-    let addresses = super::lookup::addresses(&[crate::webui::pcs::address(&m.t("target"), 0).1, resolved.clone()]);
+    let addresses = super::lookup::addresses(&[crate::remote::address(&m.t("target"), 0).1, resolved.clone()]);
     json!({ "id": m.t("id"), "label": m.t("label"), "target": m.t("target"), "session": m.t("session"), "enabled": m.at("enabled") != &json!(false), "selected": m.at("selected") == &json!(true), "resolved": resolved, "addresses": addresses })
 }
 /// A list as another machine sent it, its entries that came without the addresses of their hosts (a program there that
 /// sends none) given them as this machine looks them up: a Tailscale name stands for the same address on both.
 pub fn looked_up(list: &mut Value) {
     for e in list.as_array_mut().into_iter().flatten().filter(|e| e.is_object() && !e.at("addresses").is_array()) {
-        e["addresses"] = json!(super::lookup::addresses(&[crate::webui::pcs::address(&e.t("target"), 0).1, e.t("resolved")]));
+        e["addresses"] = json!(super::lookup::addresses(&[crate::remote::address(&e.t("target"), 0).1, e.t("resolved")]));
     }
 }
 /// The herdr list of a machine whose answer came without one (an older program there, which sends none), asked of
@@ -72,14 +72,14 @@ pub fn same_host(a: &str, b: &str) -> bool {
     !ip(&a) && !ip(&b) && (bare(&a) || bare(&b)) && a.split('.').next() == b.split('.').next()
 }
 /// The hosts an entry connects to: as its target says, and as its machine's SSH resolves that.
-fn hosts(e: &Entry) -> Vec<String> { [crate::webui::pcs::address(&e.target, 0).1, e.resolved.clone()].into_iter().filter(|h| !h.is_empty()).collect() }
+fn hosts(e: &Entry) -> Vec<String> { [crate::remote::address(&e.target, 0).1, e.resolved.clone()].into_iter().filter(|h| !h.is_empty()).collect() }
 fn session(s: &str) -> &str { if s == "default" { "" } else { s } }
 /// Is this entry of another machine's list that machine of the board's? By herdr's id where both have the same one,
 /// else by where it connects: the same host (`same_host`), port and herdr session.
 fn same(e: &Entry, m: &Machine) -> bool {
     if !e.id.is_empty() && e.id == m.id { return true; }
-    let (_, host, port) = crate::webui::pcs::address(&m.target, 0);
-    hosts(e).iter().any(|h| same_host(h, &host)) && crate::webui::pcs::address(&e.target, 0).2 == port && session(&e.session) == session(&m.session)
+    let (_, host, port) = crate::remote::address(&m.target, 0);
+    hosts(e).iter().any(|h| same_host(h, &host)) && crate::remote::address(&e.target, 0).2 == port && session(&e.session) == session(&m.session)
 }
 /// Is this entry this machine, in its herdr session: by one of its names or addresses, else (`by_address`) by an
 /// address its host stands for (remote/lookup.rs: a Mac named `Mac` that the list names by its Tailscale name).

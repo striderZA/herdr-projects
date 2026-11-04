@@ -125,8 +125,8 @@ pub fn report(k: &mut Kit, c: &Ctx, r: &Obj) {
     else if research { lines.extend(k.wrap(if has { "Changes nothing in the repo." } else { "Changes nothing in the repo. No report yet." }).into_iter().map(|l| l.recolor(Ink::Muted))); }
     let room = if c.full { k.w } else { k.room + 2 };
     if has { lines.extend(artifact_rows(&json!({ "link": rep.at("link"), "caption": "Open report", "detail": if c.full { format!("{}{}", rep.s("file"), if rep.b("at") { format!(" · kept {} ago", age(c.now - rep.i("at"))) } else { String::new() }) } else { String::new() } }), room, c.full)); }
-    // How to open it: the board's key, or the terminal's own click on a link (the web board's link is a plain one).
-    if has && !c.web {
+    // How to open it: the board's key, or the terminal's own click on a link.
+    if has {
         let click = if rep.s("link").starts_with("http") { format!(", or {}+click", if crate::board::key_style::mac() { "cmd" } else { "ctrl" }) } else { String::new() };
         lines.extend(Kit::wrap_at(&format!("{} opens it{click}", key_name("openLink")), room.saturating_sub(2).max(1)).into_iter().map(|l| Inked::plain("  ").add(l.recolor(Ink::Muted))));
     }

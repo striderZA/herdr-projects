@@ -32,8 +32,6 @@ pub enum Event {
     Shown { term: (u16, u16), shown: Option<size::Shown>, by: Option<Vec<(i64, i64)>> },
     /// What taking the terminal back answered.
     Took(Result<(), String>),
-    /// The web UI's links that could go through the board's front door (web_ui.rs).
-    WebUiOffer(Vec<String>),
 }
 #[derive(Clone, Debug, PartialEq)]
 pub enum Effect {
@@ -53,8 +51,6 @@ pub enum Effect {
     Attach { command: String, args: Vec<String> },
     /// Take the board's terminal back from the viewer that holds it, at this size (size.rs).
     Take { cols: u16, rows: u16 },
-    /// Look whether the herdr web UI has a link that could show the board (web_ui.rs).
-    LookWebUi,
 }
 pub fn update(s: &mut State, ev: Event) -> Vec<Effect> {
     let mut fx = vec![];
@@ -74,7 +70,6 @@ pub fn update(s: &mut State, ev: Event) -> Vec<Effect> {
         Event::Stamp(st) => beat::stamp(s, st, &mut fx),
         Event::Shown { term, shown, by } => { let now = s.now; size::see(s, (term.0 as usize, term.1 as usize), shown, by, now, &mut fx) }
         Event::Took(r) => size::took(s, r),
-        Event::WebUiOffer(urls) => web_ui::offered(s, urls),
     }
     pending::start(s, &mut fx); // what was just asked for shows on its row now, not when it is done
     fx
@@ -91,7 +86,6 @@ pub mod actions;
 pub mod archive_project;
 pub mod autos;
 pub mod beat;
-pub mod call;
 pub mod chat;
 pub mod coords;
 pub mod top;
@@ -114,5 +108,3 @@ pub mod setup;
 pub mod shows;
 pub mod size;
 pub mod skills;
-pub mod web;
-pub mod web_ui;

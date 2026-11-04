@@ -24,7 +24,7 @@ fn with(r: &Rec, more: Value) -> Rec { rec(Value::Object((**r).clone()), more) }
 fn words(n: usize, w: &str) -> String { (1..=n).map(|k| format!("{w}{k}")).collect::<Vec<_>>().join(" ") }
 fn busy() -> Rec { work(json!({ "id": "p/1", "title": "Research capy.ai and other coding agents for ideas we could use", "msg": "Researching coding agents and harnesses for ideas, reading what each one says about itself", "progress": 3 })) }
 fn long() -> Rec { todo(json!({ "id": "p/2", "title": "Rethink how the Coordinator works, restarts and remembers what it was told before it stopped" })) }
-fn brief() -> Rec { todo(json!({ "id": "p/3", "title": "Bring the board to herdr's web UI" })) }
+fn brief() -> Rec { todo(json!({ "id": "p/3", "title": "Bring the board to a narrow window" })) }
 fn old() -> Rec { done(json!({ "id": "p/4", "title": "Third row line on narrow screens for progress and more" })) }
 fn all() -> Vec<Rec> { vec![busy(), long(), brief(), old()] }
 fn board(list: &[Rec], sel: &str, scope: &str) -> State {
@@ -89,7 +89,7 @@ fn narrow_screen_the_selected_row_shows_its_whole_name_on_as_many_lines_as_it_ne
     let d = drawn(&mut s, 52, 30);
     let shown: Vec<String> = plain(&d).into_iter().filter(|l| has(l, "Rethink|told before|Bring")).collect();
     // One step in under the top row (update/depth.rs).
-    assert_eq!(shown, ["▌ ○ #2 Rethink how the Coordinator works, restarts", "▌      and remembers what it was told before it", "  ○ #3 Bring the board to herdr's web UI"]);
+    assert_eq!(shown, ["▌ ○ #2 Rethink how the Coordinator works, restarts", "▌      and remembers what it was told before it", "  ○ #3 Bring the board to a narrow window"]);
     let lit: Vec<&Inked> = d.iter().filter(|l| is_lit(l)).collect();
     assert_eq!(lit.len(), 3); assert!(lit.iter().all(|l| len(&l.text()) == 52));
 }
@@ -101,7 +101,7 @@ fn narrow_screen_to_do_and_done_rows_stay_one_line_and_go_without_their_time_so_
     let wide = plain(&drawn(&mut s, 140, 30));
     let lg = long();
     // One step in under the top row (update/depth.rs): a cell less for the names.
-    assert!(narrow.contains(&"  ✓ #4 Third row line on narrow screens for progres…".to_string()) && narrow.contains(&"  ○ #3 Bring the board to herdr's web UI".to_string()), "{}", narrow.join("\n"));
+    assert!(narrow.contains(&"  ✓ #4 Third row line on narrow screens for progres…".to_string()) && narrow.contains(&"  ○ #3 Bring the board to a narrow window".to_string()), "{}", narrow.join("\n"));
     assert!(narrow.contains(&format!("  ○ #2 {}…", lg.s("title").chars().take(44).collect::<String>())), "a name cut at the edge, not before a time: {}", narrow.join("\n"));
     assert!(!narrow.iter().any(|l| has(l, r"^ +[○✓].* 5h")));
     // A wider screen is as it was: the time at the right of every row, one line for a to-do or done row, two for a live one.

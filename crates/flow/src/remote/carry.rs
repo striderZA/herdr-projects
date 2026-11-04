@@ -85,7 +85,7 @@ fn kind_of(name: &str) -> &'static str {
 struct Named { start: usize, end: usize, path: PathBuf, at: bool }
 /// Folders whose files both machines have, each its own: a bare path into one means that machine's file, not this one's.
 const SYSTEM: [&str; 16] = ["/etc", "/usr", "/bin", "/sbin", "/lib", "/lib64", "/opt", "/proc", "/sys", "/dev", "/boot", "/run", "/System", "/Library", "/Applications", "/nix"];
-/// Every existing plain file of this machine the words name, in order: `@/path` and `@~/path` (the web board's box
+/// Every existing plain file of this machine the words name, in order: `@/path` and `@~/path` (a chat box's
 /// writes `@<path> `), and a bare absolute or `~/` path as a terminal drop gives it, with `\ ` for a space or in
 /// '…' / "…" quotes. A path ends at whitespace that is not escaped; a `.`, `,` or `)` after it is not its own. A bare
 /// one into a system folder or a hidden one (`/etc/hosts`, `~/.zshrc`) is the other machine's own and is left alone.

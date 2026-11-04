@@ -1,5 +1,4 @@
-//! The skills and commands a program takes in its chat, read where it keeps them (agents/skills.rs), as the herdr web
-//! UI's chat box lists them: Claude Code's as `/name` (yours, the project's, its commands, its plugins' turned on as
+//! The skills and commands a program takes in its chat, read where they keep them (agents/skills.rs), as a chat box lists them: Claude Code's as `/name` (yours, the project's, its commands, its plugins' turned on as
 //! `/plugin:name`), Codex's skills as `$name` and its prompts as `/prompts:name`, pi's skills as `/skill:name`; what
 //! each does in its first sentence; and the ones that match a word typed, best first.
 use crate::common;
@@ -68,7 +67,7 @@ fn codex_offers_skills_with_a_dollar_and_its_prompts_and_pi_its_skills_as_skill_
     // ~/.agents/skills and the project's .agents/skills are pi's too
     assert_eq!(typed(&l), vec!["/plan", "/skill:deep", "/skill:loose", "/skill:notes", "/skill:proj", "/skill:release"]);
     assert_eq!(refs(&matching(&l, "/de")), vec!["/skill:deep"]);
-    // a program whose skills the web UI does not know either offers none: what is typed goes to it as it is
+    // a program whose skills the board does not know either offers none: what is typed goes to it as it is
     assert!(offered("kimi", &w.root).is_empty() && triggers("kimi").is_empty());
 }
 

@@ -19,7 +19,7 @@ fn every_picture_in_sent_words_is_its_chip_numbered_per_message() {
     assert_eq!(labelled(&format!("[Image #39] and {}", herdr(1))), "[Image 1] and [Image 2]");
     // A dropped file, escaped or in quotes, on another machine (no file here), and one under ~/.
     assert_eq!(labelled("see /Users/you/Desktop/Screen\\ Shot.PNG, '/tmp/a b.jpg' ~/.herdr-projects/inbox/x.webp"), "see [Image 1], [Image 2] [Image 3]");
-    // As the web board's chat box sends one.
+    // As a chat box sends one.
     assert_eq!(labelled("@/Users/you/x.png what is this"), "[Image 1] what is this");
     // No picture: as it was.
     for words in ["Look at /tmp/notes.txt and src/x.png and https://x.dev/a.png.", "[Image 2] typed by hand"] { assert_eq!(labelled(words), words); }

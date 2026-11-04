@@ -10,8 +10,8 @@ fn every_source_file_is_within_its_size_says_what_it_holds_and_every_made_table_
 fn the_map_is_made_from_each_files_top_comment_whole_or_for_one_folder() {
     let all = sw::docs::map::where_page("").unwrap();
     assert!(all.contains("## `crates/board/src/board/`") && all.contains("## The pages: `docs/`"), "{all}");
-    let one = sw::docs::map::where_page("crates/web/src/webui").unwrap();
-    assert!(one.contains("## `crates/web/src/webui/`") && !one.contains("## `crates/board/src/board/`") && !one.contains("The pages"));
+    let one = sw::docs::map::where_page("crates/board/src/board").unwrap();
+    assert!(one.contains("## `crates/board/src/board/`") && !one.contains("## `crates/flow/src/finish/`") && !one.contains("The pages"));
     assert!(sw::docs::map::where_page("nowhere").unwrap().contains("No folder of source files is at or under `nowhere`."));
 }
 #[test]

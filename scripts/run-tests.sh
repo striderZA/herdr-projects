@@ -37,7 +37,7 @@ sc_share
 procs="${HERDR_PROJECTS_TEST_PROCS:-$((sc_threads * 2))}"
 case "$procs" in ''|0*|*[!0-9]*) procs=1 ;; esac
 # The tests each program is to run, by their exact names: an area's files (in the one test program, tests/main.rs),
-# the tests whose names hold a word, or all. `settings::` as a filter would also run `web_settings::`: areas are
+# the tests whose names hold a word, or all. `settings::` as a filter would also run `board_settings::`: areas are
 # picked by their exact module.
 i=0
 for b in $bins; do

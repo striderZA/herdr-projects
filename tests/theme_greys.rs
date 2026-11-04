@@ -60,7 +60,7 @@ fn a_finished_mark_is_its_colour_made_quieter_measured_and_a_colour_you_named_fr
     assert_eq!(quieter(C::Ansi(6), C::Own, C::Own), C::Ansi(6)); assert_eq!(quieter(C::Rgb(0x777777), C::Rgb(0x808080), C::Own), C::Rgb(0x777777));
     let t = Theme::default_dark(false);
     assert_eq!(t.quiet(Ink::Teal), C::Rgb(0x5e8a88)); assert_ne!(t.quiet(Ink::Teal), t.ink(Ink::Teal));
-    // The web board draws it quieter itself: the piece says so.
+    // A quiet piece says so, for the drawer.
     let piece = serde_json::to_value(&Inked::of("✓", Ink::Teal).quiet().0[0]).unwrap();
     assert_eq!((piece["t"].as_str(), piece["c"].as_str(), piece["quiet"].as_bool()), (Some("✓"), Some("teal"), Some(true)));
     // A colour you named from the terminal's 16 is kept: it cannot be measured.

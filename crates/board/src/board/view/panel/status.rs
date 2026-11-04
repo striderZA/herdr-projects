@@ -83,7 +83,7 @@ pub fn status(k: &mut Kit, c: &Ctx, r: &Obj) -> (usize, Top, usize, String) {
     let pr = if r.b("pr") { let p = Inked::of(pr_number(r), pr_color(r)); let p = if url.is_empty() { p } else { p.link(&url) }; if merged(r) { p.add(Kit::dim(" merged")) } else { p } } else { Inked::new() };
     if !size.is_empty() || !pr.is_empty() {
         let mut v = k.flow(vec![pr, if size.is_empty() { Inked::new() } else { Kit::quiet(size) }], None, " · ");
-        if c.full && !url.is_empty() && !c.web { v.push(Kit::dim(url.clone())); }
+        if c.full && !url.is_empty() { v.push(Kit::dim(url.clone())); }
         rows.push(("change", k.fact("Change", v)));
     }
     if !c.agent && !r.b("archivedAt") && !r.at("pending").b("word") && r.s("state") == "idle" && r.s("description").trim().is_empty() { rows.push(("next", k.fact("Next", Kit::wrap_at(&format!("No agent is on this yet. {} puts one on it.", key_name("delegate")), k.room).into_iter().map(|l| l.recolor(Ink::Muted)).collect()))); }
@@ -109,14 +109,13 @@ pub fn status(k: &mut Kit, c: &Ctx, r: &Obj) -> (usize, Top, usize, String) {
         k.alert(Ink::Peach, "Behind main", &format!("Cannot be approved yet: {}. The board keeps trying to bring it up to date.", r.at("syncBlocked").s("why")), &if said.is_empty() { vec![] } else { vec![("Details", said)] });
     } else if failed_review(r) {
         let tally = review_tally(r);
-        k.alert(Ink::Red, "Review failed", &format!("{}{}", if tally.is_empty() { String::new() } else { format!("It found {tally}. ") }, if c.web { "Send the review to the agent to fix it, or merge it anyway: that asks first.".to_string() } else { format!("{} sends the review to the agent to fix. {} merges it anyway, and asks first.", key_name("sendBack"), key_name("yes")) }), &[]);
+        k.alert(Ink::Red, "Review failed", &format!("{}{}", if tally.is_empty() { String::new() } else { format!("It found {tally}. ") }, format!("{} sends the review to the agent to fix. {} merges it anyway, and asks first.", key_name("sendBack"), key_name("yes"))), &[]);
     } else if (r.s("state") == "blocked" && r.s("stage") == "approval") || r.s("stage") == "plan" {
     } else if stopped_at_limit(r) {
         let ls = r.at("limitStop");
         let review = ls.s("role") == "reviewer";
         told = note.clone();
-        let on = if c.web { format!("{} with the buttons; a reply to the agent continues it with your words.", if review { "Carry on" } else { "Tell the agent to continue, or take its work as it is" }) }
-            else { format!("{} carries on{}.", key_name("sendBack"), if review { if ls.b("ready") { if ls.b("done") { ": it was finished and reviewed, and is done".to_string() } else { ": its work was finished and reviewed, and is put up for approval".into() } } else if ls.b("review") { ": the review goes to the agent".into() } else { ": it is reviewed again".into() } } else { format!(", and so does a reply to the agent. {} takes the work as it is, through the check and the review", key_name("yes")) }) };
+        let on = format!("{} carries on{}.", key_name("sendBack"), if review { if ls.b("ready") { if ls.b("done") { ": it was finished and reviewed, and is done".to_string() } else { ": its work was finished and reviewed, and is put up for approval".into() } } else if ls.b("review") { ": the review goes to the agent".into() } else { ": it is reviewed again".into() } } else { format!(", and so does a reply to the agent. {} takes the work as it is, through the check and the review", key_name("yes")) });
         let who = if review && !ls.b("review") && !ls.b("ready") { "The reviewer" } else { "It" };
         let raw = if r.b("raw") { r.t("raw") } else if !note.is_empty() { note.clone() } else { "stopped".into() };
         let id = if r.b("rid") { r.t("rid") } else { r.t("id") };

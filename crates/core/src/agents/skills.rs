@@ -1,7 +1,7 @@
 //! The skills and commands of its own that a program takes in its chat (Claude Code's `/review-pr`, Codex's
-//! `$review`, pi's `/skill:review` …), read from where that program keeps them, as the herdr web UI's chat box lists
-//! them when you type `/` (its server/skills/): the board's text box offers the same (docs/skills.md). One file per
-//! program in skills/; a program the web UI lists nothing for offers none here, and what you type still goes to it as
+//! `$review`, pi's `/skill:review` …), read from where that program keeps them, as a chat lists
+//! them when you type `/`: the board's text box offers the same (docs/skills.md). One file per program in skills/; a
+//! program the board lists nothing for offers none here, and what you type still goes to it as
 //! you typed it.
 pub mod agy;
 pub mod claude;

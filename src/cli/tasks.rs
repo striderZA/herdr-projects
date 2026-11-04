@@ -170,14 +170,9 @@ pub fn command(cmd: &str, a: &Args) -> Res<(Value, String)> {
         "autopilot" => crate::autopilot::command::autopilot_command(&pos[1..], flags)?,
         "sweep" => { let r = crate::leftovers::sweep::sweep_with(flags.b("dry")); let s = crate::leftovers::sweep::say(&r); (r, s) }
         "machines" => { let r = crate::remote::check::check(20000); let s = crate::remote::check::say(&r); (r, s) }
-        "voice" => crate::calls::command::main(&pos[1..]),
-        "web-ui" => { let r = crate::webui::command::main(&pos[1..]); if !r.b("ok") { crate::fail!("{}", r.s("msg")); } let m = r.t("msg"); (r, m) }
         "remove-extras" => {
-            let web = crate::extras::remove_web_ui();
-            let mut r = obj(crate::extras::remove_extras());
-            r.put("webUi", web.at("n").clone());
-            let text = format!("Removed: the how-to files{}. The how-to is not written again and the key question will not be asked again.{}", if r.b("blocks") { " and the plugin's blocks in herdr's config (a backup is beside it)" } else { "" },
-                if web.b("n") || !web.b("ok") { format!(" {}", web.s("msg")) } else { String::new() });
+            let r = obj(crate::extras::remove_extras());
+            let text = format!("Removed: the how-to files{}. The how-to is not written again and the key question will not be asked again.", if r.b("blocks") { " and the plugin's blocks in herdr's config (a backup is beside it)" } else { "" });
             (Value::Object(r), text)
         }
         "reopen" => { let (pane, has, t) = crate::delegate::jobs::reopen(&need(1, "an id")?, true)?; (json!({ "pane": pane.at("pane_id"), "hasAgent": has }), format!("{}: its space is open{}", t.s("id"), if has { "" } else { ", no agent in it" })) }

@@ -55,7 +55,6 @@ fn a_research_task_that_changed_nothing_is_done_with_its_report_kept_and_reviewe
     assert!(t.s("msg").contains("The build is slow because of X.") && !t.s("msg").contains("No report"), "{}", t.s("msg"));
     assert_eq!(t.at("report").s("file"), "index.html");
     assert_eq!(t.at("report").s("link"), dir.join("index.html").display().to_string());
-    assert_eq!(read(&sw::store::files::artifacts_dir(&id).join("report").join("index.html")), page);
     assert!(sw::store::files::artifacts_dir(&id).join("out.txt").exists(), "the evidence, beside it");
     let d = sw::actions::finish_line::details(&id).unwrap();
     assert_eq!((d.at("report"), d.at("research")), (t.at("report"), &json!(true)));

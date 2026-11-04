@@ -11,12 +11,13 @@ holds what, so that two tasks do not edit the same file.
   `npm run check`. It is not in git: never commit it. The tests are one file per area (`ls tests`), all of them
   modules of one test program, `tests/main.rs`.
 
-The program is Rust, one native program: `Cargo.toml` at the root, the command in `src/main.rs`. Its code is five
+The program is Rust, one native program: `Cargo.toml` at the root, the command in `src/main.rs`. Its code is four
 crates, one on top of the other, so that a change builds again only its own crate and those on top of it: sw-core
 (`crates/core/`: the data, herdr, the agents), sw-flow (`crates/flow/`: the flow of a task), sw-board
-(`crates/board/`: the board's screen), sw-web (`crates/web/`: the board in the herdr web UI), and the command line
-with the made pages in `src/` (`sw`, which the tests use) ([docs/crates.md](docs/crates.md)). There is no Node and
-nothing to `npm install`; `package.json` is only there so that every agent finds the one command that runs the tests.
+(`crates/board/`: the board's screen), and the command line with the made pages in `src/` (`sw`, which the tests use)
+([docs/crates.md](docs/crates.md)).
+There is no Node and nothing to `npm install`; `package.json` is only there so that every agent finds the one
+command that runs the tests.
 
 ## Where new things go
 
@@ -24,7 +25,7 @@ nothing to `npm install`; `package.json` is only there so that every agent finds
   the end of an old one. A source file may not pass 300 lines (the check fails): split it by area into a folder of
   small files with the old file passing them on, as `crates/flow/src/finish.rs` and `crates/flow/src/finish/` do.
 - **Every source file starts with a comment that says what it holds**: `//!` lines in a `.rs` file (`#` in a shell
-  script, `//` in the web page's `.js`, `/* */` in its `.css`). Its first sentence is its line in the map; the check
+  script). Its first sentence is its line in the map; the check
   fails for a file without one.
 - **A new module goes in the lowest crate whose code it uses**: one `pub mod` line in that crate's `src/lib.rs`. Every
   crate passes on the modules of those below it, so it is `crate::store` in every crate and `sw::store` in the tests. A
@@ -35,7 +36,7 @@ nothing to `npm install`; `package.json` is only there so that every agent finds
   draws is that file's; what a key does to the board is `crates/board/src/board/update/`, one file per area; the board's
   one record of what it shows is `crates/board/src/board/state.rs`.
 - **A key is one entry in `crates/flow/src/board/keys.rs`**: its chord, its name, what it does, its hint, its line in
-  the `?` menu, its button on the web board. The key handler, the menu, the hint line and `docs/keys.md` all read that
+  the `?` menu. The key handler, the menu, the hint line and `docs/keys.md` all read that
   list. What it does is its arm in `crates/board/src/board/update/` (a key with no arm there does not compile). Never
   write a key's chord anywhere else (the check fails): test for it with `keys::is(p, K::…)`, and name it in a message
   with `key_name("undo")`.
@@ -53,7 +54,7 @@ nothing to `npm install`; `package.json` is only there so that every agent finds
   list of pages: a new page is found in `docs/`.
 - **A report, a review or a research result is never committed to the repo**, in no folder. It is kept in the task's
   own folder among the board's reports (`~/.herdr-projects/reports/<repo>/<task number>/`, outside every repo) and
-  shared as a private link by the board ([docs/research.md](docs/research.md)).
+  their paths are the links the board shows ([docs/research.md](docs/research.md)).
 
 ## Tests
 

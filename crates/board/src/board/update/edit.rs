@@ -58,7 +58,6 @@ pub fn whose_here(s: &State) -> Result<Whose, String> {
     match (parts[0], parts.get(2)) { (h, Some(repo)) if h.ends_with("repo") && s.data.repos.iter().any(|r| r == repo) => Ok(Whose::Repo(repo.to_string())), _ => Ok(Whose::You) }
 }
 pub fn open(s: &mut State, r: Option<&Obj>, fx: &mut Vec<Effect>) {
-    if s.ctx.web { return super::web::settings(s, r); }
     if r.map(|r| !r.has("title")).unwrap_or(false) { return s.flash("Select a task first.", Ink::Muted); }
     let Some(r) = r else { return match whose_here(s) { Ok(w) => open_mine(s, w, fx), Err(why) => { super::edit_coord::far(s); s.flash(why, Ink::Yellow) } } };
     if s.editing.as_ref().map(|e| e.id == r.s("id") && e.whose == Whose::Task).unwrap_or(false) { return leave(s); }

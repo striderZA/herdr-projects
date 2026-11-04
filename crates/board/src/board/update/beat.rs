@@ -16,7 +16,6 @@ pub fn tick(s: &mut State, now: i64, fx: &mut Vec<Effect>) {
     if s.all() && s.ticks % 5 == 0 { fx.push(Effect::Poll(false)); }
     // herdr is asked what it shows of the board's pane every two seconds (size.rs).
     if s.ticks % 2 == 0 && !s.ctx.pane.is_empty() { s.size.ask = true; }
-    if s.ticks == 3 { super::web_ui::look(s, fx); }
     if super::pending::tick(s) { relist(s); }
 }
 pub fn loaded(s: &mut State, d: Data, fx: &mut Vec<Effect>) {
@@ -35,7 +34,6 @@ pub fn loaded(s: &mut State, d: Data, fx: &mut Vec<Effect>) {
     if !approve.is_empty() { if let Some(r) = s.items.iter().find(|x| x.s("id") == approve && !x.b("archivedAt")).cloned() { s.menu = None; s.sel = r.t("id"); relist(s); super::actions::yes(s, &r, fx); } }
     if let Some((text, kind)) = heard { s.flash(text, ink_of(&kind)); }
     super::chat::sync_coord(s, fx);
-    super::call::follow(s, fx);
     left_chats(s, fx);
     ring(s, first, fx);
     announce(s, fx);
@@ -58,7 +56,7 @@ fn ring(s: &mut State, first: bool, fx: &mut Vec<Effect>) {
 }
 /// For a board run as a plain command: its tasks as OSC 7501 records on its own terminal. Output only.
 fn announce(s: &mut State, fx: &mut Vec<Effect>) {
-    if s.ctx.web || crate::util::env_set("HERDR_PLUGIN_ID") || std::env::var("HERDR_PROJECTS_PROGRAM_STATUS").as_deref() == Ok("0") { return; }
+    if crate::util::env_set("HERDR_PLUGIN_ID") || std::env::var("HERDR_PROJECTS_PROGRAM_STATUS").as_deref() == Ok("0") { return; }
     let mut next = std::collections::HashMap::new();
     for r in s.data.items.iter().filter(|r| !r.b("host") && !r.b("archivedAt") && r.s("state") != "idle" && r.s("state") != "done") { next.insert(r.t("id"), osc(r)); }
     let mut out = String::new();

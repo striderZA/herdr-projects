@@ -1,12 +1,12 @@
 //! The list's headings: with every machine shown a heading per machine and its repos (or its status groups) under it,
 //! rows that never name their machine; the arrows stop on every heading, ← folds it to one line that says how many
 //! tasks it holds and → unfolds it, at both levels, grouped by repo and by status; a fold outlasts a refresh and the board
-//! closing, gives way to a filter and to a task the selection is taken to; the hint line, the ? menu and the web board.
+//! closing, gives way to a filter and to a task the selection is taken to; the hint line and the ? menu.
 //! A repo's heading is its name in plain text, bold, as loud as its tasks' titles, its key and caret muted.
 use crate::common;
-use common::board::{open, web, Board};
+use common::board::{open, Board};
 use common::*;
-use serde_json::{json, Value};
+use serde_json::json;
 use sw::board::update::{update, Event};
 use sw::shown::ink::Ink;
 use sw::json::*;
@@ -118,7 +118,7 @@ fn a_fold_outlasts_a_refresh_and_the_board_closing_a_filter_and_a_task_taken_to_
 }
 
 #[test]
-fn a_click_on_a_heading_folds_it_and_the_web_board_has_the_same_headings_a_tap_folds() {
+fn a_click_on_a_heading_folds_it() {
     let w = world();
     for n in 1..=2 { w.add(&format!("Task {n}")); }
     let mut s = open(&w.root, 30); s.s.side = false;
@@ -126,16 +126,7 @@ fn a_click_on_a_heading_folds_it_and_the_web_board_has_the_same_headings_a_tap_f
     let y = s.s.list_ids.iter().position(|id| id == "head:status\t\tto do").unwrap();
     s.click((s.s.list_at.unwrap().0 + y) as u16);
     assert!(s.text().contains("▸ to do  2 tasks"), "{}", s.text());
-    // The web board: the headings by their ids, a tap on one folds it, and it says how many it holds.
-    let groups = |v: &Value| v.at("list").arr("groups").to_vec();
-    let b = web(&w, "board", json!({}));
-    let g = groups(&b).into_iter().find(|g| g.s("name") == "to do").unwrap();
-    assert_eq!((g.s("id"), g.b("folded"), g.arr("rows").len()), ("head:status\t\tto do", false, 2));
-    let b = web(&w, "fold", json!({ "id": g.s("id"), "role": "watch" }));
-    let g = groups(&b).into_iter().find(|g| g.s("name") == "to do").unwrap();
-    assert!(g.b("folded") && g.arr("rows").is_empty() && g.i("count") == 2, "{g:?}");
-    let b = web(&w, "fold", json!({ "id": g.s("id") }));
-    assert_eq!(groups(&b).into_iter().find(|g| g.s("name") == "to do").unwrap().arr("rows").len(), 2);
+
 }
 
 #[test]
@@ -152,9 +143,4 @@ fn a_repos_heading_is_its_name_in_plain_text_normal_weight_as_its_titles_and_its
     assert_eq!(head, vec![("▾".into(), Ink::Muted, false), ("proj".into(), Ink::Plain, false), ("· PRJ".into(), Ink::Muted, false)]); // names have no colour, a project's no weight
     let title = pieces("Mine 1").into_iter().find(|p| p.0.contains("Mine 1")).unwrap();
     assert_eq!(title.1, Ink::Plain, "the heading is as loud as the titles under it: {title:?}");
-    // The web board: the heading in plain text too (board.css: .sw-c-plain), its key on its own, dimmed there.
-    let mut b = web(&w, "board", json!({}));
-    if !b.at("flags").b("byRepo") { b = web(&w, "press", json!({ "id": "byRepo" })); }
-    let g = b.at("list").arr("groups").iter().find(|g| g.s("name") == "proj").cloned().unwrap_or_else(|| panic!("{}", b.at("list")));
-    assert_eq!((g.s("color"), g.s("key")), ("plain", "PRJ"), "{g:?}");
 }

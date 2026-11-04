@@ -1,6 +1,6 @@
 //! A remote view that holds the board's pane at another size: the board says so top left once two looks agree, names
 //! the key that ends that view (never a process to kill), and stops when the size is its own again. A view somebody
-//! looks through (seen live on herdr-web-ui 0.4.8: disconnected and reattached every four seconds) keeps the terminal:
+//! looks through (disconnected and reattached every four seconds) keeps the terminal:
 //! the board is drawn for it, drops the enter its input line adds, and never turns its terminal into an agent.
 use crate::common;
 use common::board::{open, Board};
@@ -87,7 +87,7 @@ fn a_remote_view_somebody_looks_through_keeps_the_terminal() {
     assert_eq!(took, 0); assert!(a.s.guest);
     a.s.held = Some(Held { columns: 435, rows: 58, room: (184, 78), by: by.clone(), known: true });
     let l = a.screen(435);
-    assert_eq!(l.len(), 58); assert!(has(&l[0], r"^ Drawn for a remote view of this pane at 435×58 \(herdr's web UI has it open\): herdr's own window \(184×78\) shows a cut-out of it until that view is closed"), "{}", l[0]);
+    assert_eq!(l.len(), 58); assert!(has(&l[0], r"^ Drawn for a remote view of this pane at 435×58 \(a remote view has it open\): herdr's own window \(184×78\) shows a cut-out of it until that view is closed"), "{}", l[0]);
     assert!(has(&l[57], r"\? all keys *$")); assert!(!has(&l.join("\n"), "Another viewer|Held at"));
     // it stays that view's guest however old the view gets, and when herdr gives no answer about it
     a.s.guest = false; took += see(&mut a, Some(vec![(7, 4000)])); took += see(&mut a, Some(vec![(7, 4000)])); assert!(a.s.guest);
@@ -116,12 +116,12 @@ fn a_remote_view_somebody_looks_through_keeps_the_terminal() {
         b.press(&["?", "enter"]); assert!(b.s.menu.is_some()); b.press(&["esc"]);
         let mut fx = vec![];
         sw::board::update::actions::open_agent(&mut b.s, &theirs, &mut fx);
-        assert!(fx.is_empty() && b.s.msg.starts_with("In the web UI, pick its agent in the sidebar under vm-a"), "{}", b.s.msg);
+        assert!(fx.is_empty() && b.s.msg.starts_with("In that view, pick its agent in the sidebar under vm-a"), "{}", b.s.msg);
         update(&mut b.s, Event::Held(None, None)); assert!(b.s.viewed, "herdr gave no answer: what was known stands");
         update(&mut b.s, Event::Held(None, Some(false))); assert!(!b.s.viewed);
     }
     // from such a view the board does not turn its terminal into another machine's agent: the way back would not get through
     let mut fx = vec![];
     sw::board::update::actions::open_agent(&mut a.s, &theirs, &mut fx);
-    assert!(a.s.msg.starts_with("In the web UI, pick its agent in the sidebar under vm-a: “Theirs”."), "{}", a.s.msg);
+    assert!(a.s.msg.starts_with("In that view, pick its agent in the sidebar under vm-a: “Theirs”."), "{}", a.s.msg);
 }

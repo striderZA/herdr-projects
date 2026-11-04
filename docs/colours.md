@@ -32,8 +32,7 @@ hand its theme to a plugin, so the board reads what Herdr reads: the `[theme]` a
   or dark one.
 - **The `terminal` theme** paints with the terminal's own sixteen colours, in Herdr and on the board alike. Its greys are
   the exception ([below](#the-greys-are-quiet-but-always-readable)).
-- **A theme changed in Herdr** shows the next time the board opens. The popup, the task panel, the reply view and the
-  review page take the same theme. Another machine's tasks are drawn by this board, in this theme.
+- **A theme changed in Herdr** shows the next time the board opens. The popup, the task panel and the reply view take the same theme. Another machine's tasks are drawn by this board, in this theme.
 
 To choose by hand, set [`board.theme`](settings.md): `herdr` (the default, all of the above), `dark` or `light` (that
 theme's dark or light one), or one of Herdr's themes by name: `catppuccin`, `catppuccin-latte`, `terminal`,
@@ -48,9 +47,6 @@ theme's dark or light one), or one of Herdr's themes by name: `catppuccin`, `cat
   `board.theme` to that theme's name (`herdr-projects set board.theme nord`), or give both machines the same `[theme]`.
   A plain `ssh` to this machine with Herdr started here is not this case: client and server are on one machine, and the
   board matches.
-- **The web Board.** The web UI (Ovis) does not read Herdr's theme; it has colours of its own (its CSS variables, light and
-  dark and its palettes). The Board there uses those, so it matches what Herdr looks like on the web, not in a terminal
-  ([the board in the web UI](web-ui.md)).
 
 ## A status is in Herdr's own colour
 
@@ -83,8 +79,7 @@ task's line, and is cut where any other line is. A task that only waits for othe
 row says nothing of the wait.
 
 **Colour is not the only clue**: the `◷` is a clock no other state has, one column wide (to do is the plain `○`), and `Q#2`,
-`Waiting for a free slot` and `Queued after SKL-6` are words. With `NO_COLOR` they still say it. The web Board shows it
-the same way.
+`Waiting for a free slot` and `Queued after SKL-6` are words. With `NO_COLOR` they still say it.
 
 ## An automation is purple
 
@@ -109,9 +104,6 @@ A `mauve` of your own (`[theme.custom]`) is held to the same rule.
 **Colour is not the only clue**: the heading is a heading by its place and its word, the mark is an arrow going round
 where every task's mark is another shape, and `on` or `off` is a word on every row. With `NO_COLOR` all of that still
 stands. One that is off is quiet as a done task is: its mark dimmed, its words greyed.
-
-On the web Board it is a purple of the board's own (`#a855f7`, pulled towards the page's text colour so it reads on light
-and dark), since the web UI has no purple among its status colours.
 
 ## Autopilot has no colour of its own
 
@@ -179,17 +171,6 @@ as in Herdr's own sidebar, and what reads on that cannot be known.
 A colour you name yourself in `[theme.custom]` from the terminal's sixteen (`overlay0 = "gray"`) is kept as it is: it
 cannot be measured.
 
-### On the web Board
-
-The web Board uses the web UI's own colours. Its "to do" and its greyed-out words are the web UI's dim text
-(`--text-dim`), which is 4.5 to 1 or more against the page, its panels and a hovered row on every palette of the web UI
-(measured on herdr-web-ui 0.4.8, Ovis before its rename: 4.5 to 9.9). The board's own teal for done is 3.6 to 1 or more there.
-
-The rules below hold there too: names in the base colour, the hierarchy by weight and how far in a row stands, the
-filter row's lit filter in its own colour (on a tint of it, as the web UI marks a status), and the chat's frame and the
-name of whoever it talks to in that one's status colour. Inside the board's own conversation your words are the web
-UI's strong text, theirs its dim text.
-
 ## Names have no colour; the hierarchy is weight and indent
 
 - **Machines** are in bold, in the base colour (`All machines` too). **Projects** are in normal weight, one step in.
@@ -215,11 +196,7 @@ your words are in the base colour you type in, theirs grey.
 | nobody: a new task where no coordinator can run, find | the base colour |
 
 - The lit step of the ladder is in the same colour, reversed. It is the same wherever there is such a box: under the
-  list, in the reply view, under the task panel and full screen, in the popup, and on the web Board, where the frame of
-  the text field takes the colour.
+  list, in the reply view, under the task panel and full screen, and in the popup.
 - **Colour is never the only clue.** The ladder names who it is (`vm-str › gtm`, `gtm › GTM-14`), the grey words in the
   empty box say who gets it (`Send message to gtm's coordinator`, `your message starts an agent on it`), and while you
   type the hint line does (`enter send to HSW-34's agent`). With `NO_COLOR` the board draws no colour at all.
-
-On the web Board, done is a teal of the board's own: the web UI has one colour for done, and it is the green of "ready to
-approve" there, so the two would be one colour.

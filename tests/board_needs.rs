@@ -1,5 +1,5 @@
 //! A task that waits for you says what it needs: its mark (? an answer, ! a yes or no, @ a sign-in) and the words beside
-//! it, on a row, in the task panel and on the web board; never the look of one that went wrong. A task a limit stopped,
+//! it, on a row and in the task panel; never the look of one that went wrong. A task a limit stopped,
 //! or near its limit, says so too.
 use serde_json::{json, Value};
 use sw::board::state::State;
@@ -64,10 +64,6 @@ fn the_kind_comes_from_where_the_task_stands_and_the_terminals_records_carry_it(
     assert_eq!(kind(json!({ "stage": "failed", "failure": { "auth": true } }), Value::Null), ("blocked", Some("auth".into())));
     assert_eq!(kind(json!({ "stage": "failed", "failure": {} }), Value::Null), ("error", None));
     assert_eq!(kind(json!({ "stage": "working" }), json!({ "status": "blocked" })), ("blocked", None));
-    let web = Theme::web();
-    let at = |r: &Obj| sw::board::view::fields::mark(&web, r);
-    assert_eq!([asks(Some("question")), asks(Some("permission")), asks(Some("auth")), asks(None), broke()].iter().map(|r| at(r).text()).collect::<Vec<_>>(), vec!["?", "!", "@", "!", "✗"]);
-    assert!([asks(Some("question")), asks(Some("auth")), broke()].iter().all(|r| at(r).0[0].c == sw::shown::ink::Ink::Red));
     assert!(sw::board::update::beat::osc(&asks(Some("question"))).starts_with("\x1b]7501;state=blocked:id=proj/1:kind=question:"));
     assert!(!sw::board::update::beat::osc(&broke()).contains("kind="));
 }

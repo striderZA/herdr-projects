@@ -1,6 +1,6 @@
 //! The text of a saved conversation, one reader per agent program: what was said to the program and what it said
 //! back, oldest first. Only words: no tool call, no tool's output, no thinking, nothing the program wrote for itself.
-//! It is what the board shows of a chat (the box, the task panel, the web board).
+//! It is what the board shows of a chat (the box and the task panel).
 use super::read_turn::{tail_lines, when, TAIL};
 use super::talk_commands::{self as cmd, claude_markup, is_stop, STOPPED};
 use crate::json::*;

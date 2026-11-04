@@ -217,13 +217,6 @@ is no separate list behind a key any more: `Alt+O` is no key of the board.)
   setting as its next task will have it there), and a row changed or put back is changed on that machine. Only a machine
   on a version that sends no such rows has no page: there the board shows the command instead.
 
-The [web board](web-ui.md) has the same groups in the same places (a folded heading counts the same way:
-`1 task, 1 automation`), the same automation whole and the same actions,
-drawn from the same code: a row tapped open, buttons to turn it on or off, fire it now and remove it, and each firing that
-made a task as a link to it. A row shows all of what it says however narrow the page is (a task's row keeps to two
-lines): on or off, and when it fires, are never cut away. An automation's settings page is the terminal board's; on the
-web, change them with the command. The popup is the same board, so it has all of this too.
-
 ## Where it is kept
 
 `data/automations/` in [the home folder](home-folder.md): `automations.json` (the list), `firings/<id>.jsonl` (every

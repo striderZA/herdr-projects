@@ -1,4 +1,4 @@
-//! omp's skills and commands (the web UI's server/skills/omp.ts): skills as `/skill:name`, found in the folders of the
+//! omp's skills and commands: skills as `/skill:name`, found in the folders of the
 //! places omp reads (its own `.omp` and agent folder, Claude Code's, `.agent`/`.agents`, Codex's, OpenCode's, the
 //! project's `.github`, the Claude Code plugins installed and turned on, its extensions and npm plugins
 //! (omp_plugins.rs), its `customDirectories` and managed skills), each place on unless its config.yml's `skills` turn

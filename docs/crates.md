@@ -1,6 +1,6 @@
 # Crates
 
-**The program is five crates, stacked one on top of the other.** A change rebuilds only its own crate and the ones
+**The program is four crates, stacked one on top of the other.** A change rebuilds only its own crate and the ones
 above it.
 
 | Crate | Folder | What it holds |
@@ -8,14 +8,13 @@ above it.
 | sw-core | `crates/core/` | the data (`store/`), Herdr and the agents, and small tools every part uses |
 | sw-flow | `crates/flow/` | the flow of a task: delegating, the finish line, landing, the keeper, other machines, automations |
 | sw-board | `crates/board/` | the board's screen (`board/`): its state, what a key does, what it draws |
-| sw-web | `crates/web/` | the board in the web UI, Ovis (`webui/`): the front door and the web board |
 | herdr-projects | `Cargo.toml`, `src/` | the command line (`cli/`) and the made pages (`docs.rs`); the library is `sw` |
 
 Why: the compiler reads a whole crate again after any edit (and once more for its tests). When it was one crate of
 27,000 lines, every edit, even one line of the board's screen, paid for all of it.
 
-Most changes are to the board's screen and the web board. Those rebuild sw-board, sw-web and the command line, and
-keep sw-core and sw-flow as they were. A change to sw-core rebuilds all five.
+Most changes are to the board's screen. Those rebuild sw-board and the command line, and keep sw-core and sw-flow as
+they were. A change to sw-core rebuilds all four.
 
 ## Where a new module goes
 
@@ -33,14 +32,8 @@ something from above, either move it down, or let the caller above hand it in.
 
 - **Moved down.**
   - The keys' table (`crates/flow/src/board/keys.rs`) and the theme (`crates/flow/src/board/theme/`) are built in
-    sw-flow, in a `board` module of its own: a message of the flow names a key, and the review page uses the board's
-    colours. sw-board's `board` module passes them on, so they are `crate::board::keys` everywhere.
-  - The same for what the flow and the board's screen use of the web UI (`crates/flow/src/webui/`): where it is
-    (`find.rs`), its PCs (`pcs.rs`), its link (`link.rs`, `command.rs`), passing a request on (`proxy.rs`) and the
-    front door started from outside (`keep.rs`). The front door's own loop, which serves the web board, is
-    `door_loop.rs` in sw-web.
-- **Handed in.** The page server (`review_page::serve_main`, sw-flow) is also the front door of the web UI (Ovis). The
-  command line hands it the front door's loop (`webui::door_loop::run_door`, sw-web).
+    sw-flow, in a `board` module of its own: a message of the flow names a key, and the board's own code uses both.
+    sw-board's `board` module passes them on, so they are `crate::board::keys` everywhere.
 
 ## A new worktree
 
@@ -59,7 +52,6 @@ one-line change to a file of each crate (the median of three runs; one run for a
 | Change in | Program built again, before → after | Fresh worktree from the warm build, before → after |
 |---|---|---|
 | the board's screen (sw-board) | 2.7 s → 1.5 s | 12.8 s → 4.8 s |
-| the web board (sw-web) | 2.9 s → 1.1 s | 13.1 s → 2.6 s |
 | the command line (`src/`) | 2.8 s → 0.7 s | 13.5 s → 1.5 s |
 | the flow (sw-flow) | 2.8 s → 2.4 s | 12.5 s → 10.7 s |
 | the data (sw-core) | 2.7 s → 3.2 s | 12.9 s → 13.1 s |

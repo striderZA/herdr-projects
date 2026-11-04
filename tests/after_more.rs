@@ -92,26 +92,6 @@ fn another_machines_board_sees_the_wait_and_starts_one_early_only_when_asked() {
 }
 
 #[test]
-fn the_web_board_says_the_same_and_its_button_asks_before_it_starts_one_early() {
-    let w = world();
-    w.script(json!({ "worker": [{ "status": "working" }] }));
-    let dep = w.add("First");
-    let id = w.add("Second");
-    run(&["delegate", &id, "--after", &dep]).unwrap();
-    let said = |p: &Value| p.as_array().map(|a| a.iter().map(|x| x.t("t")).collect::<String>()).unwrap_or_default();
-    let s = common::board::web(&w, "pick", json!({ "id": id, "open": true }));
-    let row = s.at("list").arr("groups").iter().flat_map(|g| g.arr("rows").to_vec()).find(|r| r.s("id") == id).unwrap();
-    assert_eq!(said(row.at("says")), "Queued after PRJ-1");
-    let fact = s.at("panel").arr("parts").iter().find(|p| p.s("head") == "Status").and_then(|p| p.arr("items").iter().find(|x| x.s("label") == "Starts after").cloned()).unwrap_or_default();
-    assert_eq!(said(&fact.at("lines")[0]), "PRJ-1");
-    let s = common::board::web(&w, "press", json!({ "id": "delegate" }));
-    assert_eq!(s.at("ask").s("q"), "Start PRJ-2 \"Second\" now?");
-    assert_eq!(task(&id).s("stage"), "after");
-    common::board::web(&w, "press", json!({ "id": "sayYes" }));
-    assert_ne!(settle(&id).s("stage"), "after");
-}
-
-#[test]
 fn stopping_a_task_that_waits_tells_the_tasks_that_wait_for_it_that_it_was_stopped() {
     let w = world();
     let a = w.add("A");

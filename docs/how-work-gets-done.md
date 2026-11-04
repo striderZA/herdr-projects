@@ -398,7 +398,7 @@ requests, starts queued tasks, runs the Watcher, and keeps Herdr's sidebar curre
 - **The sidebar.** An agent's entry there is a small copy of its task's row on the board ([Herdr's sidebar](sidebar.md)):
   the task's number and title; who is on it and where it stands, in the board's own words (one list:
   `crates/core/src/status_words.rs`), with the review round and the pull request; and the row's percent and time to go
-  (`8% 16m`). The pane's title names the task the same way, so the web UI's sidebar reads the same. A running review has
+  (`8% 16m`). The pane's title names the task the same way, so Herdr's sidebar reads the same. A running review has
   two entries, the agent's and the reviewer's: they are two agents. The sidebar shows only tasks with a live agent pane;
   the others (queued, your own) are on the board only.
 - **No notifications.** It raises no pop-up or sound: what needs you is on the board and in Herdr's sidebar.

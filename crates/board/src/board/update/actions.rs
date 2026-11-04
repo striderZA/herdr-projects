@@ -97,12 +97,11 @@ pub fn dispatch(s: &mut State, text: &str, delegate: bool, about: Option<&Obj>, 
 }
 /// Into the selected task's agent: its real herdr pane (attempts.rs: the selected attempt's while one is picked).
 pub fn open_agent(s: &mut State, r: &Obj, fx: &mut Vec<Effect>) {
-    if s.ctx.web { return super::web::open_agent(s, r, fx); }
     if r.b("archivedAt") { return open_panel(s); }
     if r.b("host") {
         if !r.at("link").b("pane") { return s.flash(format!("No agent has been on this yet. {} puts one on it.", key_name("delegate")), Ink::Yellow); }
-        // Looked at through herdr's web UI this terminal must not become that agent's: the way back would not get through.
-        if s.guest || s.viewed { return s.flash(format!("In the web UI, pick its agent in the sidebar under {}: “{}”. From here herdr's key for the way back would not get through while the web UI shows this pane.", r.s("host"), clean(if r.b("title") { r.s("title") } else { r.s("rid") })), Ink::Yellow); }
+        // Looked at through a remote view this terminal must not become that agent's: the way back would not get through.
+        if s.guest || s.viewed { return s.flash(format!("In that view, pick its agent in the sidebar under {}: “{}”. From here herdr's key for the way back would not get through while the view shows this pane.", r.s("host"), clean(if r.b("title") { r.s("title") } else { r.s("rid") })), Ink::Yellow); }
         s.stick = r.t("id");
         s.flash(format!("{}: opening…", r.s("host")), Ink::Muted);
         // In a herdr window that machine's herdr puts it in front; outside one (plain SSH) this terminal attaches.

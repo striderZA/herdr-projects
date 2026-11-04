@@ -88,7 +88,6 @@ herdr-projects autopilot off [--machine | --project <repo> | --all]
 
   - **Its machine's summary** (a folded machine's row, and the top row) says how many coordinators there are on autopilot:
     `33 tasks, 1 automation, 1 on autopilot`.
-  - The web board shows the same, in its own row.
   - Off, nothing of autopilot shows.
 - **The state word**, on its panel and from `herdr-projects autopilot`, the first that holds:
 
@@ -308,7 +307,7 @@ repo's that machine knows, one that never ran as off: `Ctrl+O` there starts it, 
 older version sends no autopilot at all, and the keys say to update it there.
 
 **The main Coordinator sees other machines only while a board is open.** The keeper does not ask other machines for
-their tasks. So their tasks reach the main Coordinator's autopilot only as an open board (in a terminal or the web UI)
+their tasks. So their tasks reach the main Coordinator's autopilot only as an open board (in a terminal)
 last heard them, and are dropped after 3 minutes without a fresh answer. With no board open, its area is this machine's
 tasks.
 
@@ -357,7 +356,7 @@ board refuses in autopilot's turn catches mistakes; it does not contain an agent
 
 Autopilot can work on the board's own repo, but agents there may improve their own harness instead of the project. Its
 changes only count once you release and install a version, and releases are not its own unless `autopilot.releases
-yes`. There, give it a narrow goal ("the web board's chat loses no message") and keep `merge.by you`.
+yes`. There, give it a narrow goal ("the board's chat loses no message") and keep `merge.by you`.
 
 ## Where it is kept
 

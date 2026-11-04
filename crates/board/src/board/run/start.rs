@@ -39,7 +39,7 @@ pub fn prepare(folder: &std::path::Path) -> (State, Theme, Option<(String, Strin
     let named = place::name_board_tab(&place::board_pane());
     let popup = place::in_popup();
     let ctx = Ctx { cwd: folder.display().to_string(), popup, from: place::context().0, pane: if env("HERDR_ENV") == "1" && env("TMUX").is_empty() { env("HERDR_PANE_ID") } else { String::new() },
-        own_pane: place::own_name(), board_key: crate::extras::board_key(), own_key: crate::extras::board_presses(), can_reload: reloads < 5, web: false, leave_ms: 700, settle_ms: 1000, in_herdr: in_herdr() };
+        own_pane: place::own_name(), board_key: crate::extras::board_key(), own_key: crate::extras::board_presses(), can_reload: reloads < 5, leave_ms: 700, settle_ms: 1000, in_herdr: in_herdr() };
     // Every repo has a short key: given before the first look, and the ones given since the board last opened said once.
     let keys = crate::store::keys_given::keys_note();
     let mut s = view(ctx, folder);

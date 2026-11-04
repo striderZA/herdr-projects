@@ -1,9 +1,9 @@
 //! A repo's tasks archived in one go. `archive --done [--repo NAME]` archives only done tasks, of that repo or of every
 //! repo, and says how many it left out and why (a pinned done task stays). `archive --repo NAME` archives the whole
-//! project, and `restore --repo NAME` brings it back with its tasks as they were; on the board (and the web board) the
+//! project, and `restore --repo NAME` brings it back with its tasks as they were; on the board the
 //! archive key on a project's row does the same, asking first when a task of it works, waits or is to do.
 use crate::common;
-use common::board::{open, web};
+use common::board::open;
 use common::*;
 use serde_json::json;
 use sw::board::keys::key_name;
@@ -174,23 +174,4 @@ fn the_archive_key_on_a_projects_row_asks_first_then_archives_it_and_restores_it
     s.press(&["alt+a"]); s.s.sel = head.clone(); s.load();
     s.press(&["ctrl+a"]); s.load();
     assert!(s.s.ask.is_none() && project_archived("proj"), "{}", s.s.msg);
-}
-
-#[test]
-fn the_web_board_archives_a_project_and_restores_it_with_the_same_key() {
-    let w = world();
-    let id = w.add("To do");
-    web(&w, "press", json!({ "id": "byRepo" }));
-    let head = format!("{}repo\t\tproj", sw::board::update::heads::HEAD);
-    let s = web(&w, "pick", json!({ "id": head, "open": false }));
-    assert!(s.arr("actions").iter().any(|a| a.s("id") == "archive" && a.s("label") == "archive"), "{}", s.at("actions"));
-    let s = web(&w, "press", json!({ "id": "archive" }));
-    assert_eq!(s.at("ask").s("q"), "Archive proj and its task?");
-    web(&w, "press", json!({ "id": "sayYes" }));
-    assert!(archived(&id) && project_archived("proj"));
-    web(&w, "press", json!({ "id": "archiveView" }));
-    let s = web(&w, "pick", json!({ "id": head, "open": false }));
-    assert!(s.arr("actions").iter().any(|a| a.s("id") == "archive" && a.s("label") == "restore this project"), "{}", s.at("actions"));
-    web(&w, "press", json!({ "id": "archive" }));
-    assert!(!archived(&id) && !project_archived("proj"));
 }

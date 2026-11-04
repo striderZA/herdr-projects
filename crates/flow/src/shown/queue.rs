@@ -1,6 +1,6 @@
 //! A task's place in the queue for a free slot (`board.agents` all taken): `Q#1` gets the next slot, `Q#2` the one
 //! after. The board starts waiting tasks in this order (actions/start.rs: start_queued), so the row, the task panel,
-//! `list`, `details`, herdr's sidebar and the web Board all say the same place. A task delegated with `--after` is
+//! `list`, `details` and herdr's sidebar all say the same place. A task delegated with `--after` is
 //! queued too, after the tasks it waits for (after.rs): the same mark and colour, no place, and "queued after HSW-6". One
 //! that waits for room on a disk (leftovers/room.rs) keeps its place, and says it waits for disk space, not a slot.
 use crate::json::*;

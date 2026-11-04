@@ -160,30 +160,3 @@ fn a_task_agent_on_another_machine_shows_your_words_at_once_until_it_answers() {
     let c = crate::board_chat::chat(&mut s, 120);
     assert_eq!(c.boxed[..1].to_vec(), v(&["Made g."]), "{}", c.lines.join("\n"));
 }
-
-#[test]
-fn the_web_page_shows_your_words_in_the_conversation_before_the_board_answers() {
-    let chat = include_str!("../crates/web/src/webui/page/chat.js");
-    // drawn the moment they are sent, from what the conversation showed, before the board is even asked
-    assert!(chat.contains("    mine(text);\n    const kept = await onSend("), "{chat}");
-    assert!(chat.contains(r#"said.set([...showing.parts, { by: "You", text: text.trim(), mine: true }]);"#));
-    assert!(chat.contains(r#"state.replaceChildren(showing.toAgent ? "Sending…" : "sending…"); status = "";"#));
-    // never for somebody the page no longer shows, nor over a program's screen; the board's answer is drawn whatever it says
-    assert!(chat.contains("if (!showing || showing.raw || elsewhere) return;"));
-}
-
-#[test]
-fn the_web_boards_chat_has_your_words_as_soon_as_it_sent_them() {
-    let w = coord_world(json!({}));
-    w.add("Fix the login");
-    let web = |call: &str, args: Value| common::board::web(&w, call, args);
-    web("press", json!({ "id": "byRepo" }));
-    let s = web("board", json!({}));
-    let head = s.at("list").arr("groups").iter().find(|g| g.s("id").starts_with("head:repo")).map(|g| g.t("id")).unwrap();
-    web("fold", json!({ "id": head }));
-    web("press", json!({ "id": "talk" }));
-    // the words went to the coordinator's queue, which it has not read yet: the chat says they are yours, on their way
-    let s = web("send", json!({ "text": "how is it?", "to": { "id": head, "reply": true, "scope": "" } }));
-    let parts = s.at("chat").arr("parts").to_vec();
-    assert_eq!(parts.last().map(|p| (p.t("by"), p.t("text"))), Some(("You".into(), "how is it?".into())), "{}", s.at("chat"));
-}

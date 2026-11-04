@@ -127,9 +127,6 @@ usual ones.
 - A `Note` row says what the board could not use: a program that is not installed, something the repo's own file was
   refused, a mistake in your settings file.
 - A task on another machine has the same rows, from the settings that machine sent.
-- The web Board's task panel has them too, right under `Status` and what the task needs from you, above the description,
-  the reviews and what the agent said: its page scrolls, so what is on top is what has the room
-  ([the board in the web UI](web-ui.md)).
 
 ## The settings page
 

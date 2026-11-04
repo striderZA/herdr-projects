@@ -17,7 +17,7 @@ use crate::store::files::artifacts_dir;
 use crate::store::handovers::{handover_line, last_handover, log_handover};
 use crate::store::marks::pending_events;
 use crate::store::repos::{cwd_of, folder_of, git_out};
-use crate::store::reviews::{keep_saved_review, review_history, review_round};
+use crate::store::reviews::{keep_saved_review, review_history};
 use crate::store::settings::values::agent_of;
 use crate::store::tasks::{get, update_wait, Change};
 use crate::turn::why_stopped;
@@ -197,17 +197,34 @@ pub fn review_once(id: &str, g: &mut Guard, text: &str, change: Option<&Value>, 
     gate::stamp(&mut rv, ch.s("review.mustFix"));
     rv.put("by", by.clone()); // who reviewed: the task's history keeps it
     if plan.is_some() { let _ = std::fs::remove_dir_all(&dir); rv.del("listed"); return Ok(Reviewed { review: Some(rv), by, ..Default::default() }); }
-    // Move the folder to the task's artifacts and publish the evidence page.
+    // Move the folder to the task's artifacts, and keep the evidence the reviewer named as local links.
     let art = artifacts_dir(id);
     if let Ok(rd) = std::fs::read_dir(&art) { for e in rd.flatten() { let n = e.file_name().to_string_lossy().into_owned(); if n != crate::research::REPORT && n != crate::plan::PLAN { let _ = std::fs::remove_dir_all(e.path()); let _ = std::fs::remove_file(e.path()); } } }
     let _ = std::fs::create_dir_all(&art);
     let _ = crate::util::copy_dir(&dir, &art);
     let _ = std::fs::remove_dir_all(&dir);
-    let t = get(id).unwrap_or(t);
-    let ctx = json!({ "id": id, "round": review_round(&t), "title": t.at("title"), "description": t.at("description"), "summary": text, "stat": change.map(|c| c.at("stat").clone()), "head": change.map(|c| c.at("head").clone()), "pr": t.at("pr") });
     let listed = rv.at("listed").clone();
-    let artifacts = crate::review_page::publish_review(ch.b("review.evidence"), &art, &listed, &Value::Object(rv.clone()), &t, &ctx).unwrap_or_default();
+    let artifacts = if ch.b("review.evidence") { kept_evidence(&art, &listed) } else { vec![] };
     rv.put("artifacts", artifacts);
     rv.del("listed");
     Ok(Reviewed { review: Some(rv), by, ..Default::default() })
+}
+/// The evidence the reviewer named, as the task panel shows it: a URL to try, or a file in the task's artifacts folder.
+fn kept_evidence(art: &Path, listed: &Value) -> Vec<Value> {
+    let mut seen = std::collections::HashSet::new();
+    let clean = |v: &Value, max: usize| text(v).chars().filter(|c| !c.is_control()).take(max).collect::<String>().trim().to_string();
+    listed.as_array().map(|a| a.as_slice()).unwrap_or(&[]).iter().filter_map(|a| {
+        if !a.is_object() { return None; }
+        let (caption, detail) = (clean(a.at("caption"), 160), clean(a.at("detail"), 600));
+        let url = a.s("url");
+        if url.starts_with("http://") || url.starts_with("https://") {
+            if !seen.insert(url.to_string()) { return None; }
+            return Some(json!({ "url": url, "link": url, "caption": if caption.is_empty() { "Try the work".into() } else { caption }, "detail": detail }));
+        }
+        let file = a.s("file");
+        let plain = !file.is_empty() && !file.contains('/') && !file.contains('\\') && !file.starts_with('.') && !file.chars().any(|c| c.is_control());
+        let path = art.join(file);
+        if !plain || !path.is_file() || !seen.insert(path.display().to_string()) { return None; }
+        Some(json!({ "file": file, "link": path.display().to_string(), "caption": if caption.is_empty() { file.to_string() } else { caption }, "detail": detail }))
+    }).collect()
 }

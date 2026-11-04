@@ -46,7 +46,7 @@ pub fn plan_written(id: &str, g: &mut Guard, said: &str) -> Res<()> {
         fail(g, f, FailHow::default())?;
         return Ok(());
     }
-    let link = plan_link(&t, || crate::review_page::artifact_base(t.s("id")));
+    let link = plan_link(&t);
     let words = first_words(&text);
     t = g.set(|t| {
         let p = t.obj_mut("plan");

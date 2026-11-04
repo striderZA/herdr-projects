@@ -105,28 +105,6 @@ fn space_on_a_machines_heading_talks_to_that_machines_coordinator_here_or_there(
 }
 
 #[test]
-fn the_web_board_names_a_headings_coordinator_and_sends_it_your_words() {
-    let w = coord_world(json!({}));
-    w.add("Fix the login");
-    w.script(json!({ "coordinator": [{ "said": "Proj is fine." }] }));
-    let web = |call: &str, args: Value| common::board::web(&w, call, args);
-    web("press", json!({ "id": "byRepo" }));
-    let s = web("board", json!({}));
-    let head = s.at("list").arr("groups").iter().find(|g| g.s("id").starts_with("head:repo")).map(|g| g.t("id")).unwrap_or_else(|| panic!("{}", s.at("list")));
-    // a tap on the heading selects it (and folds it): the switch's other choice is its coordinator
-    let s = web("fold", json!({ "id": head }));
-    assert_eq!(s.at("chat").s("head"), "proj's coordinator", "{}", s.at("chat"));
-    let s = web("press", json!({ "id": "talk" }));
-    assert_eq!((s.at("chat").at("toAgent"), s.at("chat").s("name")), (&json!(true), "proj's coordinator"), "{}", s.at("chat"));
-    web("send", json!({ "text": "how is it?", "to": { "id": head, "reply": true, "scope": "" } }));
-    drain();
-    assert_eq!(prompts(&w, "sw-coordinator-proj"), vec!["how is it?"]);
-    // what this machine sends another one: its repo's coordinator, by level
-    let sent = sw::remote::remote_list();
-    assert_eq!(sent.at("coordinators").at("project:proj").s("said"), "Proj is fine.", "{}", sent.at("coordinators"));
-}
-
-#[test]
 fn words_put_away_for_a_headings_coordinator_come_back_only_to_it() {
     let w = coord_world(json!({}));
     w.add("Fix the login");

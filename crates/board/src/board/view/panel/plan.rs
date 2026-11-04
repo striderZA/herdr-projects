@@ -45,7 +45,7 @@ pub fn plan(k: &mut Kit, c: &Ctx, r: &Obj) -> bool {
     }
     if r.s("stage") == "plan" && !r.b("archivedAt") {
         lines.push(Inked::new());
-        let said = if c.web { "Yes approves this plan and the build starts. A reply sends it back with your words, and it is written again.".to_string() } else { format!("{} approves this plan and the build starts. A reply ({}) sends it back with your words, and it is written again.", key_name("yes"), key_name("talk")) };
+        let said = format!("{} approves this plan and the build starts. A reply ({}) sends it back with your words, and it is written again.", key_name("yes"), key_name("talk"));
         lines.extend(k.wrap(&said).into_iter().map(|l| l.recolor(Ink::Muted)));
     }
     k.part(lines);

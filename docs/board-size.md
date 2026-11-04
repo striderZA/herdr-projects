@@ -49,8 +49,7 @@ purpose (`Alt+O` on a task) is the one thing that moves Herdr's window, as befor
     typed in last. (Once, on the real board, the 0.6-second change came in the same half second as a reviewer starting.
     Herdr's log shows that reviewer's pane spawned at the other window's size, so that window had the session at that
     moment.)
-- **A viewer attached to the board's own terminal** (`herdr terminal attach`, which Herdr's web UI starts for each pane
-  it shows): it holds that one terminal at its size. [The board](board.md) says so and disconnects it.
+- **A viewer attached to the board's own terminal** (`herdr terminal attach`): it holds that one terminal at its size. [The board](board.md) says so and disconnects it.
 - **A pane split off the board's own pane, or your own window resized.** Only by you: the plugin never does the first.
 
 ## A size that lasts a moment is not drawn
@@ -87,10 +86,9 @@ fixed behaviour: there is no setting that turns it off.
 
 ## A view somebody is looking through keeps the terminal
 
-One kind of viewer is not disconnected: the board opened in the terminal view of Herdr's web UI, in a browser or on a
-phone. Disconnecting it only started a contest (seen on herdr-web-ui 0.4.8, Ovis before its rename: the web UI
-reattached by itself, and the two took the terminal from each other every four seconds, so the board could not be used
-there).
+One kind of viewer is not disconnected: a viewer attached to the board's terminal and kept open, in a browser or on a
+phone, through `herdr terminal attach`. Disconnecting it only started a contest: the viewer reattached by itself, and
+the two took the terminal from each other every four seconds, so the board could not be used there.
 
 - **How it is recognised:** by its age. It was opened in the last twenty seconds, or it came back within twenty seconds
   of being disconnected. Once taken for one, it stays one for as long as it runs.
@@ -98,7 +96,7 @@ there).
   Herdr's own window meanwhile:
 
   ```
-   Drawn for a remote view of this pane at 119×47 (herdr's web UI has it open): herdr's own window (184×78) shows a cut-out of it until that view is closed
+   Drawn for a remote view of this pane at 119×47 (a remote view has it open): herdr's own window (184×78) shows a cut-out of it until that view is closed
   ```
 
 - When the view is closed, the window has its terminal again.

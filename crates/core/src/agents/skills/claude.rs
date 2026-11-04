@@ -1,4 +1,4 @@
-//! Claude Code's skills and commands, all as `/name` (the web UI's server/skills/claude.ts): your skills (the managed
+//! Claude Code's skills and commands, all as `/name`: your skills (the managed
 //! ones, `~/.claude/skills`, its `synced` ones as `/anthropic-skills:name`), the project's `.claude/skills`, your and
 //! the project's commands (`git/commit.md` is `/git:commit`), and those of the plugins turned on as `/plugin:name`. A
 //! skill marked `user-invocable: false` is only for Claude itself.

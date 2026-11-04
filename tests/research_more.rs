@@ -22,13 +22,13 @@ fn put(id: &str, k: &str, v: Value) { sw::store::tasks::patch(id, |t| { t.put(k,
 fn any_task_may_write_a_report_and_the_first_page_of_its_folder_gets_the_link() {
     let w = world_with(Opts { repo: false, ..Default::default() });
     let t = task(&w.add("Fix it and say why"));
-    assert_eq!(keep_report(&t, String::new), None, "none written");
+    assert_eq!(keep_report(&t), None, "none written");
     write_report(t.s("id"), "notes.md", "n"); write_report(t.s("id"), "report.md", "# Why");
-    let kept = keep_report(&t, || "https://box.ts.net:8750/proj/1".into()).unwrap();
-    assert_eq!((kept.s("file"), kept.s("link")), ("report.md", "https://box.ts.net:8750/proj/1/report/report.md"));
-    assert_eq!(read(&sw::store::files::artifacts_dir(t.s("id")).join("report").join("report.md")), "# Why");
+    let kept = keep_report(&t).unwrap();
+    let want = sw::research::report_folder(&t).join("report.md").display().to_string();
+    assert_eq!((kept.s("file"), kept.s("link")), ("report.md", want.as_str()));
     write_report(t.s("id"), "index.html", "<!doctype html><title>Report</title><h1>What I found</h1>");
-    assert_eq!(keep_report(&t, String::new).unwrap().s("file"), "index.html");
+    assert_eq!(keep_report(&t).unwrap().s("file"), "index.html");
 }
 
 #[test]

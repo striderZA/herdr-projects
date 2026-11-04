@@ -203,8 +203,4 @@ fn a_selected_or_pinned_done_task_is_folded_away_and_counted_too() {
     sw::actions::filing::pin(&ids[1]).unwrap(); s.load();
     let t = text(&mut s);
     assert!(!t.contains("✓") && t.contains(&note(3)), "the done group's: {t}");
-    let web = common::board::web(&w, "board", serde_json::json!({}));
-    let groups = web.at("list").arr("groups");
-    assert!(groups.iter().flat_map(|g| g.arr("rows").to_vec()).all(|r| r.s("mark") != "✓"), "the web board's list is the same: {groups:?}");
-    assert_eq!(groups.iter().map(|g| g.i("more")).sum::<i64>(), 3);
 }

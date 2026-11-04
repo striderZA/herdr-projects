@@ -1,4 +1,4 @@
-//! Skills in the board's text box, as in the herdr web UI's chat box: typing `/` lists the skills and commands of
+//! Skills in the board's text box, as in an agent program's chat box: typing `/` lists the skills and commands of
 //! whoever the chat talks to (a task's agent, a heading's coordinator), the ones that match what follows; up and down
 //! pick, tab or enter puts the one picked in the box, esc closes the list and keeps the draft; what is sent goes to
 //! the agent word for word, so the agent's program runs the skill. With nobody whose skills this machine reads (a new

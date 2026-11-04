@@ -46,7 +46,6 @@ the board keeps it shown as it keeps any filter, also after it closes.
 - **Done tasks fold away** as under `All`, pinned ones too: one line counts them (`↓ 2 done`), and `Alt+D` shows them.
 - **Nothing pinned:** one line says how to pin something.
 - **What needs you is never out of sight:** the filter row's `Needs you` and its red count stay on the row beside it.
-- **On the web board** it is the same filter, the last pill on the filter row.
 
 ## Where pins live
 

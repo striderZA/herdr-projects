@@ -29,7 +29,7 @@ pub fn waits(t: &Task, turn: Option<&Turn>) -> bool {
 /// The turn is handled and the task waits, with the kind and the words its agent gave. A report that is there already
 /// gets its link: an interim report can be read while the task waits.
 pub fn stay(id: &str, t: &Task, turn: Option<&Turn>, seen: Obj, session: &str) {
-    let report = keep_report(t, || crate::review_page::artifact_base(t.s("id")));
+    let report = keep_report(t);
     let _ = update_wait(id, 10000, |t| {
         let h = t.obj_mut("handled");
         for (k, v) in seen { h.insert(k, v); }

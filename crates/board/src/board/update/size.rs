@@ -14,7 +14,7 @@ pub struct Shown { pub cols: u16, pub rows: u16, pub split: bool }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Fit { pub cols: usize, pub rows: usize, pub held: bool }
 /// A remote view opened this many seconds ago or less, or back this soon after it was disconnected, has somebody
-/// looking through it (herdr's web UI reattaches by itself within a few seconds).
+/// looking through it (a remote view reattaches by itself within a few seconds).
 const FRESH_S: i64 = 20;
 const BACK_MS: i64 = 20000;
 #[derive(Clone, Debug, Default)]

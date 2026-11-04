@@ -101,7 +101,7 @@ it needs 1.7 GB free, not the 5.0 GB of board.diskFree). Free some space: herdr-
 
 A task that waits for room keeps its place in the queue, and says that it waits for disk space, not for a free slot:
 
-- its row on the board and on the web board: the whole `Disk nearly full on …` line under its name, its place (`Q#1`)
+- its row on the board: the whole `Disk nearly full on …` line under its name, its place (`Q#1`)
   on the right;
 - the task panel's State line, `list`, `details` and the line when you start it: `waiting for disk space, Q#1`;
 - herdr's sidebar: `waiting for disk space`, with its place;

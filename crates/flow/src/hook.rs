@@ -31,7 +31,6 @@ pub fn hook_main() {
     crate::keeper::ensure_keeper();
     let event = std::env::var("HERDR_PLUGIN_EVENT").unwrap_or_default();
     if event == "startup" {
-        crate::webui::keep::ensure_door(); // the board in the herdr web UI starts with herdr
         crate::extras::sync_skill(); crate::extras::remove_popups(); crate::extras::refresh_sidebar();
     }
     if !has_tasks() { return; } // nothing of ours anywhere: do nothing, in any herdr session

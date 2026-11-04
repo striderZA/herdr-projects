@@ -1,8 +1,8 @@
 //! `--after` is a condition, tab (delegate) the start: a task only to wait for others stays in to do, its row saying
 //! nothing of it, and never starts by itself; tabbed, it is queued like a task that waits for a free slot (◷ in the queue's magenta,
-//! last under working, "Queued after PRJ-1") on the row, the panel, `list`, herdr's sidebar and the web Board.
+//! last under working, "Queued after PRJ-1") on the row, the panel, `list` and herdr's sidebar.
 use crate::common;
-use common::board::{open, web};
+use common::board::open;
 use common::*;
 use serde_json::{json, Value};
 use sw::cli::{flags::parse, tasks::command};
@@ -34,12 +34,9 @@ fn a_task_only_to_wait_for_others_stays_in_to_do_saying_nothing_of_it_on_its_row
     let text = b.screen(120).join("\n");
     // (Its row may be the selected one, with the bar in its gutter: the three are added within the same moment.)
     assert!(has(&text, r"\n[ ▌]  ○ PRJ-2 +Second +0s ago"), "{text}");
-    // herdr's sidebar and the web Board say nothing of it either.
+    // herdr's sidebar says nothing of it either.
     let e = sw::flow::sidebar_entry::entry_of(&row(&id), "", sw::clock::now());
     assert!(![&e.place, &e.stands, &e.line].iter().any(|x| x.contains("PRJ-1")), "{e:?}");
-    let s = web(&w, "board", json!({}));
-    let wr = s.at("list").arr("groups").iter().flat_map(|g| g.arr("rows").iter().cloned()).find(|x| x.s("id") == id).unwrap();
-    assert_eq!(wr.at("says"), &json!([]));
     // The task panel has it, to be seen and changed; `list` says it beside the title.
     b.s.sel = id.clone(); b.load();
     let panel = sw::board::view::panel::panel(&mut b.s, &b.theme, &as_row(&row(&id)), 100, false, 0).iter().map(|l| l.text()).collect::<Vec<_>>().join("\n");
@@ -87,13 +84,9 @@ fn a_tabbed_task_with_after_is_queued_like_one_that_waits_for_a_free_slot_and_st
     assert!(lines[at("Waits for a slot")].contains("Q#1"), "{}", lines.join("\n"));
     let panel = sw::board::view::panel::panel(&mut b.s, &b.theme, &r, 100, false, 0).iter().map(|l| l.text()).collect::<Vec<_>>().join("\n");
     assert!(panel.contains("◷ queued after PRJ-3") && !panel.contains("Now "), "{panel}");
-    // herdr's sidebar and the web Board say the same.
+    // herdr's sidebar says the same.
     let e = sw::flow::sidebar_entry::entry_of(&row(&id), "", sw::clock::now());
     assert_eq!((e.place.as_str(), e.progress.as_str()), ("queued after PRJ-3", ""));
-    let s = web(&w, "board", json!({}));
-    let rows: Vec<Value> = s.at("list").arr("groups").iter().flat_map(|g| g.arr("rows").iter().cloned()).collect();
-    let wr = rows.iter().find(|x| x.s("id") == id).unwrap();
-    assert_eq!((wr.s("mark"), wr.s("color")), ("◷", "queue"));
     // The task it waits for is done and a slot frees: it starts by itself, after the one that waited for the slot.
     sw::clock::advance(1000);
     sw::store::tasks::set(&dep, json!({ "stage": "done" })).unwrap();

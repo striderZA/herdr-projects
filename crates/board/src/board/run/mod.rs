@@ -42,7 +42,7 @@ fn poll(s: &mut crate::board::state::State, run: &mut Run, now_too: bool) {
 pub fn open_board(folder: &std::path::Path) -> i32 {
     let (mut s, theme, named) = start::prepare(folder);
     let (tx, rx) = channel::<Msg>();
-    let wants = Arc::new(Mutex::new(Wants { ids: vec![s.sel.clone()], cwd: s.ctx.cwd.clone(), own_pane: place::own_name(), web: false, coord: String::new(), mine: None, looks: vec![], skills: String::new() }));
+    let wants = Arc::new(Mutex::new(Wants { ids: vec![s.sel.clone()], cwd: s.ctx.cwd.clone(), own_pane: place::own_name(), coord: String::new(), mine: None, looks: vec![], skills: String::new() }));
     let load = Arc::new((Mutex::new(true), std::sync::Condvar::new()));
     let mut run = Run { tx: tx.clone(), wants: wants.clone(), load: load.clone(), machines_at: 0 };
     start::threads(&tx, &wants, &load);
@@ -100,7 +100,6 @@ pub fn open_board(folder: &std::path::Path) -> i32 {
                     Effect::Close => close = true,
                     Effect::Reload => reload = true,
                     Effect::Take { cols, rows } => held::take(&tx, &s.ctx.pane, cols, rows),
-                    Effect::LookWebUi => { let tx = tx.clone(); std::thread::spawn(move || { let urls = crate::webui::command::offer(); if !urls.is_empty() { let _ = tx.send(Msg::Ev(Event::WebUiOffer(urls))); } }); }
                     Effect::Attach { command, args } => {
                         term::leave(false);
                         print!("\x1b[2J\x1b[H");

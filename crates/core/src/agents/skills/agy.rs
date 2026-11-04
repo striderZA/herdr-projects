@@ -1,4 +1,4 @@
-//! Antigravity's (agy) skills, as `/name` (the web UI's server/skills/agy.ts): the project's `.agents`, `.agent`,
+//! Antigravity's (agy) skills, as `/name`: the project's `.agents`, `.agent`,
 //! `_agents` and `_agent` skills folders and the skills their `skills.json` names, yours in `~/.gemini/config/skills`
 //! and its plugins', and the ones it comes with, less those that are its own commands. A skill marked
 //! `disable-slash-command: true` is left out.

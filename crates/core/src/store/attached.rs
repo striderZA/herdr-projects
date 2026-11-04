@@ -1,13 +1,13 @@
 //! A file attached to words for an agent (a picture pasted, a file dropped or picked), kept in a folder its reader can
-//! read, under a name no other file has: by the web board's chat box (webui/attach.rs), and on another machine when
-//! words that name a file of this one are sent there (remote/carry.rs). Old ones are let go.
+//! read, under a name no other file has: by the board's own chat box, and on another machine when words that name a
+//! file of this one are sent there (remote/carry.rs). Old ones are let go.
 use std::path::{Path, PathBuf};
 
-/// The most one file may be: the web UI's own limit when the box was made, checked by the page before it sends any.
+/// The most one file may be, checked before a file is sent with words.
 pub const MOST: usize = 8 * 1024 * 1024;
 /// How long a kept file stays: an agent may look again later in its conversation, not months on.
 const KEPT_DAYS: i64 = 30;
-/// The pictures the web UI stores as a paste under a name of its own; any other file keeps its own name.
+/// The pictures a paste may carry under a name of their own; any other file keeps its own name.
 const PICTURES: [(&str, &str); 4] = [("image/png", "png"), ("image/jpeg", "jpg"), ("image/gif", "gif"), ("image/webp", "webp")];
 
 /// A file's own name made safe to keep: letters, digits, `.`, `_` and `-`, its last 80; the end after its last dot.

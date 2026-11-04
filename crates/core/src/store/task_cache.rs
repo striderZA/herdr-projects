@@ -1,5 +1,5 @@
 //! The task files as this process last read them, so that a look at every task (the board's each second, the keeper's,
-//! the web board's) parses only the files that changed since: a file is known by its inode, size and times, which every
+//! another reader's) parses only the files that changed since: a file is known by its inode, size and times, which every
 //! write changes (ours rename a new file over it). A file changed lately is also compared by its bytes, as two writes in
 //! the same tick of the file system's clock can leave its times as they were. The tasks are shared, not copied.
 use super::files::*;

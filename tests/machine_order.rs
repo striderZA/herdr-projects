@@ -2,7 +2,7 @@
 //! shows this machine, the one it followed before, this machine's own), which entry is this machine (never a guess)
 //! and which machine each other one is (whole host names), where this machine stands in it, the ones it
 //! does not show after the rest, a reorder followed at the next answer, the board's own order when none can be read,
-//! and that order in the headings, the header, the scope key's round, the automations and the web board; a machine on
+//! and that order in the headings, the header, the scope key's round and the automations; a machine on
 //! an older program, which sends no list, followed through its herdr (the Mac mini of HSW-228).
 use crate::common;
 use crate::far;
@@ -132,8 +132,6 @@ fn every_list_of_machines_on_the_board_is_in_the_sidebars_order_and_follows_it_w
     // this machine's own herdr list: its Local first, then the others as herdr lists them, not by name
     assert_eq!(headings(&mut b), vec![here.clone(), "vm-c".into(), "vm-a".into(), "vm-b".into()]);
     assert!(b.text().contains("\n All machines │ "), "the filter row names whose board: {}", b.text());
-    let model = sw::webui::model::list::list_of(&b.s, &b.theme);
-    assert_eq!(model.at("head").s("machines"), "vm-c, vm-a, vm-b");
     // the scope key goes round in that order too: every machine, then each one, this machine where herdr has it
     let mut round = vec![];
     for _ in 0..4 { b.press(&["alt+m"]); round.push(b.s.scope.clone()); }
@@ -225,7 +223,6 @@ fn a_machine_on_an_older_program_still_has_its_sidebar_followed_through_its_herd
     // each is named as the M1's sidebar names it, the board's name beside it where that is another
     let local = "Local (elias-macbook-pro-m1)".to_string();
     assert_eq!(headings(&mut b), vec![local.clone(), format!("Mac mini ({here})"), "vm-str".into(), "vm-ssa".into(), "vm-not".into(), "vm-kil".into(), "vm-demo".into()]);
-    assert_eq!(sw::webui::model::list::list_of(&b.s, &b.theme).at("head").s("machines"), "Local (elias-macbook-pro-m1), vm-str, vm-ssa, vm-not, vm-kil, vm-demo");
     // the user moves vm-demo up in the MacBook's herdr: followed at the M1's next answer
     m1_answers(&far, &["vm-demo", "vm-str", "vm-ssa", "vm-not", "vm-kil"]);
     ask_all(&mut b);

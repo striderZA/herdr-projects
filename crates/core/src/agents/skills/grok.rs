@@ -1,4 +1,4 @@
-//! Grok's skills, as `/name` (the web UI's server/skills/grok.ts, from Grok's README): the project's `.grok/skills` and
+//! Grok's skills, as `/name`: the project's `.grok/skills` and
 //! `.claude/skills` (where it runs and at the repo's top), yours in Grok's folder and `~/.claude/skills`, the folders
 //! its config.toml's `[skills] paths` names, then its plugins' and the installed Claude Code plugins'. A skill needs a
 //! name and a description; one under a path of `[skills] ignore` is left out, and so is a project's one that git

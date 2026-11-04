@@ -53,8 +53,7 @@ The severity says what the fault does:
   not valid) shows the reviewer's last screen in the failure: its last 8 lines, read before its tab closes. A dialog
   that stopped it (one herdr did not report as a dialog) is there to see, before you retry.
 
-Findings below the gate still show on the review page, in the task panel and in a comment on the pull request, marked
-as not required.
+Findings below the gate still show in the task panel and in a comment on the pull request, marked as not required.
 
 ## Merging by itself
 

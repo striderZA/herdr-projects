@@ -101,7 +101,6 @@ fn herdr_superwork_alone_moves_into_the_new_home_with_its_paths_fixed_and_its_ex
     for d in [".claude/skills", ".codex/skills"] { assert!(!exists(&m.at(d).join("herdr-superwork"))); }
     let x = read_obj(&to.join("data/extras.json")).unwrap();
     assert_eq!(strings(x.at("skillPaths")), vec![m.at("elsewhere/mine").display().to_string()]);
-    assert_eq!(x.at("webUiLinks"), &json!([{ "https": 8751, "now": "http://127.0.0.1:7327" }])); // the web UI's link carries over
     // herdr's folders for the plugin: what herdr-superwork's held is herdr-projects' now.
     assert_eq!(read(&m.p.plugin_config.join("herdr-projects/settings.toml")), "x = 1\n");
     assert!(!exists(&m.p.plugin_config.join("herdr-superwork")) && !exists(&m.p.plugin_state.join("herdr-superwork")));

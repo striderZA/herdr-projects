@@ -6,8 +6,7 @@ SSH. Work never moves between machines.
 
 Which machines you see is the first item of the filter row, in the base colour, with no caret: `All machines` (plain), or `otherbox` (lit, as the filter shown is)
 (in yellow while it does not answer). A click on it goes round too ([the board](board.md#the-filter-row)). No line
-under the chat confirms a pick: that item says whose board shows, the chat box who gets your words. On the web board a
-tap on it lists every board to pick one ([the web UI](web-ui.md)).
+under the chat confirms a pick: that item says whose board shows, the chat box who gets your words.
 
 ## Set up another machine
 
@@ -15,7 +14,7 @@ Machines are found through Herdr only: the ones you added with `herdr machine ad
 `board.machines`. There is no Tailscale discovery. They are listed in the order of Herdr's machines sidebar
 ([machine order](machine-order.md)).
 
-With no other machine there is no "every machine" to show, on the terminal board and on the web: `Alt+M` asks Herdr
+With no other machine there is no "every machine" to show: `Alt+M` asks Herdr
 for its machines (`Looking for other machines…`), says when there are none, and shows every machine as soon as there
 is another one. A board that showed every machine goes back to this machine's own when the others are gone.
 
@@ -77,8 +76,7 @@ what SSH gives). So you can see on the machine itself whether another one could 
 
 ## When a machine does not answer
 
-It is never shown as a machine with no tasks. Where its tasks would be, on the terminal board and the web board, one
-line says so, with the reason:
+It is never shown as a machine with no tasks. Where its tasks would be, one line says so, with the reason:
 
 ```
 vm-a: its tasks cannot be read: herdr-projects is not found there.
@@ -86,8 +84,7 @@ vm-a: its tasks cannot be read: herdr-projects is not found there.
 
 - In the every-machine view, the other machines' tasks still show under it.
 - On that machine's own view (`Alt+M` goes round to it, even while it does not answer) you get the rest: what came back,
-  what it means and what to do. The web board keeps that behind "Why, and what to do". If it is longer than the screen,
-  the arrows scroll it and a line says there is more.
+  what it means and what to do. If it is longer than the screen, the arrows scroll it and a line says there is more.
 - The line stays put while the board asks again every half minute. It is never repeated as a message.
 - An action on a task of a machine that stopped answering says why, in its one message.
 
@@ -158,10 +155,3 @@ each such file over its own SSH link to that machine, and the words name it wher
 - **When a file cannot go** (too large, the machine does not answer, it refuses), the board says why and sends none of
   your words: never a path the agent there cannot open.
 - **A machine on an older version** cannot take files: the board says so. Update `herdr-projects` there.
-
-## In the web UI (Ovis)
-
-The web Board shows other machines as `Alt+M` does, acts on their tasks, and opens their agents in the web UI's own view
-of that machine, when the web UI has that machine as one of its PCs. The terminal board works in the web UI's terminal
-view too, on this machine and on another. What works how, and what the board says when something is missing:
-[the board in the web UI (Ovis)](web-ui.md).

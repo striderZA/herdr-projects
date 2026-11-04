@@ -1,4 +1,4 @@
-//! The skills of whoever the chat talks to, offered as you type, as the herdr web UI's chat box offers them: a draft
+//! The skills of whoever the chat talks to, offered as you type, as an agent program's chat box offers them: a draft
 //! that is one word starting with `/` (with Codex `$` too) lists the skills and commands of that program that match
 //! it, over the text box (view/skills.rs). Up and down pick one, tab or enter puts it in the box, esc closes the list
 //! and keeps the draft. Enter on a word that already is the one picked sends it. The list is read by the loader

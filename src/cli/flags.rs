@@ -47,7 +47,7 @@ const AUTO_CHANGE: &[&str] = &["name", "prompt", "schedule", "when", "every-repo
 fn takes(cmd: &str, sub: &str) -> Option<Takes> {
     Some(match cmd {
         "board" | "--skill" | "skill" => f(&["skill"]),
-        "help" | "hook" | "keeper" | "keeper-work" | "open" | "open-coordinator" | "approve-current" | "serve" | "remote" => f(&[]),
+        "help" | "hook" | "keeper" | "keeper-work" | "open" | "open-coordinator" | "approve-current" | "remote" => f(&[]),
         "docs" => f(&["check", "where", "guard"]),
         "turn-ended" => f(&["id", "role", "token", "round"]),
         "plan-written" => f(&["id", "token"]),
@@ -68,8 +68,7 @@ fn takes(cmd: &str, sub: &str) -> Option<Takes> {
         "autopilot" => match sub { "on" => s(&["machine", "project", "goal"]), "off" => f(&["machine", "project", "all"]), "show" => f(&["machine", "project"]), _ => f(&[]) },
         "coordinator" => match sub { "tell" => f(&["delegate", "machine", "project"]), "new" | "fresh" => f(&["agent", "effort", "machine", "project"]), _ => f(&["machine", "project"]) },
         "sweep" => f(&["dry"]),
-        "machines" | "web-ui" | "remove-extras" | "reopen" | "version" | "install" | "update" | "doctor" => f(&[]),
-        "voice" => f(&["from"]),
+        "machines" | "remove-extras" | "reopen" | "version" | "install" | "update" | "doctor" => f(&[]),
         "housekeep" => f(&["pr"]),
         "check" => f(&["all", "fresh"]),
         _ => return None,

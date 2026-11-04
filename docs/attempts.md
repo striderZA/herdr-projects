@@ -97,7 +97,6 @@ kept, not the first.
   - `Ctrl+L`, the approve key, keeps the selected one. It asks first.
   - `Alt+O` goes into the selected attempt's tab.
   - A reply to the task while its attempts work goes to every attempt still in it. `Ctrl+X` stops them all.
-- **The web Board** shows the same row and part, with the same keys as buttons (`Next attempt`, `Yes`).
 - `herdr-projects show <id>` names each attempt's agent and the one chosen. `details <id>` has the attempts and the
   comparison.
 

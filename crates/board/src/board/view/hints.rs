@@ -31,7 +31,7 @@ pub fn hints(s: &State, r: Option<&Obj>, who: Option<&Who>) -> (Vec<Hint>, Optio
     let chat_key = if up { None } else { key.first().cloned() };
     if s.ask.is_some() { return (vec![], chat_key); }
     // After esc at the top (which closes nothing) the line names the key that does. A running Coordinator is no part of
-    // this board (the popup, the web board and `coordinator tell` share it): it keeps running, and the line says so, in
+    // this board (the popup and `coordinator tell` share it): it keeps running, and the line says so, in
     // shorter words in a narrow window, never left out.
     if let Some((_, by_esc)) = s.closing {
         let runs = ["starting", "working", "blocked", "idle"].contains(&s.data.coord.state.as_str());
@@ -81,7 +81,7 @@ pub fn hints(s: &State, r: Option<&Obj>, who: Option<&Who>) -> (Vec<Hint>, Optio
         v.extend(back); v.extend(key);
         match talk { Some(t) if t.stays => { v.push(t) } Some(t) => { v.insert(0, t); v.push(more) } None => v.push(more) }
         // A project's row: the whole project to the archive; in the archive, back (update/archive_project.rs). It gives
-        // way first: past the line's six it is the web board's button alone, and the ? menu's line.
+        // way first: past the line's six only the ? menu's line is left.
         let archive = crate::board::update::archive_project::says(s);
         if !archive.is_empty() { let at = if v.len() < 6 { v.len() - 1 } else { v.len() }; v.insert(at, hk(K::Archive, archive)); }
         return (v, chat_key);
@@ -140,7 +140,6 @@ fn auto_hints(s: &State, a: &Obj, back: &[Hint], more: &Hint) -> Vec<Hint> {
     let mut act = vec![hk(K::Talk, &format!("turn this automation {}", if a.b("on") { "off" } else { "on" }))];
     if a.b("on") { act.push(hk(K::Delegate, "fire it now")); }
     act.push(hk(K::Stop, "remove it"));
-    if s.ctx.web { let mut v = act; if !s.auto_open { v.extend(back.iter().cloned()); } return v; }
     if !s.auto_open {
         let mut v = vec![plain(name(K::Enter), "open this automation")];
         v.extend(act);
