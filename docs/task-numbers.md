@@ -44,12 +44,6 @@ never changes.
   To see each repo's tasks together, group the list by repo (`Alt+S`, in the `?` menu as "group by repo: see which repo
   each task is in"): each group's heading names its repo. The whole task
   names the repo too, in its `Task id` row (`pi-work/12`), with the session.
-- **Other machines.** A task of another machine has the tag its own machine gives it (that machine's keys). Each machine
-  counts its own tasks, so two machines can each have a `#1`. With every machine shown, each machine is a heading of its
-  own with its tasks under it ([list headings](list-headings.md)), so a row has the plain tag (`HSW-1`), never its
-  machine's name. Where there is no heading above (the board's messages, the chat, the whole task), it is named
-  `otherbox:HSW-1`. Find takes the tag alone, without the machine. (A task of a machine still on an older version, whose
-  repo has no key there, shows its number as that machine gives it: `#1`, `otherbox#1`.)
 - **When room runs out**, the tag is the last thing to go before the rest of a name: after what a row says, the bar, the
   word `ago`, the end of a long name, the percent with the minutes left, the `R#` tag with the pull request, and the time
   ([the board](board.md) has the whole order). It goes for the whole list at once, so the titles stay in one column:
@@ -67,7 +61,7 @@ never changes.
 | the task panel and the details page | the tag before the title, greyed; the heading says `Task details  HSW-134 "its title"`. The id itself (`herdr-projects/134`) stands once, on the whole task, as `Task id` with the session: where a command needs it |
 | the chat's line that names who you talk to | the tag between the mark and the task's name; a window too narrow to leave the status 20 cells goes without it |
 | an automation's firings | `made HSW-140`, on the board and on the command line |
-| the board's own messages | the tag and the title, in one form: `Archived HSW-134 "Fix the footer".`, `Pinned HSW-14 "…" to the top.`, `Stopped HSW-14 "…".`, `Removed …`. A message an action wrote with the id reads with the tag too (`HSW-14: approved, merging`). Only a line that shows a command to run keeps the id the command takes. Pinning says so, and an action on another machine says what it is doing there (`Pinning HSW-2 on otherbox…`), never a bare `…` |
+| the board's own messages | the tag and the title, in one form: `Archived HSW-134 "Fix the footer".`, `Pinned HSW-14 "…" to the top.`, `Stopped HSW-14 "…".`, `Removed …`. A message an action wrote with the id reads with the tag too (`HSW-14: approved, merging`). Only a line that shows a command to run keeps the id the command takes. Pinning says so, never a bare `…` |
 | Herdr's sidebar, and a pane's title | the task's space is named with the tag and the task's title (`HSW-34 Add a file…`), which is the first row of its agent's entry ([Herdr's sidebar](sidebar.md)). The pane's title is the same. A reviewer's pane is named the same way |
 
 ### The key beside a repo's name

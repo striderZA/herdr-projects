@@ -105,14 +105,6 @@ Agents and hooks are handed the launcher `~/.herdr-projects/data/bin/herdr-proje
 - `herdr-projects install` writes it again, and says if something else named `herdr-projects` comes first on your PATH.
 - To type `herdr-projects` in a shell, put that folder on your PATH (in `~/.profile` or your shell's start-up file).
 
-**On a machine other machines will ask for its tasks** ([other machines](other-machines.md)), `herdr-projects` must be
-found by a login shell that nobody types into, which is what SSH starts. A PATH set only in `~/.bashrc` is often not
-enough. `herdr-projects machines` checks it on the machine itself and says how to fix it. From the other machine, the
-test is this; it ends with a line of JSON when all is well:
-
-```sh
-ssh <machine> 'exec $SHELL -lc "herdr-projects remote list"' | tail -c 200
-```
 
 ## Updating
 

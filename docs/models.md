@@ -76,7 +76,7 @@ gpt-6.1-sol, gpt-6-astra, gpt-6-sol, … (codex's own list for that sign-in). Wr
 ### A model refused while the agent works
 
 A name can still be refused when the agent runs: one written in a settings file by hand (only a value being set is
-checked), a sign-in that changed, a program on another machine, or the program's own default model. The board catches
+checked), a sign-in that changed, or the program's own default model. The board catches
 that at the end of the turn and never leaves the task in the agent with only its error:
 
 - **It gave the program that model:** the same program starts again at once on its own default model, in the same

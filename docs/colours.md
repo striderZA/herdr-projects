@@ -1,8 +1,8 @@
 # Colours
 
 **The board uses Herdr's own theme, and colour means status only.** A mark's colour says where a task or a coordinator
-stands, and the text box's edge takes the status colour of whoever you type to. Names are never coloured: machines,
-projects and tasks are all in the base colour. Colour is never the only clue: every state has its own mark and words
+stands, and the text box's edge takes the status colour of whoever you type to. Names are never coloured: projects
+and tasks are all in the base colour. Colour is never the only clue: every state has its own mark and words
 too, and with `NO_COLOR` the board still reads.
 
 | Colour | Means |
@@ -16,8 +16,8 @@ too, and with `NO_COLOR` the board still reads.
 | magenta | queued: waits for a free slot, or for other tasks (its own mark, a clock, `◷`) |
 | light grey | the board runs its own check |
 | purple | an automation |
-| the base colour | every name: a machine's, a project's, a task's title |
-| the fainter grey | what goes with a name: counts (`2 machines · 5 tasks`, `7 tasks`), keys (`HP`, `HOME`), times, and tags after a title or a name (`[auto]`, `[research]`, `[chat]`, `[autopilot]`, `×3`) |
+| the base colour | every name: a project's, a task's title |
+| the fainter grey | what goes with a name: counts (`9 projects · 30 tasks`, `7 tasks`), keys (`HP`, `HOME`), times, and tags after a title or a name (`[auto]`, `[research]`, `[chat]`, `[autopilot]`, `×3`) |
 
 ## The board is in Herdr's theme
 
@@ -32,7 +32,7 @@ hand its theme to a plugin, so the board reads what Herdr reads: the `[theme]` a
   or dark one.
 - **The `terminal` theme** paints with the terminal's own sixteen colours, in Herdr and on the board alike. Its greys are
   the exception ([below](#the-greys-are-quiet-but-always-readable)).
-- **A theme changed in Herdr** shows the next time the board opens. The popup, the task panel and the reply view take the same theme. Another machine's tasks are drawn by this board, in this theme.
+- **A theme changed in Herdr** shows the next time the board opens. The popup, the task panel and the reply view take the same theme.
 
 To choose by hand, set [`board.theme`](settings.md): `herdr` (the default, all of the above), `dark` or `light` (that
 theme's dark or light one), or one of Herdr's themes by name: `catppuccin`, `catppuccin-latte`, `terminal`,
@@ -110,7 +110,7 @@ stands. One that is off is quiet as a done task is: its mark dimmed, its words g
 A coordinator on [autopilot](autopilot.md) keeps its row's own mark, in its own colour, as when it is off. Autopilot
 shows only in the board's own patterns: a dimmed `[autopilot]` after the row's name, as a task's `[research]`; a status
 line under the row in the grey of a task's (`Autopilot · next check-in in 12m · 3 of 20 today`, `Working on HSW-92`,
-`Needs you · …`); and `1 on autopilot` in its machine's summary. Its wakes in the chat stand under the name `Autopilot`,
+`Needs you · …`); and `1 on autopilot` in the top row's summary. Its wakes in the chat stand under the name `Autopilot`,
 as the board's own words stand under `Board`, in the same greys. With `NO_COLOR` all of it still reads.
 
 ## The greys are quiet but always readable
@@ -173,8 +173,8 @@ cannot be measured.
 
 ## Names have no colour; the hierarchy is weight and indent
 
-- **Machines** are in bold, in the base colour (`All machines` too). **Projects** are in normal weight, one step in.
-  **Tasks** are in normal weight, another step in. No accent on a machine's name, no colour on a project's or a task's.
+- **Projects** are in normal weight, in the base colour. **Tasks** are in normal weight, one step in. No accent on a
+  project's name, no colour on a project's or a task's.
 - **What goes with a name is dimmed**: counts, keys, times, and the tags after a title (`[auto]`, `[research]`,
   `[chat]`, `[archived]`, `×3`).
 - **Status keeps its colours**: the marks, a status group's heading, the filter row's lit filter and the selected row
@@ -183,7 +183,7 @@ cannot be measured.
 ## The box says who you type to
 
 The text box's edge takes the status colour of whoever it talks to, as their mark has it; its ladder already says who
-([machine and project coordinators](machine-and-project-coordinators.md#the-chat-box-names-who-it-talks-to)). Inside it,
+([project coordinators](project-coordinators.md#the-chat-box-names-who-it-talks-to)). Inside it,
 your words are in the base colour you type in, theirs grey.
 
 | Who the box talks to | Colour of its edge |

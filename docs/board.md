@@ -7,7 +7,7 @@ agent.
 ```
  herdr-projects  proj · PRJ
  All 48   Coordinators 4   Needs you 3   Working 2   Ready 1   To do 12   Done 30   Automations 0
- ○ ▾ vm-str  1 project · 48 tasks                                                       5m ago
+ ○ ▾ Jaco-Desktop  1 project · 48 tasks                                                       5m ago
    ▾ needs you
    ! HSW-98  Add an undo for clear                                     R#2 PR#18 12m ago
              Review failed · 1 critical, 1 major
@@ -19,10 +19,10 @@ agent.
              Running the tests
    ▾ to do
    ○ HSW-9   Rename the hint line                                                 2h ago
-╭─  vm-str  ─────────────────────────────────────────────────────────────────────────────────╮
+╭─  Jaco-Desktop  ─────────────────────────────────────────────────────────────────────────────────╮
 │ Added proj/4: Add an undo. An agent is on it.                                              │
 │                                                                                            │
-│ ❯ Send message to vm-str's coordinator                                                     │
+│ ❯ Send message to the gtm coordinator                                                      │
 ╰────────────────────────────────────────────────────────────────────────────────────────────╯
   alt+c hide the latest message · ? all keys
 ```
@@ -45,41 +45,36 @@ board shows and how many tasks stand in each group are on the filter row under i
 
 ## The filter row
 
-**`vm-str │ All 420   Coordinators 12   Needs you 0   Working 1   Ready 0   To do 4   Done 415   Automations 2   Pinned 3`**,
+**`All 420   Coordinators 12   Needs you 0   Working 1   Ready 0   To do 4   Done 415   Automations 2   Pinned 3`**,
 each filter with its count, as in an agents command center, with plain room between them. The one shown is lit in its own colour, the one its rows and marks have: `Needs you` red,
 `Working` amber, `Ready` green, `Coordinators` the accent, `Automations` the automations' colour, the others plain, with
 a cell of the highlight on each side; every filter keeps that room, so the row does not move when another is lit. The
 others are greyed, a count of tasks that need you in red.
 
-**Whose board comes first**, wherever there is another machine: `All machines` (plain), or the one machine shown (lit, as the filter shown is), in the base colour with no caret (in yellow
-while it does not answer). `Alt+M` goes round: all machines, then each machine by itself in the order of Herdr's
-sidebar ([other machines](other-machines.md)); a click on it does the same. Every count is the machine's shown.
-
 | Filter | The list shows |
 |---|---|
 | `All` | every task in its group and the automations, as always |
-| `Coordinators` | only the coordinators that run (started and not stopped: working, idle, needs you; on autopilot; or failed, so you can fix it): each such machine's row and project's row ([machine and project coordinators](machine-and-project-coordinators.md)). A stopped or never started one is not there, nor in the count; its row stays in the other filters, with no mark. The main Coordinator has no row |
+| `Coordinators` | only the coordinators that run (started and not stopped: working, idle, needs you; on autopilot; or failed, so you can fix it): each such project's row ([project coordinators](project-coordinators.md)). A stopped or never started one is not there, nor in the count; its row stays in the other filters, with no mark. The Coordinator is the top row |
 | `Needs you`, `Working`, `Ready`, `To do` | only the tasks of that group (`Ready` is ready to approve) |
 | `Done` | every done task, which the other filters hide |
 | `Automations` | only the automations' rows, in their places |
-| `Pinned` | only what you pinned, in its places: a pinned task, a pinned project with its tasks, a pinned machine with its projects and tasks ([pins](pinned.md)). Its count is each pin once: the pinned machines, projects and tasks, not the other rows under them |
+| `Pinned` | only what you pinned, in its places: a pinned task, a pinned project with its tasks ([pins](pinned.md)). Its count is each pin once: the pinned projects and tasks, not the other rows under them |
 
 - **`Tab` shows the next filter, `Shift+Tab` the one before**, round and round. A click on one shows it. The filter
   shown is kept with the board's view. Each filter keeps the grouping (`Alt+S`) and the headings of what it shows; a
-  machine or a repo with nothing that matches has none.
-- **A machine's row and a project's row are their coordinator's**, read as a task's row: the same marks (`○` idle,
+  repo with nothing that matches has none.
+- **A project's row is its coordinator's**, read as a task's row: the same marks (`○` idle,
   `◐` working, `?` asks you, `✗` could not start), the time on the right, what it does or asks under
-  it; on autopilot, `[autopilot]` after its name and what autopilot does under it. The top row is `All machines` or the one machine shown. The list reads all machines → machine → project → task
-  by how far in each row stands. `Space` talks to it, `Alt+O` goes into it, `Enter` (or `←` `→`) folds and unfolds it, `Ctrl+S` /
-  `Ctrl+X` start and stop it, `Ctrl+O` is its autopilot ([machine and project coordinators](machine-and-project-coordinators.md)).
+  it; on autopilot, `[autopilot]` after its name and what autopilot does under it. The top row is the Coordinator's.
+  The list reads project → task by how far in each row stands. `Space` talks to it, `Alt+O` goes into it, `Enter` (or `←` `→`) folds and unfolds it, `Ctrl+S` /
+  `Ctrl+X` start and stop it, `Ctrl+O` is its autopilot ([project coordinators](project-coordinators.md)).
 - **Where the window is narrow** the names are shorter (`Coords`, `Needs`, `Autos`), then shortest (`Co`, `Need`,
   `Work`), then the filters with nothing in them go; narrower still, only the one shown stands, with `tab next`.
 
-## Grouping: by status, by repo, by machine
+## Grouping: by status, by repo
 
 `Alt+S` groups the list one way after the other: **by status** (the five groups below), **by repo** (each repo under its
-row, its project coordinator's), **by machine** (each machine under its row, its machine coordinator's, its tasks under
-it by how much they need you, with no status headings), and by status again.
+row, its project coordinator's), and by status again.
 
 ## The list: five groups
 
@@ -95,17 +90,16 @@ Tasks stand in five groups, in the order they need you:
 
 - **First what waits for you**, then what is being worked on (the agent, the reviewer, the board's check), then to do,
   then done. Done is history, so it is last: however long it grows, it never pushes the to-dos down.
-- **A pinned task** (or project, or machine) stays where it is, with a yellow pin mark `★` after its name; the `Pinned`
+- **A pinned task** (or project) stays where it is, with a yellow pin mark `★` after its name; the `Pinned`
   filter shows only what is pinned ([pins](pinned.md)).
-- **Grouped by repo or by machine** (`Alt+S`), each repo's or machine's rows follow the same order, so a repo's done rows are below its to-dos.
+- **Grouped by repo** (`Alt+S`), each repo's rows follow the same order, so a repo's done rows are below its to-dos.
 - **No done task shows**, a pinned or a selected one neither. One line where they would stand counts them
   (`↓ 73 done (alt+d shows them)`), and `Alt+D` shows them all. With none done, there is no such line. A project whose
   tasks are all done shows its heading and that line. The selection on a done task that goes out of view (`Alt+D`
   again) goes to the heading it stood under; while you talk to its agent or read it whole, it stays.
 - **Moving:** `↑` and `↓` follow the order shown; `PgUp` and `PgDn` go ten tasks at a time. Changing the grouping keeps
   the selected task selected.
-- **Headings:** the arrows stop on them too, and `Enter` on one folds it to one line, and unfolds it. With every machine
-  shown, each machine has a heading of its own: [list headings](list-headings.md).
+- **Headings:** the arrows stop on them too, and `Enter` on one folds it to one line, and unfolds it: [list headings](list-headings.md).
 - **The archive** (`Alt+A`) is a list of its own, newest first, outside this order. `Ctrl+A` archives the selected
   task, and restores it there. Archiving closes the task's own space (its agent ends) and frees its temporary files;
   its worktree, branch and history stay. Restoring starts nothing.
@@ -115,8 +109,7 @@ Tasks stand in five groups, in the order they need you:
     working.`) archives every done task of that repo; without `--repo`, every repo's. A task that works, waits, is to
     do or is pinned stays. Each goes as one archive does: its space closes, its worktree stays. Nothing archives them
     by itself.
-- **Automations** are a group of their own after the task groups, inside their machine's part of the list (by repo:
-  under their repo) ([below](#automations-in-the-list)).
+- **Automations** are a group of their own after the task groups (by repo: under their repo) ([below](#automations-in-the-list)).
 
 ### Archiving a project
 
@@ -138,19 +131,8 @@ A project you are done with for now leaves the board whole, and comes back as it
   every task archived with it comes back as it was (to do is to do again, done is done; one that was stopped stays
   stopped until you start it), and its automations are on again. Its coordinator starts with your next message to it,
   as a stopped one does. A task you had archived on its own before stays in the archive.
-- **Another machine's project** goes the same way, from the board on every machine (`Alt+M`): `Ctrl+A` on its row
-  asks that machine to archive it, and that machine does it itself, so its coordinator stops and its automations go
-  off there. The question is the same (`Archive autopilot-tictactoe and its 3 tasks on vm-str?`), worked out from
-  that machine's tasks as the board last read them; that machine reads them again before it acts, and refuses one that
-  changed in a way that would have changed the question (a task of it works now where the board asked nothing, or it
-  holds more tasks than the board counted): `… changed on vm-str since your board read it: … Nothing was archived:
-  look again, then archive it.` In the archive its heading stands under its machine, and `Ctrl+A` there restores it.
-  A machine that cannot be reached changes nothing, and the board says so (`vm-str did not answer: …`); one on an older
-  version says to update it there first.
 - **From the shell:** `herdr-projects archive --repo mstars` (`Archived mstars and its 6 tasks. Stopped first:
   MST-4.`) and `herdr-projects restore --repo mstars` (`Restored mstars and its 6 tasks.`). They do not ask.
-  `--on vm-str` does it on another machine (`vm-str: Archived autopilot-tictactoe and its 3 tasks.`), as `add --on`
-  adds a task there.
 
 ### The list says what it hides
 
@@ -192,10 +174,10 @@ Each state has a mark of its own, so no two are told apart by colour alone:
 
 The `?` menu has the list too.
 
-- **A machine's row and a project's row** (and `All machines`) carry their coordinator's state with these same marks:
+- **A project's row and the top row** carry their coordinator's state with these same marks:
   `○` idle (also never ran, or stopped), `◐` it works, `?` it asks you (`!` it wants your OK), `✗` it could not start.
   On [autopilot](autopilot.md) it keeps that mark, with `[autopilot]` after its name. The others (`◑ ◆ ✓ ◷ ◇`) are never a coordinator's
-  ([machine and project coordinators](machine-and-project-coordinators.md)).
+  ([project coordinators](project-coordinators.md)).
 
 - **Only a moon says someone works**: `◐` and `◑`, an agent or its reviewer.
 - Every mark is one column wide, and a character every monospace font has.
@@ -275,8 +257,6 @@ is on it, or it waits for you.
   `overlay0`, is for what may be missed: times, counts, tags). What a task asks of you (its question, the OK it wants,
   the login it needs: a `?`, `!` or `@` row) is in its mark's needs-you colour, Herdr's `red`, so it stands out as the
   mark does; on the selected row too.
-- In the all-machines view the machine is the heading above its tasks, never in a row
-  ([list headings](list-headings.md)), so line 2 starts under the task's name as everywhere.
 - Line 2 has the row's whole width, so it is rarely cut. One longer than the window is cut at its end with `…`, never
   wrapped (on a narrow screen it wraps: below).
 - **Line 2 is there from the start**, so a row does not grow, and nothing under it moves, when its words arrive. It is
@@ -493,9 +473,7 @@ not say which task it is. So under 80 columns:
   above). It gives up the tags beside its name for that. Move on, and it is one line again.
 - **Done and to-do rows stay one line, without their time** (`5h`): the name has that room, and the tags (`R#`, `PR#`)
   still show where there is room beside it. A task's time is in its panel.
-- **Wrapped lines start under the name**, never under the mark, so the marks stay a column of their own. In the
-  all-machines view a name that wraps has the line to itself, without the machine's name before it; and what a task says
-  starts under the machine's name when a long one would leave it fewer than 20 cells a line.
+- **Wrapped lines start under the name**, never under the mark, so the marks stay a column of their own.
 - No limit on how long a name or a sentence may be has changed: this is only how they are drawn.
 - The highlight covers every line of the selected row, the arrows still go task by task, and the list counts each row at
   the height it has: what gives way in a list taller than the window, and the scroll, work as above.
@@ -537,8 +515,7 @@ So you go through tasks one after another without arrowing back.
 
 ## Automations in the list
 
-**The automations are a group of their own**, under the heading `automations`, after the task groups: each machine's in
-its own part of the list, as its tasks are, and they fold as any group does. Grouped by repo, each stands under its
+**The automations are a group of their own**, under the heading `automations`, after the task groups, and they fold as any group does. Grouped by repo, each stands under its
 repo's heading, after that repo's tasks ([automations](automations.md)). With none, there is no heading. The heading and each row's mark are in a colour of their own, a purple
 no status has ([colours](colours.md)). One row per automation, **in the list's own columns**, drawn by the code that draws
 a task's row:
@@ -560,7 +537,7 @@ a task's row:
 | its mark | `⟳` (U+27F3), in the automations' colour while it is on and the same one dimmed while it is off: an arrow going round, where every task's mark is round, a diamond or a sign |
 | its tag (`HSW-12`) | the word `on` or `off`, in the same grey. It fills the numbers' column, so every name starts where the titles start |
 | its title | its name, plain as a to-do's title; greyed while it is off |
-| what it says, after the title | its trigger in plain words (`every 2h`, `when a task is merged, in every repo`), in the same grey; then its repo when that is not the one the board shows (and not the heading it stands under). Never its machine: the heading above names that |
+| what it says, after the title | its trigger in plain words (`every 2h`, `when a task is merged, in every repo`), in the same grey; then its repo when that is not the one the board shows (and not the heading it stands under) |
 | its review tag and pull request | the task its last firing made, by that task's own mark and number (`✓ HSW-4`: done; `◐ HSW-7`: an agent is on it), and the word that goes with the time (`next in`, `fired`, `skipped`) |
 | its time | how long until it fires (`4m`), or how long ago it last did (`2h ago`), in the list's time column, under the tasks' times. `never fired` stands there for one that never did |
 | a second line, for a live task | a second line only when it has something to say: why the board turned it off. Where the trigger has no room beside the names it stands there too, on every row of the group at once |
@@ -578,8 +555,7 @@ the rest of the name.
 - The selected row has the same bar and tint, a click selects it, and `↓ 3 automations` says how many do not fit.
 
 **Not on the row**, so it stays as calm as a task's: the prompt, the settings, the folder, the list of firings and why
-one was skipped, the hour a schedule is next due, and how many times it fired (only the last 200 firings are kept, and 20
-are sent from another machine, so a count would not be true). All of that is in the automation, whole (`Enter`).
+one was skipped, the hour a schedule is next due, and how many times it fired (only the last 200 firings are kept, so a count would not be true). All of that is in the automation, whole (`Enter`).
 
 - `↑` and `↓` go from the last task on to their heading, then to them. On such a row no task is selected, so the keys that act on a task do
   nothing, and the row has keys of its own (open it, turn it on or off, fire it now, remove it, its settings), which the
@@ -598,12 +574,11 @@ are sent from another machine, so a count would not be true). All of that is in 
 - **The arrows only move the selection**; they never change who you talk to. While you talk to a task's agent, the chat
   follows the selection: move to another task and you talk to that task's agent, with its latest message shown.
 - **A task with no agent to talk to** is still named, with where your message goes instead: it starts an agent on a task
-  that is to do; it goes to the top row's coordinator about that task otherwise (`no agent on it: your message goes to vm-str's coordinator, about this task`). An archived task is read-only.
-- **With no task selected** (words on their way to another machine, an empty list), the chat names the Coordinator until
-  a task is selected again.
+  that is to do; it goes to the Coordinator about that task otherwise (`no agent on it: your message goes to the Coordinator, about this task`). An archived task is read-only.
+- **With no task selected** (an empty list), the chat names the Coordinator until a task is selected again.
 - **If the task you talk to goes away** (removed), you are back with the top row's coordinator, never on a neighbour's agent.
-- **On a machine's or a project's row**, `Space` talks to that machine's or that project's own coordinator
-  ([machine and project coordinators](machine-and-project-coordinators.md)).
+- **On a project's row**, `Space` talks to that project's own coordinator
+  ([project coordinators](project-coordinators.md)).
 - **Type `/`** to pick one of their skills or commands from a list over the box ([skills in the chat](skills.md)).
 
 ### What the chat is made of
@@ -611,18 +586,17 @@ are sent from another machine, so a count would not be true). All of that is in 
 It looks the same for a coordinator and for a task's agent, at every window width:
 
 ```
-╭─ All machines ›  vm-str  ─────────────────────────────────────────────── alt+k more ↑ ─╮
+╭─ Jaco-Desktop ›  gtm  ────────────────────────────────────────────────── alt+k more ↑ ─╮
 │ Added proj/4: Add an undo. An agent is on it.                                              │
 │                                                                                            │
-│ ❯ Send message to vm-str's coordinator                                                     │
+│ ❯ Send message to the gtm coordinator                                                      │
 ╰────────────────────────────────────────────────────────────────────────────────────────────╯
   alt+c hide the latest message · ? all keys
 ```
 
-1. **Its top edge names who you talk to**: a ladder from the top row down (`All machines › vm-str › gtm › GTM-14`),
-   the current step lit, and after it, dimmed, the kind of agent (`· Agent`, `· Reviewer`, `· Project coordinator`,
-   `· Machine coordinator`), and the edge in the status colour of whoever it talks to ([colours](colours.md#the-box-says-who-you-type-to))
-   ([machine and project coordinators](machine-and-project-coordinators.md#the-chat-box-names-who-it-talks-to)). One
+1. **Its top edge names who you talk to**: a ladder from the top row down (`Jaco-Desktop › gtm › GTM-14`),
+   the current step lit, and after it, dimmed, the kind of agent (`· Agent`, `· Reviewer`, `· Project coordinator`, `· Coordinator`), and the edge in the status colour of whoever it talks to ([colours](colours.md#the-box-says-who-you-type-to))
+   ([project coordinators](project-coordinators.md#the-chat-box-names-who-it-talks-to)). One
    that never ran invites a first message.
    - One thing gets a greyed line of its own above the box: a default that changed while a coordinator runs, with the
      command that starts a new one on it.
@@ -689,11 +663,10 @@ was, over an empty line to type on. It stays until the answer comes; then the an
 message is never shown under your words: it is above, with the rest of the conversation.
 
 "The moment you send it" means before the words have reached anyone, whoever the chat talks to: the Coordinator, a
-task's agent here or on another machine, a machine's or a repo's coordinator, another machine's Coordinator. Until
-their own conversation has the words, the line over the box says so (`Sending…` for a task's agent, `sending…` for a
-coordinator), and nothing else of them stands over the chat: a send to another machine has no row "on its way" over the
-box, only one that failed, with why (nor do the ones you sent just before). Words that did not get there leave the box;
-on this machine they go back to the line you type on. An earlier turn the agent ends while your words are still on
+task's agent, or a project's coordinator. Until their own conversation has the words, the line over the box says so
+(`Sending…` for a task's agent, `sending…` for a coordinator), and nothing else of them stands over the chat: only one
+that failed, with why (nor do the ones you sent just before). Words that did not get there leave the box; they go back
+to the line you type on. An earlier turn the agent ends while your words are still on
 That holds also for words you send while the agent works: Claude Code queues them and they go in during its turn, and the
 board reads them there. For the Coordinator this holds when the board is closed and opened again; for a task's agent, for
 as long as the board stays open.
@@ -729,7 +702,7 @@ The box opens on the newest thing said, and holds only that. What came before is
 │ 3. The check fails on main too: it is not this task's change.                              │
 │ 4. I filed proj/7 for it and put an agent on it.                                           │
 │                                                                               alt+j more ↓ │
-│ ❯ Send message to vm-str's coordinator                                                     │
+│ ❯ Send message to the gtm coordinator                                                      │
 ╰────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -747,8 +720,8 @@ The box opens on the newest thing said, and holds only that. What came before is
 ### Hiding the message
 
 ```
-╭─  vm-str  ─────────────────────────────────────────────────────────────────────────────────╮
-│ ❯ Send message to vm-str's coordinator                                                     │
+╭─  Jaco-Desktop  ─────────────────────────────────────────────────────────────────────────────────╮
+│ ❯ Send message to the gtm coordinator                                                      │
 ╰────────────────────────────────────────────────────────────────────────────────────────────╯
   alt+c show the latest message · ? all keys
 ```
@@ -841,8 +814,8 @@ Herdr's own menu does: nothing behind it takes a key or a click.
   Herdr shows another tab all the same (a command moved it there, or a second window on the same session did), the popup
   closes at that moment, with what you typed saved. The key opens it there.
 - **It opens on the task you were looking at.** Pressed in the pane of a task's agent or reviewer, that task is selected,
-  even if the filter left from last time would hide it. A view of one other machine gives way to this machine's tasks, so
-  the task shows and the chat talks to this machine. Anywhere else it opens where it was.
+  even if the filter left from last time would hide it. A view from another machine shows this machine's tasks, so the
+  task shows and the chat talks to this machine. Anywhere else it opens where it was.
 - **Words left in its box stay with their repo.** The popup opens in the repo of the pane you are in, and what you type is
   sent from there. With a draft waiting from last time, it opens in the repo the draft was typed for and says so, so
   `Enter` never sends it from another one. Once it is sent or put away, the popup opens where you are again. Words put

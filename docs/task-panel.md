@@ -123,10 +123,9 @@ usual ones.
 - Every setting somebody chose is shown, also one that says `none`, or one that does nothing now.
 - A task in no repo has no `Check` and no `Workspace` row.
 - The whole task adds where the task is (`Project`, `Worktree` with its folder, `Branch`). Beside the list, only a project
-  that is not this board's, and another machine's name (`Machine`), have a row.
+  that is not this board's has a row.
 - A `Note` row says what the board could not use: a program that is not installed, something the repo's own file was
   refused, a mistake in your settings file.
-- A task on another machine has the same rows, from the settings that machine sent.
 
 ## The settings page
 
@@ -167,21 +166,20 @@ here either: `herdr-projects show <id>` says it.
 - **A setting that cannot apply is not offered**: fast mode, for a program that has none (only Codex has one); a repo's
   setting, for a task in no repo. One that is this task's own all the same still shows, so it can be put back.
 - Only this page's keys act while it is open, and the hint line is its own ([keys](keys.md)).
-- Board settings are yours only and are not on this page: they are on yours (below). A task on another machine is
-  changed there. An archived task's settings can be read, not changed.
+- Board settings are yours only and are not on this page: they are on yours (below). An archived task's settings can
+  be read, not changed.
 
 ### Your own settings
 
-`Ctrl+E` on this machine's heading (or a status group's), or `your own settings` in the `?` menu, opens the same page
+`Ctrl+E` on the top row (or a status group's), or `your own settings` in the `?` menu, opens the same page
 for your settings: what every task starts from, board settings too (`Settings  yours: what every task starts from`).
 On a repo's heading it is your entry for that repo. The keys are the page's; `Enter` saves as `herdr-projects set` does
 and `Ctrl+U` as `unset`. `*` marks what you set, and every other row says where its value comes from (`built in`, or on
-a repo's entry `you`). `Esc` goes back to the list. On another machine's heading the board says to change them there
-([settings](settings.md)).
+a repo's entry `you`). `Esc` goes back to the list ([settings](settings.md)).
 
 ## A coordinator in the panel
 
-On a coordinator's row (a machine's or a project's row) the panel shows that
+On a coordinator's row (a project's row or the top row) the panel shows that
 coordinator, in the same form:
 
 - **Status**: `State` (its chat's, `idle` or `working`; on [autopilot](autopilot.md), autopilot's word), `Last`, its
@@ -193,9 +191,8 @@ coordinator, in the same form:
 - `Alt+T` shows it whole, and while on its last 20 wakes: when, why, and whether it answered.
 
 `Ctrl+E` there opens its settings page, in this page's form and keys: its own rows first, under `This coordinator`,
-then on this machine's row your own settings, on a project's row your entry for that repo. While autopilot is on,
-`Enter` on an autopilot row other than the goal saves it for this time only, and a line under the rows says so. Another
-machine's coordinator's page is shown whole, to read; it is changed on that machine.
+then your own settings, then on a project's row your entry for that repo. While autopilot is on,
+`Enter` on an autopilot row other than the goal saves it for this time only, and a line under the rows says so.
 
 ## The reviews
 
@@ -235,7 +232,7 @@ text**: they are shown in full whenever they can be.
    (`Review 3  ✓ Pass · 2 minor`).
 3. The description gives up lines, down to one that says where to read it (`Description · alt+t shows it`). What the task
    needs from you is down to its first two lines. Then that one line of the description goes.
-4. Only now the settings. First the rows that are not settings (`Project`, `Machine`, `Note`). Then one row at a time,
+4. Only now the settings. First the rows that are not settings (`Project`, `Note`). Then one row at a time,
    each whole. The ones that stay longest: a row with a value somebody chose (one that names its place), then `Agent`,
    `Reviewer`, `Review when`, `Send back` and `Merge`, then the rest. The last line under them says how many settings
    have no room and the key that shows them (`13 more settings · ctrl+e shows them`).

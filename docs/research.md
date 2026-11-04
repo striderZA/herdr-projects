@@ -62,7 +62,7 @@ every setting is, nearest answer first: **the task → your entry for that repo 
 ### On the board
 
 - The row says `[research]` after the task's name: on the board and in Herdr's sidebar, for an
-  automation's task and a task on another machine alike. The label comes from the setting, never from the title.
+  automation's task too. The label comes from the setting, never from the title.
 - The task panel has a part **Research only** with the report's link (or `No report yet`). Its settings say
   `Research  only · no change to the repo` where an ordinary task says how it merges.
 

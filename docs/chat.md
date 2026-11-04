@@ -70,8 +70,7 @@ rules, its turn ends wait for you, and its row says `[chat]`, not `[research]`.
 
 ## On the board
 
-- The row says `[chat]` after the task's name: on the board, in Herdr's sidebar, and for a task on
-  another machine. The label comes from the setting, never from the title.
+- The row says `[chat]` after the task's name: on the board and in Herdr's sidebar. The label comes from the setting, never from the title.
 - The task panel has a part **Chat**: `No change to the repo · ends when you say.`, with the report's link when there is
   one. Its settings say `Chat  no change to the repo · ends when you say` where an ordinary task says how it merges, and
   leave out the review and the check, which never run.

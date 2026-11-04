@@ -81,8 +81,8 @@ Disk nearly full on vm-str: 778 MB free on /; this task starts once 5.0 GB is fr
 herdr-projects sweep, and herdr-projects doctor lists more that can go.
 ```
 
-It starts by itself once there is room. `herdr-projects machines` says how much each machine has free, and
-`herdr-projects doctor` lists each disk and the leftovers it could clean.
+It starts by itself once there is room. `herdr-projects doctor` lists each disk, how much is free, and the
+leftovers it could clean.
 
 ### A small disk
 

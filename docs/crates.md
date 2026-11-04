@@ -6,7 +6,7 @@ above it.
 | Crate | Folder | What it holds |
 |---|---|---|
 | sw-core | `crates/core/` | the data (`store/`), Herdr and the agents, and small tools every part uses |
-| sw-flow | `crates/flow/` | the flow of a task: delegating, the finish line, landing, the keeper, other machines, automations |
+| sw-flow | `crates/flow/` | the flow of a task: delegating, the finish line, landing, the keeper, automations |
 | sw-board | `crates/board/` | the board's screen (`board/`): its state, what a key does, what it draws |
 | herdr-projects | `Cargo.toml`, `src/` | the command line (`cli/`) and the made pages (`docs.rs`); the library is `sw` |
 

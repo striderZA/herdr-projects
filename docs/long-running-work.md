@@ -15,7 +15,7 @@ that keeps the thread.
 
 Group by repo (`Alt+S`) and press `Space` on the repo's row: you talk to that repo's own coordinator. It is a
 long-lived chat about that one repo, kept across restarts, beside the Coordinator and never mixed with it
-([machine and project coordinators](machine-and-project-coordinators.md)).
+([project coordinators](project-coordinators.md)).
 
 Use it as the place where the big work is planned: "here is the migration, split it into batches and add them as
 tasks, each after the last". It reads the repo, adds the tasks, and remembers what it said about them next week.

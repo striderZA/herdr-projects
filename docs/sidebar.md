@@ -26,8 +26,7 @@ To get all three rows, let the board add its sidebar rows to Herdr's config on i
 ### Row 1: Herdr's dot, the number and the title
 
 As on the board: `HSW-152 …`, the repo's key and its number ([task numbers](task-numbers.md)). The number comes first
-and Herdr cuts a row at its end, so a narrow sidebar cuts the title, never the number. The machine's name stands before
-it only where the sidebar shows more than one machine: that is Herdr's own `machine` token.
+and Herdr cuts a row at its end, so a narrow sidebar cuts the title, never the number.
 
 ### Row 2: who is on it and where it stands
 
@@ -118,11 +117,6 @@ entry: its space, its tab, its name.
 - **No bar.** The percent and time to go are there; the row's bar is not.
 - **Not in the collapsed sidebar or a phone-width window.** Those keep Herdr's own compact layouts, which sidebar rows do
   not change (Herdr's configuration page says so; not tried here).
-- **Another machine's tasks** are written by the plugin on that machine, into that machine's Herdr. They show here when
-  this Herdr is connected to it and that machine runs this version of the plugin.
-
-## How it gets there
-
 - **One writer, no words of its own.** The board has one writer for all of it (`crates/flow/src/flow/sidebar.rs`). It
   draws the task's row with the board's own code, without colours (`crates/flow/src/flow/sidebar_entry.rs`).
 - **When.** Whoever ticks (the keeper or an open board) writes an entry once a second when a word of it changed: as

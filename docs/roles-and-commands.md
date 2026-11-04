@@ -55,8 +55,7 @@ this to the board" without being told how.
 
 `add`, `list`, `report`, `describe`, `delegate`, `after` ([one task after another](after.md)), `tell`, `stop`,
 `approve`, `review`, `retry`, `fix`, `finish`, `details`, `pin`, `unpin` ([pins](pinned.md)), `archive`, `restore`, `clear`, `set`, `unset`, `show`,
-`automations` ([automations](automations.md)), `machines` ([other machines](other-machines.md)), `install`, `update`
-([installing](install.md)), `remove-extras`.
+`automations` ([automations](automations.md)), `install`, `update` ([installing](install.md)), `remove-extras`.
 
 `herdr-projects help` lists them.
 
@@ -73,9 +72,9 @@ Coordinator's closing line use them too):
 | `clear` | `removed`, and what it ended first: `proj/12: removed. Ended what it started: node …/vite.js (pid 812).` ([what it left running](disk-space.md#what-it-left-running)) |
 | `archive`, `restore` | `archived`, `restored` |
 | `archive --done [--repo NAME]` | `Archived 50 done tasks of mstars.`, and what it left out: `Left out: 1 done but pinned, 2 working.` |
-| `archive --repo NAME`, `restore --repo NAME` (`--on MACHINE`: another machine's) | `Archived mstars and its 6 tasks.`, `Restored mstars and its 6 tasks.`, and the tasks it stopped first ([archiving a project](board.md#archiving-a-project)) |
+| `archive --repo NAME`, `restore --repo NAME` | `Archived mstars and its 6 tasks.`, `Restored mstars and its 6 tasks.`, and the tasks it stopped first ([archiving a project](board.md#archiving-a-project)) |
 | `approve` | `approved` |
-| `pin`, `unpin` (a task, a machine or a project; `--on MACHINE`: another machine's project) | `proj/12: pinned`, `vm-str: pinned`, `mstars on vm-b: unpinned` ([pins](pinned.md)) |
+| `pin`, `unpin` (a task or a project) | `proj/12: pinned`, `mstars: unpinned` ([pins](pinned.md)) |
 | `stop` | `stopped`, and what it ended beside the agent: `proj/12: stopped. Ended what it started: bun …/check (pid 812).` |
 
 `stop` interrupts the agent and keeps it, so a reply goes on, and ends what it started for the task: every process

@@ -41,9 +41,8 @@ The list is of the program the words go to, read in the folder it runs in:
 | a task's agent (`Space` on the task) | its program's skills, read in the task's worktree (and the repo's main folder, for skills not committed yet) |
 | the Coordinator | its program's skills, in the Coordinator's own folder (no repo's) |
 | a repo's coordinator (`Space` on a repo's heading) | its program's skills, with that repo's |
-| a machine's coordinator | its program's skills, in its own folder |
 
-No list shows for words that go to another machine (its skills are on that machine), for a task with no agent yet, or
+No list shows for a task with no agent yet, or
 with no Coordinator (your words are added as a task). What you type still goes as typed.
 
 ## What each program offers

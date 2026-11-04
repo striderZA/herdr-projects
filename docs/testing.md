@@ -323,8 +323,7 @@ left a fake task (`probe/12`) on the human's board, because a variable it inheri
 its scratch `HERDR_PROJECTS_HOME`.
 
 **A real program is started only where the program itself is what is tested.** Those tests say so in their name
-(`real_programs_…`): the command line (`tests/cli.rs`), another machine's door (`tests/remote.rs`) and the real terminal
-(`tests/real_terminal.rs`). They run the program cargo built for the tests, inside the test's world, with no Herdr to
+(`real_programs_…`): the command line (`tests/cli.rs`) and the real terminal (`tests/real_terminal.rs`). They run the program cargo built for the tests, inside the test's world, with no Herdr to
 reach. A repo's own `setup`, `check` and `teardown` commands are shell commands by nature, and run as such in the tests
 about them.
 

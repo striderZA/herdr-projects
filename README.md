@@ -8,7 +8,7 @@
 
 <p align="center"><a href="https://github.com/eliasstravik/herdr-projects/blob/main/docs/get-started.md"><img src="assets/buttons/install-herdr-projects.svg" alt="Install herdr-projects" /></a></p>
 
-<p align="center"><sub>✓&nbsp;Free,&nbsp;MIT&nbsp;licensed &nbsp; ✓&nbsp;Runs&nbsp;on&nbsp;your&nbsp;machines,&nbsp;no&nbsp;hosted&nbsp;service &nbsp; ✓&nbsp;macOS&nbsp;and&nbsp;Linux,&nbsp;Herdr&nbsp;0.9.3+</sub></p>
+<p align="center"><sub>✓&nbsp;Free,&nbsp;MIT&nbsp;licensed &nbsp; ✓&nbsp;Runs&nbsp;on&nbsp;your&nbsp;machine,&nbsp;no&nbsp;hosted&nbsp;service &nbsp; ✓&nbsp;macOS&nbsp;and&nbsp;Linux,&nbsp;Herdr&nbsp;0.9.3+</sub></p>
 
 <br />
 
@@ -25,7 +25,7 @@ The board is an overview and a remote control; Herdr is the engine. Each delegat
 | **Same rules for every agent** | ✅ | ❌ | ✅ | ✅ |
 | **A second agent reviews every finished task** | ✅ | ❌ | ❌ | ❌ |
 | **Tasks grouped by what needs you** | ✅ | ❌ | ❌ | ✅ |
-| **Runs on your own machines** | ✅ | ✅ | ✅ | ❌ |
+| **Runs on your own machine** | ✅ | ✅ | ✅ | ❌ |
 | **Keeps every branch up to date with main** | ✅ | ❌ | ❌ | ❌ |
 | **Works with the agent CLI you already use** | ✅ | ✅ | ✅ | ❌ |
 | **Runs with no machine of yours switched on** | ❌ | ❌ | ❌ | ✅ |
@@ -36,7 +36,7 @@ Keep your attention on decisions. Herdr Projects starts, checks and tracks the t
 
 ### 📈 See every task at a glance
 
-The board's list holds your tasks in five groups, in the order they need you: `needs you`, `ready to approve`, `working`, `to do` and `done`. Its header counts them (`3 need you · 1 ready · 2 working`), and each row says who is on it, where it stands, its review round and pull request, and a percent and time to go. Herdr's own sidebar carries a small copy of each live agent's row, so you see the same thing from any space. `Alt+M` shows the tasks of your [other machines](docs/other-machines.md).
+The board's list holds your tasks in five groups, in the order they need you: `needs you`, `ready to approve`, `working`, `to do` and `done`. Its header counts them (`3 need you · 1 ready · 2 working`), and each row says who is on it, where it stands, its review round and pull request, and a percent and time to go. Herdr's own sidebar carries a small copy of each live agent's row, so you see the same thing from any space.
 
 ### ⚡ Stop briefing every agent yourself
 
@@ -90,7 +90,7 @@ Run:
 herdr-projects doctor
 ```
 
-It checks the program and its launcher, the plugin in Herdr, your agent programs (installed, signed in) and their model and effort settings, your other machines, free disk space, and leftover worktrees it could clean. Each problem comes with what to do, and it exits non-zero when there is one. [Troubleshooting](docs/troubleshooting.md#the-health-check) lists every check. [Installing](docs/install.md) walks through the first run, the blocks the board can add to Herdr's config, and taking the plugin out again.
+It checks the program and its launcher, the plugin in Herdr, your agent programs (installed, signed in) and their model and effort settings, free disk space, and leftover worktrees it could clean. Each problem comes with what to do, and it exits non-zero when there is one. [Troubleshooting](docs/troubleshooting.md#the-health-check) lists every check. [Installing](docs/install.md) walks through the first run, the blocks the board can add to Herdr's config, and taking the plugin out again.
 
 ### What permissions do the agents get?
 
@@ -98,7 +98,7 @@ It checks the program and its launcher, the plugin in Herdr, your agent programs
 
 ### Does the plugin send my work to a hosted service?
 
-No. The board keeps its files in a folder on your machine, talks to your local Herdr session, and reaches your other machines over your own SSH. Reports and review evidence stay as files in the task's folder, and the board shows their paths. Your agent CLI still uses its own service as usual.
+No. The board keeps its files in a folder on your machine and talks to your local Herdr session. Reports and review evidence stay as files in the task's folder, and the board shows their paths. Your agent CLI still uses its own service as usual.
 
 ### Will it touch my branches or worktrees on its own?
 
@@ -110,7 +110,7 @@ In `~/.herdr-projects/` by default: `settings/config.json` for your settings, `d
 
 ### Can I have several boards at once?
 
-You don't need to: one board per machine holds every repo, each task tagged with its repo, and `Alt+S` groups them. Each machine has its own board, and `Alt+M` shows the others' tasks from yours. Each herdr session gets its own Coordinator, but they share the one list. The board key never opens a second board: it goes to the one that runs. [Several boards](docs/several-boards.md) has the details.
+You don't need to: one board holds every repo, each task tagged with its repo, and `Alt+S` groups them. Each herdr session gets its own Coordinator, but they share the one list. The board key never opens a second board: it goes to the one that runs. [Several boards](docs/several-boards.md) has the details.
 
 ### Do I have to start every task through the Coordinator?
 
@@ -130,4 +130,4 @@ Herdr Projects is free and [MIT licensed](LICENSE). Your agent CLI's usual usage
 
 <p align="center"><a href="https://github.com/eliasstravik/herdr-projects/blob/main/docs/get-started.md"><img src="assets/buttons/install-herdr-projects.svg" alt="Install herdr-projects" /></a></p>
 
-<p align="center"><sub>✓&nbsp;Free,&nbsp;MIT&nbsp;licensed &nbsp; ✓&nbsp;Runs&nbsp;on&nbsp;your&nbsp;machines,&nbsp;no&nbsp;hosted&nbsp;service &nbsp; ✓&nbsp;macOS&nbsp;and&nbsp;Linux,&nbsp;Herdr&nbsp;0.9.3+</sub></p>
+<p align="center"><sub>✓&nbsp;Free,&nbsp;MIT&nbsp;licensed &nbsp; ✓&nbsp;Runs&nbsp;on&nbsp;your&nbsp;machine,&nbsp;no&nbsp;hosted&nbsp;service &nbsp; ✓&nbsp;macOS&nbsp;and&nbsp;Linux,&nbsp;Herdr&nbsp;0.9.3+</sub></p>

@@ -1,7 +1,7 @@
 # What a key shows at once
 
 **A key that acts on a task shows it right away**, even when the work takes a while (setting up a worktree, starting
-an agent, a merge, another machine answering). The row gets the working mark and says what is happening, in the
+an agent, a merge). The row gets the working mark and says what is happening, in the
 working colour. The task panel says the same under Status, as `Now`.
 
 | Key | The row says |
@@ -12,12 +12,12 @@ working colour. The task panel says the same under Status, as `Now`.
 | `Ctrl+L` | `Merging…` (after the `y`), `Approving…`, `Trying again…` or `Finishing as it is…`, depending on what it says yes to |
 | `Ctrl+R` | `Sending back…` |
 | `Ctrl+A`, `Ctrl+Z` | `Archiving…`, `Restoring…` |
-| `Ctrl+P` (on a task, and on a machine's or a project's row, here or on its machine) | `Pinning…`, `Unpinning…` |
+| `Ctrl+P` (on a task or a project's row) | `Pinning…`, `Unpinning…` |
 | `y` when picking an attempt | `Keeping attempt B…` |
 | `Alt+O` | `Opening…` (until its pane opens) |
 | `Space`, `Ctrl+S`, `Ctrl+X` on an automation | `Turning on…`, `Turning off…`, `Firing…`, `Removing…` |
-| `Ctrl+S`, `Ctrl+X`, `Ctrl+O` on a machine's or a project's row (its coordinator, here or on its machine) | `Starting…` (started, or autopilot on), `Stopping…` (stopped, or autopilot off), in the time's place with the working mark |
-| `Alt+O` on a machine's or a project's row | `Opening…` |
+| `Ctrl+S`, `Ctrl+X`, `Ctrl+O` on a project's row (its coordinator) or the top row (the Coordinator) | `Starting…` (started, or autopilot on), `Stopping…` (stopped, or autopilot off), in the time's place with the working mark |
+| `Alt+O` on a project's row or the top row | `Opening…` |
 
 **Nothing is said under the chat when it worked**: no confirmation line, for any key. The row shows what is under way,
 then what it became. What went wrong is still said (below).
@@ -27,8 +27,6 @@ then what it became. What went wrong is still said (below).
 The words stay until the board has read the task again after the work ended. Then the row shows the task's real state.
 A read that started before the work ended does not count, so the row never flickers back to the old state.
 
-For another machine's task, the words stay until that machine shows the task changed, or has answered twice (at most
-15 seconds).
 
 ## When it fails
 

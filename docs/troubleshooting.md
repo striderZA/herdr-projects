@@ -10,7 +10,6 @@
 | `herdr-projects doctor` | the health check: every problem below in one run, each with what to do ([the health check](#the-health-check)) |
 | `herdr-projects install` | writes the `herdr-projects` launcher again, and says if something else of that name comes first on your PATH ([installing](install.md)) |
 | `herdr-projects models [program]` | the model names each agent program takes here, or why its list cannot be read ([models](models.md)) |
-| `herdr-projects machines` | whether each other machine answers, how much disk each has free, and why not ([other machines](other-machines.md)) |
 | `herdr-projects sweep` | removes what ended tasks left behind now, and says what ([disk space](disk-space.md)) |
 | `herdr-projects show <id>` | every setting a task runs on, and where each value comes from ([settings](settings.md)) |
 | `herdr-projects details <id>` | everything about one task: reviews, hand-overs, limits, what it waits for |
@@ -30,14 +29,12 @@ with `✗` is a problem, with what to do under it. It exits 1 when there is a pr
 | each agent program your settings name | not installed, older than the board was checked on, not signed in (Claude Code, Codex and Cursor can say), missing Herdr's integration | install it or choose another; `claude auth login`, `codex login`, `cursor-agent login`; `herdr integration install <name>` |
 | model and effort settings | a model the program does not take, an effort it does not have, a program that cannot do its role, a value written by hand that does not count | `herdr-projects set <setting> …` ([models](models.md)) |
 | plan approval | a plan's writer cannot run in its read-only mount here (bubblewrap missing or user namespaces not allowed on Linux; `sandbox-exec` not usable on macOS), while your settings ask for plans (`plan.approve`). With no setting asking, it is said as a fact | install bubblewrap; on macOS start Herdr outside any sandbox; or `herdr-projects set plan.approve none` ([a plan first](plan.md)) |
-| other machines | one does not answer, runs an older version, or cannot ask this one | what `herdr-projects machines` says ([other machines](other-machines.md)) |
 | disk space | under 10 GB free on a disk that holds the board's data, your repos, worktrees, build caches or temporary files: a task's setup may fail there | free some space, starting with the leftovers below |
 | leftovers | the worktree of a done or archived task (a clean-up keeps one with unsaved work), a worktree on a task branch no task has, one git still lists whose folder is gone, an old warm build in `~/.cache/herdr-projects` | the `git worktree remove`, `git worktree prune` or `rm -rf` it names. It never removes anything itself; `herdr-projects sweep` removes what is provably an ended task's ([disk space](disk-space.md)) |
 | coordinators' queues | a message waits undelivered for more than a minute, as when `coordinator tell` ran where herdr could not be found | open the board in Herdr, which delivers it; in that shell, set `HERDR_BIN_PATH` to herdr's full path ([the Coordinator](coordinator.md)) |
 | older installs | herdr-superwork or herdr-projects 0.2 still in the way | it takes over what it can, and says what is left ([older installs](old-installs.md)) |
 
-Other machines are asked only when there are some, and each for at most 5 seconds. A done task's worktree is no
-leftover while its clean-up is still to come, or when `workspace.cleanup` is `false`.
+A done task's worktree is no leftover while its clean-up is still to come, or when `workspace.cleanup` is `false`.
 
 ## An agent could not start
 
@@ -206,5 +203,3 @@ The task panel shows most of this already. `herdr-projects details <id>` prints 
 - **The board looks cut off or half empty**: another Herdr window on the same session (a second device, a browser tab)
   has the size. Type a key in this window ([the board's size](board-size.md)).
 - **Herdr refuses the plugin**: your running Herdr server must be 0.9.3 or newer. Restart it after updating Herdr.
-- **Another machine's tasks do not show**: run `herdr-projects machines`, and see
-  [when a machine does not answer](other-machines.md#when-a-machine-does-not-answer).

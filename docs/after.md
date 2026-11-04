@@ -9,7 +9,7 @@ herdr-projects add "Take the new skill in" --repo gtm-agent --after gtm-skills/1
 herdr-projects delegate gtm-agent/4 --after gtm-skills/12,gtm-skills/13
 ```
 
-Or tell the Coordinator: "then", "once that is merged", "after HSW-12", "after ELA-3 on vm-str" become an `--after` on
+Or tell the Coordinator: "then", "once that is merged", "after HSW-12" become an `--after` on
 the task it adds or delegates. It adds `--delegate` (queues it) only when you asked for the task to be started.
 
 `--after` is only a condition: the task may not start before the tasks it names are done. Starting it is still `Ctrl+S`
@@ -40,22 +40,19 @@ A task tabbed with `--after` while those tasks are not all done is queued, exact
 ([the board](board.md)):
 
 - the clock `◷` in the queue's magenta, under **working** with the queued tasks (after those waiting for a slot);
-- its line says `Queued after AGT-2` (or `Queued after SKL-4, SKL-5`), naming the ones not done yet by their key, as
-  everywhere else (`vm-str:ELA-3` for a task of another machine), in the quiet grey of any task's line and cut where
-  any other line is;
+- its line says `Queued after AGT-2` (or `Queued after SKL-4, SKL-5`), naming the ones not done yet by their key, in the
+  quiet grey of any task's line and cut where any other line is;
 - it has no place in the queue (`Q#2`) yet: it waits for tasks, not for a slot;
 - the task panel's State says `queued after AGT-2`, and a `Starts after` line lists each task (`(done)` beside those
   that are). `details` has an `after` part, and `list` shows it beside the title;
-- another machine's board and the Herdr sidebar (`queued after AGT-2`) show the same. Another machine's
-  board shows the line and names as the task's own machine says them (its keys, which that board may not know), never
-  the bare id (`gtm-agent/2`).
+- the Herdr sidebar (`queued after AGT-2`) shows the same.
 
 Tasks added with `--after … --delegate` before this existed count as tabbed and show as queued.
 
 While it waits:
 
 - It holds no agent slot (`board.agents`), and nothing runs for it: no worktree, no space, no agent.
-- The ids may be tasks of **other repos** (any repo on this machine) and of **other machines** the board knows (below).
+- The ids may be tasks of **other repos** (any repo on this machine).
 - An id that does not exist is refused. So is a wait in a circle (`a` waits for `b`, which waits for `a`): the answer
   shows the circle, `proj/1 → proj/3 → proj/2 → proj/1`, and nothing is changed. An `--after` refused on `add` adds no
   task.
@@ -91,33 +88,3 @@ Nothing of that is final: get the other task going again, and once it is done th
   goes back to to do, and what it waits for is kept as its condition for its next `Ctrl+S`. A task that waits for this one
   is told it was stopped, as for any stopped task, until it is delegated again.
 - A task an agent is already on cannot be made to wait: the wait is before the start.
-
-## Waiting for a task on another machine
-
-A task can wait for tasks on any other machine the board knows (`board.machines`, or Herdr's own list of machines:
-[other machines](other-machines.md)). Keys alone may clash across machines, so name such a task with its machine first:
-`vm-str:ELA-3`, `vm-str:ela/3` or `vm-str#3`. It is kept as `vm-str:ela/3`, and shown as `vm-str:ELA-3` everywhere the
-board says what a task waits for (its row, its panel, `details`, `list`, another machine's board).
-
-```sh
-herdr-projects delegate notably/3 --after vm-str:ELA-3
-herdr-projects add "Use the new API" --after vm-str:ELA-3,HSW-12 --delegate
-```
-
-- **When you set the wait**, the board asks that machine whether the task is there. It refuses an unknown machine, a
-  task that machine does not have, and a machine that does not answer right then, and changes nothing.
-- **Circles across machines are refused too.** The board follows what the task there waits for in turn, on that machine
-  and any other one it names, back to this one. If that cannot be followed to the end (a machine on the way does not
-  answer, or names a machine this board does not know), the wait is refused as well: an unseen circle would wait
-  forever.
-- **While it waits**, this machine asks the other one about it every 15 seconds, in a job of its own (so a slow machine
-  holds nothing else up). The other machine needs only this version of herdr-projects, not an open board. An older
-  version cannot answer, and the board says so, with "update it there".
-- **A machine that does not answer does not end the wait.** The task keeps waiting and says so on its row:
-  `queued after vm-str:ELA-3 · waiting for vm-str: not reachable since 10:42` (`details`: `after.notReachable`). Once it
-  answers again, the line is back to normal.
-- **Done, failed, stopped, removed or archived without being done** are what that machine says of its task, and do here
-  what they do for a task of this machine: done counts, the others make the task wait for you with the reason
-  (`vm-str:ELA-3 was stopped`).
-- **When the wait is over,** the agent is told what that task did, as for one of this machine (its closing note, pull
-  request, merge commit or report, and which machine it was on), from what the other machine said last.
