@@ -23,12 +23,13 @@ fn own_name(name: &str) -> (String, String) {
 /// git, also in a repo that does not leave `.herdr-projects/` alone. Files kept there more than a month ago go.
 pub fn keep(dir: &Path, name: &str, kind: &str, bytes: &[u8]) -> std::io::Result<PathBuf> {
     use std::io::Write;
-    use std::os::unix::fs::OpenOptionsExt;
     std::fs::create_dir_all(dir)?;
     // A link in the folder's place (`.herdr-projects` or `files` in a working folder an agent writes in) would send
     // the file somewhere else: refused, and the `.gitignore` is never written through one.
     for d in [dir, dir.parent().unwrap_or(dir)] { if std::fs::symlink_metadata(d)?.file_type().is_symlink() { return Err(std::io::Error::other("its folder is a link")); } }
-    match std::fs::OpenOptions::new().write(true).create_new(true).custom_flags(libc::O_NOFOLLOW).open(dir.join(".gitignore")) {
+    let mut o = std::fs::OpenOptions::new();
+    o.write(true).create_new(true);
+    match crate::sys::no_follow(&mut o).open(dir.join(".gitignore")) {
         Ok(mut f) => f.write_all(b"*\n")?,
         Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {}
         Err(e) => return Err(e),
@@ -38,7 +39,9 @@ pub fn keep(dir: &Path, name: &str, kind: &str, bytes: &[u8]) -> std::io::Result
     let unique = format!("{stamp}-{}", crate::util::random_hex(4));
     let file = match PICTURES.iter().find(|(k, _)| *k == kind) { Some((_, end)) => format!("paste-{unique}.{end}"), None => { let (base, end) = own_name(name); format!("{base}-{unique}.{end}") } };
     let path = dir.join(file);
-    std::fs::OpenOptions::new().write(true).create_new(true).mode(0o600).custom_flags(libc::O_NOFOLLOW).open(&path)?.write_all(bytes)?;
+    let mut o = std::fs::OpenOptions::new();
+    o.write(true).create_new(true);
+    crate::sys::no_follow(crate::sys::private_mode(&mut o)).open(&path)?.write_all(bytes)?;
     Ok(path)
 }
 /// The files of the folder kept more than `KEPT_DAYS` ago, by the board's clock: only plain files, never its

@@ -28,7 +28,7 @@ pub fn copy_dir(from: &std::path::Path, to: &std::path::Path) -> std::io::Result
         let e = e?;
         let (src, dst) = (e.path(), to.join(e.file_name()));
         let ft = e.file_type()?;
-        if ft.is_dir() { copy_dir(&src, &dst)?; } else if ft.is_symlink() { let target = std::fs::read_link(&src)?; let _ = std::fs::remove_file(&dst); std::os::unix::fs::symlink(target, &dst)?; } else { std::fs::copy(&src, &dst)?; }
+        if ft.is_dir() { copy_dir(&src, &dst)?; } else if ft.is_symlink() { let target = std::fs::read_link(&src)?; let _ = std::fs::remove_file(&dst); crate::sys::symlink(&target, &dst)?; } else { std::fs::copy(&src, &dst)?; }
     }
     Ok(())
 }
@@ -62,7 +62,7 @@ pub fn env_set(k: &str) -> bool { std::env::var(k).map(|v| !v.is_empty()).unwrap
 /// Its value when it says something.
 pub fn env_val(k: &str) -> Option<String> { std::env::var(k).ok().filter(|v| !v.is_empty()) }
 /// This machine's own name, as the system gives it.
-pub fn hostname() -> String { let mut b = [0u8; 256]; unsafe { libc::gethostname(b.as_mut_ptr() as *mut libc::c_char, b.len()); } String::from_utf8_lossy(&b[..b.iter().position(|c| *c == 0).unwrap_or(0)]).into_owned() }
+pub fn hostname() -> String { crate::sys::hostname() }
 fn parts(v: &str) -> Vec<u64> { v.trim_start_matches('v').split('.').map(|p| p.chars().take_while(|c| c.is_ascii_digit()).collect::<String>().parse().unwrap_or(0)).collect() }
 /// Versions compared part by part as numbers (0.10.0 is newer than 0.9.1): true when `a` is newer than `b`.
 pub fn newer(a: &str, b: &str) -> bool {

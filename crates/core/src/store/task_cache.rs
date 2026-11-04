@@ -7,7 +7,6 @@ use super::tasks::{as_now, Task};
 use crate::json::*;
 use std::cell::Cell;
 use std::collections::HashMap;
-use std::os::unix::fs::MetadataExt;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
@@ -26,7 +25,7 @@ thread_local! { static PARSED: Cell<usize> = const { Cell::new(0) }; }
 pub fn parsed() -> usize { PARSED.with(|p| p.get()) }
 
 fn file_of(id: &str) -> PathBuf { dir_of(id).join("task.json") }
-fn stamp(m: &std::fs::Metadata) -> Stamp { Stamp { ino: m.ino(), size: m.size(), mtime: (m.mtime(), m.mtime_nsec()), ctime: (m.ctime(), m.ctime_nsec()) } }
+fn stamp(m: &std::fs::Metadata) -> Stamp { Stamp { ino: crate::sys::file_key(m).1, size: m.len(), mtime: crate::sys::mtime(m), ctime: crate::sys::ctime(m) } }
 /// Changed before `now` by more than a tick could hide: a later write shows in its times.
 fn settled(s: &Stamp, now: Duration) -> bool {
     let at = |(sec, ns): (i64, i64)| Duration::new(sec.max(0) as u64, ns.clamp(0, 999_999_999) as u32);
