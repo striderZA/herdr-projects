@@ -177,6 +177,7 @@ mod plan;
 mod plan_more;
 mod plan_rest;
 mod plan_untouched;
+mod platform_launcher;
 mod platform_shell;
 mod pull_requests;
 mod pull_requests_actions_only;

@@ -7,14 +7,24 @@ description = "A work board: one list of tasks, each delegated one an ordinary h
 platforms = ["linux", "macos"]
 
 # Commands go through bin/run.sh: herdr starts them with its server's environment, which may lack the user's PATH. It
-# runs the program built here, or the one downloaded for this platform from this version's GitHub release.
+# runs the program built here, or the one downloaded for this platform from this version's GitHub release. The Windows
+# entries (platforms = ["windows"]) run bin/run.ps1 instead, the same steps (see there). Each action id is distinct:
+# herdr rejects a duplicate action id whatever its platforms.
 
 # Gets the program when the plugin is installed: downloads it, or builds it from source when it cannot.
 [[build]]
 command = ["sh", "bin/run.sh", "--fetch"]
 
+[[build]]
+platforms = ["windows"]
+command = ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "bin/run.ps1", "--fetch"]
+
 [[startup]]
 command = ["sh", "bin/run.sh", "hook"]
+
+[[startup]]
+platforms = ["windows"]
+command = ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "bin/run.ps1", "hook"]
 
 [[actions]]
 id = "open"
@@ -22,9 +32,21 @@ title = "Open the work board"
 command = ["sh", "bin/run.sh", "open"]
 
 [[actions]]
+id = "open-windows"
+title = "Open the work board"
+platforms = ["windows"]
+command = ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "bin/run.ps1", "open"]
+
+[[actions]]
 id = "coordinator"
 title = "Go into the Coordinator's chat"
 command = ["sh", "bin/run.sh", "open-coordinator"]
+
+[[actions]]
+id = "coordinator-windows"
+title = "Go into the Coordinator's chat"
+platforms = ["windows"]
+command = ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "bin/run.ps1", "open-coordinator"]
 
 [[actions]]
 id = "approve-current"
@@ -32,9 +54,21 @@ title = "Approve the task in the focused pane (the board asks first)"
 contexts = ["pane"]
 command = ["sh", "bin/run.sh", "approve-current"]
 
+[[actions]]
+id = "approve-current-windows"
+title = "Approve the task in the focused pane (the board asks first)"
+contexts = ["pane"]
+platforms = ["windows"]
+command = ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "bin/run.ps1", "approve-current"]
+
 [[events]]
 on = "pane.agent_status_changed"
 command = ["sh", "bin/run.sh", "hook"]
+
+[[events]]
+on = "pane.agent_status_changed"
+platforms = ["windows"]
+command = ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "bin/run.ps1", "hook"]
 
 # An agent exiting to its shell fires this (released) on herdr 0.9.3.
 [[events]]
@@ -42,12 +76,27 @@ on = "pane.agent_detected"
 command = ["sh", "bin/run.sh", "hook"]
 
 [[events]]
+on = "pane.agent_detected"
+platforms = ["windows"]
+command = ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "bin/run.ps1", "hook"]
+
+[[events]]
 on = "pane.closed"
 command = ["sh", "bin/run.sh", "hook"]
 
 [[events]]
+on = "pane.closed"
+platforms = ["windows"]
+command = ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "bin/run.ps1", "hook"]
+
+[[events]]
 on = "worktree.removed"
 command = ["sh", "bin/run.sh", "hook"]
+
+[[events]]
+on = "worktree.removed"
+platforms = ["windows"]
+command = ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "bin/run.ps1", "hook"]
 
 [[panes]]
 id = "board"
