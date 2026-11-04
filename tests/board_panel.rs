@@ -49,17 +49,17 @@ fn the_panel_beside_the_list_cuts_a_long_description_short_and_the_whole_panel_s
     // Every setting shows in both; where the task is (its project, its worktree, its branch) is on the whole task only.
     for fact in SETTINGS { assert!(whole.contains(&format!("\n {fact} ")), "{fact}"); assert!(text.contains(&format!("│  {fact} ")), "{fact}"); }
     for fact in ["Project", "Worktree", "Branch"] { assert!(whole.contains(&format!("\n {fact} ")), "{fact}"); assert!(!text.contains(&format!("│  {fact} ")), "{fact}"); }
-    assert!(has(&whole, r"\n Review when {2}in a repo · with evidence\n Send back {4}major or worse · 3 rounds max\n Check {8}no command · 15m at most\n Merge {8}after your yes · squash · opens a pull request(\n {14}| · )waits for GitHub's checks\n Workspace {4}from main · removed when done\n Also {9}one attempt · not research only · no limits · no fallback\n"), "{whole}");
+    assert!(has(&whole, r"\n Review when {2}in a repo · with evidence\n Send back {4}major or worse · 3 rounds max\n Check {8}no command · 15m at most\n Merge {8}after your yes · squash · opens a pull request(\n {14}| · )waits for GitHub's checks\n Workspace {4}from main · removed when done\n Also {9}one attempt · not research only · no limits\n"), "{whole}");
     assert!(!has(&whole, r"\((this task|you|this repo)\)|\*"), "no value names a place, and none is marked: none is this task's own");
     // A short window gives the settings its lines before the description: cut further, then the one line that says
     // where to read it, then gone, and only then a setting. With no room for all, a line counts the rest.
     { let side = beside(&w, &big, 32); every(&side, "32 rows");
-      assert!(has(&side.join("\n"), r"\n {2}Description ─+\n {2}Line 1 of a very long description\.\n {2}Line 2 of a very long description\.\n {2}Line 3 of a very long description\. …\n\n {2}Settings ─"), "{}", side.join("\n")); }
+      assert!(has(&side.join("\n"), r"\n {2}Description ─+\n {2}Line 1 of a very long description\.\n {2}Line 2 of a very long description\.\n {2}Line 3 of a very long description\.\n {2}Line 4 of a very long description\. …\n\n {2}Settings ─"), "{}", side.join("\n")); }
     { let side = beside(&w, &big, 30); every(&side, "30 rows"); let t = side.join("\n");
-      assert!(has(&t, &keyed(r"\n {2}State {8}○ to do · \ds ago\n\n {2}Description · {panel} shows it\n\n {2}Settings ─")) && !t.contains("Line 1 of"), "{t}"); }
+      assert!(has(&t, r"\n {2}State {8}○ to do · \ds ago\n\n {2}Description ─+\n {2}Line 1 of a very long description\.\n {2}Line 2 of a very long description\. …\n\n {2}Settings ─") && !t.contains("Line 3 of"), "{t}"); }
     { let side = beside(&w, &big, 27); every(&side, "27 rows"); let t = side.join("\n"); assert!(!has(&t, "Description|Line 1 of"), "{t}"); }
     { let side = beside(&w, &big, 20); let t = side.join("\n");
-      assert!(has(&t, &keyed(r"\n {2}Status ─+\n {2}State {8}○ to do · \ds ago\n\n {2}Settings ─+\n {2}Agent {8}claude · default model\n {15}default effort\n {2}Reviewer {5}codex · default model\n {15}default effort\n {2}Review when {2}in a repo · with evidence\n {2}Send back {4}major or worse · 3 rounds max\n {2}16 more settings · {settings} shows them\n\n {2}{panel} shows the whole task")), "{t}");
+      assert!(has(&t, &keyed(r"\n {2}Status ─+\n {2}State {8}○ to do · \ds ago\n\n {2}Settings ─+\n {2}Agent {8}claude · default model\n {15}default effort\n {2}Reviewer {5}codex · default model\n {15}default effort\n {2}Review when {2}in a repo · with evidence\n {2}Send back {4}major or worse · 3 rounds max\n {2}14 more settings · {settings} shows them\n\n {2}{panel} shows the whole task")), "{t}");
       assert!(!side.iter().any(|l| l.ends_with('…')), "nothing is cut in the middle of a line"); }
     // With too little room for all, a value somebody chose comes before the built-in ones.
     set("limit.time", "2h", &big);

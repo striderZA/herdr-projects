@@ -23,12 +23,11 @@ fn codex_list() {
 #[test]
 fn each_program_the_settings_name_is_asked_about_once() {
     let _w = world();
-    hand_written(json!({ "worker.agent": "codex/gpt-6.1-sol", "reviewer.agent": "claude", "worker.fallback": ["pi", "claude/opus"], "coordinator.agent": "none" }));
+    hand_written(json!({ "worker.agent": "codex/gpt-6.1-sol", "reviewer.agent": "claude", "coordinator.agent": "none" }));
     let named = agents::named();
     let by = |k: &str| named.iter().find(|(x, _)| x == k).map(|(_, b)| b.clone()).unwrap_or_default();
     assert_eq!(by("codex"), ["worker.agent"]);
-    assert_eq!(by("pi"), ["worker.fallback"]);
-    assert!(by("claude").contains(&"reviewer.agent".to_string()) && by("claude").contains(&"worker.fallback".to_string()), "{named:?}");
+    assert!(by("claude").contains(&"reviewer.agent".to_string()), "{named:?}");
     assert_eq!(named.iter().filter(|(k, _)| k == "claude").count(), 1);
     assert!(!named.iter().any(|(k, _)| k == "none" || k.is_empty()));
 }

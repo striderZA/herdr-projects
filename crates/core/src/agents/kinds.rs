@@ -20,7 +20,6 @@
 //!   fresh        the arguments that start a new conversation, not its last one  none
 //!   standing     the arguments that add a rules file to its instructions        none: the rules go in its first prompt
 //!   lead         arguments that come first, before everything else              none
-//!   headless     its one-shot command, for the Watcher                          none: it cannot be the Watcher
 //!   fast         it has a faster service tier (`<role>.fast`)                   none: the setting does nothing
 //!   tokens       its saved conversation's tokens can be counted                 none: `limit.tokens` does nothing
 //!   interrupt    the key that stops a turn                                      esc
@@ -63,7 +62,6 @@ pub struct Kind {
     pub session: &'static [&'static str],
     pub fresh: &'static [&'static str],
     pub standing: &'static [&'static str],
-    pub headless: Option<Headless>,
     /// herdr's integration for it (`herdr integration install <name>`): "" for none.
     pub integration: &'static str,
     /// herdr sees whether it works only through that integration: without it, it is never started.
@@ -72,18 +70,10 @@ pub struct Kind {
     /// "not logged in". None: the board cannot tell.
     pub login: Option<Login>,
     /// (role, why): a role it cannot do well. The role is a setting's first part (worker, reviewer, coordinator,
-    /// plan, watcher); `worker` also stands for the fallbacks and the attempts.
+    /// plan); `worker` also stands for the attempts.
     pub cannot: &'static [(&'static str, &'static str)],
     /// What was tried, on which version (docs/agents.md).
     pub checked: &'static str,
-}
-/// A headless one-shot: `args`, then the model, then the instructions (`system`, else written above the prompt),
-/// then `prompt` (`{}` the prompt; none: it goes in on stdin).
-pub struct Headless {
-    pub args: &'static [&'static str],
-    pub model: &'static [&'static str],
-    pub system: &'static [&'static str],
-    pub prompt: &'static [&'static str],
 }
 /// Asking a program whether it is signed in: `status`, the arguments that ask; `how`, the command that signs in.
 pub struct Login { pub status: &'static [&'static str], pub how: &'static str }
@@ -135,7 +125,7 @@ pub const NO_MODELS: Models = Models { list: &[], read: Read::None, server: &[],
 pub const BASE: Kind = Kind {
     name: "", program: "", aliases: &[], min_version: "0", efforts: &[], efforts_read: EffortsRead::Help, access_full: &[], access_ask: Some(&[]), access_auto: None, fast: false, tokens: false,
     interrupt: "esc", rules_file: None, since: &[], reads_turn: false, lead: &[], model: &[], models: NO_MODELS, effort: &[], effort_note: "",
-    resume: &[], session: &[], fresh: &[], standing: &[], headless: None, integration: "", needs_integration: false, login: None, cannot: &[], checked: "",
+    resume: &[], session: &[], fresh: &[], standing: &[], integration: "", needs_integration: false, login: None, cannot: &[], checked: "",
 };
 mod herdr;
 mod own;

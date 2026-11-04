@@ -18,7 +18,7 @@ pub fn settings_command(cmd: &str, pos: &[String], w: &Where, value: Option<Valu
     let co = match &w.coord { Some(k) => Some(coordinator_of(k)?), None => None };
     let id = if cmd == "show" { w.task.clone().or_else(|| pos.get(1).cloned()) } else { w.task.clone() };
     let task = match &id { Some(id) => Some(find(id)?), None => None };
-    let scope = match (&task, &w.repo, &co) { (Some(t), _, _) => Scope::task(t), (None, Some(r), _) => Scope::repo(r), (None, None, Some(c)) => crate::autopilot::record::scope_of(c), _ => Scope::you() };
+    let scope = match (&task, &w.repo, &co) { (Some(t), _, _) => Scope::task(t), (None, Some(r), _) => Scope::repo(r), (None, None, Some(c)) => Scope::coord(crate::store::settings::coord::Coord::of(&c.settings_key())), _ => Scope::you() };
     let place = match (&task, &w.repo, &co) { (Some(t), _, _) => format!(" for {}", t.s("id")), (None, Some(r), _) => format!(" for {r}"), (None, None, Some(c)) => format!(" for the {}", c.name()), _ => String::new() };
     if cmd == "show" {
         if !scope.repo.is_empty() && !known_repos().contains_key(&scope.repo) {
@@ -60,7 +60,7 @@ pub fn settings_command(cmd: &str, pos: &[String], w: &Where, value: Option<Valu
 /// The coordinator a settings command names, by its key: a project coordinator's repo must be one the board knows.
 fn coordinator_of(key: &str) -> Res<crate::coordinator::co::Co> {
     let socket = crate::herdr::cli::current_socket();
-    let Some(repo) = key.strip_prefix("project:") else { return Ok(crate::autopilot::record::co_of(&socket, key)) };
+    let Some(repo) = key.strip_prefix("project:") else { return Ok(crate::coordinator::co::Co::top(&socket)) };
     let repos = known_repos();
     let Some(name) = repos.keys().find(|k| k.eq_ignore_ascii_case(repo)) else { crate::fail!("No repo \"{repo}\" on the board, so it has no project coordinator. Known: {}.", if repos.is_empty() { "none yet".into() } else { repos.keys().cloned().collect::<Vec<_>>().join(", ") }) };
     Ok(crate::coordinator::co::Co::project(&socket, name))

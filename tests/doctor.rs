@@ -31,11 +31,6 @@ fn each_problem_is_one_line_with_what_to_do_and_the_count_ends_it() {
     assert_eq!(say(&all), "✓ herdr 0.9.3 runs the plugin\n✗ codex is not signed in (worker.agent)\n  → Run `codex login` in a terminal here.\n1 problem.");
     assert_eq!(problems(&all), 1);
     assert!(say(&[Found::ok("fine")]).ends_with("No problems."));
-    // Older installs: a line that goes on from the one before is said with it; only what is left to do is a problem.
-    let old = sw::doctor::old_installs(vec![("Old herdr-projects (0.2): its projects are in ~/x.".into(), false), ("  The old version finds them with HERDR_PROJECTS_ROOT=~/x.".into(), false), ("HERDR_PROJECTS_ROOT is set.".into(), true)]);
-    assert_eq!(old.len(), 2);
-    assert!(old[0].what.ends_with("projects are in ~/x. The old version finds them with HERDR_PROJECTS_ROOT=~/x."), "{:?}", old[0]);
-    assert!(old[1].problem);
 }
 
 #[test]

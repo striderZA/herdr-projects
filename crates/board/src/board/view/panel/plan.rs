@@ -17,15 +17,12 @@ const SHORT: usize = 12;
 pub fn plan(k: &mut Kit, c: &Ctx, r: &Obj) -> bool {
     let p = r.at("plan");
     if !p.is_object() { return false; }
-    let w = p.at("writer");
-    let who = if w.is_object() { format!("{}{}", w.s("kind"), if p.b("model") || w.b("model") { format!(" · {}", if p.b("model") { p.s("model") } else { w.s("model") }) } else { String::new() }) } else { "the working agent".into() };
+    let who = "the working agent".to_string();
     let yes = if p.b("approvedAt") { format!("approved by {} {} ago", match p.s("approvedBy") { "reviewer" => "the reviewer", "nobody" => "nobody: plan.approve was taken off", _ => "you" }, age(c.now - p.i("approvedAt"))) }
         else if r.s("stage") == "plan" { "waits for your yes".into() } else if p.b("at") { "written".into() } else { "being written".into() };
     let mut lines = vec![k.head("Plan", None)];
     lines.extend(k.fact_text("Stands", &yes));
     lines.extend(k.fact("Written by", Kit::wrap_at(&who, k.room).into_iter().map(|l| l.recolor(Ink::Muted)).collect()));
-    // A planner's time and tokens count to the task: said here, since the session below is the working agent's.
-    if p.b("took") { let u = p.at("usage"); let x = [age(p.i("took")), if u.is_object() { format!("{} in · {} out", tokens(u.f("in")), tokens(u.f("out"))) } else { String::new() }].into_iter().filter(|x| !x.is_empty()).collect::<Vec<_>>().join(" · "); lines.extend(k.fact("Planner used", Kit::wrap_at(&x, k.room).into_iter().map(|l| l.recolor(Ink::Muted)).collect())); }
     let rv = p.at("review");
     if rv.is_object() {
         lines.extend(k.fact_text("Reviewer", &format!("{}{}", gate::result(rv, "merge"), if rv.b("text") { format!(". {}", rv.s("text")) } else { String::new() })));

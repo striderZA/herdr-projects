@@ -15,18 +15,15 @@ talks to its coordinator instead, and `Space` again goes back to the top row.
 ## A coordinator's row reads as a task's
 
 - **The same marks as tasks**, in the marks' column left of the caret: `○` idle (also one that never ran, or was
-  stopped), `◐` working, `?` it asks you (`!` it wants your OK), `✗` it could not start, on [autopilot](autopilot.md) too:
-  autopilot has no mark or colour of its own. None of a task's other marks (`◑ ◆ ✓ ◷ ◇`) is a
+  stopped), `◐` working, `?` it asks you (`!` it wants your OK), `✗` it could not start. None of a task's other marks (`◑ ◆ ✓ ◷ ◇`) is a
   coordinator's, and an idle coordinator is not counted in To do. Where no coordinator can run
   (`coordinator.agent none`), its row has no mark.
 - **The same right side as tasks: only the time.** `3m` while it works, `1h ago` otherwise, nothing when it never ran.
   No state words, no role word.
 - **The same second line as tasks**: what it does while it works, or its question while it waits for you. It goes when
-  it stops: no old news. On autopilot the line says what autopilot does, in the same grey: `Autopilot · next check-in
-  in 12m · 3 of 20 today`, `Working on HSW-92 · 3 of 20 today`, `Checking in · HSW-92 finished`, `Needs you · …`. Its latest message shows in the chat box when you select its row.
+  it stops: no old news. Its latest message shows in the chat box when you select its row.
 - **Its name**, a home folder as `~`, with no rule to the edge. The top row says what it holds, open or folded:
-  `9 projects · 30 tasks`. A coordinator on autopilot has a dimmed `[autopilot]` after its name, as a task has
-  `[research]`; the top row's summary also says how many of its coordinators are: `30 tasks, 1 automation, 1 on autopilot`.
+  `9 projects · 30 tasks`.
 - **The list reads project → task by how far in each row stands.**
 - In a narrow pane the names shorten; the mark and the time stay.
 
@@ -41,7 +38,7 @@ talks to its coordinator instead, and `Space` again goes back to the top row.
 counted there.
 
 **The filter Coordinators** (`Tab` from All, [the filter row](board.md#the-filter-row)) leaves only the coordinators
-that run: started and not stopped (working, idle, needs you), on autopilot, or failed so that you can fix it. Its count
+that run: started and not stopped (working, idle, needs you), or failed so that you can fix it. Its count
 is how many there are. The top row is always there, counted only while it runs. A stopped or never started one is not
 there and not counted; its row stays in the other filters, with `○`.
 
@@ -57,7 +54,7 @@ of whoever it talks to ([colours](colours.md#the-box-says-who-you-type-to)).
   from task to task. `Space` again goes back to the top row's Coordinator.
 - **`Alt+O` goes into its agent**: its real Herdr pane, as on a task. A coordinator that is not running is started
   first. The board keeps running in its own tab, and your key goes back to it.
-- **`Ctrl+S` starts it, `Ctrl+X` stops it**, and `Ctrl+O` is its autopilot; `Ctrl+E` shows its settings. Those are the
+- **`Ctrl+S` starts it, `Ctrl+X` stops it**, and `Ctrl+E` shows its settings. Those are the
   same keys as on a task's row.
 - **`Ctrl+P` pins its row**, as it pins a task's; the project's tasks come under it in the Pinned filter.
 - **`Enter`** on its row with words typed sends them to it, exactly as `Space` and `Enter` do on a task.

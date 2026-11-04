@@ -122,9 +122,8 @@ entry: its space, its tab, its name.
 - **When.** Whoever ticks (the keeper or an open board) writes an entry once a second when a word of it changed: as
   often as the board redraws its own rows. When a task comes to wait for you, goes wrong, is taken up again or ends,
   whatever did that writes the entry at once, without waiting for the tick.
-- **No fights.** The Watcher and the check only keep what they find on the task ([the Watcher](watcher.md),
-  [the check's progress](check-progress.md)). They write nothing to Herdr themselves, so no two writers fight over a
-  line.
+- **No fights.** The check only keeps what it finds on the task ([the check's progress](check-progress.md)). It writes
+  nothing to Herdr itself, so no two writers fight over a line.
 - **After a Herdr restart.** Herdr keeps none of this when its server restarts. The board notices on its next tick, by
   Herdr's own reading of the pane (the shown name it wrote is gone), and writes every entry of that Herdr again.
 - **Nothing stale is left.** What was written is replaced, never left to expire. A task that is stopped, done or moved

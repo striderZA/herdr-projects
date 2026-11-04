@@ -37,13 +37,13 @@ fn a_short_window_the_settings_outlast_every_text_and_the_status_stays_whole() {
         let more = lines.iter().find(|l| has(l, r"more settings? · ctrl\+e shows"));
         let want: Vec<&str> = if fit >= 30 { SETTINGS.to_vec() } else if fit == 24 { vec!["Agent", "Plan first", "Reviewer", "Review when", "Send back", "Merge"] } else if fit == 20 { vec!["Agent", "Reviewer"] } else { vec![] };
         assert_eq!(kept, want, "the settings {at}");
-        assert_eq!(more.map(String::as_str), if fit == 24 { Some(" 7 more settings · ctrl+e shows them") } else if fit == 20 { Some(" 13 more settings · ctrl+e shows them") } else { None }, "how many settings have no room, {at}");
+        assert_eq!(more.map(String::as_str), if fit == 24 { Some(" 5 more settings · ctrl+e shows them") } else if fit == 20 { Some(" 11 more settings · ctrl+e shows them") } else { None }, "how many settings have no room, {at}");
         assert_eq!(lines.iter().any(|l| l == " Settings ──────────────────────────────────"), !kept.is_empty(), "the settings keep their headline while one of them is there, {at}");
-        assert_eq!(lines.iter().any(|l| l == " Description ───────────────────────────────"), fit >= 40, "the description {at}");
-        assert_eq!(lines.iter().any(|l| l == " Description · alt+t shows it"), fit == 30, "one line for the description {at}");
+        assert_eq!(lines.iter().any(|l| l == " Description ───────────────────────────────"), fit >= 30, "the description {at}");
+
         assert!(!lines.iter().any(|l| l.starts_with(" The agent said")), "what the agent said gives way before a setting does, {at}");
         assert_eq!(lines.iter().any(|l| l.starts_with(" Review 3     ✓ 4/5, says merge")), fit > 6, "the latest review {at}");
-        assert_eq!(lines.iter().any(|l| l == "              Fine now."), fit == 16, "the review's summary {at}");
+        assert_eq!(lines.iter().any(|l| l == "              Fine now."), fit == 40 || fit == 16, "the review's summary {at}");
         assert_eq!(lines.iter().any(|l| l == " Status ────────────────────────────────────"), fit >= 12, "the headline {at}");
         assert_eq!(lines.iter().any(|l| l.starts_with(" #1 Build a flying game")), fit >= 6, "the title {at}");
         assert!(!lines.iter().any(|l| has(l, r"^[ ▌] {13}") && l.ends_with('…')) && !lines.iter().any(|l| SETTINGS.iter().any(|k| l.starts_with(&format!(" {k} "))) && l.ends_with('…')), "no fact is cut with an ellipsis, {at}");

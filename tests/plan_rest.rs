@@ -13,7 +13,6 @@ use sw::store::reviews::review_history;
 const PLAN: &str = "# Plan\n\n1. Add f.txt with one line.\n2. Run the check.\n";
 fn plan_world(settings: serde_json::Value) -> World {
     let w = world_with(Opts { repo: true, settings, ..Default::default() });
-    unsafe { std::env::set_var("HERDR_PROJECTS_SANDBOX", "bwrap") };
     w.patch(|s| s["pids"] = json!(true));
     w
 }
@@ -32,8 +31,6 @@ fn plan_ready_is_said_everywhere_the_worktree_stays_untouched_and_the_work_is_re
     assert_eq!(t.at("plan").s("link"), P::plan_file(&t).display().to_string());
     assert!(!t.at("plan").b("undone"), "nothing got in, so nothing had to be put back");
     assert!(is_locked(&t));
-    assert_eq!(t.at("plan").at("mode"), &json!(true));
-    assert!(sw::plan::sandbox::boxed_command(&t, "x", "codex", &["-c".into(), "a b".into()]).ends_with("--die-with-parent -- codex -c 'a b'"));
     assert!(!t.b("reviewRound"));
     // The row, the State line, herdr's sidebar and the notification all say it.
     let r = sw::shown::states::as_row(&row(&id));
@@ -46,7 +43,7 @@ fn plan_ready_is_said_everywhere_the_worktree_stays_untouched_and_the_work_is_re
     let whole = b.text();
     assert!(has(&whole, r"Stands\s+waits for your yes"), "{whole}");
     assert!(has(&whole, r"Written by\s+the working agent"), "{whole}");
-    assert!(has(&whole, r"Plan first\s+you approve it( \*)? · written by the agent"), "{whole}");
+    assert!(has(&whole, r"Plan first\s+you approve it( \*)?"), "{whole}");
     assert!(sw::actions::finish_line::details(&id).unwrap().at("plan").to_string().contains("Add f.txt with one line"));
     // Sent back and written again: still nothing in the repo.
     sw::actions::talk::tell(&id, "Make it smaller.", false).unwrap();
@@ -93,7 +90,7 @@ fn the_reviewers_look_at_a_plan_is_shown_runs_in_tabs_of_its_own_and_is_no_round
     for _ in 0..2 { if t.s("stage") != "working" { t = settle(&id); } }
     assert_eq!(t.s("stage"), "working", "{}", t.at("failure"));
     assert!(t.at("plan").b("built"));
-    assert!(last(&w, &t).contains("This task has an approved plan"), "{}", last(&w, &t));
+    assert!(last(&w, &t).contains("Your plan is approved"), "{}", last(&w, &t));
     assert!(P::go_words(&t).starts_with("Your plan is approved (the reviewer checked it against the task)"));
     // The look at a plan is no round of the task's reviews (the work itself is not reviewed here: review.when never).
     assert_eq!(review_history(&t).len(), 0);

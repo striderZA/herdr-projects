@@ -10,7 +10,6 @@ pub mod gh;
 pub mod herdr;
 pub mod opener;
 pub mod panes;
-pub mod pilot;
 pub mod worktrees;
 
 use serde_json::{json, Value};
@@ -56,7 +55,7 @@ pub fn world_with(o: Opts) -> World {
     let now = sw::clock::now();
     let versions: serde_json::Map<String, Value> = sw::agents::kinds::all().map(|k| (k.name.to_string(), json!({ "v": "9.9.9", "at": now, "found": true }))).collect();
     std::fs::write(data.join("versions.json"), Value::Object(versions).to_string()).unwrap();
-    let mut settings = json!({ "watcher.agent": "none", "coordinator.agent": "none" });
+    let mut settings = json!({ "coordinator.agent": "none" });
     for (k, v) in o.settings.as_object().cloned().unwrap_or_default() { settings[k] = v; }
     std::fs::write(config.join("config.json"), settings.to_string()).unwrap();
     let root = base.join("proj");

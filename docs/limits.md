@@ -132,10 +132,8 @@ Choose the count with that in mind (`show <id>` and the task panel say what a ta
 - **[Several attempts](attempts.md)**: a task done several times at once is one task to its limits. Each attempt reads
   its task's limits. `limit.time` holds for each attempt's own runs; `limit.tokens` for all the attempts and the task
   together, whichever of them a turn ends in.
-- **[A plan first](plan.md)**: tokens are counted per conversation file and added up on the task, so a planner's
-  conversation is one more file. A run is whatever agent is at work in the task's current stage.
-- **[The fallback agent](fallback.md)**: a stop at a limit is the board's ordinary stop with a mark on it (`limitStop`).
-  A task stopped at its limit is not handed over: it waits for you.
+- **[A plan first](plan.md)**: tokens are counted per conversation file and added up on the task. A run is whatever
+  agent is at work in the task's current stage.
 
 These settings come from the research of task herdr-projects/154.
 

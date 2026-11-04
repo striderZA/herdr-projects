@@ -49,8 +49,6 @@ Every other program has no such mode, and `auto` is refused for it, never made `
   another program.` `herdr-projects doctor` names every such setting.
 - **On the task panel's settings page** the access row passes over a value its program cannot do: for OpenCode it goes
   `full`, `ask`, `full`; for pi, which can do neither, it stays `full`.
-- **A fallback agent** without one is passed over while the access is `auto`, as one that cannot ask is while it is
-  `ask` ([the fallback agent](fallback.md)).
 - **A task that plans first** is refused before the plan, not after you approved it.
 
 ## An older version

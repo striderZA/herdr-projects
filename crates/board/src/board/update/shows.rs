@@ -1,8 +1,7 @@
 //! The filter row on top of the board: All · Coordinators · Needs you · Working · Ready · To do · Done · Automations
 //! · Pinned, each with its count. Tab moves to the next, shift+tab back, a click picks one; the list then shows only the tasks of
 //! that status. Coordinators and Automations are filters as the others are: Coordinators leaves the coordinators' own
-//! rows, which are the top row's and the projects', of those that run (started and not stopped, on autopilot, or
-//! failed); Automations leaves the automations' rows, in the same places and grouping;
+//! rows, which are the top row's and the projects', of those that run (started and not stopped, or failed); Automations leaves the automations' rows, in the same places and grouping;
 //! Pinned leaves what is pinned, in its places and the board's grouping (pinned.rs).
 use super::heads::{machine_id, HEAD};
 use super::list::relist;
@@ -63,20 +62,17 @@ fn projects(s: &State) -> Vec<String> {
     out.sort_by_key(|r| r.to_lowercase());
     out
 }
-/// The coordinator a heading stands for runs: started and not stopped (working, idle, needs you), on autopilot, or
-/// failed, so that it can be fixed. One stopped or never started is not under Coordinators.
+/// The coordinator a heading stands for runs: started and not stopped (working, idle, needs you), or failed, so that
+/// it can be fixed. One stopped or never started is not under Coordinators.
 pub fn running(s: &State, id: &str) -> bool {
     let Some(t) = super::coords::of_head(s, id) else { return false };
-    if super::pilot::on(s, &t) { return true; }
     let v = super::coords::look_of(s, &t).unwrap_or_default();
     !v.error.is_empty() || ["starting", "working", "blocked", "idle"].contains(&v.state.as_str())
 }
-/// The coordinator a heading stands for needs you: it asks you, wants your OK, could not start, or its autopilot
-/// needs you. It shows under Needs you beside the tasks, and is counted there.
+/// The coordinator a heading stands for needs you: it asks you, wants your OK, or could not start. It shows under
+/// Needs you beside the tasks, and is counted there.
 pub fn needs_you(s: &State, id: &str) -> bool {
     let Some(t) = super::coords::of_head(s, id) else { return false };
-    let p = super::pilot::view(s, &t);
-    if p.b("on") && ["needs you", "could not start"].contains(&p.s("state")) { return true; }
     let v = super::coords::look_of(s, &t).unwrap_or_default();
     !v.error.is_empty() || v.state == "blocked" || !v.asks.is_empty()
 }

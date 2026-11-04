@@ -10,11 +10,10 @@ use crate::json::*;
 use crate::shown::ink::{Ink, Inked};
 
 /// A coordinator's edge, in the colour of where it stands as its row's mark is: base idle (or never ran), amber working,
-/// red when it needs you or could not start (autopilot's start too). Autopilot has no colour of its own.
-fn coordinator_edge(s: &State, t: &Target, v: &crate::coordinator::look::Look) -> Ink {
-    let p = crate::board::update::pilot::view(s, t);
+/// red when it needs you or could not start.
+fn coordinator_edge(_s: &State, _t: &Target, v: &crate::coordinator::look::Look) -> Ink {
     let working = ["working", "starting"].contains(&v.state.as_str());
-    if !v.error.is_empty() || p.s("state") == "could not start" || v.state == "blocked" || !v.asks.is_empty() { return Ink::Red; }
+    if !v.error.is_empty() || v.state == "blocked" || !v.asks.is_empty() { return Ink::Red; }
     if working { Ink::Yellow } else { Ink::Text }
 }
 /// A task's agent's edge: its task's status colour, as its mark has it; base for one with no agent at work (to do,

@@ -4,7 +4,6 @@ use super::already;
 use super::check_again::{choose, passed_patch, CHECKED_ENV};
 use super::check_run::run_check;
 use super::commit::commit_left;
-use super::hand_over::hand_over;
 use super::pipeline_end::{after_review, Ctx};
 use super::research::{kept_report, research_only};
 use super::shared::{fail, failure, first_line, FailHow};
@@ -124,8 +123,6 @@ pub fn pipeline(id: &str, g: &mut Guard, text: &str, keep_intent: bool, reason: 
             let mut f = failure("check", &format!("Check failed{}", if last && fails > 1 { format!(" after {fails} tries") } else { String::new() }), &format!("Command: {ran}\nFolder: {}\n\n{}", folder.display(), r.out), "Fix the failed check, run it again and finish for a fresh review.");
             f.put("auth", auth); f.put("agentCanFix", true);
             if last && fails > 1 { f.put("msg", format!("The check still fails after {fails} tries ({ran}): {tail}")); }
-            // The agent had its rounds and the check still fails: the next one on `worker.fallback` takes over.
-            if last && !auth && rounds > 0 && !get(id).map(|c| c.b("mergeIntent")).unwrap_or(false) && hand_over(id, g, &format!("the check still failed after {fails} tries"), &format!("The check still fails, so this is not done yet.{merged}\n\n{}", bound_detail(f.s("detail"))))? { return Ok(()); }
             if last || auth { fail(g, f, FailHow { patch: obj(json!({ "checkFails": fails })), ..Default::default() })?; return Ok(()); }
             g.check()?;
             // Straight back to the agent. The turn it causes is the board's own: an approved merge survives it.

@@ -124,7 +124,7 @@ fn handover(own: i64) -> Result<(), String> {
 // ---- the tick: what the board's own tick does, once a second ----------------------------------------------------------
 /// One ticker at a time: whoever ticks takes the short `tick` lock without waiting and skips when it is taken, so
 /// housekeeping never runs twice at once during a handover between a board and a keeper.
-pub fn tick_once(socket: &str, watch: bool) -> Option<Vec<Obj>> {
+pub fn tick_once(socket: &str) -> Option<Vec<Obj>> {
     let mut rows = None;
     let r = with_lock_wait("tick", 0, || {
         if same_socket(socket, &current_socket()) { crate::automations::tick::automations_tick(now()); } // tasks made on a schedule or by a board event
@@ -135,17 +135,11 @@ pub fn tick_once(socket: &str, watch: bool) -> Option<Vec<Obj>> {
         refresh_said(&every, now());
         // A run at its time limit is stopped; a raised limit carries on (limits/tick.rs).
         crate::limits::tick::limits_tick(&every, now(), Some(&|id: &str| { let _ = crate::actions::limits::carry_on(id, true); }));
-        crate::autopilot::tick::autopilot_tick(socket, now()); // coordinators on autopilot woken (autopilot/tick.rs)
         for co in crate::coordinator::state::all(socket) { crate::coordinator::pump::tick(&co); crate::coordinator::sidebar::tell_sidebar(&co); }
         rows = Some(rs);
         Ok(())
     });
     if let Err(e) = r { if e.kind != Kind::Busy { log(&e.msg); } }
-    if let (Some(rs), true) = (&rows, watch) {
-        // Each attempt of a task has an agent of its own to follow (attempts.rs).
-        let every: Vec<Obj> = rs.iter().flat_map(|t| std::iter::once(t.clone()).chain(t.arr("tries").iter().filter_map(|x| x.as_object().cloned()))).collect();
-        crate::watcher::watch_tick(&every, now());
-    }
     rows
 }
 static SAID_AT: LazyLock<Mutex<HashMap<String, i64>>> = LazyLock::new(Default::default);
@@ -179,7 +173,7 @@ pub fn keeper_work() -> i32 {
             let f = fails.entry(socket.clone()).or_insert(0);
             *f = if ok { 0 } else { *f + 1 };
             if *f < 3 { live += 1; }
-            if ok { tick_once(socket, true); }
+            if ok { tick_once(socket); }
         }
         if live == 0 { return 3; } // every herdr it knows is gone
         std::thread::sleep(std::time::Duration::from_millis(1000));

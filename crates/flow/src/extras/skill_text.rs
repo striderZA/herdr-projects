@@ -38,8 +38,6 @@ Every command accepts `--json`. Below, `herdr-projects` stands for that path.
 - `herdr-projects delegate <id>`: put an agent on a task. It works in its own git worktree, as an ordinary herdr
   agent in its own herdr space. Any work setting can be chosen for this one task as `--<name> <value>`:
   `--worker.agent {agents}` (a model after a slash: `codex/<model>`, in the program's own names: `herdr-projects models <program>` lists the ones your sign-in can use and its effort levels, never guess one, and with no model named by the human give none: the program alone uses its own default; a wrong name or a program that cannot do a role is refused with the reason), `--worker.effort`, `--reviewer.agent`,
-  `--worker.fallback "codex, claude/claude-opus-5-5"` (who takes over, in order, when the agent cannot go on: out of
-  allowance, logged out, its provider down, its rounds used up; `--reviewer.fallback` the same for the reviewer),
   `--review.when always|repos|never`, `--review.mustFix critical|major|minor|trivial`, `--merge.by you|itself`,
   `--workspace.from here` (start from their current commit), `--workspace.from develop` (start from that branch at the
   remote and land on it: the pull request merges into it). A refused option changes nothing on the task.
@@ -64,7 +62,7 @@ Every command accepts `--json`. Below, `herdr-projects` stands for that path.
 - A plan first: `--plan.approve you` on delegate makes a task start with a plan, and nothing in the repo is changed
   before it is approved. The task then waits as "plan ready": `approve <id>` is the human's yes to the plan (only when
   they plainly say so), `tell <id> "<text>"` sends the plan back with their words. `--plan.approve reviewer`: the
-  reviewer checks the plan and the build goes on. `--plan.agent <program[/model]>`: who writes it, when not the working agent.
+  reviewer checks the plan and the build goes on.
 - Finished work is reviewed by a second agent. It lists findings tagged critical, major, minor or trivial; the board
   decides from them. A finding at or above `review.mustFix` (major by default) fails the review and goes back to
   the agent by itself; anything milder passes (`Pass · 2 minor`). `review.rounds 0`: nothing goes back by itself.

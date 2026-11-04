@@ -9,7 +9,6 @@ use sw::agents::model_refused::{read, Refused};
 use sw::agents::models::listed::Names;
 use sw::agents::models::server::{read_page, signin_of};
 use sw::json::*;
-use sw::store::handovers::{handover_line, handovers};
 use sw::store::settings::change::set_value;
 use sw::store::settings::lookup::Scope;
 
@@ -77,9 +76,8 @@ fn a_model_the_board_gave_that_is_refused_starts_the_program_again_on_its_own_de
     assert!(!s[1].contains(" -m "), "on its own default model: {}", s[1]);
     assert_eq!((t.s("agent"), t.s("on")), ("codex", "codex"));
     assert_eq!(t.s("msg"), "gpt-6.1 can't be used with your ChatGPT sign-in: started again on codex's own default model");
-    assert_eq!(handovers(&t).iter().map(handover_line).collect::<Vec<_>>(), vec!["codex took over from codex/gpt-6.1: gpt-6.1 can't be used with your ChatGPT sign-in (now on its own default model)"]);
     let told = prompts(&w, t.at("link").s("pane"))[0].clone();
-    assert!(told.contains("taking this task over from another agent (codex/gpt-6.1), which could not go on: gpt-6.1 can't be used with your ChatGPT sign-in"), "{told}");
+    assert!(told.contains("starting again on the same task after codex could not go on: gpt-6.1 can't be used with your ChatGPT sign-in"), "{told}");
 }
 
 #[test]
@@ -123,7 +121,6 @@ fn a_reviewer_whose_model_is_refused_reviews_again_on_its_program_s_default() {
     assert_eq!(r.len(), 2, "{r:?}");
     assert!(r[0].contains(" -m gpt-6.1") && !r[1].contains(" -m "), "{r:?}");
     assert_eq!(t.s("reviewerOn"), "codex");
-    assert_eq!(handovers(&t).iter().map(handover_line).collect::<Vec<_>>(), vec!["codex took over the review from codex/gpt-6.1: gpt-6.1 can't be used with your ChatGPT sign-in (now on its own default model)"]);
     assert_eq!(t.s("stage"), "approval", "{} {}", t.s("msg"), t.at("failure"));
 }
 

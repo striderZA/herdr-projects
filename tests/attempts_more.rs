@@ -18,17 +18,10 @@ fn an_attempt_another_agent_took_over_is_chosen_and_the_task_keeps_that_agent_it
     assert_eq!(task(&id).s("stage"), "pick");
     // attempt A changed hands on the way (finish/hand_over.rs writes exactly this on it)
     let a = kids(&id)[0].clone();
-    let over = json!({ "at": sw::clock::now(), "role": "worker", "from": "claude", "to": "codex/gpt-5.5", "why": "out of allowance" });
-    let o = over.clone();
-    sw::store::tasks::patch(a.s("id"), move |c| { c.put("agent", "codex"); c.put("app", "codex"); c.put("on", "codex/gpt-5.5"); c.put("tried", json!(["claude", "codex/gpt-5.5"])); c.put("handovers", json!([o])); }).unwrap();
+    sw::store::tasks::patch(a.s("id"), move |c| { c.put("agent", "codex"); c.put("app", "codex"); c.put("on", "codex/gpt-5.5"); }).unwrap();
     sw::attempts::settle::pick(&id, "A").unwrap();
     let t = task(&id);
-    assert_eq!((t.s("agent"), t.s("on"), t.at("tried"), t.at("handovers"), t.at("settings").s("worker.agent")), ("codex", "codex/gpt-5.5", &json!(["claude", "codex/gpt-5.5"]), &json!([over]), "codex/gpt-5.5"));
-    use sw::store::settings::lookup::setting;
-    let on = sw::store::handovers::on_now(&t, &text(&setting("worker.agent", Some(&t))));
-    assert_eq!(on, "codex/gpt-5.5", "a restart starts the one that did the work, on its model");
-    let tried: Vec<String> = t.arr("tried").iter().map(text).collect();
-    assert_eq!(sw::store::handovers::next_fallback(&sw::store::settings::values::list_of(&setting("worker.fallback", Some(&t))), &on, &tried, |_| String::new()).0, "", "and it is not handed to itself");
+    assert_eq!((t.s("agent"), t.s("on"), t.at("settings").s("worker.agent")), ("codex", "codex/gpt-5.5", "codex/gpt-5.5"));
 }
 
 #[test]

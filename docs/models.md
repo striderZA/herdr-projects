@@ -10,8 +10,8 @@ herdr-projects models codex      every name codex takes, written as a setting wr
 ```
 
 Every agent the board starts has a **program**, and if you want, a **model** and an **effort**. You choose them per role:
-the working agent (`worker.`), the reviewer (`reviewer.`), the Coordinator (`coordinator.`), the plan's writer (`plan.`),
-the Watcher (`watcher.`), and the lists that name agents (`worker.fallback`, `reviewer.fallback`, `attempts.by`).
+the working agent (`worker.`), the reviewer (`reviewer.`), the Coordinator (`coordinator.`), and the list that names
+attempts (`attempts.by`).
 
 ## Examples
 
@@ -20,7 +20,6 @@ herdr-projects set worker.agent codex/gpt-6.1-sol          you, for every task
 herdr-projects set worker.effort high
 herdr-projects set reviewer.agent claude/opus --repo my-app  one repo
 herdr-projects delegate 12 --worker.agent pi/anthropic/claude-opus-5-5 --worker.effort medium   one task
-herdr-projects set worker.fallback "codex, claude/sonnet"
 herdr-projects coordinator new --agent claude/sonnet --effort low   the next Coordinator only
 ```
 
@@ -81,15 +80,12 @@ that at the end of the turn and never leaves the task in the agent with only its
 
 - **It gave the program that model:** the same program starts again at once on its own default model, in the same
   worktree, told what was done so far. The row says so: `gpt-6.1 can't be used with your ChatGPT sign-in: started again on
-  codex's own default model`, and the task panel lists it under "Took over". The reviewer the same: the review starts
-  again on its program's default model.
+  codex's own default model`. The reviewer the same: the review starts again on its program's default model.
 - **The default model is refused too, or it gave none:** the task waits for you, with the reason and a name to try
   (`Agent stopped: gpt-6.1 can't be used with your ChatGPT sign-in; try gpt-6.1-sol`) and the next step in the panel:
   choose one for the task (`herdr-projects set worker.agent codex/gpt-6.1-sol --task <id>`), or fix the program's own
   default (Codex: `model` in `~/.codex/config.toml`), then `Ctrl+L` (retry). The program is ended, so the retry starts it
   again on the model as it is set then.
-- With a `worker.fallback` (or `reviewer.fallback`), the next on that list comes after the default model
-  ([fallback](fallback.md)).
 
 **A name is not checked** (it goes to the program as you wrote it) when:
 

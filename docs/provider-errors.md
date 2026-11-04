@@ -46,12 +46,6 @@ Never retried, and sent to you at once: a login, a model that does not exist or 
 the provider refuses, and any error the board does not recognise. A reviewer that hits one fails the review with "the
 reviewer stopped:" and the error; that, too, is not on the list of reviews.
 
-## With a fallback agent
-
-With `worker.fallback` or `reviewer.fallback` set, another agent takes over where the board would otherwise give up or go
-to you: after the last try, for an error that passes; at once, for one that waiting cannot fix. So the order is: **the
-tries first, then the fallback, then you** ([the fallback agent](fallback.md)).
-
 ## Details
 
 The waits are fixed. What was seen in real conversation files is in [checked on Herdr](checked-on-herdr.md).

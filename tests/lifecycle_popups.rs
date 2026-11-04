@@ -28,7 +28,7 @@ impl Drop for ConfigPath { fn drop(&mut self) { unsafe { std::env::remove_var("H
 fn no_notifications_a_task_that_needs_you_raises_nothing_and_the_popup_block_an_older_version_wrote_is_taken_out() {
     let w = world();
     let id = to_approval(&w, "Work");
-    sw::keeper::tick_once(&w.socket, false);
+    sw::keeper::tick_once(&w.socket);
     assert!(task(&id).at("announced").is_null());
     assert_eq!(sw::store::settings::lookup::setting("board.notify", None), json!("none"), "unless you ask for it: board.notify");
     assert!(w.state().arr("notifications").is_empty());

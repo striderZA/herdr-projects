@@ -54,7 +54,7 @@ others are greyed, a count of tasks that need you in red.
 | Filter | The list shows |
 |---|---|
 | `All` | every task in its group and the automations, as always |
-| `Coordinators` | only the coordinators that run (started and not stopped: working, idle, needs you; on autopilot; or failed, so you can fix it): each such project's row ([project coordinators](project-coordinators.md)). A stopped or never started one is not there, nor in the count; its row stays in the other filters, with no mark. The Coordinator is the top row |
+| `Coordinators` | only the coordinators that run (started and not stopped: working, idle, needs you; or failed, so you can fix it): each such project's row ([project coordinators](project-coordinators.md)). A stopped or never started one is not there, nor in the count; its row stays in the other filters, with no mark. The Coordinator is the top row |
 | `Needs you`, `Working`, `Ready`, `To do` | only the tasks of that group (`Ready` is ready to approve) |
 | `Done` | every done task, which the other filters hide |
 | `Automations` | only the automations' rows, in their places |
@@ -65,9 +65,9 @@ others are greyed, a count of tasks that need you in red.
   repo with nothing that matches has none.
 - **A project's row is its coordinator's**, read as a task's row: the same marks (`○` idle,
   `◐` working, `?` asks you, `✗` could not start), the time on the right, what it does or asks under
-  it; on autopilot, `[autopilot]` after its name and what autopilot does under it. The top row is the Coordinator's.
+  it. The top row is the Coordinator's.
   The list reads project → task by how far in each row stands. `Space` talks to it, `Alt+O` goes into it, `Enter` (or `←` `→`) folds and unfolds it, `Ctrl+S` /
-  `Ctrl+X` start and stop it, `Ctrl+O` is its autopilot ([project coordinators](project-coordinators.md)).
+  `Ctrl+X` start and stop it ([project coordinators](project-coordinators.md)).
 - **Where the window is narrow** the names are shorter (`Coords`, `Needs`, `Autos`), then shortest (`Co`, `Need`,
   `Work`), then the filters with nothing in them go; narrower still, only the one shown stands, with `tab next`.
 
@@ -121,8 +121,8 @@ A project you are done with for now leaves the board whole, and comes back as it
   and come back with it; an agent on one stops.` With only done tasks (or none), it goes at once. A merge under way holds it up: the
   key says which task merges.
 - **What goes:** its row and its tasks leave the board (each archived as one task is: its space closes, its worktree
-  stays), an agent at work or waiting for you is stopped first, its project coordinator stops (its autopilot goes
-  off), and its automations are turned off. An empty repo used lately no longer keeps a row for it. A new task in it
+  stays), an agent at work or waiting for you is stopped first, its project coordinator stops, and its automations are
+  turned off. An empty repo used lately no longer keeps a row for it. A new task in it
   is refused (`mstars is archived. herdr-projects restore --repo mstars brings it back, with its tasks.`), and so is
   a message to its coordinator.
 - **Nothing is deleted:** not its folder, its worktrees, its branches, its pull requests, its settings or its tasks.
@@ -176,7 +176,7 @@ The `?` menu has the list too.
 
 - **A project's row and the top row** carry their coordinator's state with these same marks:
   `○` idle (also never ran, or stopped), `◐` it works, `?` it asks you (`!` it wants your OK), `✗` it could not start.
-  On [autopilot](autopilot.md) it keeps that mark, with `[autopilot]` after its name. The others (`◑ ◆ ✓ ◷ ◇`) are never a coordinator's
+  The others (`◑ ◆ ✓ ◷ ◇`) are never a coordinator's
   ([project coordinators](project-coordinators.md)).
 
 - **Only a moon says someone works**: `◐` and `◑`, an agent or its reviewer.
@@ -353,7 +353,7 @@ task has its percent: `Q#1` gets the next free slot, `Q#2` the one after.
 
 ## While the board runs the check
 
-At the finish line, and again after a catch-up with main, the row shows real progress, not the Watcher's guess: the bar
+At the finish line, and again after a catch-up with main, the row shows real progress: the bar
 and percent are the count the check reports, and the minutes left come from how long its last full runs took on this
 machine. How a check reports, and what a repo's own check can do: [the check's progress](check-progress.md).
 
@@ -604,7 +604,7 @@ It looks the same for a coordinator and for a task's agent, at every window widt
    left and right of the text (one in a narrow box; no empty lines where the window is short). In it the newest thing
    said in that conversation. No label on either side: what you wrote is in the
    bright colour you type in, what the one the box talks to said in grey (its edge names it). Only someone else is
-   named: a reviewer under `Reviewer:`, a wake under `Autopilot:`, the board under `Board:`. Then an empty line; then the line you type on (the prompt is only
+   named: a reviewer under `Reviewer:`, the board under `Board:`. Then an empty line; then the line you type on (the prompt is only
    `❯`).
    - A picture you paste stands on it as `[Image 1]`, not as its path; what is sent has the path
      ([pictures pasted](image-paste.md)).
@@ -824,7 +824,7 @@ Herdr's own menu does: nothing behind it takes a key or a click.
   from now.
 - **A board in a tab keeps running beside it.** Each has its own note of where it is, and its own selection, filter and
   words (the popup's are in `view-popup.json`; the first popup starts from the tab's view, without its draft). There is
-  one keeper, one Watcher and one Coordinator, whichever board you look at. The approve action for the focused pane is
+  one keeper and one Coordinator, whichever board you look at. The approve action for the focused pane is
   answered by the board that was shown for it.
 - **When Herdr will not open it**, the board opens in a tab and says why on its message line. Herdr has one popup for
   everybody: while another plugin's popup, or a `type = "popup"` command of your own config, is open, the board's cannot

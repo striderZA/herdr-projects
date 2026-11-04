@@ -54,7 +54,7 @@ pub fn part_lines(parts: &[Part], width: usize, paint: &dyn Fn(bool, Inked, &Par
         if n > 0 { lines.push(Inked::new()); }
         starts.push(lines.len());
         // Who said it, but not for you nor for the one the box talks to: your words are as bright as you type them,
-        // theirs grey (view/chat.rs), and its edge names them. A reviewer, autopilot and the board are named.
+        // theirs grey (view/chat.rs), and its edge names them. A reviewer and the board are named.
         let own = (!p.sent && !p.raw && p.tone.is_empty() && p.by != "Reviewer") || p.by == "You";
         if !p.by.is_empty() && !own { for l in wrap(&format!("{}:", clean(&p.by)), width, "", "") { lines.push(paint(true, l, p)); } }
         for l in prose_lines(&p.text, width, p.raw) { let l = paint(false, l, p); lines.push(if p.sent { chips(l) } else { l }); }

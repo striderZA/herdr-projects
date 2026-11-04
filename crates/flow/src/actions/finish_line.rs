@@ -18,7 +18,6 @@ use crate::runner::{runner_alive, spawn_runner};
 use crate::status_words::{review_failed, review_tally};
 use crate::store::attempts::attempts_of;
 use crate::store::files::{data_dir, read_obj, write_json};
-use crate::store::handovers::{handover_line, handovers};
 use crate::store::reviews::{current_review, review_history};
 use crate::store::tasks::{assert_unarchived, find, get, update, Change, Task};
 
@@ -88,7 +87,7 @@ pub fn can_send_error(t: &Task) -> bool {
     (t.s("stage") == "nosummary" || (t.s("stage") == "failed" && (!t.at("failure").b("auth") || t.at("failure").s("stage") == "agent"))) && flow::task::is_agent_task(t) && !t.b("archivedAt")
 }
 pub fn send_error(id: &str) -> Res<Said> { send_error_noted(id, "") }
-/// The same, with a note of what to do differently (`retry <id> <note>`, as an autopilot wake retries).
+/// The same, with a note of what to do differently (`retry <id> <note>`).
 pub fn send_error_noted(id: &str, note: &str) -> Res<Said> {
     let cur = find(id)?;
     assert_unarchived(&cur)?;
@@ -257,7 +256,6 @@ pub fn details(id: &str) -> Res<Value> {
         "review": current_review(&t).cloned(),
         "reviews": review_history(&t),
         "agent": if t.b("on") { t.at("on").clone() } else if t.b("agent") { t.at("agent").clone() } else { Value::Null },
-        "handovers": handovers(&t).iter().map(|h| { let mut x = h.as_object().cloned().unwrap_or_default(); x.put("words", handover_line(h)); Value::Object(x) }).collect::<Vec<_>>(),
         "research": is_research(&t),
         "chat": crate::chat_only::is_chat(&t),
         "report": t.at("report"),
@@ -269,7 +267,6 @@ pub fn details(id: &str) -> Res<Value> {
         "stillRunning": if t.b("stillRunning") { t.at("stillRunning").clone() } else { Value::Null }, // what its clean-up or archive left for you to end
         "inUse": if t.at("tidy").b("inUse") { t.at("tidy").at("inUse").clone() } else { Value::Null }, // what keeps its space in use, every thing
         "limits": limits_detail(&t, now()),
-        "addedBy": crate::autopilot::history::added_by(&t), // you, an automation, a coordinator's autopilot, or which coordinator you asked
     }));
     // Waiting in the queue: its place, and in words ("waiting for a free slot, Q#2", "waiting for disk space, Q#1").
     if let Some(n) = crate::flow::live::queue_place(&t) { let mut q = t.clone(); q.put("queuePlace", n); out.put("queue", json!({ "place": n, "words": crate::shown::queue::words(&q) })); }

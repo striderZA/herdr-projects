@@ -107,7 +107,7 @@ pub fn threads(tx: &Sender<Msg>, wants: &Arc<Mutex<Wants>>, load: &Arc<(Mutex<bo
     std::thread::spawn(move || loop {
         { let (m, c) = &*l; let g = m.lock().unwrap(); let (mut g, _) = c.wait_timeout_while(g, std::time::Duration::from_millis(1000), |go| !*go).unwrap(); *g = false; }
         // With a keeper alive the board only looks; without one it does the keeper's tick itself.
-        if !crate::keeper::keeper_alive() { crate::keeper::tick_once(&current_socket(), true); }
+        if !crate::keeper::keeper_alive() { crate::keeper::tick_once(&current_socket()); }
         let wants = w.lock().unwrap().clone();
         if t.send(Msg::Ev(Event::Loaded(Box::new(crate::board::data::load(&wants))))).is_err() { break; }
     });

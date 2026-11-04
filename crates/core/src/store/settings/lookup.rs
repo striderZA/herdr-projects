@@ -3,7 +3,7 @@
 //! A board setting is yours only: you -> built in. A repo's own fact (its key) is said for that repo only: your entry
 //! for the repo -> the repo's own file, as it is in the repo's folder now -> built in. A coordinator's setting:
 //! this time -> this coordinator -> you -> built in (coord.rs). No setting has a lookup of its own. A setting is read when its step starts: callers ask here at that moment and keep nothing.
-use super::coord::{once_names, Coord};
+use super::coord::Coord;
 use super::places::{read, repo_file, yours, Mine, Problem};
 use super::values::{fits, known, NONE};
 use crate::err::Res;
@@ -75,12 +75,9 @@ pub fn places_of(scope: &Scope, mine: &Mine) -> Places {
     if !name.is_empty() { if let Some(r) = mine.repos.get(&name) { own.push(Place::now("repo", format!("your entry for {name}"), r.clone())); } }
     if !name.is_empty() { if let Some(root) = known_repos().get(&name) { let root = PathBuf::from(text(root)); own.push(Place::later("file", "the repo's file", move || repo_file(&root, None).0)); } }
     own.push(builtin());
-    // A coordinator's: what autopilot holds for this time, then its own entry, then you.
+    // A coordinator's: its own entry, then you.
     let mut coord = vec![];
-    if let Some(c) = &scope.coord {
-        if !c.once.is_empty() { let (v, p) = read(&Value::Object(c.once.clone()), "this time", &once_names(), "cannot be said for this time"); problems.extend(p); coord.push(Place::now("once", "this time", v)); }
-        if let Some(o) = mine.coords.get(&c.key) { coord.push(Place::now("coord", c.place(), o.clone())); }
-    }
+    if let Some(c) = &scope.coord { if let Some(o) = mine.coords.get(&c.key) { coord.push(Place::now("coord", c.place(), o.clone())); } }
     coord.push(Place::now("you", "you", mine.you.clone()));
     coord.push(builtin());
     Places { work, board: vec![Place::now("you", "you", mine.you.clone()), builtin()], repo: own, coord, no_repo: task.is_some() && !repo_places, problems }

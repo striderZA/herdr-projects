@@ -62,9 +62,8 @@ fn a_worktrees_tasks_belong_to_its_primary_repo() {
 #[test]
 fn settings_the_built_in_values_your_own_one_tasks_own() {
     let w = world();
-    use sw::store::settings_list::{entry_of, Kind, SETTINGS};
+    use sw::store::settings_list::{Kind, SETTINGS};
     assert_eq!(setting("worker.agent", None), json!("claude")); assert_eq!(setting("reviewer.agent", None), json!("codex"));
-    assert_eq!(entry_of("watcher.agent").unwrap().builtin, json!("claude/claude-haiku-5-5"));
     assert_eq!(setting("board.agents", None), json!(4));
     set_value("board.agents", &json!("2"), &Scope::you()).unwrap(); assert_eq!(setting("board.agents", None), json!(2));
     assert!(set_value("merge.method", &json!("yolo"), &Scope::you()).unwrap_err().msg.contains("squash, merge, rebase"));
@@ -95,41 +94,6 @@ fn login_failures_are_recognised_from_diagnostics_not_from_test_names_or_asserti
     assert!(!is_auth_failure("ok 3 - missing token returns 401"));
     assert!(!is_auth_failure("AssertionError: expected 401 received 200"));
     assert!(!is_auth_failure("test/credentials.test.ts:12:3"));
-}
-
-#[test]
-fn minutes_left_come_from_the_percent_and_the_time_spent_and_move_as_time_passes() {
-    use sw::state::{began, eta_of, role_of, show};
-    let _w = world_with(Opts { settings: json!({ "watcher.agent": "claude" }), ..Default::default() }); // a row's words read the settings
-    let (min, t0) = (60000i64, 1_000_000_000_000i64);
-    assert_eq!(eta_of(&json!(80), t0, t0 + 40 * min), Some(10)); // 40 minutes in at 80% is 10 left
-    assert_eq!(eta_of(&json!(50), t0, t0 + 7 * min + 24000), Some(7)); // whole minutes
-    for p in [json!(0), json!(4), Value::Null, json!("x")] { assert_eq!(eta_of(&p, t0, t0 + 40 * min), None, "no guess at {p}"); }
-    assert_eq!(eta_of(&json!(5), t0, t0 + 40 * min), Some(760));
-    assert_eq!(eta_of(&json!(80), 0, t0), None); // no start known
-    assert_eq!(eta_of(&json!(80), t0, t0 - 5 * min), Some(1)); // a clock that went back: never negative
-    assert_eq!([eta_of(&json!(99), t0, t0 + 2 * min), eta_of(&json!(42), t0, t0), eta_of(&json!(100), t0, t0 + 40 * min)], [Some(1), Some(1), Some(0)]);
-    assert_eq!(eta_of(&json!(5), t0, t0 + 1_000_000_000 * min), Some(99999));
-    // On the board: the agent's guess counts from when its work began, the reviewer's from the start of this round.
-    let task = json!({ "id": "p/1", "owner": "me", "app": "claude", "link": { "pane": "w1:p1" }, "stage": "working", "since": t0 - 30 * min, "workAt": t0, "reviewAt": t0 + 60 * min });
-    let with = |extra: Value| { let mut t = o(task.clone()); for (k, v) in o(extra) { t.insert(k, v); } t };
-    let b = |t: &Obj| began(t, role_of(t));
-    let at = |t: &Obj, mins: i64| show(t, &json!({ "status": "working" }), t0 + mins * min).eta;
-    assert_eq!(b(&with(json!({ "watch": { "progress": 80, "role": "agent" } }))), t0); // not the time it waited in the queue
-    assert_eq!(b(&with(json!({ "since": t0 + min, "watch": { "progress": 80, "role": "agent" } }))), t0 + min); // a reply starts the count again
-    assert_eq!([40, 60, 80].map(|m| at(&with(json!({ "watch": { "progress": 80, "role": "agent" } })), m)), [Some(10), Some(15), Some(20)]);
-    assert_eq!(at(&with(json!({ "watch": { "progress": 2, "role": "agent" } })), 40), None);
-    assert_eq!(at(&with(json!({ "watch": null })), 40), None);
-    assert_eq!(at(&with(json!({ "stage": "reviewing", "watch": { "progress": 50, "role": "reviewer" } })), 66), Some(6));
-    // The stage decides whose clock runs: a reviewer's guess kept on a task whose agent works again is not the agent's.
-    let again = show(&with(json!({ "since": t0 + 100 * min, "workAt": 0, "watch": { "msg": "reading the diff", "progress": 80, "role": "reviewer" } })), &json!({ "status": "working" }), t0 + 100 * min + 1000);
-    assert_eq!((again.progress, again.eta, again.msg.as_str()), (Some(0.0), None, "Just started"));
-    assert_eq!(b(&with(json!({ "watch": { "progress": 80, "role": "reviewer" } }))), t0);
-    assert_eq!(at(&with(json!({ "stage": "reviewing", "watch": { "progress": 50, "role": "agent" } })), 66), None);
-    assert_eq!(at(&with(json!({ "stage": "merging", "watch": { "progress": 50, "role": "reviewer" } })), 66), None); // no one is watched in a runner stage
-    // Your own task keeps the minutes you reported, as given.
-    let own = |w: Value| show(&with(json!({ "stage": "progress", "watch": w })), &Value::Null, t0).eta;
-    assert_eq!([own(json!({ "progress": 50, "eta": 12 })), own(json!({ "eta": 3 }))], [Some(12), Some(3)]);
 }
 
 #[test]

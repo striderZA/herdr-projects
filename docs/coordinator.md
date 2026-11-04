@@ -34,13 +34,11 @@ there. `herdr-projects doctor` names messages that wait in a queue for more than
 ## Its row, and its settings
 
 **Its row is the top row.** It reads as every coordinator's row does: its mark (`○` idle, `◐` working, `?` it asks
-you), its time on the right, what it does under it (on [autopilot](autopilot.md), `[autopilot]` after its name and
-what autopilot does under it) ([project coordinators](project-coordinators.md)).
+you), its time on the right, what it does under it ([project coordinators](project-coordinators.md)).
 
 - `Space` there talks to it; `Space` on another row talks to that row's agent, and again comes back here. `Alt+O` goes
   into it.
-- `Alt+P`, `Alt+T` and `Ctrl+E` on its row show it and its settings; `Ctrl+S` starts it, `Ctrl+X` stops it and
-  `Ctrl+O` puts it on autopilot and takes it off.
+- `Alt+P`, `Alt+T` and `Ctrl+E` on its row show it and its settings; `Ctrl+S` starts it and `Ctrl+X` stops it.
 - Its settings (`coordinator.*`) are looked up as a task's are: **this coordinator → you → built in**. One set for it
   alone goes in the `coordinators` part of your `config.json` (`set … --main-coordinator`). A change counts from its next
   fresh chat ([settings](settings.md)).
@@ -56,8 +54,8 @@ A board opened from the Coordinator's own pane stays in the repo it was last in:
 ## Starting what it adds
 
 You just send your message; the Coordinator works out what to do with it. It adds the tasks, and starts them when you
-ask for that in your words ("fix the login page and start it"). On autopilot it starts what it adds by itself
-([autopilot](autopilot.md)). `Ctrl+S` with words typed does nothing: there is no second way to send.
+ask for that in your words ("fix the login page and start it"). `Ctrl+S` with words typed does nothing: there is no
+second way to send.
 
 - `coordinator tell <text> --delegate` from a shell has every task it adds from that message delegated at once, however
   many, with nothing more to confirm. The message carries one line under your words saying so (the board's chat shows
@@ -94,8 +92,6 @@ whole conversation, its dialogs, slash commands and menus, **go into it** in Her
 - The agent's own new-chat command (`/clear`, `/new`) is followed: the chat and a restart go with the conversation it
   is in now.
 - Its program, model and effort are settings (`coordinator.agent`, …): [roles and commands](roles-and-commands.md).
-- `coordinator new`, `restart` and `stop` leave [autopilot](autopilot.md) as it is. `stop` on one on autopilot says
-  that its next wake starts it again.
 
 ## Its standing rules are a file
 
@@ -117,8 +113,7 @@ same file), and when you start the program in that folder by hand.
 - **A running one hears that they changed, once.** The board keeps a fingerprint of the rules each coordinator's
   program started with. When the rules differ by the time the board types your next message in (a new version of the
   board, a new `coordinator.instructions`), one line goes before it: "[The board was updated: your standing rules in
-  <file> changed; read them again.]". An autopilot wake keeps its first words (`Autopilot:`): the line goes after it,
-  and says the message is a real wake whatever older rules said. That happens once, and never as a message of its own: that would cost a turn
+  <file> changed; read them again.]". That happens once, and never as a message of its own: that would cost a turn
   and could land in the middle of one. A program started by an older board, which kept no fingerprint, hears it too.
 - **Your own notes are kept.** The board owns only the block between its two marker lines. What you write above or
   below it in `AGENTS.md` or `CLAUDE.md` stays, and the Coordinator reads it too.

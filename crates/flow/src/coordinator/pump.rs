@@ -164,9 +164,7 @@ fn run_pump(co: &Co, taken: &mut HashSet<String>) -> Res<()> {
                 continue;
             }
         } else if c.arr("queue").is_empty() || c.b("stopped") { break; }
-        let run_was = get(co).map(|c| c.i("startedAt")).unwrap_or(0);
         let (_, blocked) = ensure(&api, co)?;
-        let started = get(co).map(|c| c.i("startedAt")).unwrap_or(0) != run_was; // a wake that started it: its run counts as at rest
         if blocked { break; } // the tick tries again
         if get(co).map(|c| c.b("error")).unwrap_or(false) { change(co, |c| { c.put("error", ""); true })?; }
         c = get(co).unwrap_or_default();
@@ -174,7 +172,6 @@ fn run_pump(co: &Co, taken: &mut HashSet<String>) -> Res<()> {
         for m in c.arr("queue").to_vec() {
             // Asked to stop (or restart, or begin anew) while an earlier message went in: that comes first.
             if get(co).map(|c| c.b("want")).unwrap_or(false) { break; }
-            if m.b("autopilot") && crate::autopilot::record::words(co, "coordinator.access") == "ask" { continue; } // it would wait at a permission prompt: the tick takes it back
             let ag = api.agent_get(c.s("pane")).ok().flatten();
             let run = get(co).map(|c| c.i("startedAt")).unwrap_or(0);
             let seq = ag.as_ref().map(|a| a.at("completion_seq").clone()).unwrap_or(Value::Null);
@@ -201,8 +198,8 @@ fn run_pump(co: &Co, taken: &mut HashSet<String>) -> Res<()> {
             let now_look = look_now(co);
             let (over, over_id) = (now_look.said.clone(), now_look.turn.as_ref().filter(|t| t.finished).map(|t| t.id.clone()).unwrap_or_default());
             let intro = get(co).map(|c| c.b("intro")).unwrap_or(false);
-            let (news, rules_hash) = super::rules_news::before_next(co, &get(co).unwrap_or_default(), m.b("autopilot"));
-            let words_in = super::rules_news::with_head(if intro { Some(intro_line_of(co)) } else { news }, m.s("text"), m.b("autopilot"));
+            let (news, rules_hash) = super::rules_news::before_next(co, &get(co).unwrap_or_default());
+            let words_in = super::rules_news::with_head(if intro { Some(intro_line_of(co)) } else { news }, m.s("text"));
             let typed = match hand(&api, c.s("pane"), &words_in) {
                 Ok(t) => t,
                 Err(e) if e.code == "agent_blocked" || e.code == "agent_not_ready" => { unsay(); stuck = true; break; }
@@ -215,10 +212,9 @@ fn run_pump(co: &Co, taken: &mut HashSet<String>) -> Res<()> {
                 c.put("where", trimmed(&l));
                 c.put("mark", json!({ "run": run, "seq": seq, "rest": at_rest }));
                 c.put("intro", false); c.put("rulesHash", rules_hash.clone()); c.put("sentAt", now());
-                if !m.b("autopilot") { c.put("last", m.at("said").clone()); c.put("over", over.clone()); c.put("overId", over_id.clone()); } // a wake is no words of yours
-                // Who its turn is on: a task's agent that sent it (coordinator tell), and an autopilot wake (autopilot/).
+                c.put("last", m.at("said").clone()); c.put("over", over.clone()); c.put("overId", over_id.clone());
+                // Who its turn is on: a task's agent that sent it (coordinator tell).
                 c.put("typedFrom", m.at("sender").clone()); c.put("typedId", id.clone());
-                if m.b("autopilot") { crate::autopilot::wake::typed(c, &m, started); }
                 true
             })?;
             // Typed is not sent: if it still sits at its prompt, enter is pressed again (never the words).

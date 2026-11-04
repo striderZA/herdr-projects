@@ -62,6 +62,21 @@ pub fn flip(s: &mut State) -> bool {
     s.reply = true; s.reply_id = s.sel.clone(); s.panel_top = 0;
     true
 }
+/// Start that coordinator, in its own conversation.
+pub fn start(_s: &State, t: &Target, fx: &mut Vec<Effect>) { fx.push(Effect::Run(Job::CoordRun { to: t.to.clone(), name: t.name.clone(), on: true })); }
+/// Stop that coordinator.
+pub fn stop(_s: &State, t: &Target, fx: &mut Vec<Effect>) { fx.push(Effect::Run(Job::CoordRun { to: t.to.clone(), name: t.name.clone(), on: false })); }
+/// The selected heading's coordinator, or the top row's where the heading stands for no one (a status group).
+pub fn selected(s: &State) -> Option<Target> { of_head(s, &s.sel).or_else(|| super::top::top(s)) }
+/// Start the selected heading's coordinator (the top row's for a status group).
+pub fn start_selected(s: &State, fx: &mut Vec<Effect>) { if let Some(t) = selected(s) { start(s, &t, fx); } }
+/// Stop the selected heading's coordinator (the top row's for a status group).
+pub fn stop_selected(s: &State, fx: &mut Vec<Effect>) { if let Some(t) = selected(s) { stop(s, &t, fx); } }
+/// Go into that coordinator's pane (started first when it is not running).
+pub fn go_in(s: &mut State, fx: &mut Vec<Effect>) {
+    let Some(t) = of_head(s, &s.sel) else { return s.flash(format!("A status group has no agent to go into. {} and {} fold it.", crate::board::keys::key_name("fold"), crate::board::keys::key_name("unfold")), Ink::Muted) };
+    fx.push(Effect::Run(Job::CoordOpen { to: t.to, name: t.name, popup: s.ctx.popup }));
+}
 /// What you typed, for that coordinator. It decides itself what to start.
 pub fn send(s: &mut State, t: &Target, text: &str, fx: &mut Vec<Effect>) {
     if text.is_empty() { return; }

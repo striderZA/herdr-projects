@@ -77,10 +77,9 @@ pub fn archive_project(want: &str) -> Res<(String, Vec<String>)> {
     if !failed.is_empty() { said += &format!(" Still on the board: {}.", failed.join("; ")); }
     Ok((said, tasks))
 }
-/// Its project coordinator stops, and its autopilot goes off: nothing of it runs while it is archived.
+/// Its project coordinator stops: nothing of it runs while it is archived.
 fn stop_coordinator(repo: &str) {
     let co = crate::coordinator::co::Co::project(&crate::herdr::cli::current_socket(), repo);
-    if crate::autopilot::record::is_on(&co) { let _ = crate::autopilot::switch::off(&co); }
     if crate::coordinator::state::get(co.clone()).is_some_and(|c| c.b("run") && !c.b("stopped")) { let _ = crate::coordinator::requests::stop(co); }
 }
 /// Bring the project back: the tasks archived with it, as they were (one stopped then stays stopped), and the

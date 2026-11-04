@@ -67,7 +67,7 @@ fn other_machines_a_tasks_work_settings_travel_with_it_and_board_settings_stay()
     set_value("review.rounds", &json!(5), &you()).unwrap(); set_value("board.agents", &json!(9), &you()).unwrap(); set_value("worker.instructions", &json!("Mine."), &you()).unwrap();
     set_value("worker.instructions", &json!("For proj."), &Scope::repo("proj")).unwrap(); set_value("merge.by", &json!("itself"), &Scope::repo("proj")).unwrap();
     let sent = to_send("proj", &yours());
-    // no board setting among them (the world's own coordinator.agent and watcher.agent are board settings too)
+    // no board setting among them (the world.s own coordinator.agent is a board setting too)
     assert_eq!(Value::Object(sent.clone()), json!({ "worker.instructions": "Mine.\n\nFor proj.", "review.rounds": 5, "merge.by": "itself" }));
     assert_eq!(Value::Object(to_send("elsewhere", &yours())), json!({ "worker.instructions": "Mine.", "review.rounds": 5 }));
     // on the machine that owns the task they stand where its own "you" and repo entry would
@@ -101,7 +101,7 @@ fn what_a_task_holds_is_checked_too_a_wrong_value_a_board_setting_or_an_effort_i
     }
     assert_eq!(setting("merge.pr", None), json!(true));
     // an effort or an access written by hand for a program that does not take it: said, and the next place down is used
-    write(json!({ "worker": { "agent": "codex", "effort": "banana" }, "reviewer": { "agent": "pi", "access": "ask" }, "coordinator": { "agent": "none" }, "watcher": { "agent": "none" } }));
+    write(json!({ "worker": { "agent": "codex", "effort": "banana" }, "reviewer": { "agent": "pi", "access": "ask" }, "coordinator": { "agent": "none" } }));
     assert_eq!(at("worker.effort", &you()), (json!("default"), "built in".to_string()));
     assert_eq!(at("reviewer.access", &you()), (json!("full"), "built in".to_string()));
     let said = problems(None).join("\n");

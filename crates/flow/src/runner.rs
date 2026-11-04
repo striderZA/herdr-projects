@@ -1,8 +1,7 @@
 //! Long jobs (delegate, finish line, land, restart) run in a detached runner so the board stays responsive and hook
 //! commands never hold herdr up. A runner marks itself in task.json as `runner: {pid, start, started, job}`; a marker
-//! whose process is gone is ignored. Each turn is a separate runner, so counters live in task.json. One asked for from
-//! inside a sandbox, or by a command while a keeper runs, is started from outside it (runner/outside.rs).
-pub mod outside;
+//! whose process is gone is ignored. Each turn is a separate runner, so counters live in task.json. One asked for by a
+//! command while a keeper runs is handed to it (runner/outside.rs).
 
 use crate::err::{Error, Res};
 use crate::json::*;
@@ -11,6 +10,8 @@ use crate::store::marks::pending_events;
 use crate::store::tasks::{get, update_wait, Change, Task};
 use std::cell::RefCell;
 use std::process::{Command, Stdio};
+
+pub mod outside;
 
 pub use crate::login_env::user_env;
 /// Tests run jobs in their own process: the jobs that would have been detached are kept here instead.
@@ -37,7 +38,7 @@ pub fn reap(mut ch: std::process::Child) -> u32 {
 }
 /// Start a detached runner for one job on one task. Returns at once.
 pub fn spawn_runner(job: &str, id: &str, extra: &[&str]) -> u32 {
-    if crate::plan::sandbox::inside::boxed() || outside::hands_over() { return outside::ask(job, id, extra); }
+    if outside::hands_over() { return outside::ask(job, id, extra); }
     if inline() { JOBS.with(|j| j.borrow_mut().push((job.into(), id.into(), extra.iter().map(|s| s.to_string()).collect()))); return 0; }
     user_env();
     let dir = if id == "-" { data_dir() } else { dir_of(id) };
@@ -54,7 +55,7 @@ pub fn spawn_runner(job: &str, id: &str, extra: &[&str]) -> u32 {
 /// and the marker names the new process, which finds it its own when it claims the task: a second caller before that
 /// claim (another pass, or a pass started from a stale list) finds the task taken (#401). Returns whether it started one.
 pub fn spawn_claimed(job: &str, id: &str, extra: &[&str]) -> bool {
-    if crate::plan::sandbox::inside::boxed() || outside::hands_over() { spawn_runner(job, id, extra); return true; } // started out there, unseen
+    if outside::hands_over() { spawn_runner(job, id, extra); return true; }
     let mut started = false;
     let _ = update_wait(id, 10000, |t| {
         if runner_alive(t) { return Ok(Change::Keep); }

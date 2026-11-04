@@ -58,7 +58,6 @@ fn run(cmd: &str, a: &Args) -> Res<i32> {
     // A flag the command does not know is refused before anything is done, with the nearest right one named
     // (cli/flags.rs). Every command: the ones herdr, a hook and the board itself run too.
     refuse_unknown(cmd, a)?;
-    crate::take_over::at_start(cmd); // older installs taken over: herdr-superwork's, the old herdr-projects 0.2's (take_over.rs)
     home_at_start(cmd); // an older version's folders move into the one home folder, once (store/move_home.rs)
     crate::store::old_copy::copy_at_start(cmd); // …then a copy of the data an older (Node) version wrote, once (store/old_copy.rs)
     // …and its settings into the new names, once (store/settings/migrate.rs). Asking for help changes nothing.

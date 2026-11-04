@@ -134,7 +134,7 @@ fn enter_goes_into_a_tasks_agent_the_chats_head_line_at_every_width_and_a_narrow
     let mut g = open(&w.root, 34); g.s.sel = u.clone(); g.load(); g.press(&["space"]);
     // The box names who it talks to: the ladder down to its tag on its edge; inside, only what it said.
     assert!(has(&g.screen(160).join("\n"), r"\n╭─ [^\n]*PRJ-3  · Agent ─*╮\n(?:│ +│\n)?│ +The agent has just started: nothing to show yet\. +│\n│ +│\n│ +❯ Send message to the agent +│\n(?:│ +│\n)?╰─+╯\n"), "{}", g.screen(160).join("\n"));
-    // What it does now (the Watcher's "doing now" line) is its row's second line, as herdr's sidebar says it.
+    // What it does now is its row's second line, as herdr's sidebar says it.
     sw::store::tasks::update(&u, |c| { c.put("msg", "Verifying the test run after the rebase onto main"); Ok(sw::store::tasks::Change::Write) }).unwrap(); g.load();
     let lines = g.screen(160);
     assert!(has(&lines.join("\n"), r"PRJ-3 Still at it[^\n]*\n[ ▌] +Verifying the test run after the rebase onto main"), "{}", lines.join("\n"));

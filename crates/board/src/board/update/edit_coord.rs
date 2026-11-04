@@ -1,7 +1,6 @@
-//! The settings page of a coordinator's row: that coordinator's own rows first (`coordinator.*` and `autopilot.*`,
-//! under `This coordinator`), then the rows the heading's page showed before (yours on this machine's heading, your
-//! entry for the repo on a repo's). While autopilot is on, a value of an
-//! autopilot row (but the goal) is saved for this time; while off, as the coordinator's own.
+//! The settings page of a coordinator's row: that coordinator's own rows first (`coordinator.*`, under
+//! `This coordinator`), then the rows the heading's page showed before (yours on this machine's heading, your entry
+//! for the repo on a repo's).
 use crate::board::state::{State, Whose};
 use crate::board::update::coords::of_head;
 use crate::json::*;
@@ -28,5 +27,3 @@ pub fn whose_for(s: &State, name: &str, w: &Whose) -> Whose {
     let row = all.get(at).filter(|r| r.s("name") == name).or_else(|| all.iter().find(|r| r.s("name") == name));
     if row.map(|r| r.b("coordRow")).unwrap_or(false) { w.clone() } else { w.then() }
 }
-/// Is autopilot on for the coordinator of this page (its values are then saved for this time)?
-pub fn on(s: &State, w: &Whose) -> bool { super::edit::mine_read(s, w).map(|v| v.b("on")).unwrap_or(false) }

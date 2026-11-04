@@ -242,7 +242,7 @@ pub fn moved_from(dir: &Path) -> Option<PathBuf> {
     None
 }
 /// Commands that are run with nobody reading their error output.
-const QUIET: [&str; 7] = ["board", "hook", "turn-ended", "keeper", "keeper-work", "run", "remote"];
+const QUIET: [&str; 6] = ["board", "hook", "turn-ended", "keeper", "keeper-work", "run"];
 /// At the start of every run of the program: the move, and its one line said where a human reads it.
 pub fn home_at_start(cmd: &str) {
     if std::env::var("HERDR_PROJECTS_INLINE").as_deref() == Ok("1") { return; }

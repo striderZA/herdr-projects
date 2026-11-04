@@ -3,7 +3,6 @@
 //! herdr's status hook, the hook-less route, where herdr's "idle" is a guess from the screen and alone never finishes a
 //! task. `force`: the status hook already decided a turn ended (missed-turn recovery). A finish runner that finds
 //! another unhandled event when it is done keeps its marker and processes that one too.
-use super::hand_over::hand_over;
 use super::model_refused;
 use super::pipeline::pipeline;
 use super::review::close_reviewer;
@@ -20,7 +19,6 @@ use crate::limits::reached::{stop_at, tokens_over, StopHow};
 use crate::runner::{is_aborted, release, Guard};
 use crate::store::failures::{failure_patch, is_auth_failure};
 use crate::store::files::{dir_of, marker, marker_alive};
-use crate::store::handovers::{fresh_list, why_of};
 use crate::store::marks::{count_mark, pending_events};
 use crate::store::repos::cwd_of;
 use crate::store::retries::{gave_up, retry_waits};
@@ -46,7 +44,6 @@ fn human_turn(t: &mut Task) {
     t.put("mergeIntent", Value::Null);
     if t.at("review").is_object() && !t.at("review").b("stale") { t.obj_mut("review").put("stale", true); }
     for k in ["checkFails", "reviewRounds", "prRounds", "syncRepairs"] { t.put(k, 0); }
-    fresh_list(t);
     let armed = if t.at("handled").b("at") { t.at("handled").i("at") } else { t.i("armedAt") };
     t.put("armedAt", armed); t.put("expectedWake", Value::Null); t.put("turnOpen", false);
     t.put("stage", "working"); t.put("msg", ""); t.del("kind"); t.put("mergeFailed", false);
@@ -199,9 +196,6 @@ fn finish_steps(id: &str, g: &mut Guard, mut t: Task, ev: Option<Value>, force: 
         // Its model was refused: the program again on its own default model, once (finish/model_refused.rs).
         let refused = if x.error.is_empty() || x.auth || x.passing { None } else { crate::agents::model_refused::read(&k, &x.error) };
         if let Some(r) = &refused { if model_refused::on_default(id, g, &t, r)? { return Ok(()); } }
-        // It cannot go on: the next agent on `worker.fallback` takes the task over; with nobody left it waits for you.
-        let hw = if let Some(r) = &refused { r.plain.clone() } else if !x.error.is_empty() { why_of(&why, x.auth, x.passing, &x.reason, tries + 1, now()) } else if x.stop == "length" { "it ran out of room (context or output limit)".into() } else { "its model refused to continue".into() };
-        if hand_over(id, g, &hw, "")? { return Ok(()); }
         if let Some(r) = &refused { return model_refused::fail_refused(g, &t, r, &why); }
         if x.passing {
             let gu = format!("{}. ", gave_up("agent", &x.reason, tries + 1));
@@ -222,7 +216,6 @@ fn finish_steps(id: &str, g: &mut Guard, mut t: Task, ev: Option<Value>, force: 
         let screen = last_lines(&crate::agents::screen_text::agent_words(&read_screen(&api, &pane, a.as_ref().map(|a| a.s("agent_status")), 60)), 12); // its words, not its frames
         if is_auth_failure(&screen) {
             g.set(&keep)?;
-            if hand_over(id, g, "logged out", "")? { return Ok(()); }
             let mut f = failure("agent", "Needs a login", &screen, ""); f.put("auth", true); f.put("msg", "Needs a login"); f.del("next");
             fail(g, f, FailHow::default())?;
             return Ok(());

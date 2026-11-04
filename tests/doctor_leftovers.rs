@@ -37,7 +37,7 @@ fn a_done_task_s_worktree_is_a_leftover_unless_its_clean_up_is_to_come_or_off() 
     assert_eq!(whys(&ask(&cache)), []);
     // You keep done tasks' worktrees.
     update(&id, |t| { t.del("tidy"); Ok(Change::Write) }).unwrap();
-    std::fs::write(sw::store::files::config_dir().join("config.json"), json!({ "watcher.agent": "none", "coordinator.agent": "none", "workspace.cleanup": false }).to_string()).unwrap();
+    std::fs::write(sw::store::files::config_dir().join("config.json"), json!({ "coordinator.agent": "none", "workspace.cleanup": false }).to_string()).unwrap();
     assert_eq!(whys(&ask(&cache)), []);
 }
 

@@ -1,44 +1,12 @@
 # Roles and commands
 
-## Four roles
+## Three roles
 
 | Role | What it does |
 |---|---|
 | **Agent** | does the work |
 | **Reviewer** | attacks the finished work, looking for what is wrong |
-| **Watcher** | a small model that writes the "doing now" line and guesses how far along the work is |
 | **Coordinator** | the agent you talk to in the chat; it turns what you type into tasks |
-
-### The Watcher's guess
-
-About once a minute (skipping a look when the screen has not changed), the Watcher is shown the task, its description,
-the last lines on the agent's screen, how long the work has run, and its own last guess. It guesses one number: how
-far along the work is, in percent. It keeps its last guess unless the screen gives a reason to change it. The guess can
-go down: a failing test, a merge conflict or review findings mean more work. More: [the Watcher](watcher.md).
-
-The board turns that percent into minutes left:
-
-```
-time spent × (100 − percent) ÷ percent        40 minutes in at 80% → 10 minutes left
-```
-
-- Time spent counts from when the agent began on what you last asked of it. While the Reviewer works, it counts from
-  the start of that review round.
-- The minutes are worked out again every second, so they keep moving between looks.
-- Under 5% there is too little to go on, and no minutes are shown.
-- Your own tasks are different: they show the `--progress` and `--eta` you give `report`, as given.
-
-### The Coordinator
-
-One long-lived chat that turns what you type into board commands, and can do anything else an agent chat can.
-
-- It is Claude Code on its default model and effort unless you say otherwise, whatever the Agent is set to.
-- Change it with `coordinator.agent` (`claude`, `codex`, `pi` or another program Herdr starts, with a model after a
-  slash: [agents](agents.md)), `coordinator.effort`, `coordinator.fast`, `coordinator.access` and
-  `coordinator.instructions`. Or pick one for a single use with `coordinator new --agent …`.
-- A changed default applies to the next new Coordinator. The chat says so.
-- With `coordinator.agent none`, a program that is not installed, or no Herdr running, the chat says "New task" and
-  what you type is added word for word.
 
 ## Every chat knows the board
 

@@ -1,7 +1,7 @@
 # The check's progress
 
 **While the board runs a repo's check, the task shows how far along it is.** Nothing shown is a guess, and the
-Watcher is not asked. A check can report a count by writing to one file; one that writes nothing still gets a timer.
+The board asks the check itself. A check can report a count by writing to one file; one that writes nothing still gets a timer.
 
 The board runs the `check` itself: at the finish line when the agent says it is done, and again after catching up
 with main before a merge ([how work gets done](how-work-gets-done.md)). The progress shows everywhere a task's

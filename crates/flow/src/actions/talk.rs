@@ -13,7 +13,6 @@ use crate::limits::run::granted;
 use crate::runner::{runner_alive, spawn_runner};
 use crate::store::attempts::attempts_of;
 use crate::store::files::marker_alive;
-use crate::store::handovers::fresh_list;
 use crate::store::inbox::queue_text;
 use crate::store::tasks::{assert_unarchived, find, get, update, Change, Task};
 
@@ -99,7 +98,6 @@ pub fn rearm(t: &mut Task, keep_intent: bool, live: bool, chat: bool) -> Res<()>
     else if flow::chat::begin(t, "board", live && runner_alive(t)) == flow::chat::Began::During { granted(t); return Ok(()); }
     granted(t); // stopped at a limit: your word gives it the limit once more
     for k in ["tidy", "waiting", "cutRetry"] { t.put(k, Value::Null); }
-    fresh_list(t);
     if t.at("failure").s("stage") == "send" { t.put("failure", Value::Null); } // what you say now goes into the same box
     t.put("armedAt", now()); t.put("expectedWake", Value::Null); t.put("turnOpen", true); t.put("turnBy", "reply"); t.put("selfBlocked", Value::Null); t.put("blocked", Value::Null);
     if t.at("failure").b("auth") { t.put("failure", Value::Null); } // a reply or a retry after a login problem is how "fixed" is said

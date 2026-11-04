@@ -1,7 +1,6 @@
 //! The pipeline's second half: the adversarial review (or the one that still stands), the loop that sends failing work
 //! back, the limits, and then done, the approval gate, or the merge by itself.
 use super::auto_merge::by_itself;
-use super::hand_over::hand_over;
 use super::review::run_review;
 use super::review_screen::with_screen;
 use super::shared::{approval_message_with, fail, failure, first_line, FailHow};
@@ -121,12 +120,6 @@ pub fn after_review(c: Ctx, g: &mut Guard) -> Res<()> {
         let mut stale = rv.as_object().cloned().unwrap_or_default(); stale.put("stale", true);
         flow::send::send_own(id, &gate::review_message(rv, false), "review", t.b("mergeIntent"), obj(json!({ "review": stale, "reviewRounds": rounds + 1 })), 0)?;
         return Ok(());
-    } }
-    // Still failing after the last round: the next agent on `worker.fallback` takes over, with the open findings.
-    if let Some(rv) = &review { if fresh && !passed && max > 0 && !t.b("mergeIntent") {
-        let mut stale = rv.as_object().cloned().unwrap_or_default(); stale.put("stale", true);
-        g.set(|t| t.put("review", stale.clone()))?;
-        if hand_over(id, g, &format!("its work still failed review after {rounds} round{}", if rounds == 1 { "" } else { "s" }), "")? { return Ok(()); }
     } }
     let head = change.as_ref().map(|x| x.t("head")).filter(|h| !h.is_empty()).unwrap_or_else(|| flow::git::head_of(c.folder));
     let head_v = if head.is_empty() { Value::Null } else { json!(head) };

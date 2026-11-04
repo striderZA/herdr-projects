@@ -122,7 +122,7 @@ They are soft. By default nothing merges without your yes, work whose review fai
 
 ### What does it cost?
 
-Herdr Projects is free and [MIT licensed](LICENSE). Your agent CLI's usual usage charges still apply: every task is a full agent session plus a review, the Coordinator spends tokens on each message, and the Watcher makes a small model call about once a minute per working agent.
+Herdr Projects is free and [MIT licensed](LICENSE). Your agent CLI's usual usage charges still apply: every task is a full agent session plus a review, and the Coordinator spends tokens on each message.
 
 ## Open the board in three steps
 

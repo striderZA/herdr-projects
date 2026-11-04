@@ -81,7 +81,7 @@ fn the_panel_of_a_reviewed_task_in_the_order_you_need_it() {
     let ready = v.page(&with(&second, json!({ "summary": "Did the work.", "said": "Built Skylark.", "stat": " 4 files changed, 120 insertions(+), 31 deletions(-)" })), false);
     // (Its review says no: it is not "ready", it says so under a headline of its own with what the two keys do, and its id is not a fact here.)
     m(&ready, &format!(r"^\n #\d+ Build a flying game\n\n Status ─+\n State {{8}}! review failed · 2nd review · 0s ago\n On it {{8}}claude\n Change {{7}}PR#12 · 4 files, \+120 −31\n\n Review failed ─+\n It found 3/5, reviewer says no\. {} sends the review to the agent to fix\.\n {} merges it anyway, and asks first\.\n\n Review ─+\n Review 2 {{5}}✗ 3/5, says don't merge\n[ ▌] {{13}}Crashes\.\n\n The agent said ─+\n Built Skylark\.\n\n Settings ─+\n Project ", regex::escape(&key_name("sendBack")), regex::escape(&key_name("yes"))));
-    m(&ready, r"\n Send back {4}major or worse · 3 rounds max\n Merge {8}after your yes\n Also {9}one attempt · not research only · no limits · no fallback$");
+    m(&ready, r"\n Send back {4}major or worse · 3 rounds max\n Merge {8}after your yes\n Also {9}one attempt · not research only · no limits$");
     no(&ready, r"as usual|https:|shows the whole task|ready to approve|proj/1"); // beside the list every setting it runs with; the link is in the PR's number
     m(&v.page(&with(&second, json!({ "stat": " 4 files changed, 120 insertions(+), 31 deletions(-)" })), true), r"\n Change {7}PR#12 · 4 files, \+120 −31\n[ ▌] {13}https://github\.com/a/b/pull/12\n"); // full screen it is printed too
     no(&ready, r"Description|None\.");

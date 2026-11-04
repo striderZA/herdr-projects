@@ -74,9 +74,8 @@ pub fn hints(s: &State, r: Option<&Obj>, who: Option<&Who>) -> (Vec<Hint>, Optio
         let fold = crate::board::update::heads::fold_says(s);
         let mut v: Vec<Hint> = (!fold.is_empty()).then(|| hk(K::Enter, &fold)).into_iter().collect();
         if !w.is_empty() { v.push(hk(K::Open, &w)); }
-        // A coordinator's row names both of autopilot's keys (update/pilot.rs).
-        // A coordinator's row: started and stopped as an agent is, and its autopilot's own key.
-        if let Some(c) = crate::board::update::pilot::selected(s) { v.push(hk(K::Delegate, "start")); v.push(hk(K::Stop, "stop")); v.push(hk(K::Pilot, if crate::board::update::pilot::on(s, &c) { "autopilot off" } else { "autopilot" })); }
+        // A coordinator's row: started and stopped as an agent is.
+        if crate::board::update::heads::selected(s).is_some() && crate::board::update::coords::of_head(s, &s.sel).is_some() { v.push(hk(K::Delegate, "start")); v.push(hk(K::Stop, "stop")); }
         v.extend(back); v.extend(key);
         match talk { Some(t) if t.stays => { v.push(t) } Some(t) => { v.insert(0, t); v.push(more) } None => v.push(more) }
         // A project's row: the whole project to the archive; in the archive, back (update/archive_project.rs). It gives

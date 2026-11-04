@@ -10,7 +10,6 @@ pub mod issues;
 pub mod key_map;
 pub mod lookup;
 pub mod migrate;
-pub mod pilot_values;
 pub mod places;
 pub mod show;
 pub mod values;

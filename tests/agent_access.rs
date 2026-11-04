@@ -6,8 +6,6 @@ use serde_json::json;
 use sw::json::*;
 use sw::agents::access::{too_old, why_not};
 use sw::agents::start::{start_args, StartOpts};
-use sw::finish::hand_over::usable;
-use sw::store::handovers::next_fallback;
 use sw::store::settings::change::set_value;
 use sw::store::settings::lookup::Scope;
 
@@ -109,19 +107,6 @@ fn an_auto_written_by_hand_for_a_program_without_it_stays_auto_and_its_start_is_
     let t = settle(&id);
     assert!(calls(&w).iter().all(|c| !c.starts_with("agent start")), "pi was never started");
     assert!(t.at("failure").to_string().contains("pi cannot be started with access \\\"auto\\\": it has no auto mode"), "{}", t.at("failure"));
-}
-
-#[test]
-fn a_fallback_with_no_auto_mode_is_passed_over_for_one_that_has_it() {
-    let _w = world();
-    assert_eq!(usable("pi", "auto"), "pi cannot do \"auto\": it has no auto mode (only claude, codex, cursor, qodercli, qwen have one)");
-    assert_eq!([usable("claude", "auto"), usable("codex", "auto")], [String::new(), String::new()]);
-    let list: Vec<String> = ["pi", "codex"].map(String::from).to_vec();
-    let (next, skipped) = next_fallback(&list, "claude", &[], |a| usable(a, "auto"));
-    assert_eq!(next, "codex");
-    assert_eq!(skipped.len(), 1);
-    version("codex", "0.1.0");
-    assert!(usable("codex", "auto").contains("codex 0.1.0 has no auto mode"));
 }
 
 #[test]

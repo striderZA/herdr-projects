@@ -18,7 +18,7 @@ use crate::herdr::{cli::{current_socket, same_socket}, Herdr};
 use crate::json::*;
 use crate::limits::run::granted;
 use crate::runner::{runner_alive, spawn_runner};
-use crate::store::{failures::failure_patch, files::{data_dir, has_tasks}, handovers::fresh_list, inbox::{pending_text, take_text, untake_text}, repos::cwd_of, tasks::{get, list, update_wait, Change, ListOpts, Task}};
+use crate::store::{failures::failure_patch, files::{data_dir, has_tasks}, inbox::{pending_text, take_text, untake_text}, repos::cwd_of, tasks::{get, list, update_wait, Change, ListOpts, Task}};
 use crate::submit::{hand, not_started, note_sent, rest, took, unconfirmed::taken};
 use std::path::Path;
 
@@ -125,8 +125,7 @@ pub fn apply(id: &str, a: &Value, api: &Herdr) {
                 t.put("mergeIntent", Value::Null);
                 stale_review(t);
                 for k in ["checkFails", "reviewRounds", "prRounds", "syncRepairs"] { t.put(k, 0); }
-                fresh_list(t);
-                let w = t.at("workedAt").clone();
+                            let w = t.at("workedAt").clone();
                 t.put("armedAt", w); t.put("turnOpen", true); t.put("turnBy", "typed"); granted(t);
                 t.put("stage", "working"); t.put("msg", ""); t.del("kind"); t.put("watch", Value::Null); t.put("since", now()); t.put("mergeFailed", false);
                 if t.at("failure").b("auth") { t.put("failure", Value::Null); } // typing after a login problem is how "fixed" is said
@@ -247,7 +246,6 @@ pub fn human_turn_ended(t: &mut Task) {
     t.put("mergeIntent", Value::Null);
     stale_review(t);
     for k in ["checkFails", "reviewRounds", "prRounds", "syncRepairs"] { t.put(k, 0); }
-    fresh_list(t);
     // armedAt is never hook wall-clock time here: it is the time of the last handled completion, so a note written
     // during a fast turn still counts.
     let armed = if t.at("handled").b("at") { t.at("handled").at("at").clone() } else if t.b("armedAt") { t.at("armedAt").clone() } else { json!(0) };

@@ -1,6 +1,6 @@
 //! Where a task stands, as the board sorts it: its group, its colour, whether an agent is on it, whether it waits for
 //! you. A row is a task as the board shows it (flow/live.rs: shown): the task's own fields, plus `state`, `kind`,
-//! `note`, `progress`, `eta` and the rest that herdr and the Watcher said.
+//! `note`, `progress`, `eta` and the rest that herdr and the board said.
 use super::ink::Ink;
 use super::queue::queued;
 use crate::json::*;

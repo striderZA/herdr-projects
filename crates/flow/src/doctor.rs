@@ -1,12 +1,12 @@
 //! `herdr-projects doctor`: the health check. One file in doctor/ per area (the program and its launcher, herdr's
-//! plugin, the agent programs and Codex's config.toml, the model and effort settings, plan approval's read-only
-//! mount, free disk space, leftovers it could clean, messages that wait undelivered for a coordinator); older installs are take_over/look.rs. Each area hands back what it found: a fact that is fine, or a
-//! problem in one plain line with what to do. The areas are asked at the same time, so the check takes as long as its
-//! slowest one; it exits 1 when there is a problem (docs/troubleshooting.md).
+//! plugin, the agent programs and Codex's config.toml, the model and effort settings, free disk space, leftovers it
+//! could clean, messages that wait undelivered for a coordinator). Each area
+//! hands back what it found: a fact that is fine, or a problem in one plain line with what to do. The areas are asked
+//! at the same time, so the check takes as long as its slowest one; it exits 1 when there is a problem
+//! (docs/troubleshooting.md).
 pub mod agents;
 pub mod codex;
 pub mod disk;
-pub mod plan;
 pub mod plugin;
 pub mod program;
 pub mod queue;
@@ -31,28 +31,15 @@ pub fn say(all: &[Found]) -> String {
     out.push(match problems(all) { 0 => "No problems.".into(), 1 => "1 problem.".into(), n => format!("{n} problems.") });
     out.join("\n")
 }
-/// Older installs (take_over/look.rs): only what is left for you to do is a problem; its line says what to do.
-pub fn old_installs(lines: Vec<(String, bool)>) -> Vec<Found> {
-    let mut out: Vec<Found> = vec![];
-    for (l, bad) in lines {
-        // A line that goes on from the one before (indented) is said with it.
-        match out.last_mut() { Some(last) if l.starts_with("  ") => { last.what = format!("{} {}", last.what, l.trim()); } _ => out.push(if bad { Found::bad(l, "") } else { Found::ok(l) }) }
-    }
-    out
-}
-
 /// The command: everything on this machine, as it is now.
 pub fn doctor_main() -> i32 {
-    // The launcher is read before anything else runs: taking over an older install may write it again.
     let launcher = crate::flow::send::launcher_file();
     let launcher_text = std::fs::read_to_string(&launcher).ok();
-    let old = old_installs(crate::take_over::look::looked_here());
     let now = crate::clock::now();
     let all = std::thread::scope(|s| {
         let herdr = s.spawn(plugin::ask);
         let progs = s.spawn(|| agents::named().into_iter().map(|(k, by)| std::thread::spawn(move || agents::ask(&k, by))).collect::<Vec<_>>().into_iter().filter_map(|h| h.join().ok()).collect::<Vec<_>>());
         let set = s.spawn(settings::check);
-        let mount = s.spawn(plan::ask);
         let disks = s.spawn(disk::ask);
         let left = s.spawn(|| stale::ask(&stale::cache_dir()));
         let waits = s.spawn(|| queue::ask(&crate::herdr::cli::current_socket(), now));
@@ -63,13 +50,12 @@ pub fn doctor_main() -> i32 {
         all.extend(agents::check(&progs.join().unwrap_or_default()));
         all.extend(codex::check());
         all.extend(set.join().unwrap_or_default());
-        if let Ok(m) = mount.join() { all.extend(plan::check(&m)); }
         all.extend(disk::check(&disks.join().unwrap_or_default()));
         all.extend(stale::check(&left.join().unwrap_or_default()));
         all.extend(queue::check(&waits.join().unwrap_or_default(), now));
         all
     });
-    let all: Vec<Found> = all.into_iter().chain(old).collect();
+    let all: Vec<Found> = all;
     println!("{}", say(&all));
     if problems(&all) > 0 { 1 } else { 0 }
 }

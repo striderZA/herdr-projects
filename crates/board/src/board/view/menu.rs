@@ -58,8 +58,6 @@ pub fn menu_lines(s: &mut State, t: &Theme, width: usize, h: usize) -> Vec<Inked
     lines.extend(entry("PR#16", "its pull request: green when its checks pass, red when they fail"));
     lines.extend(entry("[auto]", "made by an automation; [research]: research only, nothing is merged"));
     lines.extend(entry("[chat]", "a conversation: it changes nothing and ends when you say"));
-    // A machine's or a project's row is its coordinator's, with a task's marks; on autopilot, its tag and a line under it.
-    lines.extend(entry("[autopilot]", "a coordinator on autopilot (a machine's or a project's row): the line under it says what it does"));
     // The window: the title stays, and the picked line stays in view while the pick moves.
     let space = h.saturating_sub(1).max(1);
     let cut = lines.len() > space;
