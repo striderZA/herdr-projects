@@ -54,7 +54,7 @@ pub fn rows(scope: &Scope) -> Vec<Row> {
     let task = scope.task;
     let at = places_of(scope, &mine);
     let get = |name: &str| lookup_at(name, scope, &at).map(|f| text(&f.value)).unwrap_or_default();
-    let shows = |s: &Entry| if scope.coord.is_some() { s.kind == Kind::Coord } else if task.is_some() { true } else if !scope.repo.is_empty() { s.kind != Kind::Board && s.kind != Kind::Coord } else { s.kind != Kind::Repo && s.name != super::coord::GOAL };
+    let shows = |s: &Entry| if scope.coord.is_some() { s.kind == Kind::Coord } else if task.is_some() { true } else if !scope.repo.is_empty() { s.kind != Kind::Board && s.kind != Kind::Coord } else { s.kind != Kind::Repo };
     // One task's own setting is said on that task only.
     SETTINGS.iter().filter(|s| shows(s) && (task.is_some() || !s.task)).filter_map(|s| {
         let r = lookup_at(&s.name, scope, &at).ok()?;

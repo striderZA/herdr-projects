@@ -11,7 +11,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
 pub const REPO_FILE: &str = ".herdr-projects.json";
-/// The name herdr-superwork gave that file: still read, in a repo that has only that one (docs/old-installs.md).
+/// The name herdr-superwork gave that file: still read, in a repo that has only that one.
 pub const OLD_REPO_FILE: &str = ".herdr-superwork.json";
 pub fn config_file() -> PathBuf { config_dir().join("config.json") }
 
@@ -69,9 +69,7 @@ fn read_yours() -> Mine {
     let repos = mine.shift_remove("repos").unwrap_or(Value::Null);
     let coordinators = mine.shift_remove("coordinators").unwrap_or(Value::Null);
     let not_repo: Vec<&str> = names().into_iter().filter(|n| entry_of(n).map(|e| e.kind != Kind::Repo).unwrap_or(false)).collect();
-    let (mut you, mut problems) = read(&Value::Object(mine), "your settings", &not_repo, "is one repo's own: say it under \"repos\", in that repo's entry");
-    // A goal is one coordinator's own: said for you, it does not count.
-    if you.shift_remove(super::coord::GOAL).is_some() { problems.push(Problem { place: "your settings".into(), name: super::coord::GOAL.into(), why: format!("{} is said for one coordinator only: under \"coordinators\", in its entry (or `set … --project-coordinator <repo>`)", super::coord::GOAL) }); }
+    let (you, mut problems) = read(&Value::Object(mine), "your settings", &not_repo, "is one repo's own: say it under \"repos\", in that repo's entry");
     if broken { problems.push(Problem { place: "your settings".into(), name: String::new(), why: "it is not valid JSON, so nothing in it counts".into() }); }
     let not_board: Vec<&str> = names().into_iter().filter(|n| entry_of(n).map(|e| e.kind != Kind::Board && e.kind != Kind::Coord).unwrap_or(false)).collect();
     let mut entries = BTreeMap::new();

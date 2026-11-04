@@ -32,15 +32,6 @@ pub fn moved_values(o: &Obj, builtin: &[(&str, String)]) -> Obj {
     if o.contains_key("reviewerFast") { put("reviewer.fast", json!(on(o.at("reviewerFast"))), &mut out); }
     if has(o.at("coordinator")) && off(o.at("coordinator")) { put("coordinator.agent", json!("none"), &mut out); } else { agent("coordinator.agent", o.at("coordinator"), o.at("coordinatorModel"), &b("coordinator"), &mut out, &mut put); }
     if has(o.at("coordinatorEffort")) { put("coordinator.effort", o.at("coordinatorEffort").clone(), &mut out); }
-    let w_agent = if o.contains_key("watcherAgent") { o.at("watcherAgent") } else { o.at("helper") };
-    let w_model = if o.contains_key("watcherModel") { o.at("watcherModel") } else { o.at("helperModel") };
-    if has(o.at("watcher")) && off(o.at("watcher")) { put("watcher.agent", json!("none"), &mut out); }
-    else if has(w_agent) || has(w_model) {
-        let kind = if has(w_agent) { text(w_agent).to_lowercase() } else { "claude".into() };
-        let model = if has(w_model) { w_model.clone() } else if has(w_agent) { json!("") } else { json!("claude-haiku-5-5") };
-        put("watcher.agent", json!(with_model(&kind, &model)), &mut out);
-    }
-    if has(o.at("watcherEvery")) { put("watcher.every", json!(format!("{}s", o.f("watcherEvery").round() as i64)), &mut out); }
     if has(o.at("review")) && !out.contains_key("review.when") {
         let w = match text(o.at("review")).to_lowercase().as_str() { "all" | "always" | "everything" => "always", "none" | "off" | "false" | "no" | "never" => "never", _ => "repos" };
         put("review.when", json!(w), &mut out);
@@ -73,10 +64,10 @@ fn moved_facts(cfg: &Value) -> Obj {
     if !cfg.arr("include").is_empty() { f.put("workspace.include", cfg.arr("include").iter().map(text).collect::<Vec<_>>()); }
     f
 }
-const OLD_KEYS: [&str; 35] = ["agent", "model", "effort", "fast", "reviewerModel", "reviewerEffort", "reviewerFast", "coordinatorModel", "coordinatorEffort", "watcherAgent", "watcherModel", "watcherEvery", "helper", "helperModel", "gate", "reviewAuto", "rounds", "artifacts", "serve", "remerge", "worktree", "base", "pr", "autoMerge", "cleanup", "machines", "remoteUser", "max", "skill", "trust", "agentArgs", "theme", "ownTerminal", "webUi", "bell"];
+const OLD_KEYS: [&str; 25] = ["agent", "model", "effort", "fast", "reviewerModel", "reviewerEffort", "reviewerFast", "coordinatorModel", "coordinatorEffort", "gate", "reviewAuto", "rounds", "artifacts", "remerge", "worktree", "base", "pr", "autoMerge", "cleanup", "max", "skill", "trust", "agentArgs", "theme", "ownTerminal"];
 fn is_old(file: &Value) -> bool {
     let Some(o) = file.as_object() else { return false };
-    OLD_KEYS.iter().any(|k| o.contains_key(*k)) || ["reviewer", "coordinator", "watcher", "review", "merge"].iter().any(|k| o.get(*k).map(|v| !v.is_object()).unwrap_or(false))
+    OLD_KEYS.iter().any(|k| o.contains_key(*k)) || ["reviewer", "coordinator", "review", "merge"].iter().any(|k| o.get(*k).map(|v| !v.is_object()).unwrap_or(false))
 }
 /// Your old config.json as the new one, or None when it is not in the old shape.
 pub fn moved_config(file: &Value) -> Option<Obj> {
@@ -91,7 +82,7 @@ pub fn moved_task(t: &Obj, old: &Obj) -> Option<Obj> {
     let agent = if t.b("agent") { t.t("agent") } else if old.b("agent") { old.t("agent") } else { "claude".into() };
     let reviewer = if old.b("reviewer") && !off(old.at("reviewer")) { old.t("reviewer") } else { "codex".into() };
     let said = moved_values(&own, &[("agent", agent), ("reviewer", reviewer)]);
-    let mut settings: Obj = said.into_iter().chain(t.o("settings").cloned().unwrap_or_default()).filter(|(n, _)| !(n.starts_with("board.") || n.starts_with("coordinator.") || n.starts_with("watcher."))).collect();
+    let mut settings: Obj = said.into_iter().chain(t.o("settings").cloned().unwrap_or_default()).filter(|(n, _)| !(n.starts_with("board.") || n.starts_with("coordinator."))).collect();
     if (t.s("base") == "head" || t.s("base") == "fresh") && !settings.contains_key("workspace.from") { settings.put("workspace.from", if t.s("base") == "head" { "here" } else { "main" }); }
     // The repo's own file could switch merging on by itself where you had chosen nothing. It no longer can; a task
     // that ran on that keeps it, as its own choice.

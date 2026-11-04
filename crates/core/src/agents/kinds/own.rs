@@ -1,7 +1,6 @@
 //! The three programs whose saved conversation the board reads itself: Claude Code, Codex and pi. Verified on claude
 //! 2.1.296, codex 0.160.0, pi 1.1.0 (docs/checked-on-herdr.md). What they do beyond these facts is code of their own
-//! in adapter.rs (the turn-end hook, the conversation files, the Watcher's lean start, Codex's rules and fast mode,
-//! pi's provider in its model).
+//! in adapter.rs (the turn-end hook, the conversation files, Codex's rules and fast mode, pi's provider in its model).
 use super::{EffortsRead, Kind, Login, Models, Read, BASE, NO_MODELS};
 
 pub static KINDS: &[Kind] = &[

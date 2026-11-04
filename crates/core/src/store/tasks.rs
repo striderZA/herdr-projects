@@ -12,7 +12,7 @@ use std::sync::Arc;
 
 pub type Task = Obj;
 
-/// Minutes left, as the Watcher or a report gave them: a whole number from 0 up, or None when none was given.
+/// Minutes left, as a report gave them: a whole number from 0 up, or None when none was given.
 pub fn minutes(v: &Value) -> Option<i64> {
     match v {
         Value::Null => None,
@@ -92,12 +92,6 @@ pub fn update_wait(id: &str, wait_ms: i64, f: impl FnOnce(&mut Task) -> Res<Chan
     with_task_lock(id, wait_ms, || {
         let mut t = get(id).ok_or_else(|| Error::new(format!("No task {id}")))?;
         let before = t.s("stage").to_string();
-        // The Watcher's sentence about the agent's work outlives the guess it came with: whatever this change does to
-        // `watch` (every new run drops it), the sentence is kept with its time (status_kept.rs).
-        if t.at("watch").s("role") == "agent" && !t.at("watch").s("msg").is_empty() {
-            let w = t.at("watch").clone();
-            t.put("lastLine", json!({ "msg": w.s("msg"), "at": w.at("at") }));
-        }
         if let Change::Keep = f(&mut t)? { return Ok(t); }
         if t.s("stage") != before {
             t.put("at", now());
