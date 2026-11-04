@@ -29,7 +29,7 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 // Under the tests none of them may be the real one (never_real.rs).
 pub const HOME_NAME: &str = ".herdr-projects";
 fn env(k: &str) -> Option<String> { std::env::var(k).ok().filter(|v| !v.is_empty()) }
-pub fn user_home() -> PathBuf { env("HOME").map(PathBuf::from).unwrap_or_else(|| PathBuf::from("/")) }
+pub fn user_home() -> PathBuf { env(crate::sys::HOME_VAR).map(PathBuf::from).unwrap_or_else(crate::sys::root_dir) }
 pub fn home_dir() -> PathBuf { env("HERDR_PROJECTS_HOME").map(PathBuf::from).unwrap_or_else(|| user_home().join(HOME_NAME)) }
 /// Each part of the home folder: its own variable, else its place in the home folder.
 const PARTS: [(&str, &str); 3] = [("HERDR_PROJECTS_DATA_DIR", "data"), ("HERDR_PROJECTS_CONFIG_DIR", "settings"), ("HERDR_PROJECTS_REPORTS_DIR", "reports")];
