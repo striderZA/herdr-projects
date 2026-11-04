@@ -8,7 +8,7 @@ use sw::json::*;
 
 fn origin_world() -> World { world_with(Opts { repo: true, origin: true, ..Default::default() }) }
 fn creates(w: &World) -> Vec<String> { calls(w).into_iter().filter(|c| c.starts_with("worktree create ")).collect() }
-fn work_branches(w: &World) -> String { git(&w.root, &["branch", "--list", "work/*"]) }
+fn task_branches(w: &World) -> String { git(&w.root, &["branch", "--list", "feat/*"]) }
 
 #[test]
 fn two_tasks_started_together_while_the_config_is_held_both_start_from_the_commit() {
@@ -44,7 +44,7 @@ fn a_create_refused_on_a_held_config_lock_is_tried_again() {
     let t = settle(&id);
     assert_eq!(t.s("stage"), "working", "{}", t.at("failure"));
     assert_eq!(creates(&w).len(), 2);
-    assert_eq!(work_branches(&w).trim_start_matches(['*', '+', ' ']), t.s("branch"), "the empty branch of the refused try was taken away: the task keeps its name");
+    assert_eq!(task_branches(&w).trim_start_matches(['*', '+', ' ']), t.s("branch"), "the empty branch of the refused try was taken away: the task keeps its name");
 }
 
 #[test]
@@ -59,7 +59,7 @@ fn a_start_that_fails_leaves_no_branch_and_the_next_start_takes_the_same_name() 
     assert_eq!(t.s("stage"), "failed");
     assert!(t.at("failure").s("detail").contains("could not lock config file"), "{}", t.at("failure"));
     assert_eq!(creates(&w).len(), 5, "tried five times");
-    assert_eq!(work_branches(&w), "", "no empty branch left behind");
+    assert_eq!(task_branches(&w), "", "no empty branch left behind");
     // The lock is gone: delegating again starts, on the branch name the first start would have had.
     w.patch(|s| s["createLocked"] = json!(0));
     delegate(&id);

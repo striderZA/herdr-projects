@@ -46,7 +46,7 @@ attempts fan out (attempts.by)
 ─► the chosen one: review loop ─► push, pull request ─► merge gate (merge.by)
 ```
 
-1. **Each attempt works on its own.** It has its own git worktree, its own branch (`work/12a-…`, `work/12b-…`) and its
+1. **Each attempt works on its own.** It has its own git worktree, its own branch (`{type}/12a-…`, `{type}/12b-…`) and its
    own tab in the task's Herdr space (`Agent A`, `Agent B`; [a task's tabs](tabs.md)). Its agent is told the task and
    nothing about the other attempts. Each uses a slot of `board.agents`: with three attempts and two free slots, the
    third waits and the row says so (`C claude waits for a slot`).

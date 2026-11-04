@@ -5,6 +5,7 @@ use crate::json::*;
 use crate::store::keys::repo_keys;
 use crate::store::repos::git_out;
 use crate::store::settings::branch::{branch_of, git_takes};
+use crate::store::settings::branch_kind;
 use crate::store::settings::lookup::setting_text;
 use crate::store::settings_list::entry_of;
 use std::path::Path;
@@ -19,8 +20,9 @@ pub fn slug_of(title: &str) -> String {
 /// (a pattern saved before it was checked) is the built-in one's.
 pub fn free_branch(root: &Path, t: &Obj) -> String {
     let slug = slug_of(t.s("title"));
+    let kind = branch_kind::of(&t.s("title"));
     let key = repo_keys().get(t.s("repo")).cloned().unwrap_or_default();
-    let named = |pattern: &str| branch_of(pattern, &t.t("n"), &slug, &key);
+    let named = |pattern: &str| branch_of(pattern, &t.t("n"), &slug, &key, kind);
     let mut stem = named(&setting_text("workspace.branch", Some(t)));
     if !git_takes(&stem) { stem = named(&text(&entry_of("workspace.branch").map(|e| e.builtin.clone()).unwrap_or_default())); }
     let mut branch = stem.clone();

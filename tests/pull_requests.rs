@@ -24,7 +24,7 @@ fn pull_requests_pushed_as_a_draft_merged_through_gh_on_approval_remembered_when
     let id = to_approval(&w, "With a PR");
     let t = task(&id);
     assert_eq!(t.s("pr"), "https://github.com/o/r/pull/7");
-    assert!(gh_log(&w).contains("pr create --draft --head work/1-with-a-pr --title With a PR"), "{}", gh_log(&w));
+    assert!(gh_log(&w).contains("pr create --draft --head feat/1-with-a-pr --title With a PR"), "{}", gh_log(&w));
     assert_eq!(git(&w.root, &["ls-remote", "--heads", "origin", t.s("branch")]).split('\t').next().unwrap(), git(Path::new(t.s("worktree")), &["rev-parse", "HEAD"]));
     assert!(t.s("msg").contains("Pull request: https://github.com/o/r/pull/7"), "{}", t.s("msg"));
     // checks still running: the approval is remembered
@@ -50,7 +50,7 @@ fn pull_requests_pushed_as_a_draft_merged_through_gh_on_approval_remembered_when
     poll_prs();
     let t = task(&id);
     assert_eq!(t.s("stage"), "done"); assert_eq!(t.at("prMerged"), &json!(true)); assert_eq!(t.s("msg"), "Merged: https://github.com/o/r/pull/7");
-    assert!(!w.base.join("fake/worktrees/proj/work-1-with-a-pr").exists());
+    assert!(!w.base.join("fake/worktrees/proj/feat-1-with-a-pr").exists());
 }
 
 #[test]
@@ -89,7 +89,7 @@ fn a_pull_request_merged_elsewhere_does_not_take_a_newer_local_commit_with_it() 
     poll_prs();
     let t = task(&id);
     assert_eq!(t.s("stage"), "done"); assert_eq!(t.at("prMerged"), &json!(true));
-    assert!(t.arr("kept").first().map(text).unwrap_or_default().contains("unmerged work on work/"), "{}", t.at("kept"));
+    assert!(t.arr("kept").first().map(text).unwrap_or_default().contains(&format!("unmerged work on {}", t.s("branch"))), "{}", t.at("kept"));
     assert!(t.s("msg").contains("Kept: ")); assert!(!t.b("tidy") && !t.b("cleaned"));
     assert!(tree.join("late.txt").exists()); assert_eq!(git(&w.root, &["log", "-1", "--format=%s", t.s("branch")]), "late");
     assert!(!w.state().arr("workspaces").iter().any(|x| x.s("workspace_id") == t.at("link").s("workspace")), "it still leaves the sidebar");

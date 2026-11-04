@@ -52,7 +52,7 @@ fn every_turn_end_of_a_chat_waits_for_you_and_nothing_is_checked_reviewed_or_pus
     assert_eq!((t.s("stage"), t.s("msg")), ("asks", "Shall I go deeper on its risks"), "{}", t.at("failure"));
     assert!(none(&t), "{t:?}");
     assert_eq!(reviewers(&w), 0);
-    assert_eq!(git(&w.root, &["ls-remote", "origin"]).lines().filter(|l| l.contains("work/")).count(), 0, "nothing pushed");
+    assert_eq!(git(&w.root, &["ls-remote", "origin"]).lines().filter(|l| l.contains(t.s("branch"))).count(), 0, "nothing pushed");
     // It never merges: an approval is refused, and says how to end it.
     let e = sw::actions::finish_line::approve(&id, None, false).unwrap_err().msg;
     assert!(e.contains("is chat only: nothing of it is merged") && e.contains("herdr-projects finish"), "{e}");
@@ -89,7 +89,7 @@ fn yes_on_the_board_or_finish_ends_it_as_done_with_the_last_message_or_the_repor
     assert!(t.s("msg").starts_with("Chat ended. Report: ") && t.s("msg").contains("report.md"), "{}", t.s("msg"));
     assert!(t.s("msg").contains("Chat only, but its agent changed the repo (1 change in the repo): nothing was pushed, opened or merged."), "{}", t.s("msg"));
     assert!(!t.b("pr"));
-    assert_eq!(git(&w.root, &["ls-remote", "origin"]).lines().filter(|l| l.contains("work/")).count(), 0, "nothing pushed");
+    assert_eq!(git(&w.root, &["ls-remote", "origin"]).lines().filter(|l| l.contains(t.s("branch"))).count(), 0, "nothing pushed");
     // A task that waits for no word of yours has nothing to end.
     let plain = w.add("Fix the page");
     assert!(sw::actions::finish_line::finish_anyway(&plain).is_err());

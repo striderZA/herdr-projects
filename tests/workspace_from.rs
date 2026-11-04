@@ -75,7 +75,7 @@ fn it_keeps_up_with_that_branch_opens_its_pull_request_into_it_merges_there_and_
     from("develop");
     let id = to_approval(&w, "On develop");
     let t = task(&id);
-    assert!(gh_log(&w).contains("pr create --draft --head work/1-on-develop --title On develop") && gh_log(&w).contains("--base develop"), "{}", gh_log(&w));
+    assert!(gh_log(&w).contains("pr create --draft --head feat/1-on-develop --title On develop") && gh_log(&w).contains("--base develop"), "{}", gh_log(&w));
     assert_eq!(t.s("syncSeen"), git(&w.root, &["rev-parse", "origin/develop"]));
     // develop moves at the remote, and main too: the task takes develop's commit, never main's
     let d2 = they_push(&w, "develop", "e.txt", "two\n");

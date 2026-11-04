@@ -1,4 +1,4 @@
-//! Where an attempt works: a worktree and a branch of its own (`work/12a-…`), and a tab of its own (`Agent A`) in the
+//! Where an attempt works: a worktree and a branch of its own (`feat/12a-…`), and a tab of its own (`Agent A`) in the
 //! task's one herdr space. The first attempt to start makes that space, as herdr makes any worktree's; each later one
 //! gets a worktree beside it and a tab in the same space.
 use crate::err::Res;
