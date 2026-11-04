@@ -63,9 +63,7 @@ fn a_model_the_program_does_not_take_is_refused_with_the_ones_it_does() {
     refused("worker.agent", "cursor/claude-opus-4-8", r"only with its parameters in brackets, as in cursor/claude-opus-4-8\[effort=high\]");
     refused("worker.agent", "cursor/gpt-9[effort=high]", r#"cursor has no model "gpt-9\[effort=high\]""#);
     // Every setting that names an agent, and a choice for one Coordinator only.
-    refused("worker.fallback", "claude, codex/gpt-5.5", r"^worker\.fallback: codex has no model");
     refused("attempts.by", "codex/gpt-5.5, pi", r"^attempts\.by: codex has no model");
-    refused("watcher.agent", "codex/o3", r"^watcher\.agent: codex has no model");
     assert!(sw::coordinator::who::pick_of("codex/gpt-5.5", "").unwrap_err().msg.contains("codex has no model \"gpt-5.5\""));
     // A refused value changed nothing.
     assert_eq!(setting_text("worker.agent", None), "cursor/claude-opus-4-8[effort=high]");

@@ -117,7 +117,7 @@ fn a_task_an_automation_made_says_so_and_with_the_board_open_a_schedule_fires_by
     let a = three(&w).remove(0);
     let mut s = open(&w.root, 40); s.s.side = false;
     // The board's own tick, as its loader runs it when no keeper is alive (board/run/start.rs).
-    let beat = |s: &mut Board| { sw::keeper::tick_once(&w.socket, true); s.load(); };
+    let beat = |s: &mut Board| { sw::keeper::tick_once(&w.socket); s.load(); };
     beat(&mut s); assert!(sw::store::tasks::list(Default::default()).is_empty());
     sw::clock::advance(2 * HOUR + 1000); beat(&mut s); // no keeper runs: the open board fires what is due
     assert_eq!(sw::store::tasks::list(Default::default()).iter().map(|t| (t.t("id"), t.t("title"), t.t("stage"))).collect::<Vec<_>>(), [("proj/1".to_string(), "Look for old dependencies".to_string(), "starting".to_string())]);

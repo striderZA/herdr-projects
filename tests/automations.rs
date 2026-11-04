@@ -83,9 +83,9 @@ fn a_schedule_makes_a_task_and_starts_it_with_the_board_closed_and_off_never_fir
     let a = l::add(Add { name: "Look for old dependencies", prompt: "Check what is out of date.\nChange nothing.", trigger: Some(parse_schedule("every 2h").unwrap()), repo: "", folder: &w.root, settings: set, research: Some(true) }).unwrap();
     assert_eq!(a.at("settings"), &json!({ "reviewer.agent": "claude", "merge.by": "itself", "research.only": true }));
     assert_eq!((a.s("repo"), a.i("nextAt")), ("proj", t0 + 2 * HOUR));
-    sw::keeper::tick_once(&w.socket, false); sw::clock::advance(HOUR); sw::keeper::tick_once(&w.socket, false);
+    sw::keeper::tick_once(&w.socket); sw::clock::advance(HOUR); sw::keeper::tick_once(&w.socket);
     assert!(sw::store::tasks::list(Default::default()).is_empty(), "not due yet");
-    sw::clock::advance(HOUR + 1000); sw::keeper::tick_once(&w.socket, false);
+    sw::clock::advance(HOUR + 1000); sw::keeper::tick_once(&w.socket);
     let all = sw::store::tasks::list(Default::default());
     assert_eq!(all.len(), 1);
     let t = &all[0];
@@ -100,10 +100,10 @@ fn a_schedule_makes_a_task_and_starts_it_with_the_board_closed_and_off_never_fir
     // off: it never fires and keeps everything
     sw::runner::JOBS.with(|j| j.borrow_mut().clear());
     sw::store::tasks::update(t.s("id"), |t| { t.put("stage", "approval"); Ok(sw::store::tasks::Change::Write) }).unwrap();
-    l::turn(a.s("id"), false).unwrap(); sw::clock::advance(9 * HOUR); sw::keeper::tick_once(&w.socket, false);
+    l::turn(a.s("id"), false).unwrap(); sw::clock::advance(9 * HOUR); sw::keeper::tick_once(&w.socket);
     assert_eq!(sw::store::tasks::list(Default::default()).len(), 1);
     l::turn(a.s("id"), true).unwrap();
     assert_eq!(sw::store::automations::automation(a.s("id")).unwrap().i("nextAt"), sw::clock::now() + 2 * HOUR);
-    sw::clock::advance(2 * HOUR); sw::keeper::tick_once(&w.socket, false);
+    sw::clock::advance(2 * HOUR); sw::keeper::tick_once(&w.socket);
     assert_eq!(sw::store::tasks::list(Default::default()).len(), 2);
 }

@@ -28,7 +28,7 @@ fn its_own_settings_arrive_on_the_task_and_an_edit_applies_from_the_next_firing(
     sw::store::settings::change::set_value("review.rounds", &json!(5), &sw::store::settings::lookup::Scope::you()).unwrap();
     let mut set = Obj::new(); set.put("reviewer.agent", "claude"); set.put("merge.by", "itself");
     let a = l::add(Add { name: "Look for old dependencies", prompt: "Check what is out of date.\nChange nothing.", trigger: Some(parse_schedule("every 2h").unwrap()), repo: "", folder: &w.root, settings: set, research: Some(true) }).unwrap();
-    sw::clock::advance(2 * HOUR + 1000); sw::keeper::tick_once(&w.socket, false);
+    sw::clock::advance(2 * HOUR + 1000); sw::keeper::tick_once(&w.socket);
     let t = tasks().remove(0);
     assert_eq!((t.at("research"), t.at("settings")), (&json!(null), &json!({ "reviewer.agent": "claude", "merge.by": "itself", "research.only": true })));
     assert_eq!(sw::runner::JOBS.with(|j| j.borrow().iter().filter(|x| x.0 != "notify").map(|x| (x.0.clone(), x.1.clone())).collect::<Vec<_>>()), vec![("delegate".to_string(), t.t("id"))], "an agent is put on it at once");
@@ -43,7 +43,7 @@ fn its_own_settings_arrive_on_the_task_and_an_edit_applies_from_the_next_firing(
     l::set_setting(a.s("id"), "merge.by", &json!("you")).unwrap(); l::change(a.s("id"), None, Some("New words."), None, None, None).unwrap();
     assert_eq!(task(t.s("id")).at("settings").s("merge.by"), "itself"); assert_eq!(task(t.s("id")).s("description"), "Check what is out of date.\nChange nothing.");
     sw::runner::JOBS.with(|j| j.borrow_mut().clear()); stage(t.s("id"), "approval");
-    sw::clock::advance(2 * HOUR); sw::keeper::tick_once(&w.socket, false);
+    sw::clock::advance(2 * HOUR); sw::keeper::tick_once(&w.socket);
     let all = tasks();
     assert_eq!(all.len(), 2); assert_eq!(all[1].s("description"), "New words.");
     assert_eq!(all[1].at("settings"), &json!({ "reviewer.agent": "claude", "merge.by": "you", "research.only": true }));
@@ -77,7 +77,7 @@ fn a_board_event_fires_in_its_own_repo_or_in_every_repo_and_the_new_task_is_told
     stage("proj/3", "approval");
     // an automation made later, beside one that already waits: an approval from before it began to wait is not its to fire
     sw::clock::advance(10);
-    let late = add(&w, "Late watcher", "Look.", parse_event("approval", false).unwrap());
+    let late = add(&w, "Late automation", "Look.", parse_event("approval", false).unwrap());
     assert!(look().is_empty()); l::remove(late.s("id")).unwrap();
     let one = w.add("Fix the login page");
     assert!(look().is_empty(), "added: nobody waits for that");

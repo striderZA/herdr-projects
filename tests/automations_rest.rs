@@ -19,19 +19,19 @@ fn off_an_automation_keeps_its_firings_and_edits_and_on_again_its_schedule_count
     let t0 = sw::clock::now(); sw::clock::set(Some(t0));
     let mut set = Obj::new(); set.put("reviewer.agent", "claude"); set.put("merge.by", "itself");
     let a = l::add(Add { name: "Look for old dependencies", prompt: "Check what is out of date.\nChange nothing.", trigger: Some(parse_schedule("every 2h").unwrap()), repo: "", folder: &w.root, settings: set, research: Some(true) }).unwrap();
-    sw::clock::advance(2 * HOUR + 1000); sw::keeper::tick_once(&w.socket, false);
+    sw::clock::advance(2 * HOUR + 1000); sw::keeper::tick_once(&w.socket);
     let t = tasks().remove(0);
     assert_eq!((t.at("automation").s("id"), t.at("automation").s("name"), t.at("automation").s("cause"), t.at("automation").at("chain")), (a.s("id"), a.s("name"), "schedule", &json!([a.s("id")])));
     l::set_setting(a.s("id"), "merge.by", &json!("you")).unwrap(); l::change(a.s("id"), None, Some("New words."), None, None, None).unwrap();
     sw::runner::JOBS.with(|j| j.borrow_mut().clear());
     sw::store::tasks::patch(t.s("id"), |t| t.put("stage", "approval")).unwrap(); // its agent's run is not this test's
     // off: it never fires and keeps everything
-    l::turn(a.s("id"), false).unwrap(); sw::clock::advance(9 * HOUR); sw::keeper::tick_once(&w.socket, false);
+    l::turn(a.s("id"), false).unwrap(); sw::clock::advance(9 * HOUR); sw::keeper::tick_once(&w.socket);
     assert_eq!(tasks().len(), 1); assert_eq!(firings_of(a.s("id")).len(), 1); assert_eq!(automation(a.s("id")).unwrap().s("prompt"), "New words.");
     // on again, the schedule counts from then: nothing is due at once
     l::turn(a.s("id"), true).unwrap(); assert_eq!(automation(a.s("id")).unwrap().i("nextAt"), sw::clock::now() + 2 * HOUR);
-    sw::keeper::tick_once(&w.socket, false); assert_eq!(tasks().len(), 1);
-    sw::clock::advance(2 * HOUR); sw::keeper::tick_once(&w.socket, false);
+    sw::keeper::tick_once(&w.socket); assert_eq!(tasks().len(), 1);
+    sw::clock::advance(2 * HOUR); sw::keeper::tick_once(&w.socket);
     let all = tasks();
     assert_eq!(all.len(), 2); assert_eq!(all[1].s("description"), "New words.");
     assert_eq!(all[1].at("settings"), &json!({ "reviewer.agent": "claude", "merge.by": "you", "research.only": true }));

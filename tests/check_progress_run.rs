@@ -31,7 +31,7 @@ fn the_task_shows_it_everywhere_its_progress_shows_in_a_colour_of_its_own() {
     check["movedAt"] = json!(now);
     let c2 = check.clone();
     patch(&id, move |t| { t.put("stage", "checking"); t.put("msg", "Running the check"); t.put("check", c2); t.put("since", now - 9 * MIN); t.put("at", now); t.put("watch", json!({ "role": "agent", "progress": 80, "msg": "writing tests" })); }).unwrap();
-    // The Watcher's guess for the agent, left on the task, is not the check's.
+    // A progress guess left on the task is not the check's.
     let s = sw::state::show(&task(&id), &json!({ "status": "idle" }), now);
     assert_eq!((s.state, s.msg.as_str(), s.progress, s.eta), ("working", "Running the check · tests 31 of 47", Some(65.0), Some(3)));
     let mut bare = task(&id); bare.put("check", Value::Null); bare.put("watch", Value::Null);

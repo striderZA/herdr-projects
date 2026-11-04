@@ -236,7 +236,7 @@
    PR#16        its pull request: green when its checks pass, red when they fail
    [auto]       made by an automation; [research]: research only, nothing is merged
    [chat]       a conversation: it changes nothing and ends when you say
-   [autopilot]  a coordinator on autopilot (a machine's or a project's row): the line under it says what it does
+
 
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 ❯ Add a task

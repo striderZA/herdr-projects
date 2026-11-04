@@ -66,7 +66,7 @@ fn two_folders_that_would_make_one_key_get_two_and_a_key_another_repo_has_or_had
 fn a_key_you_or_the_repos_file_gave_is_kept_and_unset_goes_back_to_the_made_one() {
     let w = world();
     // Your entry, written before the board ever saw the repo: kept.
-    std::fs::write(sw::store::files::config_dir().join("config.json"), json!({ "watcher.agent": "none", "coordinator.agent": "none", "repos": { "proj": { "repo": { "key": "MINE" } } } }).to_string()).unwrap();
+    std::fs::write(sw::store::files::config_dir().join("config.json"), json!({ "coordinator.agent": "none", "repos": { "proj": { "repo": { "key": "MINE" } } } }).to_string()).unwrap();
     let id = w.add("First"); assert_eq!(short(&id), "MINE-1"); assert_eq!(entry("proj"), json!("MINE"));
     // The repo's own file: kept, and nothing is written for it.
     let crm = folder(&w, "open-crm"); git(&crm, &["init", "-q", "-b", "main"]);
@@ -89,7 +89,7 @@ fn repos_an_older_version_knew_get_a_key_once_on_upgrade_and_the_board_says_whic
     // What an older version left: repos it knew, one with a key of yours, no keys for the rest.
     let notes = folder(&w, "notes"); let crm = folder(&w, "open-crm");
     std::fs::write(sw::store::files::data_dir().join("repos.json"), json!({ "proj": w.root_str(), "notes": notes.display().to_string(), "me": sw::store::files::user_home().display().to_string(), "open-crm": crm.display().to_string() }).to_string()).unwrap();
-    std::fs::write(sw::store::files::config_dir().join("config.json"), json!({ "watcher.agent": "none", "coordinator.agent": "none", "repos": { "open-crm": { "repo": { "key": "CR" } } } }).to_string()).unwrap();
+    std::fs::write(sw::store::files::config_dir().join("config.json"), json!({ "coordinator.agent": "none", "repos": { "open-crm": { "repo": { "key": "CR" } } } }).to_string()).unwrap();
     assert_eq!(keys(), json!({ "open-crm": "CR" }));
     keys_at_start();
     assert_eq!(keys(), json!({ "proj": "PRJ", "notes": "NTS", "me": "HOME", "open-crm": "CR" }));
@@ -128,7 +128,7 @@ fn upgrade_never_changes_a_key_you_saved_even_one_two_repos_share_and_the_top_li
     let w = world();
     let beta = folder(&w, "beta");
     std::fs::write(sw::store::files::data_dir().join("repos.json"), json!({ "proj": w.root_str(), "beta": beta.display().to_string() }).to_string()).unwrap();
-    std::fs::write(sw::store::files::config_dir().join("config.json"), json!({ "watcher.agent": "none", "coordinator.agent": "none", "repos": { "proj": { "repo": { "key": "KEEP" } }, "beta": { "repo": { "key": "KEEP" } } } }).to_string()).unwrap();
+    std::fs::write(sw::store::files::config_dir().join("config.json"), json!({ "coordinator.agent": "none", "repos": { "proj": { "repo": { "key": "KEEP" } }, "beta": { "repo": { "key": "KEEP" } } } }).to_string()).unwrap();
     let before = read(&sw::store::files::config_dir().join("config.json"));
     keys_at_start();
     // Your file is as you wrote it; the repo the board knew first keeps the key, the other goes by a stand-in.

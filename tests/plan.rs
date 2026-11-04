@@ -1,4 +1,4 @@
-//! A plan before the build (plan.approve, plan.agent): the plan written in a read-only worktree, "plan ready" until
+//! A plan before the build (plan.approve): the plan written in a read-only worktree, "plan ready" until
 //! your yes or the reviewer's, sent back with your words, and the build from it afterwards; on the board and in
 //! herdr's sidebar.
 use crate::common;
@@ -34,9 +34,7 @@ fn plan_approve_you_waits_as_plan_ready_and_the_yes_starts_the_build() {
     assert_eq!(read(&tree.join("a.txt")), "one\n");
     assert_eq!(t.at("plan").at("locked"), &json!(true));
     let a = agent_of(&w, t.at("link").s("pane"));
-    assert_eq!((a.at("boxed"), a.s("kind")), (&json!(true), "codex"));
-    let ran = w.state().arr("calls").iter().map(text).find(|c| c.starts_with("pane run") && c.contains("bwrap")).unwrap_or_default();
-    assert!(ran.contains(&format!("env HERDR_PROJECTS_AGENT=sw-proj-1 HERDR_PROJECTS_BOXED=1 bwrap --dev-bind / / --ro-bind {0} {0} --ro-bind ", t.s("worktree"))), "{ran}");
+    assert_eq!(a.s("kind"), "codex");
     assert!(!t.b("review") && !t.b("pr"));
     let r = row(&id);
     assert_eq!((r.s("state"), r.s("kind")), ("blocked", "permission"));
@@ -61,9 +59,7 @@ fn plan_approve_you_waits_as_plan_ready_and_the_yes_starts_the_build() {
     assert_eq!(t.s("stage"), "working", "{}", t.at("failure"));
     assert!(t.at("plan").b("built"));
     assert_eq!(t.at("plan").at("locked"), &json!(false));
-    let a = agent_of(&w, t.at("link").s("pane"));
-    assert!(!a.b("boxed"));
-    assert!(regex::Regex::new(r"(?s)This task has an approved plan.*build exactly that plan").unwrap().is_match(prompts(&w, t.at("link").s("pane")).last().unwrap()));
+    assert!(regex::Regex::new(r"(?s)Your plan is approved.*Build it now, exactly that plan").unwrap().is_match(prompts(&w, t.at("link").s("pane")).last().unwrap()));
     assert!(sw::actions::plan::approve_plan(&id).unwrap_err().msg.contains("no plan that waits for a yes"));
 }
 
@@ -90,6 +86,5 @@ fn plan_approve_reviewer_sends_a_failing_plan_back_and_builds_one_that_passes() 
     assert_eq!(t.s("stage"), "working", "{}", t.at("failure"));
     assert_eq!((t.at("plan").s("approvedBy"), t.at("plan").s("words")), ("reviewer", "Plan with tests"));
     assert_eq!(t.at("plan").at("review").at("pass"), &json!(true));
-    assert_eq!(w.state().arr("calls").iter().map(text).filter(|c| c.starts_with("pane run") && c.contains("bwrap")).count(), 4, "the writer, and each reviewer of the plan, in the read-only mount");
     assert!(!t.b("reviewRound") && !t.b("review"));
 }

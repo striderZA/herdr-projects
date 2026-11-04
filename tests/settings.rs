@@ -35,7 +35,7 @@ fn one_order_for_every_work_setting_this_task_your_entry_for_the_repo_you_the_re
     unset_value("check.command", &Scope::task(&task(&id))).unwrap(); assert_eq!(on("check.command"), p("from the entry", "your entry for proj"));
     unset_value("check.command", &Scope::repo("proj")).unwrap(); assert_eq!(on("check.command"), p("from you", "you"));
     unset_value("check.command", &you()).unwrap(); assert_eq!(on("check.command"), p("from the file", "the repo's file"));
-    assert_eq!(saved(), json!({ "watcher.agent": "none", "coordinator.agent": "none", "repos": { "proj": { "repo": { "key": "PRJ" } } } })); // nothing of it is left in the file: only the key the board gave the repo
+    assert_eq!(saved(), json!({ "coordinator.agent": "none", "repos": { "proj": { "repo": { "key": "PRJ" } } } })); // nothing of it is left in the file: only the key the board gave the repo
     use sw::store::settings_list::{entry_of, names, Kind};
     for name in names() {
         let t = task(&id);
@@ -81,13 +81,13 @@ fn board_settings_are_yours_only_refused_on_a_task_and_for_a_repo_with_how_to_se
     let id = w.add("One");
     use sw::store::settings_list::{board, work};
     for name in board() {
-        assert!(has(name, r"^(board|coordinator|watcher)\."), "{name}");
+        assert!(has(name, r"^(board|coordinator)\."), "{name}");
         let n = regex::escape(name);
         refused(set_value(name, &json!("x"), &Scope::task(&task(&id))), &format!(r"{n} is a board setting: it is yours only and cannot be set on a task\. Set it for yourself: herdr-projects set {n} <value>"));
         refused(set_value(name, &json!("x"), &Scope::repo("proj")), "is a board setting: it is yours only and cannot be set for a repo");
         refused(unset_value(name, &Scope::task(&task(&id))), "is a board setting");
     }
-    for name in work() { assert!(!has(name, r"^(board|coordinator|watcher)\."), "{name}"); }
+    for name in work() { assert!(!has(name, r"^(board|coordinator)\."), "{name}"); }
     refused(sw::actions::start::delegate(&id, vec![("board.agents".into(), json!(9))]), r"board\.agents is a board setting"); assert_eq!(task(&id).s("stage"), "todo");
     assert_eq!(set_value("board.agents", &json!("9"), &you()).unwrap().value, json!(9)); assert_eq!(setting("board.agents", None), json!(9));
     // said by hand inside a repo's entry: reported, and not counted
@@ -128,7 +128,7 @@ fn none_is_a_real_answer_distinct_from_unset_a_task_can_cancel_its_repos_setup()
     set_value("workspace.setup", &json!("none"), &Scope::task(&task(&id))).unwrap(); assert_eq!(setup(), (json!("none"), "this task".into(), String::new())); assert_eq!(task(&id).at("settings"), &json!({ "workspace.setup": "none" }));
     unset_value("workspace.setup", &Scope::task(&task(&id))).unwrap(); assert_eq!(setup(), (json!("npm ci"), "the repo's file".into(), "npm ci".into())); assert_eq!(task(&id).at("settings"), &json!({}));
     set_value("workspace.include", &json!("none"), &Scope::task(&task(&id))).unwrap(); assert!(list_of(&setting("workspace.include", Some(&task(&id)))).is_empty());
-    assert_eq!(set_value("coordinator.agent", &json!("none"), &you()).unwrap().value, json!("none")); assert_eq!(set_value("watcher.agent", &json!("none"), &you()).unwrap().value, json!("none"));
+    assert_eq!(set_value("coordinator.agent", &json!("none"), &you()).unwrap().value, json!("none"));
     refused(set_value("worker.agent", &json!("none"), &you()), r"worker\.agent must be claude, codex, pi, agy, .*, qwen, with an optional model after a slash");
 }
 
@@ -142,7 +142,6 @@ fn values_a_switch_a_choice_a_time_with_its_unit_an_agent_with_its_model_and_the
     use sw::store::settings::values::{agent_of, ms, AgentName};
     assert_eq!(set_value("check.timeout", &json!("20m"), &you()).unwrap().value, json!("20m")); assert_eq!((ms("20m"), ms("60s"), ms("2h")), (1200000, 60000, 7200000));
     refused(set_value("check.timeout", &json!("20"), &you()), r#"check\.timeout is a time with a unit, such as 15m \(s, m or h\), not "20"\. Did you mean 20m\?"#);
-    refused(set_value("watcher.every", &json!("soon"), &you()), "a time with a unit, such as 60s");
     refused(set_value("mergeby", &json!("itself"), &you()), r#"Unknown setting "mergeby"\. Did you mean merge\.by\?"#);
     refused(set_value("gate", &json!("minor"), &you()), r#"Unknown setting "gate""#); refused(set_value("rounds", &json!("2"), &you()), r"Did you mean review\.rounds\?");
     // an agent: the model travels with the program, and effort and access are checked against it

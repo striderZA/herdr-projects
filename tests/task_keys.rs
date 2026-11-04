@@ -150,10 +150,10 @@ fn a_repos_short_key_set_for_the_repo_or_in_its_own_file_kept_in_capitals_checke
     let saved: serde_json::Value = serde_json::from_str(&read(&config)).unwrap(); assert!(saved.at("repos").at("other").is_null(), "{saved}");
     assert!(has(&run(&w, &["show", "--repo", "other"]), r"\n {2}repo\.key +FIL +not used: another repo has or had the same key; its tasks go by OTH\n"), "{}", run(&w, &["show", "--repo", "other"]));
     refused(set_value("repo.key", &json!("FIL"), &Scope::repo("other")), "proj already has the key FIL"); // `set` refuses it
-    std::fs::write(&config, json!({ "watcher.agent": "none", "coordinator.agent": "none", "repos": { "proj": { "repo": { "key": "FIL" } } } }).to_string()).unwrap(); // written by hand
+    std::fs::write(&config, json!({ "coordinator.agent": "none", "repos": { "proj": { "repo": { "key": "FIL" } } } }).to_string()).unwrap(); // written by hand
     assert_eq!(keys(), json!({ "proj": "FIL", "other": "OTH" })); assert!(sw::store::keys_given::give_keys(None).is_empty());
     // A mistake made by hand is reported with the setting's name, and that key is not counted.
-    std::fs::write(&config, json!({ "watcher.agent": "none", "coordinator.agent": "none", "repo": { "key": "TOP" }, "repos": { "proj": { "repo": { "key": "way too long" } } } }).to_string()).unwrap();
+    std::fs::write(&config, json!({ "coordinator.agent": "none", "repo": { "key": "TOP" }, "repos": { "proj": { "repo": { "key": "way too long" } } } }).to_string()).unwrap();
     let bad = sw::store::settings::show::problems(None);
     assert!(bad.iter().any(|p| has(p, r"your settings: repo\.key is one repo's own")), "{bad:?}"); assert!(bad.iter().any(|p| has(p, r"your entry for proj: repo\.key is a short key")), "{bad:?}");
     assert_eq!(key_of("proj"), json!("FIL")); // the next place down: the repo's file

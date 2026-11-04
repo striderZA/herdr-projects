@@ -1,5 +1,5 @@
-//! A plan first, its two settings (plan.approve, plan.agent): built in none, looked up nearest first, never from a
-//! repo's own file, delegate, show, an automation, the Coordinator; and what the plan's writer, a planner, the builder
+//! A plan first, its setting (plan.approve): built in none, looked up nearest first, never from a
+//! repo's own file, delegate, show, an automation, the Coordinator; and what the plan's writer, the builder
 //! and the reviewer are told.
 use crate::common;
 use common::*;
@@ -9,7 +9,6 @@ use sw::plan as P;
 use sw::store::settings::change::{set_value, unset_value};
 use sw::store::settings::lookup::{lookup, setting, Scope};
 
-const PLAN: &str = "# Plan\n\n1. Add f.txt with one line.\n2. Run the check.\n";
 /// A command as the command line runs it, in this process: what it prints, or what it says went wrong.
 fn run(args: &[&str]) -> Result<String, String> {
     let argv: Vec<String> = args.iter().map(|s| s.to_string()).collect();
@@ -22,17 +21,17 @@ fn from(name: &str, t: &Obj) -> String { lookup(name, &Scope::task(t), &sw::stor
 
 #[test]
 fn the_two_settings_nearest_first_delegate_show_an_automation_and_never_from_a_repos_own_file() {
-    let w = world_with(Opts { repo: true, repo_settings: Some(json!({ "plan": { "approve": "you", "agent": "codex" }, "check": { "command": "true" } })), ..Default::default() });
+    let w = world_with(Opts { repo: true, repo_settings: Some(json!({ "plan": { "approve": "you" }, "check": { "command": "true" } })), ..Default::default() });
     let id = w.add("Work");
     use sw::store::settings_list::entry_of;
-    assert_eq!((entry_of("plan.approve").unwrap().builtin.clone(), entry_of("plan.agent").unwrap().builtin.clone()), (json!("none"), json!("none")));
+    assert_eq!(entry_of("plan.approve").unwrap().builtin.clone(), json!("none"));
     assert_eq!(entry_of("plan.approve").unwrap().values, vec!["none", "you", "reviewer"]);
     assert_eq!(setting("plan.approve", Some(&task(&id))), json!("none"));
     assert_eq!(P::wanted(&task(&id)), "");
     // Code an agent writes cannot switch it on or off: the repo's file may not hold it, and says so.
     let (facts, refused) = sw::store::settings::places::repo_file(&w.root, Some("HEAD"));
     assert_eq!(serde_json::Value::Object(facts), json!({ "check.command": "true" }));
-    for name in ["plan.approve", "plan.agent"] {
+    for name in ["plan.approve"] {
         assert!(refused.iter().any(|r| r.contains(&format!("{name} is refused: the repo's file may only hold"))), "{name}");
         assert!(!entry_of(name).unwrap().repo);
     }
@@ -46,21 +45,18 @@ fn the_two_settings_nearest_first_delegate_show_an_automation_and_never_from_a_r
     assert_eq!((P::wanted(&task(&id)), from("plan.approve", &task(&id))), (String::new(), "this task".to_string()));
     unset_value("plan.approve", &Scope::task(&task(&id))).unwrap();
     assert_eq!(P::wanted(&task(&id)), "you");
-    assert_eq!(set_value("plan.agent", &json!("Claude/claude-opus-5-5"), &Scope::you()).unwrap().value, json!("claude/claude-opus-5-5"));
-    assert_eq!(set_value("plan.agent", &json!("NONE"), &Scope::you()).unwrap().value, json!("none"));
     // A refused value changes nothing and names the nearest right one.
     let no = |name: &str, v: &str| set_value(name, &json!(v), &Scope::you()).unwrap_err().msg;
     assert!(has(&no("plan.approve", "reviewr"), r#"plan\.approve must be none, you, reviewer, not "reviewr"\. Did you mean reviewer\?"#), "{}", no("plan.approve", "reviewr"));
-    assert!(has(&no("plan.agent", "cluade"), r#"no agent program "cluade".*Did you mean claude\?"#));
     assert!(has(&no("plan.aprove", "you"), r#"Unknown setting "plan\.aprove"\. Did you mean plan\.approve\?"#));
     assert_eq!(setting("plan.approve", None), json!("reviewer"));
     assert!(sw::actions::start::delegate(&id, vec![("plan.approve".into(), json!("me"))]).unwrap_err().msg.contains("plan.approve must be"));
     assert_eq!(task(&id).s("stage"), "todo");
     // On the command line: delegate takes it, show lists it with its place, for you and for a task.
-    run(&["delegate", &id, "--plan.approve", "reviewer", "--plan.agent", "codex/gpt-5.5"]).unwrap();
-    assert_eq!(task(&id).at("settings"), &json!({ "plan.approve": "reviewer", "plan.agent": "codex/gpt-5.5" }));
+    run(&["delegate", &id, "--plan.approve", "reviewer"]).unwrap();
+    assert_eq!(task(&id).at("settings"), &json!({ "plan.approve": "reviewer" }));
     let shown = run(&["show", &id]).unwrap();
-    assert!(has(&shown, r"plan\.approve\s+reviewer\s+.*this task") && has(&shown, r"plan\.agent\s+codex/gpt-5\.5"), "{shown}");
+    assert!(has(&shown, r"plan\.approve\s+reviewer\s+.*this task"), "{shown}");
     assert!(has(&run(&["show"]).unwrap(), r"plan\.approve\s+reviewer"));
     // An automation holds it like any setting: its tasks start with a plan.
     use sw::automations::list as L;
@@ -69,13 +65,13 @@ fn the_two_settings_nearest_first_delegate_show_an_automation_and_never_from_a_r
     assert_eq!(sw::store::automations::automation(a.s("id")).unwrap().at("settings").s("plan.approve"), "you");
     // The Coordinator's standing rules say it in plain words.
     let said = sw::coordinator::rules::rules("board");
-    for want in ["\"show me the plan first\"", "board delegate <id> --plan.approve you", "--plan.agent claude/claude-opus-5-5"] { assert!(said.contains(want), "{want}"); }
+    for want in ["\"show me the plan first\"", "board delegate <id> --plan.approve you"] { assert!(said.contains(want), "{want}"); }
 }
 
 #[test]
-fn what_the_plans_writer_a_planner_the_builder_and_the_reviewer_are_told() {
+fn what_the_plans_writer_the_builder_and_the_reviewer_are_told() {
     let w = world();
-    use sw::delegate::rules::{first_prompt, rules, task_line};
+    use sw::delegate::rules::{first_prompt, rules};
     let mut t = task(&w.add("Work"));
     for (k, v) in [("worktree", json!("/tmp/x")), ("branch", json!("work/1-x")), ("repoFile", json!({ "check.command": "npm test" })), ("agent", json!("codex"))] { t.put(k, v); }
     assert!(!rules(&t).contains("starts with a plan") && !first_prompt(&t).contains("plan"));
@@ -94,26 +90,4 @@ fn what_the_plans_writer_a_planner_the_builder_and_the_reviewer_are_told() {
     assert!(!told.contains("plan mode"));
     use sw::agents::start::{start_args, StartOpts};
     assert_eq!(start_args("claude", &StartOpts { access: "full".into(), ..Default::default() }).unwrap(), vec!["--dangerously-skip-permissions"], "its usual access");
-    // A planner of its own.
-    let planner = with(&planning, json!({ "asked": 1, "by": "you", "home": { "tab": "t1", "pane": "p1" }, "writer": { "kind": "codex", "model": "gpt-5.5" } }));
-    let to_planner = rules(&planner);
-    assert!(to_planner.contains("You are the planner of this task: you write the plan, and another agent builds from it") && to_planner.contains("You build nothing"));
-    for not in ["Commit your work on this branch", "Do not stop until the work is finished", "only counts as done when this passes"] { assert!(!to_planner.contains(not), "{not}"); }
-    assert!(to_planner.contains("report proj/1 --state blocked"), "it can still say that it waits for you");
-    assert_eq!((task_line(&planner), task_line(&planning)), ("Work board task proj/1, role: planner.".to_string(), "Work board task proj/1, role: agent.".to_string()));
-    // After the yes: the builder is told to build exactly that plan, and the reviewer of the work to check against it.
-    let done = with(&t, json!({ "asked": 1, "by": "you", "at": 2, "approvedAt": 3, "approvedBy": "you" }));
-    assert!(P::go_words(&done).contains("Your plan is approved. Build it now, exactly that plan"));
-    assert!(has(&P::build_words(&done), r"read .*plan\.md first, and build exactly that plan"));
-    assert!(P::back_words(&planning, "Smaller.").starts_with("Your plan is not approved. The human read it and sent it back with these words:\n\nSmaller."));
-    let brief = |x: &Obj| { let ch = sw::store::settings::lookup::work(Some(x)); sw::finish::review_brief::review_brief(x, &sw::finish::review_brief::Brief { text: "Done.", change: None, to_land: false, ch: &ch, earlier: None, check: "" }) };
-    assert!(!brief(&done).contains("built from a plan"), "no plan on disk: nothing to check against");
-    P::write_plan(&done, PLAN).unwrap();
-    let b = brief(&done);
-    assert!(b.contains("built from a plan that was approved before the work began") && b.contains("Say where the build left the plan, one sentence each, in `offPlan`") && b.contains("\"offPlan\": ["), "{b}");
-    assert!(!brief(&planning).contains("built from a plan"));
-    let v = sw::finish::review_brief::parse_verdict(&json!({ "meets": true, "text": "Fine.", "findings": [], "offPlan": ["It added g.txt, which the plan did not name."] }).to_string(), "", None, &[]).unwrap().unwrap();
-    assert_eq!(v.at("offPlan"), &json!(["It added g.txt, which the plan did not name."]));
-    let pb = sw::plan::review::plan_brief(&done, std::path::Path::new("/tmp/review"));
-    assert!(pb.contains("adversarial reviewer of a plan") && pb.contains("/tmp/review/verdict.json"), "{pb}");
 }

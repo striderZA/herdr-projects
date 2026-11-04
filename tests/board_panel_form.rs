@@ -113,24 +113,23 @@ fn one_form_for_every_part_in_every_state_and_at_every_width() {
         assert!(page[end..].iter().any(|l| l == " * this task only"), "{width} columns: the line that says what * means: {page:?}");
     }
     // One of a pair set and the other not: both are said, each with its value, a `*` on this task's own. The same
-    // holds for what is moot: a reviewer's own choices where nothing is reviewed, a planner where no plan is asked for.
+    // holds for what is moot: a reviewer's own choices where nothing is reviewed, plan choices where no plan is asked for.
     let pair = w.add("A pair");
     let set = |k: &str, v: &str| { set_value(k, &json!(v), &Scope::task(&task(&pair))).unwrap(); };
     let unset = |k: &str| { unset_value(k, &Scope::task(&task(&pair))).unwrap(); };
     let mut whole = || { let mut p = Value::Object(task(&pair).into_iter().collect()); p["owner"] = json!("me"); lines(&mut s, &with(&p, json!({ "state": "idle", "at": now })), 100, true).join("\n") };
-    set("worker.fallback", "codex"); set("reviewer.fallback", "none"); set("limit.time", "2h"); set("limit.tokens", "none");
+    set("limit.time", "2h"); set("limit.tokens", "none");
     let t = whole();
-    assert!(has(&t, r"\n Takes over {3}codex · when the agent cannot go on \*\n") && has(&t, r"\n Takes over {3}nobody · when the reviewer cannot go on \*\n"), "{t}");
-    assert!(has(&t, r"\n Limits {7}2h a run \* · no token limit \*\n") && !has(&t, "no limits|no fallback"), "{t}");
-    set("limit.time", "none"); unset("limit.tokens"); unset("worker.fallback");
+    assert!(has(&t, r"\n Limits {7}2h a run \* · no token limit \*\n") && !has(&t, "no limits"), "{t}");
+    set("limit.time", "none"); unset("limit.tokens");
     let t = whole();
-    assert!(has(&t, r"\n Limits {7}no time limit \* · no token limit\n") && has(&t, r"\n Also {9}one attempt · not research only · no fallback \*\n"), "{t}");
-    set("review.when", "never"); set("reviewer.effort", "high"); set("plan.agent", "codex");
+    assert!(has(&t, r"\n Limits {7}no time limit \* · no token limit\n") && has(&t, r"\n Also {9}one attempt · not research only *\n"), "{t}");
+    set("review.when", "never"); set("reviewer.effort", "high");
     let t = whole();
-    assert!(has(&t, r"\n Plan first {3}off · would be written by codex \*\n") && has(&t, r"\n Reviewer {5}off \* · high effort \*\n"), "{t}");
+    assert!(has(&t, r"\n Plan first {3}off\n") && has(&t, r"\n Reviewer {5}off \* · high effort \*\n"), "{t}");
     // Every work setting this task has an answer of its own for is marked somewhere in the part, and the line under
     // the rows says what the mark means.
-    assert_eq!(regex::Regex::new(r"\S \*").unwrap().find_iter(&t).count(), 6, "{t}"); assert!(t.contains("\n * this task only\n"), "{t}");
+    assert_eq!(regex::Regex::new(r"\S \*").unwrap().find_iter(&t).count(), 4, "{t}"); assert!(t.contains("\n * this task only\n"), "{t}");
     // Another machine's task: the same rows, from the settings that machine sent; only that task's own are marked.
     let sent: Vec<Value> = sw::store::settings::show::rows(&Scope::task(&task(&id))).iter().map(|x| { let mut j = x.json(); if x.name == "review.rounds" { j["value"] = json!(1); j["place"] = json!("you"); j["from"] = json!("you"); } else if x.name == "check.command" { j["value"] = json!("npm test"); j["place"] = json!("file"); j["from"] = json!("the repo's file"); } j }).collect();
     let far = with(&me, json!({ "id": format!("vm-a:{id}"), "rid": id, "host": "vm-a", "state": "idle", "at": now, "snap": { "folder": "~/far", "settings": sent, "canWorktree": true } }));

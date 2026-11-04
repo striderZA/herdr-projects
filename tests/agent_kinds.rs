@@ -1,11 +1,10 @@
 //! herdr's other programs (issue #138, HP-13): how each is started from the table (its model, effort, access, a new
-//! or a reopened conversation, its own executable), its one-shot for the Watcher, other names a setting may give it,
+//! or a reopened conversation, its own executable), its one-shot, other names a setting may give it,
 //! and every role a program cannot do refused with the reason.
 use crate::common;
 use common::*;
 use serde_json::json;
 use sw::json::*;
-use sw::agents::adapter::{one_shot, OneShot};
 use sw::agents::kinds::{all, kind, program};
 use sw::agents::start::{start_args, StartOpts};
 use sw::store::settings::change::set_value;
@@ -68,34 +67,15 @@ fn every_program_herdr_has_an_integration_for_is_in_the_table_and_starts_on_its_
 }
 
 #[test]
-fn the_watcher_one_shot_of_each_program_comes_from_the_table() {
-    let _w = world();
-    let shot = |k: &str, model: &str, system: &str| -> OneShot { one_shot(k, model, "", "How far along?", system, false).unwrap_or_else(|| panic!("{k}")) };
-    let a = shot("agy", "gemini-3-flash", "Answer in one line.");
-    assert_eq!((a.command.as_str(), a.args.clone(), a.stdin), ("agy", vec!["--disable-slash-commands", "--model", "gemini-3-flash", "-p", "Answer in one line.\n\nHow far along?"].into_iter().map(String::from).collect(), None));
-    // Instructions by the program's own flag where it has one, else above the prompt.
-    let d = shot("droid", "", "Answer in one line.");
-    assert_eq!(d.args, ["exec", "--append-system-prompt", "Answer in one line.", "How far along?"]);
-    let c = shot("cursor", "", "");
-    assert_eq!(c.command, "cursor-agent");
-    assert_eq!(c.args.last().unwrap(), "How far along?");
-    for k in all() { assert!(one_shot(k.name, "", "", "p", "", false).is_some(), "{} has a one-shot", k.name); }
-}
-
-#[test]
 fn a_program_that_cannot_do_a_role_or_take_what_it_is_given_is_refused_with_the_reason() {
     let _w = world();
-    // mastracode cannot be told its model or to work without asking at start: never on a task, but the Watcher.
+    // mastracode cannot be told its model or to work without asking at start: never on a task.
     refused("worker.agent", "mastracode", r"^worker\.agent: mastracode cannot work on a task: .*environment variables.* These can: claude, codex, pi, agy");
-    refused("reviewer.fallback", "codex, mastracode", r"^reviewer\.fallback: mastracode cannot review");
     refused("attempts.by", "claude, mastracode", r"^attempts\.by: mastracode cannot work on a task");
-    refused("plan.agent", "mastracode", r"mastracode cannot write a plan");
     refused("coordinator.agent", "mastracode", r"mastracode cannot be the Coordinator");
-    assert_eq!(taken("watcher.agent", "mastracode/anthropic/claude-haiku-5-5"), "mastracode/anthropic/claude-haiku-5-5");
     // A model where the program takes none at start.
     refused("worker.agent", "droid/gpt-6-sol", r"droid takes no model when the board starts it: leave the model out");
     assert_eq!(taken("worker.agent", "droid"), "droid");
-    assert_eq!(taken("watcher.agent", "droid/gpt-6-sol"), "droid/gpt-6-sol"); // its one-shot does
     // An effort: none at all, a level it does not have, or one it takes in its model's name.
     assert_eq!(taken("worker.agent", "devin"), "devin");
     refused("worker.effort", "high", r"devin takes no effort level when the board starts it: leave it at default");
@@ -106,7 +86,6 @@ fn a_program_that_cannot_do_a_role_or_take_what_it_is_given_is_refused_with_the_
     refused("worker.effort", "high", r"cursor takes its effort in the model's name: cursor/claude-opus-4-8\[effort=high\]");
     // herdr's integration name, and the executable's, name the program too.
     assert_eq!(taken("reviewer.agent", "antigravity-cli/gemini-3-pro"), "agy/gemini-3-pro");
-    assert_eq!(taken("reviewer.fallback", "cursor-agent, Qwen"), r#"["cursor","qwen"]"#);
     refused("worker.agent", "gemni", r#"no agent program "gemni"\. It must be claude, codex, pi, agy, .*, qwen\."#);
 }
 

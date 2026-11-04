@@ -210,25 +210,20 @@ fn left_and_right_fold_every_kind_of_heading_under_every_filter_and_grouping_and
 }
 
 #[test]
-fn ctrl_s_starts_a_coordinator_ctrl_x_stops_it_and_ctrl_o_is_its_autopilot() {
+fn ctrl_s_starts_a_coordinator_and_ctrl_x_stops_it() {
     let w = coord_world();
     w.add("Fix the login");
     let mut s = open(&w.root, 40); s.s.side = false;
     let jobs = |fx: Vec<sw::board::update::Effect>| fx.iter().filter_map(|e| match e { sw::board::update::Effect::Run(j) => Some(format!("{j:?}")), _ => None }).collect::<Vec<_>>().join(" | ");
     s.press(&["alt+s"]);
     s.s.sel = group_id(&s.s, "proj"); s.load();
-    assert!(s.text().contains("ctrl+s start · ctrl+x stop · ctrl+o autopilot"), "{}", s.text());
+    assert!(s.text().contains("ctrl+s start · ctrl+x stop"), "{}", s.text());
     // (a held job never answers: what it put under way on the row is let go before the next key)
     let j = jobs(s.hold("ctrl+s")); assert!(j.contains("CoordRun") && j.contains("project:proj") && j.contains("on: true"), "{j}"); s.s.pending.clear();
     let j = jobs(s.hold("ctrl+x")); assert!(j.contains("CoordRun") && j.contains("on: false"), "{j}"); s.s.pending.clear();
-    let j = jobs(s.hold("ctrl+o")); assert!(j.contains("Pilot") && j.contains("project:proj") && j.contains("on: true"), "{j}"); s.s.pending.clear();
     // the top row's coordinator, on its row and on a status group's heading
     s.s.sel = machine_id(); s.load();
     let j = jobs(s.hold("ctrl+s")); assert!(j.contains("CoordRun") && j.contains("to: \"\""), "{j}"); s.s.pending.clear();
     s.press(&["alt+s"]); s.s.sel = group_id(&s.s, "to do"); s.load();
     let j = jobs(s.hold("ctrl+s")); assert!(j.contains("CoordRun") && j.contains("to: \"\""), "{j}");
-    s.press(&["alt+s"]);
-    // on a task, ctrl+o says what it is for
-    s.s.sel = "proj/1".into(); s.load();
-    s.press(&["ctrl+o"]); assert!(s.s.msg.contains("turns a coordinator's autopilot on and off"), "{}", s.s.msg);
 }
