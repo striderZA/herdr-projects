@@ -42,7 +42,7 @@ fn a_process_beside_the_agent_is_named_with_why_it_keeps_the_space_and_a_helper_
     ends(&with(&w, "child", json!("closed")), "sleep (pid 3) has its input or output closed");
     ends(&with(&w, "child", json!("unknown")), "sleep (pid 3) cannot be looked at");
     // a dev server it started in a group of its own, and a job of the pane's shell: by their command lines
-    ends(&with(&w, "tool", json!(true)), "node …/dev-server.js (pid 2) runs in a group of its own");
+    ends(&with(&w, "tool", json!(true)), "node …/dev-server.js (pid 6) runs in a group of its own");
     ends(&with(&w, "job", json!(true)), "node …/server.js (pid 2) runs in the background of its shell");
     // an MCP server wired to the agent is part of it: nothing is kept
     let t = merged(&w, "helper", |t| pane(&w, t.at("link").s("pane"), |p| p["helper"] = json!(true)));

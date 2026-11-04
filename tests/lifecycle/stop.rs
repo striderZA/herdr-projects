@@ -43,7 +43,7 @@ fn a_dev_server_in_a_group_of_its_own_is_ended_and_a_stop_with_nothing_started_s
     let w = world_with(Opts { repo: true, settings: json!({ "review.when": "never" }), ..Default::default() });
     let t = working(&w, json!({ "tool": true }));
     let said = sw::actions::talk::stop(t.s("id")).unwrap();
-    assert_eq!((killed(&w), said.msg.as_str()), (vec![2], "Ended what it started: node …/dev-server.js (pid 2)."));
+    assert_eq!((killed(&w), said.msg.as_str()), (vec![6], "Ended what it started: node …/dev-server.js (pid 6)."));
     drop(w);
     let w = world_with(Opts { repo: true, settings: json!({ "review.when": "never" }), ..Default::default() });
     let t = working(&w, json!({ "helper": true }));
