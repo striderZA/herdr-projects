@@ -2,7 +2,7 @@
 //! out (closing, a panic, a signal), so nothing is left in your shell. Before that the terminal is asked for its own
 //! text and background colours, which the greys are measured against.
 use crossterm::{cursor, event, execute, terminal};
-use std::io::{Read, Write};
+use std::io::Write;
 
 /// A board that loads its new version keeps its screen: the new one draws over the old frame instead of clearing.
 pub const KEPT: &str = "HERDR_PROJECTS_KEPT_SCREEN";
@@ -35,6 +35,7 @@ pub fn guard_panics() {
 /// The terminal is asked for its colours; the answers are read with `colours_told`, so the board loads meanwhile.
 /// Asked: false when it is no terminal (nothing is asked then).
 pub fn ask_colours() -> bool {
+    if cfg!(windows) { return false; } // the colour reply is not asked for here: reading it would take the keys that crossterm reads
     use std::io::IsTerminal;
     if !std::io::stdin().is_terminal() || !std::io::stdout().is_terminal() || terminal::enable_raw_mode().is_err() { return false; }
     let mut out = std::io::stdout();
@@ -47,16 +48,15 @@ pub fn colours_told(asked: bool, ms: u64) -> crate::board::theme::Seen {
     let fgbg = std::env::var("COLORFGBG").ok().and_then(|v| v.rsplit(';').next().and_then(|x| x.parse::<u8>().ok())).map(|n| n == 7 || n == 15);
     let mut seen = crate::board::theme::Seen { light: fgbg, fg: None, bg: None };
     if !asked { return seen; }
-    let fd = 0;
     let mut buf = Vec::new();
     let until = std::time::Instant::now() + std::time::Duration::from_millis(ms);
     let done = |b: &[u8]| crate::board::theme::answers::read_answers(&String::from_utf8_lossy(b)).1;
     while std::time::Instant::now() < until && !done(&buf) {
-        let mut p = libc::pollfd { fd, events: libc::POLLIN, revents: 0 };
         let left = until.saturating_duration_since(std::time::Instant::now()).as_millis() as i32;
-        if unsafe { libc::poll(&mut p, 1, left.max(1)) } <= 0 { break; }
         let mut chunk = [0u8; 256];
-        match std::io::stdin().read(&mut chunk) { Ok(n) if n > 0 => buf.extend_from_slice(&chunk[..n]), _ => break }
+        let n = crate::sys::read_input_within(&mut chunk, left.max(1));
+        if n == 0 { break; }
+        buf.extend_from_slice(&chunk[..n]);
     }
     let _ = terminal::disable_raw_mode();
     let (told, _) = crate::board::theme::answers::read_answers(&String::from_utf8_lossy(&buf));

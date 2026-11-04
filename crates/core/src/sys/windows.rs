@@ -217,3 +217,10 @@ pub fn on_stop(f: extern "C" fn(i32), _sigs: &[i32]) {
 }
 /// Ends this process (Windows has no exit path that skips what exit runs, so this is the ordinary exit).
 pub fn exit_now(code: i32) -> ! { std::process::exit(code) }
+/// Windows: the terminal's colour reply is never asked for (`ask_colours` says so), so no reply is read here.
+pub fn read_input_within(_buf: &mut [u8], _ms: i32) -> usize { 0 }
+/// Windows has no in-place exec: the command runs to its end with this program's terminal, and this program ends with its
+/// exit code. It returns only when the command cannot be started.
+pub fn exec_replace(c: &mut std::process::Command) -> std::io::Error {
+    match c.status() { Ok(s) => std::process::exit(s.code().unwrap_or(1)), Err(e) => e }
+}

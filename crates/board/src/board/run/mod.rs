@@ -36,7 +36,7 @@ pub fn open_board(folder: &std::path::Path) -> i32 {
     let load = Arc::new((Mutex::new(true), std::sync::Condvar::new()));
     let run = Run { tx: tx.clone(), wants: wants.clone(), load: load.clone() };
     start::threads(&tx, &wants, &load);
-    unsafe { for sig in [libc::SIGTERM, libc::SIGHUP] { libc::signal(sig, on_signal as *const () as usize); } }
+    crate::sys::on_stop(on_signal, &[crate::sys::TERM_SIGNAL, crate::sys::HUP_SIGNAL]);
     term::guard_panics();
     if term::enter().is_err() { return 1; }
     let backend = ratatui::backend::CrosstermBackend::new(std::io::stdout());

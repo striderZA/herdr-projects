@@ -148,9 +148,8 @@ pub fn watch_tab(socket: Option<String>, tab: &str, gone: impl Fn() + Send + Syn
 /// The program changed under the open board: the same command starts again on the new program, in this terminal,
 /// over the old frame. Returns only when that could not be done.
 pub fn reload() {
-    use std::os::unix::process::CommandExt;
     let reloads: i64 = env("HERDR_PROJECTS_RELOADS").parse().unwrap_or(0);
     let exe = crate::store::files::bin();
-    let err = std::process::Command::new(exe).args(std::env::args_os().skip(1)).env(term::KEPT, "1").env("HERDR_PROJECTS_RELOADS", (reloads + 1).to_string()).exec();
+    let err = crate::sys::exec_replace(std::process::Command::new(exe).args(std::env::args_os().skip(1)).env(term::KEPT, "1").env("HERDR_PROJECTS_RELOADS", (reloads + 1).to_string()));
     eprintln!("herdr-projects could not start its new version: {err}");
 }

@@ -141,3 +141,12 @@ pub fn kill_group(pid: i32, sig: i32) -> bool { unsafe { libc::kill(-pid, sig) =
 pub fn on_stop(f: extern "C" fn(i32), sigs: &[i32]) { for s in sigs { unsafe { libc::signal(*s, f as *const () as usize); } } }
 /// Ends this process at once, skipping what exit would run (safe in a signal handler).
 pub fn exit_now(code: i32) -> ! { unsafe { libc::_exit(code) } }
+/// Reads standard input for up to `ms` milliseconds: what came in (at most `buf` long); 0 when nothing did, or it ended.
+pub fn read_input_within(buf: &mut [u8], ms: i32) -> usize {
+    use std::io::Read;
+    let mut p = libc::pollfd { fd: 0, events: libc::POLLIN, revents: 0 };
+    if unsafe { libc::poll(&mut p, 1, ms) } <= 0 { return 0; }
+    std::io::stdin().read(buf).unwrap_or(0)
+}
+/// Runs a command in place of this program (same process, terminal and arguments). It returns only when that fails.
+pub fn exec_replace(c: &mut std::process::Command) -> std::io::Error { use std::os::unix::process::CommandExt; c.exec() }
