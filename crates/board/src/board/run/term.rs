@@ -35,7 +35,6 @@ pub fn guard_panics() {
 /// The terminal is asked for its colours; the answers are read with `colours_told`, so the board loads meanwhile.
 /// Asked: false when it is no terminal (nothing is asked then).
 pub fn ask_colours() -> bool {
-    if cfg!(windows) { return false; } // the colour reply is not asked for here: reading it would take the keys that crossterm reads
     use std::io::IsTerminal;
     if !std::io::stdin().is_terminal() || !std::io::stdout().is_terminal() || terminal::enable_raw_mode().is_err() { return false; }
     let mut out = std::io::stdout();

@@ -217,8 +217,17 @@ pub fn on_stop(f: extern "C" fn(i32), _sigs: &[i32]) {
 }
 /// Ends this process (Windows has no exit path that skips what exit runs, so this is the ordinary exit).
 pub fn exit_now(code: i32) -> ! { std::process::exit(code) }
-/// Windows: the terminal's colour reply is never asked for (`ask_colours` says so), so no reply is read here.
-pub fn read_input_within(_buf: &mut [u8], _ms: i32) -> usize { 0 }
+/// Reads standard input for up to `ms` milliseconds: what came in (at most `buf` long); 0 when nothing did, or it ended.
+/// It waits on the console input first, so a read starts only when a record is there: a read started with no input would
+/// take the next key press, later, when nothing is left to answer it.
+pub fn read_input_within(buf: &mut [u8], ms: i32) -> usize {
+    use std::io::Read;
+    let h = unsafe { windows_sys::Win32::System::Console::GetStdHandle(windows_sys::Win32::System::Console::STD_INPUT_HANDLE) };
+    if unsafe { windows_sys::Win32::System::Threading::WaitForSingleObject(h, ms.max(0) as u32) } != windows_sys::Win32::Foundation::WAIT_OBJECT_0 { return 0; }
+    io::stdin().read(buf).unwrap_or(0)
+}
+/// Windows has no `ps`: no process table, so the board finds no views that hold a terminal (`held::holders` gives none).
+pub fn process_table() -> String { String::new() }
 /// Windows has no in-place exec: the command runs to its end with this program's terminal, and this program ends with its
 /// exit code. It returns only when the command cannot be started.
 pub fn exec_replace(c: &mut std::process::Command) -> std::io::Error {

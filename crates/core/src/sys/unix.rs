@@ -150,3 +150,7 @@ pub fn read_input_within(buf: &mut [u8], ms: i32) -> usize {
 }
 /// Runs a command in place of this program (same process, terminal and arguments). It returns only when that fails.
 pub fn exec_replace(c: &mut std::process::Command) -> std::io::Error { use std::os::unix::process::CommandExt; c.exec() }
+/// The process table as `ps -eo pid=,etime=,args=` prints it (etime, not etimes: macOS's ps has no etimes and fails then).
+pub fn process_table() -> String {
+    std::process::Command::new("ps").args(["-eo", "pid=,etime=,args="]).output().ok().filter(|o| o.status.success()).map(|o| String::from_utf8_lossy(&o.stdout).into_owned()).unwrap_or_default()
+}
