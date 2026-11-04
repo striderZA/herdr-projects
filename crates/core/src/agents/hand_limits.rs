@@ -19,7 +19,14 @@ pub const MESSAGE_MAX: usize = 100_000;
 
 /// The start command as herdr types it, to measure.
 pub fn typed_command(kind: &str, args: &[String]) -> String {
-    std::iter::once(kind.to_string()).chain(args.iter().map(|a| if a.chars().all(|c| c.is_ascii_alphanumeric() || "-_=./:,@%+".contains(c)) { a.clone() } else { crate::util::shq(a) })).collect::<Vec<_>>().join(" ")
+    use crate::util::{pane_shell, shell_word, Shell};
+    let shell = pane_shell();
+    // PowerShell reads `,` (an array), `@` (splatting) and `%` (an alias) as its own syntax, so they are quoted there.
+    let plain = |a: &str| match shell {
+        Shell::Posix => a.chars().all(|c| c.is_ascii_alphanumeric() || "-_=./:,@%+".contains(c)),
+        Shell::PowerShell => a.chars().all(|c| c.is_ascii_alphanumeric() || "-_=./:+".contains(c)),
+    };
+    std::iter::once(kind.to_string()).chain(args.iter().map(|a| if plain(a) { a.clone() } else { shell_word(a, shell) })).collect::<Vec<_>>().join(" ")
 }
 /// The words that point a program at its standing rules in `file`, for a program that takes them only inline.
 pub fn rules_pointer(file: &Path) -> String {

@@ -19,8 +19,17 @@ pub fn uuid() -> String {
     let s: String = c.into_iter().collect();
     format!("{}-{}-{}-{}-{}", &s[0..8], &s[8..12], &s[12..16], &s[16..20], &s[20..32])
 }
-/// A word quoted for a POSIX shell: `'it'\''s'`.
-pub fn shq(s: &str) -> String { format!("'{}'", s.replace('\'', "'\\''")) }
+/// The shell a command is typed into or run by. A pane's command uses the pane's shell (`pane_shell`); `sh -c` strings
+/// and the shell scripts stay POSIX.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Shell { Posix, PowerShell }
+/// The shell a pane's command is typed into on this platform: PowerShell on Windows, POSIX sh elsewhere.
+pub fn pane_shell() -> Shell { if cfg!(windows) { Shell::PowerShell } else { Shell::Posix } }
+/// A word quoted for a shell: POSIX `'it'\''s'`; PowerShell `'it''s'` (inside single quotes PowerShell reads `$`, quotes and
+/// backticks as text, and only a doubled single quote is a quote).
+pub fn shell_word(s: &str, shell: Shell) -> String {
+    match shell { Shell::Posix => format!("'{}'", s.replace('\'', "'\\''")), Shell::PowerShell => format!("'{}'", s.replace('\'', "''")) }
+}
 /// A folder copied whole into another (made where it is missing).
 pub fn copy_dir(from: &std::path::Path, to: &std::path::Path) -> std::io::Result<()> {
     std::fs::create_dir_all(to)?;

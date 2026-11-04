@@ -14,7 +14,7 @@ use crate::store::inbox::queue_text;
 use crate::store::retries::waiting_of;
 use crate::store::tasks::{get, one_line, update_wait, Change, Task};
 use crate::submit::{hand, note_sent};
-use crate::util::shq;
+use crate::util::{shell_word, Shell};
 use std::path::PathBuf;
 
 /// "sent": typed, with enter pressed (whether the agent then started on it is looked at again: submit.rs); "queued".
@@ -51,8 +51,8 @@ pub fn shim() -> PathBuf {
     let file = launcher_file();
     let dir = data_dir().join("bin");
     let mut text = "#!/bin/sh\n".to_string();
-    for (k, v) in board_env() { text.push_str(&format!("export {k}={}\n", shq(&v))); }
-    text.push_str(&format!("exec {} \"$@\"\n", shq(&bin().display().to_string())));
+    for (k, v) in board_env() { text.push_str(&format!("export {k}={}\n", shell_word(&v, Shell::Posix))); }
+    text.push_str(&format!("exec {} \"$@\"\n", shell_word(&bin().display().to_string(), Shell::Posix)));
     let is_link = std::fs::symlink_metadata(&file).map(|m| m.file_type().is_symlink()).unwrap_or(false);
     let have = if is_link { None } else { std::fs::read_to_string(&file).ok() };
     if have.as_deref() != Some(text.as_str()) && crate::herdr::cli::fake().is_none() {

@@ -8,6 +8,7 @@ use crate::herdr::cli::socket_exists;
 use crate::json::*;
 use crate::store::files::{data_dir, read_obj, write_json};
 use crate::util::env_set;
+#[cfg(not(windows))]
 use std::process::{Command, Stdio};
 
 /// What gh reads its login and its host from.
@@ -37,6 +38,9 @@ pub fn remembered(env_out: &str, fallback: &str) -> Obj {
     obj(json!({ "at": now(), "PATH": path, "gh": names(gh_login(env_out, |_| false)), "ssh": names(ssh_agent(env_out, |_| false)) }))
 }
 /// A login shell's whole environment (`env`, which any shell runs): what it prints before it (a greeting) is ignored.
+#[cfg(windows)]
+pub fn login_shell() -> Option<String> { None } // Windows has no login shell: the process environment is what there is
+#[cfg(not(windows))]
 pub fn login_shell() -> Option<String> {
     let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/sh".into());
     let out = Command::new(shell).args(["-lc", "env"]).stdin(Stdio::null()).stderr(Stdio::null()).output().ok()?;
@@ -47,7 +51,7 @@ pub fn login_shell() -> Option<String> {
 /// gh's login and the SSH agent are never written down: where the login shell has one (the names are remembered) and
 /// this process has none, the shell is asked for it, and this process and all it starts take it in.
 pub fn user_env() {
-    if env_set("HERDR_PROJECTS_ENV_OK") || !env_set("HERDR_PLUGIN_ID") { return; }
+    if cfg!(windows) || env_set("HERDR_PROJECTS_ENV_OK") || !env_set("HERDR_PLUGIN_ID") { return; } // Windows: no login shell, and its PATH is ';'-separated
     let file = data_dir().join("env.json");
     let mut cached = read_obj(&file);
     let stale = cached.as_ref().map(|c| now() - c.i("at") > 600000 || !c.b("PATH") || !c.has("gh") || !c.has("ssh")).unwrap_or(true);

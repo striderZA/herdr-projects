@@ -56,8 +56,15 @@ pub fn task_env(t: &Obj) -> Vec<(String, String)> { made(t); [crate::store::file
 /// The line that gives a pane's shell the task's temporary folder, before its program starts there: herdr hands a
 /// worktree's space no environment. A space first keeps it out of the shell's history where that is set.
 pub fn export_line(t: &Obj) -> String {
-    let q = |s: &str| if s.chars().all(|c| c.is_ascii_alphanumeric() || "_@%+=:,./-".contains(c)) { s.to_string() } else { crate::util::shq(s) };
-    format!(" export {}", env(t).iter().map(|(k, v)| format!("{k}={}", q(v))).collect::<Vec<_>>().join(" "))
+    let pairs = env(t);
+    match crate::util::pane_shell() {
+        // PowerShell sets a variable as `$env:NAME='value'`, joined by `;`.
+        crate::util::Shell::PowerShell => format!(" {}", pairs.iter().map(|(k, v)| format!("$env:{k}={}", crate::util::shell_word(v, crate::util::Shell::PowerShell))).collect::<Vec<_>>().join("; ")),
+        crate::util::Shell::Posix => {
+            let q = |s: &str| if s.chars().all(|c| c.is_ascii_alphanumeric() || "_@%+=:,./-".contains(c)) { s.to_string() } else { crate::util::shell_word(s, crate::util::Shell::Posix) };
+            format!(" export {}", pairs.iter().map(|(k, v)| format!("{k}={}", q(v))).collect::<Vec<_>>().join(" "))
+        }
+    }
 }
 /// What the task's agent and reviewers are told.
 pub fn rule(t: &Obj) -> String {

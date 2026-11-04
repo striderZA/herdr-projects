@@ -6,7 +6,7 @@ use super::kinds::fill;
 use super::read_turn::{find_file, head_of, when};
 use crate::err::Res;
 use crate::json::*;
-use crate::util::{shq, uuid};
+use crate::util::{shell_word, uuid, Shell};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -31,7 +31,7 @@ pub fn hook_args(kind: &str, h: &Hook) -> Res<Option<Vec<String>>> {
         // compaction is off: Claude Code would otherwise shrink a finished task's session left waiting an hour, which
         // herdr sees as a turn.
         "claude" => {
-            let command = hook_command(h).iter().map(|s| shq(s)).collect::<Vec<_>>().join(" ");
+            let command = hook_command(h).iter().map(|s| shell_word(s, Shell::Posix)).collect::<Vec<_>>().join(" ");
             let file = h.dir.join(format!("hook-{}.json", h.role));
             let one = json!([{ "hooks": [{ "type": "command", "command": command, "async": true }] }]);
             write_private(&file, &json!({ "hooks": { "Stop": one, "StopFailure": one }, "idleCompaction": false }).to_string())?;
