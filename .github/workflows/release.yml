@@ -77,7 +77,10 @@ jobs:
         run: |
           mkdir dist
           cp target/${{ matrix.target }}/release/herdr-projects${{ matrix.ext }} dist/${{ matrix.file }}
-          cd dist && shasum -a 256 ${{ matrix.file }} > ${{ matrix.file }}.sha256 && cat ${{ matrix.file }}.sha256
+          # Windows' Git Bash has no shasum; its sha256sum writes the same "hash  name" line.
+          cd dist
+          if command -v shasum >/dev/null; then shasum -a 256 ${{ matrix.file }}; else sha256sum ${{ matrix.file }}; fi > ${{ matrix.file }}.sha256
+          cat ${{ matrix.file }}.sha256
 
       - name: Check it runs and says the release's version
         if: matrix.runs
