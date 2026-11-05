@@ -151,6 +151,15 @@ fn a_lock_file_left_in_the_way_is_named_in_plain_words_and_the_work_waits_behind
 }
 
 #[test]
+fn a_lock_path_git_spells_with_forward_slashes_is_named_in_the_native_form() {
+    // git's older wording names the lock file with forward slashes on Windows (the CI runner's git); the message shows the path as it is
+    let native = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(".git").join("refs").join("remotes").join("origin").join("main.lock");
+    let said = format!("error: cannot lock ref 'refs/remotes/origin/main': Unable to create '{}': File exists.", native.display().to_string().replace('\\', "/"));
+    let msg = sw::store::fetch::plain(&said, "main");
+    assert!(msg.starts_with(&format!("git's lock file {} stayed in the way on every try", native.display())), "{msg}");
+}
+
+#[test]
 #[cfg(unix)] // This fixture runs a /bin/sh upload-pack program, which Windows does not run.
 fn git_2_53s_reference_already_exists_is_a_held_lock_only_when_its_lock_file_is_there() {
     use std::os::unix::fs::PermissionsExt;
