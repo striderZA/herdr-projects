@@ -20,8 +20,8 @@ pub fn held_size(cols: u16, rows: u16, layout: &Value, pane: &str) -> Option<(u1
 /// The attach processes on this machine that hold a terminal, oldest first: (pid, seconds).
 pub fn holders(terminal: &str) -> Vec<(i64, i64)> {
     if terminal.is_empty() { return vec![]; }
-    // `etime`, not `etimes`: macOS's ps has no `etimes` and fails outright, and then no view was ever seen.
-    let out = std::process::Command::new("ps").args(["-eo", "pid=,etime=,args="]).output().ok().filter(|o| o.status.success()).map(|o| String::from_utf8_lossy(&o.stdout).into_owned()).unwrap_or_default();
+    // `etime`, not `etimes`, in sys::process_table: macOS's ps has no `etimes`.
+    let out = crate::sys::process_table();
     holders_in(terminal, &out)
 }
 /// The same, from what `ps -eo pid=,etime=,args=` printed.

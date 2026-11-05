@@ -39,6 +39,8 @@ impl Repo {
 impl Drop for Repo { fn drop(&mut self) { let _ = std::fs::remove_dir_all(&self.dir); } }
 
 #[test]
+// Runs a script through /bin/sh: Unix-only (Windows has no /bin/sh).
+#[cfg(unix)]
 fn real_programs_the_shorter_check_picks_the_test_files_a_change_reaches_and_all_where_it_cannot_tell() {
     let r = Repo::new();
     assert_eq!(r.pick(&r.first).0, "", "nothing changed: no test file");

@@ -63,7 +63,7 @@ fn a_dropped_picture_file_is_a_chip_too_and_other_pastes_stay_words() {
     let dir = w.base.join("desk");
     std::fs::create_dir_all(&dir).unwrap();
     for f in ["Screen Shot.png", "b.JPG", "notes.txt"] { std::fs::write(dir.join(f), b"x").unwrap(); }
-    let shot = dir.join("Screen Shot.png").display().to_string().replace(' ', "\\ ");
+    let shot = sw::util::shell_word(&dir.join("Screen Shot.png").display().to_string(), sw::util::pane_shell());
     let b = dir.join("b.JPG").display().to_string();
     let mut s = open(&w.root, 30);
     // Two dropped at once, as a terminal gives them: escaped, space between.
@@ -137,7 +137,7 @@ fn a_picture_that_comes_as_keys_is_a_chip_too_also_right_after_another() {
     let dir = w.base.join("desk");
     std::fs::create_dir_all(&dir).unwrap();
     std::fs::write(dir.join("Screen Shot.png"), b"x").unwrap();
-    let shot = dir.join("Screen Shot.png").display().to_string().replace(' ', "\\ ");
+    let shot = sw::util::shell_word(&dir.join("Screen Shot.png").display().to_string(), sw::util::pane_shell());
     let mut s = open(&w.root, 30);
     // herdr's own: a chip the moment its name is whole, nothing more to wait for.
     s.typed("look ");

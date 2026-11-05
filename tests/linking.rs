@@ -18,7 +18,7 @@ impl Bench {
     fn linker(&self, p: &Path, name: &str) {
         std::fs::create_dir_all(p.parent().unwrap()).unwrap();
         std::fs::write(p, format!("#!/bin/sh\n{{ echo {name}; for a; do echo \"$a\"; done; }} > '{}'\n", self.saw().display())).unwrap();
-        std::fs::set_permissions(p, std::os::unix::fs::PermissionsExt::from_mode(0o755)).unwrap();
+        sw::sys::set_mode(p, 0o755).unwrap();
     }
     fn saw(&self) -> PathBuf { self.base.join("saw") }
     /// Installs a stand-in where scripts/linker.sh looks for the mold it installed.
@@ -48,6 +48,8 @@ fn as_rust(args: &[&str]) -> Vec<String> {
 }
 
 #[test]
+// Runs a #!/bin/sh program directly: Windows cannot start one without a shebang handler.
+#[cfg(unix)]
 fn real_programs_without_mold_a_build_links_as_rust_does_by_itself() {
     let b = Bench::new("none");
     assert_eq!(b.link(LINK, &[]), as_rust(LINK));
@@ -56,6 +58,8 @@ fn real_programs_without_mold_a_build_links_as_rust_does_by_itself() {
 }
 
 #[test]
+// Runs a #!/bin/sh program directly: Windows cannot start one without a shebang handler.
+#[cfg(unix)]
 fn real_programs_with_mold_installed_a_build_links_with_it() {
     let b = Bench::new("mold");
     b.install_mold();
@@ -63,6 +67,8 @@ fn real_programs_with_mold_installed_a_build_links_with_it() {
 }
 
 #[test]
+// Runs a #!/bin/sh program directly: Windows cannot start one without a shebang handler.
+#[cfg(unix)]
 fn real_programs_a_release_build_and_a_build_with_mold_turned_off_link_as_before() {
     let b = Bench::new("release");
     b.install_mold();
@@ -72,6 +78,8 @@ fn real_programs_a_release_build_and_a_build_with_mold_turned_off_link_as_before
 }
 
 #[test]
+// Reads the repo's scripts/ld/ld symlink: a Windows checkout without core.symlinks has it as a text file.
+#[cfg(unix)]
 fn the_cargo_config_is_the_same_words_in_every_worktree() {
     // cargo keeps what it built by these words: a path of one worktree in them would make a build copied from another
     // (scripts/warm-start.sh), and every library in the shared build cache, out of date

@@ -13,7 +13,15 @@ use sw::json::*;
 fn fill(p: &Path) { std::fs::create_dir_all(p.parent().unwrap()).unwrap(); std::fs::write(p, vec![7u8; 1_000_000]).unwrap(); }
 fn claude_files(w: &World, tree: &Path) -> PathBuf { w.base.join("tmp").join(format!("claude-{}", sw::agents::scratch::uid())).join(sw::agents::scratch::slug(tree)) }
 /// Changed `ms` from now by the board's clock.
-fn touched(p: &Path, ms: i64) { let at = std::time::UNIX_EPOCH + std::time::Duration::from_millis((sw::clock::now() + ms) as u64); std::fs::File::open(p).unwrap().set_modified(at).unwrap(); }
+fn touched(p: &Path, ms: i64) {
+    let at = std::time::UNIX_EPOCH + std::time::Duration::from_millis((sw::clock::now() + ms) as u64);
+    // A folder opens on Windows only with backup semantics, and setting its time needs a write handle there.
+    #[cfg(windows)]
+    let f = { use std::os::windows::fs::OpenOptionsExt; std::fs::OpenOptions::new().write(true).custom_flags(0x0200_0000).open(p).unwrap() };
+    #[cfg(unix)]
+    let f = std::fs::File::open(p).unwrap();
+    f.set_modified(at).unwrap();
+}
 
 #[test]
 fn the_sweep_removes_what_ended_tasks_left_and_only_what_is_provably_the_board_s() {
@@ -113,7 +121,7 @@ fn real_programs_what_runs_from_a_task_s_temporary_folder_is_stopped_before_the_
     let t = task(&id);
     let tmp = sw::temp::made(&t);
     std::fs::create_dir_all(tmp.join("preview")).unwrap();
-    let mut server = std::process::Command::new("sleep").arg("60").current_dir(tmp.join("preview")).spawn().unwrap();
+    let mut server = crate::common::sleeper(60).current_dir(tmp.join("preview")).spawn().unwrap();
     assert_eq!(sw::leftovers::procs::in_folder(&tmp), vec![server.id() as i32]);
     assert!(sw::leftovers::procs::in_folder(&w.root).is_empty());
     sw::leftovers::free(&t);

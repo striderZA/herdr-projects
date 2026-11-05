@@ -25,6 +25,8 @@ const GB: u64 = 1_000_000_000;
 fn disk_is(free: u64, size: u64) { unsafe { std::env::set_var("HERDR_PROJECTS_FREE", free.to_string()); std::env::set_var("HERDR_PROJECTS_SIZE", size.to_string()) } }
 
 #[test]
+// The pane's env line is POSIX (export NAME=...); Windows panes run PowerShell, whose env line is not tested here.
+#[cfg(unix)]
 fn the_agent_and_the_reviewer_start_with_the_task_s_own_temporary_folder_and_are_told_to_keep_temporary_things_there() {
     let w = world();
     let id = to_approval(&w, "Work");
@@ -33,8 +35,9 @@ fn the_agent_and_the_reviewer_start_with_the_task_s_own_temporary_folder_and_are
     assert_eq!(t.s("tmp"), tmp.display().to_string());
     assert!(tmp.starts_with(w.base.join("tmp").join(format!("hp-{}", uid()))) && tmp.ends_with(short(&id)), "{}", tmp.display());
     assert!(tmp.display().to_string().len() < w.base.join("tmp").display().to_string().len() + 30, "short, for the sockets programs make in it");
-    use std::os::unix::fs::PermissionsExt;
-    assert_eq!(std::fs::metadata(&tmp).unwrap().permissions().mode() & 0o777, 0o700);
+        // Unix mode bits: Windows keeps none, so the folder's mode is only asked for on Unix.
+        #[cfg(unix)]
+        assert_eq!(sw::sys::mode_bits(&std::fs::metadata(&tmp).unwrap()) & 0o777, 0o700);
     // herdr hands a worktree's space no environment: the pane's shell is given it right before the program starts, with
     // the task's id and its own folder among the reports
     let all = calls(&w);
@@ -120,7 +123,7 @@ fn a_working_task_keeps_its_temporary_files_and_nothing_the_environment_points_i
     fill(&gone.join("s/bun/bin/bun"), 1);
     assert!(sw::leftovers::guarded(&old) == false);
     let path = std::env::var("PATH").unwrap_or_default();
-    unsafe { std::env::set_var("PATH", format!("{}:{path}", gone.join("s/bun/bin").display())) };
+    unsafe { std::env::set_var("PATH", std::env::join_paths(std::iter::once(gone.join("s/bun/bin")).chain(std::env::split_paths(&path))).unwrap()) };
     assert!(sw::leftovers::guarded(&gone));
     assert_eq!(sw::leftovers::remove(&gone), 0);
     unsafe { std::env::set_var("PATH", path) };
@@ -198,7 +201,7 @@ fn a_disk_smaller_than_twice_board_disk_free_needs_half_of_itself_free_and_its_l
     let host = sw::util::hostname();
     assert!(t.s("msg").starts_with(&format!("Disk nearly full on {host}: 1.2 GB free on ")), "{}", t.s("msg"));
     assert!(regex::Regex::new(r"; this task starts once 1\.7 GB is free \(\S+ is only 3\.4 GB in all, so it needs 1\.7 GB free, not the 5\.0 GB of board\.diskFree\)\. Free some space: herdr-projects sweep").unwrap().is_match(t.s("msg")), "{}", t.s("msg"));
-    assert!(t.at("diskWait").s("on").starts_with('/'), "the disk it waits for: {}", t.at("diskWait"));
+    assert!(std::path::Path::new(&t.at("diskWait").s("on")).is_absolute(), "the disk it waits for: {}", t.at("diskWait"));
     // A big disk still needs all of board.diskFree, and says nothing more.
     disk_is(3_100_000_000, 100 * GB);
     let l = sw::leftovers::room::low(&t).unwrap();

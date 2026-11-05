@@ -10,6 +10,9 @@ fn state(pid: u32) -> Option<char> {
     let o = std::process::Command::new("ps").args(["-o", "stat=", "-p", &pid.to_string()]).output().ok()?;
     String::from_utf8_lossy(&o.stdout).trim().chars().next()
 }
+/// Whether a job has ended and nothing waits on it. On Unix: no longer in `ps` (a zombie is still there until it is reaped).
+/// On Windows `ps` cannot see a Windows process id, and a process has no zombie state: its own liveness says it.
+fn gone(pid: u32) -> bool { if cfg!(windows) { !sw::store::files::pid_alive(pid as i64) } else { state(pid).is_none() } }
 fn until(done: impl Fn() -> bool) -> bool { let end = Instant::now() + Duration::from_secs(20); while Instant::now() < end { if done() { return true; } std::thread::sleep(Duration::from_millis(10)); } done() }
 
 #[test]
@@ -22,11 +25,13 @@ fn real_programs_a_detached_job_that_ended_is_reaped_and_its_marker_reads_as_gon
     unsafe { std::env::set_var("HERDR_PROJECTS_INLINE", "1") }
     for pid in [sh, loose] {
         assert!(pid > 0, "it did not start");
-        assert!(until(|| state(pid).is_none()), "{pid} is left as {:?}", state(pid));
+        assert!(until(|| gone(pid)), "{pid} is still there");
         assert!(!sw::store::files::pid_alive(pid as i64));
     }
 }
 
+// Unix only: a zombie is a Unix process state; Windows has none to wait for
+#[cfg(unix)]
 #[test]
 fn real_programs_a_detached_job_nobody_waits_for_stays_a_zombie_that_reads_as_alive() {
     // What every job was before: started detached, and its `Child` dropped.

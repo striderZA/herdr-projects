@@ -187,7 +187,7 @@ fn run_one(job: Job) -> Done {
                 Err(why) => Done::say(format!("Nothing opens its {what} here ({why}): copied the link instead. {link}"), Ink::Yellow).and(Then::Copy(link)),
             },
             Job::FreeSize { pids } => {
-                let ended = pids.iter().filter(|p| unsafe { libc::kill(**p as i32, libc::SIGTERM) } == 0).count();
+                let ended = pids.iter().filter(|p| crate::sys::send_signal(**p, crate::sys::TERM_SIGNAL)).count();
                 if ended > 0 { Done::say(format!("Ended {}. The board has its own size again in a moment.", if ended == 1 { "the remote view of this pane".to_string() } else { format!("{ended} remote views of this pane") }), Ink::Green) }
                 else { Done::say("The remote view could not be ended from here: close it where it runs.", Ink::Yellow) }
             }

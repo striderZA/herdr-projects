@@ -16,6 +16,7 @@ pub mod opener;
 pub mod research;
 pub mod status_words;
 pub mod store;
+pub mod sys;
 pub mod temp;
 pub mod text;
 pub mod util;

@@ -6,7 +6,7 @@ use super::kinds::fill;
 use super::read_turn::{find_file, head_of, when};
 use crate::err::Res;
 use crate::json::*;
-use crate::util::{shq, uuid};
+use crate::util::{shell_word, uuid, Shell};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -18,8 +18,8 @@ fn hook_command(h: &Hook) -> Vec<String> {
     c
 }
 pub(crate) fn write_private(file: &Path, text: &str) -> Res<()> {
-    use std::os::unix::fs::OpenOptionsExt;
-    let mut f = fs::OpenOptions::new().write(true).create(true).truncate(true).mode(0o600).open(file)?;
+    let mut o = fs::OpenOptions::new();
+    let mut f = crate::sys::private_mode(o.write(true).create(true).truncate(true)).open(file)?;
     std::io::Write::write_all(&mut f, text.as_bytes())?;
     Ok(())
 }
@@ -31,7 +31,7 @@ pub fn hook_args(kind: &str, h: &Hook) -> Res<Option<Vec<String>>> {
         // compaction is off: Claude Code would otherwise shrink a finished task's session left waiting an hour, which
         // herdr sees as a turn.
         "claude" => {
-            let command = hook_command(h).iter().map(|s| shq(s)).collect::<Vec<_>>().join(" ");
+            let command = hook_command(h).iter().map(|s| shell_word(s, Shell::Posix)).collect::<Vec<_>>().join(" ");
             let file = h.dir.join(format!("hook-{}.json", h.role));
             let one = json!([{ "hooks": [{ "type": "command", "command": command, "async": true }] }]);
             write_private(&file, &json!({ "hooks": { "Stop": one, "StopFailure": one }, "idleCompaction": false }).to_string())?;
@@ -93,7 +93,7 @@ pub fn standing(kind: &str, text: &str, dir: &Path) -> Res<Vec<String>> {
     Ok(fill(a.standing, &f.display().to_string()))
 }
 pub fn has_standing(kind: &str) -> bool { kind == "codex" || super::kinds::kind(kind).map(|a| !a.standing.is_empty()).unwrap_or(false) }
-fn real(p: &Path) -> PathBuf { fs::canonicalize(p).unwrap_or_else(|_| p.to_path_buf()) }
+fn real(p: &Path) -> PathBuf { crate::sys::canonicalize(p).unwrap_or_else(|_| p.to_path_buf()) }
 fn dashed(p: &Path) -> String { p.display().to_string().chars().map(|c| if c.is_ascii_alphanumeric() { c } else { '-' }).collect() }
 /// Where a conversation is saved.
 pub fn transcript(kind: &str, session: &str, cwd: &Path) -> Option<PathBuf> {
@@ -213,7 +213,7 @@ pub fn trust(kind: &str, root: &Path) -> bool {
             if j.at("projects").at(&root_s).b("hasTrustDialogAccepted") { return true; }
             j.obj_mut("projects").obj_mut(&root_s).put("hasTrustDialogAccepted", true);
             let tmp = PathBuf::from(format!("{}.{}.sw.tmp", file.display(), std::process::id()));
-            write_private(&tmp, &serde_json::to_string_pretty(&j).unwrap_or_default()).is_ok() && fs::rename(&tmp, &file).is_ok()
+            write_private(&tmp, &serde_json::to_string_pretty(&j).unwrap_or_default()).is_ok() && crate::sys::replace_file(&tmp, &file).is_ok()
         }
         "codex" => super::codex_trust::trust(root),
         "pi" => super::pi_trust::trust(root),

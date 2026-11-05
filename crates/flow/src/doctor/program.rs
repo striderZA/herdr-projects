@@ -9,10 +9,10 @@ use std::path::{Path, PathBuf};
 pub struct Here { pub exe: PathBuf, pub version: String, pub launcher: PathBuf, pub launcher_text: Option<String>, pub plugin_root: Option<PathBuf>, pub path: String }
 pub fn here(launcher: PathBuf, launcher_text: Option<String>, plugin_root: Option<PathBuf>) -> Here {
     let exe = crate::store::files::bin();
-    Here { exe: std::fs::canonicalize(&exe).unwrap_or(exe), version: crate::store::files::VERSION.into(), launcher, launcher_text, plugin_root, path: std::env::var("PATH").unwrap_or_default() }
+    Here { exe: crate::sys::plain_path(crate::sys::canonicalize(&exe).unwrap_or(exe)), version: crate::store::files::VERSION.into(), launcher, launcher_text, plugin_root, path: std::env::var("PATH").unwrap_or_default() }
 }
 fn t(p: &Path) -> String { tilde(&p.display().to_string()) }
-fn real(p: &Path) -> PathBuf { std::fs::canonicalize(p).unwrap_or_else(|_| p.to_path_buf()) }
+fn real(p: &Path) -> PathBuf { crate::sys::plain_path(crate::sys::canonicalize(p).unwrap_or_else(|_| p.to_path_buf())) }
 /// The program a launcher runs: its `exec '<program>' "$@"` line (flow/send.rs writes it).
 pub fn launcher_target(text: &str) -> Option<PathBuf> {
     let q = text.lines().find_map(|l| l.strip_prefix("exec "))?.strip_suffix(" \"$@\"")?;
@@ -21,7 +21,7 @@ pub fn launcher_target(text: &str) -> Option<PathBuf> {
 }
 /// The programs the plugin runs (bin/run.sh): the one built in its folder, or the one downloaded for this platform.
 pub fn plugin_programs(root: &Path) -> Vec<PathBuf> {
-    let mut v = vec![root.join("target/release/herdr-projects")];
+    let mut v = vec![root.join("target/release").join(format!("herdr-projects{}", std::env::consts::EXE_SUFFIX))];
     v.extend(platform().map(|p| root.join("bin").join(asset_name(p))));
     v
 }
@@ -33,7 +33,7 @@ fn how(h: &Here) -> &'static str {
     let downloaded = platform().map(|p| h.exe.file_name().map(|n| n == asset_name(p).as_str()).unwrap_or(false)).unwrap_or(false);
     if built_from_source(&h.exe) { "built from source" } else if downloaded { "downloaded" } else { "installed by hand" }
 }
-fn is_program(p: &Path) -> bool { use std::os::unix::fs::PermissionsExt; std::fs::metadata(p).map(|m| m.is_file() && m.permissions().mode() & 0o111 != 0).unwrap_or(false) }
+fn is_program(p: &Path) -> bool { crate::sys::is_program(p) }
 
 pub fn check(h: &Here) -> Vec<Found> {
     let mut out = vec![Found::ok(format!("herdr-projects {}, {}: {}", h.version, how(h), t(&h.exe)))];
@@ -45,7 +45,7 @@ pub fn check(h: &Here) -> Vec<Found> {
             out.push(Found::bad(format!("This program is {}, older than the plugin's {pv}", h.version), fix));
         }
     }
-    let fix = match root { Some(r) => format!("Run: sh {}/bin/run.sh install  (or open the board once from Herdr)", t(r)), None => "Open the board once from Herdr, or run: herdr-projects install".into() };
+    let fix = match root { Some(r) => format!("Run: sh {} install  (or open the board once from Herdr)", t(&r.join("bin").join("run.sh"))), None => "Open the board once from Herdr, or run: herdr-projects install".into() };
     let l = t(&h.launcher);
     let target = match &h.launcher_text {
         None => { out.push(Found::bad(format!("The launcher {l} is missing: agents and hooks run herdr-projects through it"), fix)); return out; }

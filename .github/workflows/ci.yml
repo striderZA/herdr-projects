@@ -77,3 +77,38 @@ jobs:
           GIT_COMMITTER_NAME: ci
           GIT_COMMITTER_EMAIL: ci@example.com
         run: npm run check plan-sandbox plan-steps detached-jobs home-folder-more finish-commit warm-start take-over-more coordinator-levels board-coordinators-inks
+
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Rust
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Cache the build
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: windows-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: windows-${{ runner.os }}-
+
+      - name: The check on Windows
+        env:
+          GIT_AUTHOR_NAME: ci
+          GIT_AUTHOR_EMAIL: ci@example.com
+          GIT_COMMITTER_NAME: ci
+          GIT_COMMITTER_EMAIL: ci@example.com
+        run: npm run check -- --all

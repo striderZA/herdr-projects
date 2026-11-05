@@ -1,0 +1,5 @@
+*.sh text eol=lf
+# Fixtures compared byte for byte, and the plugin manifest the tests read line by line, are LF on every platform:
+# a Windows checkout with core.autocrlf would otherwise turn them into CRLF.
+tests/frames/* text eol=lf
+herdr-plugin.toml text eol=lf

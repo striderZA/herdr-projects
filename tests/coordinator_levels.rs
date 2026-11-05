@@ -118,7 +118,7 @@ fn a_project_coordinator_keeps_its_own_conversation_when_a_newer_chat_of_the_hum
     let session = state::get(&p).unwrap().t("session");
     stop(&p).unwrap(); drain();
     // the human's own chat in the repo, newer than the coordinator's
-    let real = std::fs::canonicalize(&w.root).unwrap().display().to_string();
+    let real = sw::sys::canonicalize(&w.root).unwrap().display().to_string();
     let dir = std::path::Path::new(&std::env::var("CLAUDE_CONFIG_DIR").unwrap()).join("projects").join(real.chars().map(|c| if c.is_ascii_alphanumeric() { c } else { '-' }).collect::<String>());
     let now = sw::clock::iso(sw::clock::now() + 5000);
     std::fs::write(dir.join("11111111-2222-3333-4444-555555555555.jsonl"), format!("{}\n{}\n", json!({ "type": "user", "message": { "role": "user", "content": "my own question" }, "timestamp": now }),

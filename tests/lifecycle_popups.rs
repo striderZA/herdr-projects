@@ -25,6 +25,8 @@ struct ConfigPath;
 impl Drop for ConfigPath { fn drop(&mut self) { unsafe { std::env::remove_var("HERDR_CONFIG_PATH") } } }
 
 #[test]
+// Needs a symlink: on Windows one needs Developer Mode or an admin account.
+#[cfg(unix)]
 fn no_notifications_a_task_that_needs_you_raises_nothing_and_the_popup_block_an_older_version_wrote_is_taken_out() {
     let w = world();
     let id = to_approval(&w, "Work");
@@ -45,7 +47,7 @@ fn no_notifications_a_task_that_needs_you_raises_nothing_and_the_popup_block_an_
     assert!(!sw::extras::remove_popups());
     let real = w.base.join("fake").join("managed.toml");
     let before = format!("{mine}\n{}\n", side.replace("sidebar", "popups"));
-    std::fs::write(&real, &before).unwrap(); std::fs::remove_file(&file).unwrap(); std::os::unix::fs::symlink(&real, &file).unwrap();
+    std::fs::write(&real, &before).unwrap(); std::fs::remove_file(&file).unwrap(); sw::sys::symlink(&real, &file).unwrap();
     assert!(!sw::extras::remove_popups(), "a linked config is someone else's file: left as it is");
     assert_eq!(read(&real), before);
     // The sidebar rows an older version wrote are brought up to this version's, between the same marker lines: only

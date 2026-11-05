@@ -33,8 +33,8 @@ fn a_finished_task_leaves_herdrs_sidebar_the_repo_space_herdr_opened_goes_with_t
     assert_eq!(w.state().arr("workspaces").len(), 3);
     finish_line::approve(&a, None, false).unwrap();
     assert_eq!(settle(&a).s("stage"), "done");
-    let mut cwds: Vec<String> = w.state().arr("workspaces").iter().map(|x| x.t("cwd")).collect(); cwds.sort();
-    let mut want = vec![w.root_str(), task(&b).t("worktree")]; want.sort();
+    let mut cwds: Vec<String> = w.state().arr("workspaces").iter().map(|x| sw::sys::canonicalize(Path::new(&x.t("cwd"))).unwrap().display().to_string()).collect(); cwds.sort();
+    let mut want = vec![sw::sys::canonicalize(&w.root).unwrap().display().to_string(), sw::sys::canonicalize(Path::new(&task(&b).t("worktree"))).unwrap().display().to_string()]; want.sort();
     assert_eq!(cwds, want);
     finish_line::approve(&b, None, false).unwrap();
     let t = settle(&b);
@@ -91,11 +91,13 @@ fn the_repo_space_is_left_alone_while_a_command_of_yours_runs_in_it_a_reply_to_c
     assert!(prompts(&w, t.at("link").s("pane")).iter().any(|x| x.contains("then add n")));
     // you started something in the repo space herdr opened: it stays
     let root = w.root_str();
-    let mine = w.state().arr("panes").iter().find(|p| p.s("cwd") == root).unwrap().t("pane_id");
+    let mine = w.state().arr("panes").iter().find(|p| sw::sys::canonicalize(Path::new(&p.t("cwd"))).ok().as_deref() == Some(w.root.as_path())).unwrap().t("pane_id");
     busy(&w, &mine);
     finish_line::approve(&id, None, false).unwrap();
     assert_eq!(settle(&id).s("stage"), "done");
-    assert_eq!(w.state().arr("workspaces").iter().map(|x| x.t("cwd")).collect::<Vec<_>>(), vec![root]);
+    // The same folder, whatever its spelling: git and herdr may give a Windows path with forward slashes.
+    let same = |p: &str| sw::sys::canonicalize(p).unwrap().display().to_string();
+    assert_eq!(w.state().arr("workspaces").iter().map(|x| same(&x.t("cwd"))).collect::<Vec<_>>(), vec![same(&root)]);
 }
 
 #[test]

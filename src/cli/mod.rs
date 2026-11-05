@@ -26,7 +26,7 @@ pub fn context_folder() -> PathBuf {
 /// checkout: a pane that `cd`'d into another repo is in that one. No pane folder: the space's repo, then its folder.
 pub fn plugin_folder(c: &Value) -> Option<PathBuf> {
     let there = |d: &str| (!d.is_empty() && Path::new(d).exists()).then(|| PathBuf::from(d));
-    let (wt, real) = (c.at("worktree"), |p: &Path| std::fs::canonicalize(p).unwrap_or_else(|_| p.to_path_buf()));
+    let (wt, real) = (c.at("worktree"), |p: &Path| crate::sys::canonicalize(p).unwrap_or_else(|_| p.to_path_buf()));
     let Some(pane) = there(c.s("focused_pane_cwd")) else { return there(wt.s("repo_root")).or_else(|| there(c.s("workspace_cwd"))) };
     if let (Some(root), Some(checkout)) = (there(wt.s("repo_root")), there(wt.s("checkout_path"))) {
         if real(&pane).starts_with(real(&checkout)) { return Some(root); }

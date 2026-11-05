@@ -27,10 +27,9 @@ fn work(file: &str) -> Value { json!({ "files": { file: format!("{file}\n") }, "
 fn approved(id: &str) -> Obj { finish_line::approve(id, None, false).unwrap(); settle(id) }
 fn verdict(findings: Value) -> Value { json!({ "verdict": { "meets": true, "text": "Looked at it.", "findings": findings } }) }
 fn hook(dir: &Path, name: &str, body: &str) {
-    use std::os::unix::fs::PermissionsExt;
-    let f = dir.join("hooks").join(name);
+        let f = dir.join("hooks").join(name);
     std::fs::write(&f, format!("#!/bin/sh\n{body}")).unwrap();
-    std::fs::set_permissions(&f, std::fs::Permissions::from_mode(0o755)).unwrap();
+    sw::sys::set_mode(&f, 0o755).unwrap();
 }
 
 #[test]

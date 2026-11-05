@@ -55,7 +55,7 @@ pub fn clear(id: &str) -> Res<(String, Vec<String>, Ended)> {
     let mut ends = Ended::default();
     if (SLOT_STAGES.contains(&cur.s("stage")) && flow::task::is_agent_task(&cur) && !cur.b("archivedAt")) || cur.s("stage") == "attempts" { if let Ok((_, e)) = stop_as(&cid, true) { ends = e; } }
     let Some(t) = get(&cid) else { return Ok((cid, vec![], ends)) };
-    if runner_alive(&t) { unsafe { libc::kill(t.at("runner").i("pid") as i32, libc::SIGTERM); } }
+    if runner_alive(&t) { crate::sys::send_signal(t.at("runner").i("pid"), crate::sys::TERM_SIGNAL); }
     // Removing the worktree is a clean-up like the one after a merge: it holds a runner marker while it runs.
     let _ = update_wait(&cid, 5000, |t| { let mut m = marker(); m.put("job", "cleanup"); t.put("runner", m); Ok(Change::Write) });
     let c = crate::land::cleanup(&t, "merged");

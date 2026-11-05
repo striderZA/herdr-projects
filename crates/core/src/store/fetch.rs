@@ -41,14 +41,18 @@ fn has(said: &str, any: &[&str]) -> bool { let s = said.to_lowercase(); any.iter
 fn locked(said: &str) -> bool { moved(said) || has(said, &["cannot lock ref", "unable to update local ref", ".lock': file exists"]) }
 /// Another fetch moved the ref while this one ran: the copy here is as new as that fetch made it.
 pub fn moved(said: &str) -> bool { has(said, &["but expected"]) }
+/// A path as git writes it: forward slashes on Windows, so it is shown in the form this platform uses.
+fn native(p: &str) -> String { if cfg!(windows) { p.replace('/', "\\") } else { p.to_string() } }
 /// The lock file git said is held, when it did: another git command's now, or one a git that stopped left behind.
-fn lock_file(said: &str) -> Option<String> { crate::re!(r"Unable to create '([^']+\.lock)'").captures(said).map(|c| c[1].to_string()) }
+fn lock_file(said: &str) -> Option<String> { crate::re!(r"Unable to create '([^']+\.lock)'").captures(said).map(|c| native(&c[1])) }
 /// git 2.53 says a held lock file only as "fetching ref <ref> failed: reference already exists", as it says a real
 /// conflict: it is the lock when that ref's `.lock` file is there in the repo's common git dir (whatever worktree asks).
 fn lock_left(dir: &Path, said: &str) -> Option<String> {
     let r = crate::re!(r"fetching ref '?(refs/[^\s']+)'? failed: reference already exists").captures(said)?[1].to_string();
     let common = git_out(dir, &["rev-parse", "--path-format=absolute", "--git-common-dir"]).ok()?;
-    let f = Path::new(common.trim()).join(format!("{r}.lock"));
+    // git prints forward slashes on Windows: the path is built from native components.
+    let common = native(common.trim());
+    let f = Path::new(&common).join(r.split('/').collect::<std::path::PathBuf>()).with_file_name(format!("{}.lock", r.rsplit('/').next().unwrap_or(&r)));
     f.exists().then(|| f.display().to_string())
 }
 fn network(said: &str) -> bool {
@@ -122,7 +126,7 @@ mod tests {
     fn plain_words() {
         assert!(locked("error: cannot lock ref 'refs/remotes/origin/main': is at 27 but expected 68") && moved("is at 27 but expected 68"));
         let held = "error: cannot lock ref 'refs/remotes/origin/main': Unable to create '/r/.git/refs/remotes/origin/main.lock': File exists.";
-        assert!(locked(held) && !moved(held) && plain(held, "main").starts_with("git's lock file /r/.git/refs/remotes/origin/main.lock stayed"), "{}", plain(held, "main"));
+        assert!(locked(held) && !moved(held) && plain(held, "main").starts_with(&format!("git's lock file {} stayed", native("/r/.git/refs/remotes/origin/main.lock"))), "{}", plain(held, "main"));
         assert!(plain("error: cannot lock ref 'refs/remotes/origin/main': is at 27 but expected 68", "main").starts_with("another fetch"));
         assert!(plain("fatal: couldn't find remote ref trunk", "trunk").starts_with("origin has no branch trunk"));
         assert!(plain("git@github.com: Permission denied (publickey).\nfatal: Could not read from remote repository.", "main").starts_with("origin asked for a login"));

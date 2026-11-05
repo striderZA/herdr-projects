@@ -13,7 +13,7 @@ fn decided(file: &Obj, folder: &Path) -> Option<bool> { folder.ancestors().find_
 /// Trusted in pi's trust.json, adding the folder (its real path, as pi looks it up) when no folder above it decided.
 /// False: its folder dialog shows.
 pub fn trust(folder: &Path) -> bool {
-    let folder = fs::canonicalize(folder).unwrap_or_else(|_| folder.to_path_buf());
+    let folder = crate::sys::canonicalize(folder).unwrap_or_else(|_| folder.to_path_buf());
     let file = pi_home().join("trust.json");
     let Some(all) = read(&file) else { return false };
     if let Some(yes) = decided(&all, &folder) { return yes; }
@@ -51,7 +51,7 @@ fn add(file: &Path, folder: &Path) -> bool {
     all.insert(folder.display().to_string(), Value::Bool(true));
     let sorted: std::collections::BTreeMap<&String, &Value> = all.iter().collect();
     let tmp = PathBuf::from(format!("{}.{}.sw.tmp", file.display(), std::process::id()));
-    let done = super::adapter::write_private(&tmp, &format!("{}\n", serde_json::to_string_pretty(&sorted).unwrap_or_default())).is_ok() && fs::rename(&tmp, file).is_ok();
+    let done = super::adapter::write_private(&tmp, &format!("{}\n", serde_json::to_string_pretty(&sorted).unwrap_or_default())).is_ok() && crate::sys::replace_file(&tmp, file).is_ok();
     let _ = fs::remove_file(&tmp);
     done
 }

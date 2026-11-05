@@ -4,7 +4,7 @@
 use super::cli::{current_socket, fake, HRes, HerdrError};
 use crate::json::*;
 use std::io::{BufRead, BufReader, Write};
-use std::os::unix::net::UnixStream;
+use crate::sys::connect_local;
 use std::time::Duration;
 
 fn request(method: &str, params: &Value) -> String { format!("{}\n", json!({ "id": "herdr-projects", "method": method, "params": params })) }
@@ -13,7 +13,7 @@ pub fn ask(method: &str, params: &Value, socket: Option<&str>) -> HRes<Value> {
     if let Some(f) = fake() { return f.ask(method, params); }
     let path = socket.map(String::from).unwrap_or_else(current_socket);
     let no = |m: String| HerdrError { code: "no_server".into(), message: m };
-    let mut s = UnixStream::connect(&path).map_err(|e| no(e.to_string()))?;
+    let mut s = connect_local(&path).map_err(|e| no(e.to_string()))?;
     let _ = s.set_read_timeout(Some(Duration::from_secs(5)));
     s.write_all(request(method, params).as_bytes()).map_err(|e| no(e.to_string()))?;
     let mut line = String::new();
@@ -31,7 +31,7 @@ pub fn popup_close(socket: Option<&str>) -> HRes<bool> {
 pub fn on_tab_shown(socket: Option<String>, on: impl Fn(String) + Send + 'static, started: impl FnOnce() + Send + 'static) {
     std::thread::spawn(move || {
         let path = socket.unwrap_or_else(current_socket);
-        let Ok(mut s) = UnixStream::connect(&path) else { return };
+        let Ok(mut s) = connect_local(&path) else { return };
         if s.write_all(request("events.subscribe", &json!({ "subscriptions": [{ "type": "tab.focused" }] })).as_bytes()).is_err() { return; }
         let mut started = Some(started);
         for line in BufReader::new(s).lines() {

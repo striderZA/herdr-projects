@@ -27,12 +27,14 @@ fn a_new_install_keeps_everything_in_the_home_folder_and_the_xdg_variables_choos
     // command there moves all of it (HP-172).
     assert_eq!(board_env(), vec![("HERDR_PROJECTS_HOME".to_string(), home.display().to_string())]);
     // One variable moves the whole folder; each part still has its own, handed on beside the home folder.
-    set("HERDR_PROJECTS_HOME", "/somewhere");
-    assert_eq!([data_dir(), config_dir(), reports_dir()], ["/somewhere/data", "/somewhere/settings", "/somewhere/reports"].map(PathBuf::from));
-    for (k, v) in [("HERDR_PROJECTS_DATA_DIR", "/d"), ("HERDR_PROJECTS_CONFIG_DIR", "/somewhere/settings"), ("HERDR_PROJECTS_REPORTS_DIR", "/r")] { set(k, v); }
-    assert_eq!([data_dir(), config_dir(), reports_dir()], ["/d", "/somewhere/settings", "/r"].map(PathBuf::from));
+    let elsewhere = w.base.join("somewhere");
+    let (d, r, settings) = (w.base.join("d"), w.base.join("r"), elsewhere.join("settings"));
+    set("HERDR_PROJECTS_HOME", &elsewhere.display().to_string());
+    assert_eq!([data_dir(), config_dir(), reports_dir()], [elsewhere.join("data"), elsewhere.join("settings"), elsewhere.join("reports")]);
+    for (k, v) in [("HERDR_PROJECTS_DATA_DIR", &d), ("HERDR_PROJECTS_CONFIG_DIR", &settings), ("HERDR_PROJECTS_REPORTS_DIR", &r)] { set(k, &v.display().to_string()); }
+    assert_eq!([data_dir(), config_dir(), reports_dir()], [d.clone(), settings.clone(), r.clone()]);
     let kv = |k: &str, v: &str| (k.to_string(), v.to_string());
-    assert_eq!(board_env(), vec![kv("HERDR_PROJECTS_HOME", "/somewhere"), kv("HERDR_PROJECTS_DATA_DIR", "/d"), kv("HERDR_PROJECTS_REPORTS_DIR", "/r")]);
+    assert_eq!(board_env(), vec![kv("HERDR_PROJECTS_HOME", &elsewhere.display().to_string()), kv("HERDR_PROJECTS_DATA_DIR", &d.display().to_string()), kv("HERDR_PROJECTS_REPORTS_DIR", &r.display().to_string())]);
     unsafe { std::env::remove_var("XDG_DATA_HOME") };
     // A new install has nothing to move, and the move makes no folder for it.
     let fresh = w.base.join("fresh"); std::fs::create_dir_all(&fresh).unwrap();
@@ -42,6 +44,8 @@ fn a_new_install_keeps_everything_in_the_home_folder_and_the_xdg_variables_choos
 }
 
 #[test]
+// Moving the home folder is refused on Windows for now (docs/windows.md): the move is Unix-only here.
+#[cfg(unix)]
 fn an_older_versions_folders_are_moved_by_the_first_run_nothing_lost_the_old_paths_still_work_and_a_second_run_does_nothing() {
     let w = world_with(Opts::default());
     let h = old_home(&w.base, None);
@@ -55,7 +59,7 @@ fn an_older_versions_folders_are_moved_by_the_first_run_nothing_lost_the_old_pat
     assert_eq!(names(&h.to), vec!["closing-1.md", "data", "moved.json", "reports", "settings"]);
     assert_eq!(read(&h.to.join("closing-1.md")), "a home task's closing note"); // a home task's own files are left alone
     // Every old path still reaches the same files: the command agents were handed, a lock, the Coordinator's folder.
-    for (old, what) in [(&h.data, "data"), (&h.settings, "settings"), (&h.reports, "reports")] { assert!(is_link(old)); assert_eq!(std::fs::canonicalize(old).unwrap(), h.to.join(what)); }
+    for (old, what) in [(&h.data, "data"), (&h.settings, "settings"), (&h.reports, "reports")] { assert!(is_link(old)); assert_eq!(sw::sys::canonicalize(old).unwrap(), h.to.join(what)); }
     assert!(read(&h.data.join("bin").join(OLD_NAME)).starts_with("#!/bin/sh"));
     assert_eq!(ino(&h.data.join("locks").join("dGFzaw.lock")), ino(&h.to.join("data").join("locks").join("dGFzaw.lock")));
     std::fs::write(h.data.join("tasks/proj/1/task.json"), r#"{"n":1,"by":"a board still on the old path"}"#).unwrap();
@@ -75,6 +79,8 @@ fn an_older_versions_folders_are_moved_by_the_first_run_nothing_lost_the_old_pat
 }
 
 #[test]
+// Moving the home folder is refused on Windows for now (docs/windows.md): the move is Unix-only here.
+#[cfg(unix)]
 fn the_coordinators_conversation_is_found_again_after_its_folder_moved_for_every_program() {
     let w = world_with(Opts::default());
     let h = old_home(&w.base, None);
@@ -86,9 +92,9 @@ fn the_coordinators_conversation_is_found_again_after_its_folder_moved_for_every
     for (_, f) in &files { put(f, "{}\n", None); }
     h.run();
     let now = h.to.join("data/coordinator/default/chat");
-    assert_eq!(read(&now.join("note.txt")), "its folder"); assert_eq!(std::fs::canonicalize(&was).unwrap(), now);
+    assert_eq!(read(&now.join("note.txt")), "its folder"); assert_eq!(sw::sys::canonicalize(&was).unwrap(), now);
     // (moved_from reads this process's home: it is the old home now.)
-    unsafe { std::env::set_var("HOME", &h.home); std::env::set_var("HERDR_PROJECTS_HOME", &h.to); }
+    unsafe { std::env::set_var(sw::sys::HOME_VAR, &h.home); std::env::set_var("HERDR_PROJECTS_HOME", &h.to); }
     // Found by its id from the new folder, so a restart reopens the same conversation (pump.rs resumes what it finds).
     for (kind, f) in &files { assert_eq!(sw::agents::adapter::transcript(kind, "abc", &now).as_ref(), Some(f), "{kind}"); }
     // A Coordinator started before the move still knows its folder by the old path: a new chat it begins there is
@@ -104,6 +110,8 @@ fn the_coordinators_conversation_is_found_again_after_its_folder_moved_for_every
 }
 
 #[test]
+// Moving the home folder is refused on Windows for now (docs/windows.md): the move is Unix-only here.
+#[cfg(unix)]
 fn a_move_that_was_cut_off_is_finished_by_the_next_run_wherever_it_stopped_and_the_old_paths_work_in_between() {
     let w = world_with(Opts::default());
     // Cut off (the process ends) before or after the first of the two steps in which paths change places.
@@ -152,6 +160,8 @@ fn a_move_that_was_cut_off_is_finished_by_the_next_run_wherever_it_stopped_and_t
 }
 
 #[test]
+// Moving the home folder is refused on Windows for now (docs/windows.md): the move is Unix-only here.
+#[cfg(unix)]
 fn with_data_in_the_new_place_already_nothing_is_written_over_the_newer_file_stays_and_the_other_is_set_aside() {
     let w = world_with(Opts::default());
     let h = old_home(&w.base, None);
@@ -195,7 +205,7 @@ fn under_the_tests_the_store_refuses_the_real_board_folder_with_a_clear_message(
     let w = common::world();
     let (home, real) = (real_home().unwrap(), real_board().unwrap());
     // No temporary folder: HOME is yours and nothing names another board.
-    let said = refused(&[("HOME", Some(home.clone())), ("HERDR_PROJECTS_HOME", None)], open).expect("the store opened the real board");
+    let said = refused(&[(sw::sys::HOME_VAR, Some(home.clone())), ("HERDR_PROJECTS_HOME", None)], open).expect("the store opened the real board");
     assert!(said.contains(&real.join("data").display().to_string()) && said.contains("temporary folder") && said.contains(TESTING), "{said}");
     // A scratch home with the real data folder still named by its own variable, as an agent's tab had it (HP-172); the
     // settings and the reports the same.
@@ -205,9 +215,13 @@ fn under_the_tests_the_store_refuses_the_real_board_folder_with_a_clear_message(
         let said = refused(&[("HERDR_PROJECTS_HOME", scratch.clone()), (k, Some(real.join(part)))], f).unwrap_or_else(|| panic!("{k} reached the real board"));
         assert!(said.contains(&real.join(part).display().to_string()), "{said}");
     }
-    // Through a link to your home folder.
-    std::os::unix::fs::symlink(&home, w.base.join("link")).unwrap();
-    assert!(refused(&[("HERDR_PROJECTS_HOME", Some(w.base.join("link").join(".herdr-projects")))], open).is_some(), "a link into the real board");
+    // Through a link to your home folder. Unix only: on Windows a link needs Developer Mode or an administrator
+    // (error 1314), so this part is gated there.
+    #[cfg(unix)]
+    {
+        sw::sys::symlink(&home, &w.base.join("link")).unwrap();
+        assert!(refused(&[("HERDR_PROJECTS_HOME", Some(w.base.join("link").join(".herdr-projects")))], open).is_some(), "a link into the real board");
+    }
     // The test's own board is fine, under the tests or not; outside the tests the guard lets every folder be.
     assert_eq!(refused(&[], open), None);
     assert_eq!(sw::store::files::data_dir(), w.base.join("sw/data"));

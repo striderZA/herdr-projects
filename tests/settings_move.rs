@@ -98,6 +98,8 @@ fn a_task_under_way_when_the_move_happens_keeps_working_its_check_its_review_bar
     assert_eq!(done.i("reviewRounds"), 0); assert_eq!(done.at("settings"), &json!({ "review.rounds": 0, "review.mustFix": "trivial" }));
 }
 
+// Unix only: the account's home comes from the Unix password database; Windows keeps it in USERPROFILE, which the world sets
+#[cfg(unix)]
 #[test]
 fn a_test_run_has_a_home_folder_of_its_own_nothing_here_reads_or_converts_your_real_one() {
     let _w = world_with(Opts::default());

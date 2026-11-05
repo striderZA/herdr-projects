@@ -61,7 +61,7 @@ fn popup_world(settings: Value) -> (World, Rc<Pop>) {
     (w, p)
 }
 /// The board in the popup runs: a process of its own, written down as the popup's.
-fn board_runs(p: &Pop) { let c = std::process::Command::new("sleep").arg("60").spawn().unwrap(); let mut n = note("popup"); n["pid"] = json!(c.id()); sw::store::files::write_json(&note_file("popup"), &n).unwrap(); *p.board.borrow_mut() = Some(c); }
+fn board_runs(p: &Pop) { let c = crate::common::sleeper(60).spawn().unwrap(); let mut n = note("popup"); n["pid"] = json!(c.id()); sw::store::files::write_json(&note_file("popup"), &n).unwrap(); *p.board.borrow_mut() = Some(c); }
 fn up(w: &World) -> Value { w.state().at("popup").clone() }
 fn focus(w: &World) -> Vec<String> { w.state().arr("focus").iter().map(text).collect() }
 fn view(name: &str) -> Obj { sw::store::files::read_obj(&sw::store::files::data_dir().join(name)).unwrap_or_default() }

@@ -89,7 +89,8 @@ fn a_task_whose_branch_matches_fires_and_one_that_does_not_is_a_written_skip_wit
     let f = look();
     assert_eq!(f.iter().map(|x| (x.t("skipped"), x.t("task"))).collect::<Vec<_>>(), [("its condition did not match (branch \"feature/KAM-13\")".to_string(), String::new()), (String::new(), "proj/2".to_string())]);
     assert_eq!(firings_of(a.s("id"))[0].s("what"), format!("{other} was merged"));
-    assert!(automation(a.s("id")).unwrap().arr("made").is_empty(), "a skip counts toward no runaway");
+    let a = automation(a.s("id")).unwrap();
+    assert!(a.arr("made").is_empty(), "a skip counts toward no runaway: {:?}", a);
     assert_eq!(automation(not.s("id")).unwrap().s("lastTask"), "proj/2");
     // the same skip again is one line with a count
     let again = w.add("Another without one"); merged(&again, "feature/KAM-13");

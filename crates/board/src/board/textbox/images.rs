@@ -23,15 +23,15 @@ fn unescaped(token: &str) -> String {
 /// A path with a picture's end: absolute or under `~/`, wherever its file is.
 fn names_picture(token: &str) -> bool {
     let p = unescaped(token);
-    (p.starts_with('/') || p.starts_with("~/")) && !p.contains('\n') && p.rsplit_once('.').is_some_and(|(_, end)| PICTURES.contains(&end.to_ascii_lowercase().as_str()))
+    (p.starts_with('/') || std::path::Path::new(&p).is_absolute() || p.starts_with("~/") || p.starts_with("~\\")) && !p.contains('\n') && p.rsplit_once('.').is_some_and(|(_, end)| PICTURES.contains(&end.to_ascii_lowercase().as_str()))
 }
 /// herdr's own name for a picture it pasted, whole: nothing more comes after it.
-fn is_herdrs(token: &str) -> bool { crate::re!(r"/herdr-clipboard-images-\d+/client-\d+-clipboard-\d+-\d+\.(png|jpe?g|gif|webp|bmp)$").is_match(&unescaped(token)) }
+fn is_herdrs(token: &str) -> bool { crate::re!(r"[/\\]herdr-clipboard-images-\d+[/\\]client-\d+-clipboard-\d+-\d+\.(png|jpe?g|gif|webp|bmp)$").is_match(&unescaped(token)) }
 /// A picture's path: one with a picture's end that is herdr's own or a file there is.
 pub fn is_picture(token: &str) -> bool {
     if !names_picture(token) { return false; }
     let p = unescaped(token);
-    if p.contains(HERDR) { return true; }
+    if p.contains(HERDR) || (cfg!(windows) && p.replace('\\', "/").contains(HERDR)) { return true; }
     let path = match p.strip_prefix("~/") { Some(r) => crate::store::files::user_home().join(r), None => p.into() };
     path.is_file()
 }

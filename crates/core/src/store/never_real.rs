@@ -7,14 +7,7 @@ use std::path::{Path, PathBuf};
 pub const TESTING: &str = "HERDR_PROJECTS_TESTING";
 pub fn testing() -> bool { std::env::var_os(TESTING).is_some_and(|v| !v.is_empty()) }
 /// The user's own home folder, from the system's list of users: what HOME says can be a test's.
-pub fn real_home() -> Option<PathBuf> {
-    let dir = unsafe {
-        let pw = libc::getpwuid(libc::getuid());
-        if pw.is_null() || (*pw).pw_dir.is_null() { return None; }
-        std::ffi::CStr::from_ptr((*pw).pw_dir).to_string_lossy().into_owned()
-    };
-    (!dir.is_empty()).then(|| PathBuf::from(dir))
-}
+pub fn real_home() -> Option<PathBuf> { crate::sys::passwd_home().filter(|d| !d.is_empty()).map(PathBuf::from) }
 /// The real board's folder: what the board keeps for this user when nothing says otherwise.
 pub fn real_board() -> Option<PathBuf> { real_home().map(|h| h.join(super::files::HOME_NAME)) }
 /// A board folder, as it is: refused under the tests when it is in the real board's folder (a link to it too).
@@ -35,7 +28,7 @@ fn resolved(p: &Path) -> PathBuf {
     let mut rest = vec![];
     let mut at = p;
     loop {
-        if let Ok(c) = std::fs::canonicalize(at) { return rest.iter().rev().fold(c, |c, x| c.join(x)); }
+        if let Ok(c) = crate::sys::canonicalize(at) { return rest.iter().rev().fold(c, |c, x| c.join(x)); }
         match (at.parent(), at.file_name()) { (Some(up), Some(name)) => { rest.push(name.to_os_string()); at = up; } _ => return p.to_path_buf() }
     }
 }

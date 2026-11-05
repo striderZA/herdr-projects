@@ -1,10 +1,22 @@
 //! Small tools the parts share: a random id, quoting for a shell, versions compared.
+#[cfg(not(windows))]
 use std::io::Read;
 
+/// Fills `buf` from the system's random source: /dev/urandom on Unix.
+#[cfg(not(windows))]
+fn fill_random(buf: &mut [u8]) -> std::io::Result<()> { std::fs::File::open("/dev/urandom").and_then(|mut f| f.read_exact(buf)) }
+/// Fills `buf` from the system's crypto RNG on Windows (BCryptGenRandom). Each id is then unique, whatever the clock says.
+#[cfg(windows)]
+fn fill_random(buf: &mut [u8]) -> std::io::Result<()> {
+    use windows_sys::Win32::Security::Cryptography::{BCryptGenRandom, BCRYPT_USE_SYSTEM_PREFERRED_RNG};
+    // SAFETY: buf is valid for buf.len() bytes; a null algorithm handle selects the system's preferred RNG.
+    let status = unsafe { BCryptGenRandom(std::ptr::null_mut(), buf.as_mut_ptr(), buf.len() as u32, BCRYPT_USE_SYSTEM_PREFERRED_RNG) };
+    if status == 0 { Ok(()) } else { Err(std::io::Error::other(format!("BCryptGenRandom failed: {status:#x}"))) }
+}
 /// `n` random bytes as hex.
 pub fn random_hex(n: usize) -> String {
     let mut buf = vec![0u8; n];
-    if std::fs::File::open("/dev/urandom").and_then(|mut f| f.read_exact(&mut buf)).is_err() {
+    if fill_random(&mut buf).is_err() {
         let t = crate::clock::now() as u64 ^ (std::process::id() as u64) << 32;
         for (i, b) in buf.iter_mut().enumerate() { *b = (t >> ((i % 8) * 8)) as u8 ^ i as u8; }
     }
@@ -19,8 +31,17 @@ pub fn uuid() -> String {
     let s: String = c.into_iter().collect();
     format!("{}-{}-{}-{}-{}", &s[0..8], &s[8..12], &s[12..16], &s[16..20], &s[20..32])
 }
-/// A word quoted for a POSIX shell: `'it'\''s'`.
-pub fn shq(s: &str) -> String { format!("'{}'", s.replace('\'', "'\\''")) }
+/// The shell a command is typed into or run by. A pane's command uses the pane's shell (`pane_shell`); `sh -c` strings
+/// and the shell scripts stay POSIX.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Shell { Posix, PowerShell }
+/// The shell a pane's command is typed into on this platform: PowerShell on Windows, POSIX sh elsewhere.
+pub fn pane_shell() -> Shell { if cfg!(windows) { Shell::PowerShell } else { Shell::Posix } }
+/// A word quoted for a shell: POSIX `'it'\''s'`; PowerShell `'it''s'` (inside single quotes PowerShell reads `$`, quotes and
+/// backticks as text, and only a doubled single quote is a quote).
+pub fn shell_word(s: &str, shell: Shell) -> String {
+    match shell { Shell::Posix => format!("'{}'", s.replace('\'', "'\\''")), Shell::PowerShell => format!("'{}'", s.replace('\'', "''")) }
+}
 /// A folder copied whole into another (made where it is missing).
 pub fn copy_dir(from: &std::path::Path, to: &std::path::Path) -> std::io::Result<()> {
     std::fs::create_dir_all(to)?;
@@ -28,7 +49,7 @@ pub fn copy_dir(from: &std::path::Path, to: &std::path::Path) -> std::io::Result
         let e = e?;
         let (src, dst) = (e.path(), to.join(e.file_name()));
         let ft = e.file_type()?;
-        if ft.is_dir() { copy_dir(&src, &dst)?; } else if ft.is_symlink() { let target = std::fs::read_link(&src)?; let _ = std::fs::remove_file(&dst); std::os::unix::fs::symlink(target, &dst)?; } else { std::fs::copy(&src, &dst)?; }
+        if ft.is_dir() { copy_dir(&src, &dst)?; } else if ft.is_symlink() { let target = std::fs::read_link(&src)?; let _ = std::fs::remove_file(&dst); crate::sys::symlink(&target, &dst)?; } else { std::fs::copy(&src, &dst)?; }
     }
     Ok(())
 }
@@ -62,7 +83,7 @@ pub fn env_set(k: &str) -> bool { std::env::var(k).map(|v| !v.is_empty()).unwrap
 /// Its value when it says something.
 pub fn env_val(k: &str) -> Option<String> { std::env::var(k).ok().filter(|v| !v.is_empty()) }
 /// This machine's own name, as the system gives it.
-pub fn hostname() -> String { let mut b = [0u8; 256]; unsafe { libc::gethostname(b.as_mut_ptr() as *mut libc::c_char, b.len()); } String::from_utf8_lossy(&b[..b.iter().position(|c| *c == 0).unwrap_or(0)]).into_owned() }
+pub fn hostname() -> String { crate::sys::hostname() }
 fn parts(v: &str) -> Vec<u64> { v.trim_start_matches('v').split('.').map(|p| p.chars().take_while(|c| c.is_ascii_digit()).collect::<String>().parse().unwrap_or(0)).collect() }
 /// Versions compared part by part as numbers (0.10.0 is newer than 0.9.1): true when `a` is newer than `b`.
 pub fn newer(a: &str, b: &str) -> bool {

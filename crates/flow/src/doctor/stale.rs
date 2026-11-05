@@ -43,7 +43,7 @@ pub fn old_builds(cache: &Path) -> Vec<PathBuf> {
 pub fn ask(cache: &Path) -> Vec<Left> {
     let mut out: Vec<Left> = vec![];
     let tasks = list(ListOpts { include_archived: true, attempts: true, ..Default::default() });
-    let real = |p: &str| std::fs::canonicalize(p).unwrap_or_else(|_| PathBuf::from(p));
+    let real = |p: &str| crate::sys::plain_path(crate::sys::canonicalize(p).unwrap_or_else(|_| PathBuf::from(p)));
     let owned: Vec<PathBuf> = tasks.iter().filter(|t| t.b("worktree")).map(|t| real(t.s("worktree"))).collect();
     for t in &tasks {
         let wt = crate::sync::tree_of(t);

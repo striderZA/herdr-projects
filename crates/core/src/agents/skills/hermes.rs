@@ -48,7 +48,7 @@ pub fn list(p: &Place) -> Vec<Skill> {
     let home = env("HERMES_HOME").map(PathBuf::from).unwrap_or_else(|| p.home.join(".hermes"));
     let config = yaml_file(&home.join("config.yaml"));
     let set = config.get("skills").cloned().unwrap_or(Value::Null);
-    let real = |x: &Path| std::fs::canonicalize(x).unwrap_or_else(|_| x.to_path_buf());
+    let real = |x: &Path| crate::sys::canonicalize(x).unwrap_or_else(|_| x.to_path_buf());
     let mut roots: Vec<(PathBuf, u8)> = vec![];
     if let Some(top) = &p.top {
         let trusted = set.get("trusted_project_dirs").map(texts).unwrap_or_default().iter().any(|d| real(&path_in(&home, &p.home, d)) == real(top));

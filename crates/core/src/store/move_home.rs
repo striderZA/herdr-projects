@@ -10,7 +10,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 pub fn lstat(p: &Path) -> Option<fs::Metadata> { fs::symlink_metadata(p).ok() }
-pub fn real(p: &Path) -> PathBuf { fs::canonicalize(p).unwrap_or_else(|_| absolute(p)) }
+pub fn real(p: &Path) -> PathBuf { crate::sys::canonicalize(p).unwrap_or_else(|_| absolute(p)) }
 pub fn short(p: &Path, home: &Path) -> String {
     if p == home { "~".into() } else if let Ok(rest) = p.strip_prefix(home) { format!("~/{}", rest.display()) } else { p.display().to_string() }
 }
@@ -63,15 +63,14 @@ fn free(file: &Path) -> PathBuf {
 /// Takes a lock file for a moment. None when a running process holds it.
 fn grab_now(file: &Path) -> Option<Option<fs::File>> {
     let Ok(f) = fs::File::open(file) else { return Some(None) };
-    use std::os::fd::AsRawFd;
-    if unsafe { libc::flock(f.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0 { Some(Some(f)) } else { None }
+    if crate::sys::lock_file(&f, false) { Some(Some(f)) } else { None }
 }
 fn is_lock(file: &Path) -> bool { file.extension().map(|e| e == "lock").unwrap_or(false) && file.parent().and_then(|p| p.file_name()).map(|n| n == "locks").unwrap_or(false) }
 fn keep(file: &Path, spot: &Path) { if fs::hard_link(file, spot).is_err() { let _ = copy_all(file, spot); } }
 fn copy_all(from: &Path, to: &Path) -> std::io::Result<()> {
     if fs::symlink_metadata(from)?.is_dir() { fs::create_dir_all(to)?; for e in fs::read_dir(from)? { let e = e?; copy_all(&e.path(), &to.join(e.file_name()))?; } Ok(()) } else { fs::copy(from, to).map(|_| ()) }
 }
-fn mtime(m: &fs::Metadata) -> f64 { use std::os::unix::fs::MetadataExt; m.mtime() as f64 * 1000.0 + m.mtime_nsec() as f64 / 1e6 }
+fn mtime(m: &fs::Metadata) -> f64 { let (s, ns) = crate::sys::mtime(m); s as f64 * 1000.0 + ns as f64 / 1e6 }
 /// What the new place holds goes into the old one (the one in use); then the folder moves as one. Of a file both
 /// have, the newer one stays in use and the other goes to the set-aside folder. Returns how many were set aside.
 pub fn merge_into(from: &Path, to: &Path, aside: &Path) -> std::io::Result<usize> {
@@ -97,19 +96,9 @@ pub fn merge_into(from: &Path, to: &Path, aside: &Path) -> std::io::Result<usize
     Ok(kept)
 }
 /// Two paths change places in one step: there is no moment at which either is missing. False: not possible here.
-pub fn swap_now(a: &Path, b: &Path) -> bool {
-    use std::ffi::CString;
-    use std::os::unix::ffi::OsStrExt;
-    let (Ok(ca), Ok(cb)) = (CString::new(a.as_os_str().as_bytes()), CString::new(b.as_os_str().as_bytes())) else { return false };
-    #[cfg(target_os = "linux")]
-    unsafe { libc::syscall(libc::SYS_renameat2, libc::AT_FDCWD, ca.as_ptr(), libc::AT_FDCWD, cb.as_ptr(), 2u32) == 0 }
-    #[cfg(target_os = "macos")]
-    unsafe { libc::renamex_np(ca.as_ptr(), cb.as_ptr(), libc::RENAME_SWAP) == 0 }
-    #[cfg(not(any(target_os = "linux", target_os = "macos")))]
-    { let _ = (ca, cb); false }
-}
-fn same_disk(a: &Path, b: &Path) -> bool { use std::os::unix::fs::MetadataExt; matches!((fs::metadata(a), fs::metadata(b)), (Ok(x), Ok(y)) if x.dev() == y.dev()) }
-fn link(target: &Path, at: &Path) -> std::io::Result<()> { std::os::unix::fs::symlink(target, at) }
+pub fn swap_now(a: &Path, b: &Path) -> bool { crate::sys::swap_paths(a, b) }
+fn same_disk(a: &Path, b: &Path) -> bool { matches!((fs::metadata(a), fs::metadata(b)), (Ok(x), Ok(y)) if crate::sys::file_key(&x).0 == crate::sys::file_key(&y).0) }
+fn link(target: &Path, at: &Path) -> std::io::Result<()> { crate::sys::symlink(target, at) }
 /// One folder, in three steps each whole or not done (`<old>.moving` is the spare name the steps use):
 ///   1. two links are made: <old>.moving -> new, and new -> <old>.moving
 ///   2. <old> and <old>.moving change places: old -> new -> <old>.moving, which is now the folder
@@ -246,11 +235,17 @@ const QUIET: [&str; 6] = ["board", "hook", "turn-ended", "keeper", "keeper-work"
 /// At the start of every run of the program: the move, and its one line said where a human reads it.
 pub fn home_at_start(cmd: &str) {
     if std::env::var("HERDR_PROJECTS_INLINE").as_deref() == Ok("1") { return; }
+    // Windows: no move is made, and nothing is read or written for one (the folders stay where they are). Said once,
+    // on a terminal, as the move's own line is on Unix. Refused before the plan, the record and the due checks.
+    if cfg!(windows) {
+        if !QUIET.contains(&cmd) && std::io::IsTerminal::is_terminal(&std::io::stderr()) { eprintln!("Moving the home folder is not on Windows yet."); }
+        return;
+    }
     let (home, env) = (user_home(), env_now());
     let r = move_home(&home, &env, &bin(), None, 3000, &swap_now);
     // Not moved: this run works on those folders where they are, as it did before.
     for x in &r.stay { unsafe { std::env::set_var(x.key, &x.from); } }
-    if QUIET.contains(&cmd) || unsafe { libc::isatty(2) } == 0 { return; }
+    if QUIET.contains(&cmd) || !std::io::IsTerminal::is_terminal(&std::io::stderr()) { return; }
     let line = move_note(&home, &env);
     if !line.is_empty() { eprintln!("{line}"); move_told(&home, &env); }
 }

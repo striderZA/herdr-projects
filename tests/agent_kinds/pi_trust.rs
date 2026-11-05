@@ -9,8 +9,16 @@ use sw::agents::homes::pi_home;
 use sw::agents::installed::pre_trust;
 
 fn file() -> std::path::PathBuf { pi_home().join("trust.json") }
+/// Sets a folder's time: on Windows a folder opens only with backup semantics, and setting its time needs a write handle.
+fn set_time(p: &std::path::Path, at: std::time::SystemTime) {
+    #[cfg(windows)]
+    let f = { use std::os::windows::fs::OpenOptionsExt; std::fs::OpenOptions::new().write(true).custom_flags(0x0200_0000).open(p).unwrap() };
+    #[cfg(unix)]
+    let f = std::fs::File::open(p).unwrap();
+    f.set_modified(at).unwrap();
+}
 fn saved() -> Value { serde_json::from_str(&read(&file())).unwrap_or(Value::Null) }
-fn real(p: &std::path::Path) -> String { std::fs::canonicalize(p).unwrap().display().to_string() }
+fn real(p: &std::path::Path) -> String { sw::sys::canonicalize(p).unwrap().display().to_string() }
 
 #[test]
 fn pi_is_pre_trusted_in_the_folder_it_starts_in() {
@@ -33,7 +41,7 @@ fn pis_own_decisions_and_a_file_that_does_not_read_are_left_as_they_are() {
     let w = world();
     std::fs::create_dir_all(pi_home()).unwrap();
     // Trusted already, there or in a folder above it: nothing written.
-    let text = format!("{{\n  \"{}\": true\n}}\n", real(&w.base));
+    let text = json!({ real(&w.base): true }).to_string();
     std::fs::write(file(), &text).unwrap();
     assert!(trust("pi", &w.root));
     assert_eq!(read(&file()), text);
@@ -53,7 +61,7 @@ fn pis_own_decisions_and_a_file_that_does_not_read_are_left_as_they_are() {
     std::fs::create_dir(&lock).unwrap();
     assert!(!trust("pi", &w.root));
     assert_eq!(read(&file()), "{}");
-    std::fs::File::open(&lock).unwrap().set_modified(std::time::SystemTime::now() - std::time::Duration::from_secs(60)).unwrap();
+    set_time(&lock, std::time::SystemTime::now() - std::time::Duration::from_secs(60));
     assert!(trust("pi", &w.root));
     assert_eq!(saved(), json!({ real(&w.root): true }));
     assert!(!lock.exists());

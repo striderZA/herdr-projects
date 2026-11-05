@@ -120,6 +120,8 @@ fn the_models_command_names_what_each_program_takes_as_a_setting_writes_it() {
 }
 
 #[test]
+// Runs a #!/bin/sh program as the agent: Windows cannot start one without a shebang handler (Unix-only here).
+#[cfg(unix)]
 fn real_programs_the_list_is_asked_of_the_program_and_kept() {
     let w = world();
     let bin = w.base.join("bin");
@@ -129,8 +131,7 @@ fn real_programs_the_list_is_asked_of_the_program_and_kept() {
     let page = r#"{"id":1,"result":{"data":[{"id":"gpt-6.1-sol","model":"gpt-6.1-sol","hidden":false},{"id":"gpt-6-luna","model":"gpt-6-luna","hidden":false},{"id":"codex-auto-review","model":"codex-auto-review","hidden":true}],"nextCursor":null}}"#;
     let account = r#"{"id":2,"result":{"account":{"type":"chatgpt","email":"x@y","planType":"pro"},"requiresOpenaiAuth":true}}"#;
     std::fs::write(bin.join("codex"), format!("#!/bin/sh\necho \"$1\" >> {}\nif [ \"$1\" = app-server ]; then\n  while read l; do case \"$l\" in *'\"model/list\"'*) printf '%s\\n' '{page}';; *'\"account/read\"'*) printf '%s\\n' '{account}';; esac; done\n  exit 0\nfi\nprintf '%s' '{CODEX}'\n", count.display())).unwrap();
-    use std::os::unix::fs::PermissionsExt;
-    std::fs::set_permissions(bin.join("codex"), std::fs::Permissions::from_mode(0o755)).unwrap();
+        sw::sys::set_mode(&bin.join("codex"), 0o755).unwrap();
     let run = |args: &[&str]| { let o = std::process::Command::new(env!("CARGO_BIN_EXE_herdr-projects")).args(args).current_dir(&w.root)
         .env("PATH", format!("{}:/usr/bin:/bin", bin.display())).env_remove("HERDR_PROJECTS_NO_MODEL_LIST").env("HERDR_SOCKET_PATH", "/nonexistent").env("HERDR_BIN_PATH", "/bin/false").output().unwrap();
         (o.status.code().unwrap_or(-1), String::from_utf8_lossy(&o.stdout).into_owned(), String::from_utf8_lossy(&o.stderr).into_owned()) };

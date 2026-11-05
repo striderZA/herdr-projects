@@ -127,14 +127,15 @@ fn the_models_command_says_each_program_s_levels() {
 }
 
 #[test]
+// Runs a #!/bin/sh program as the agent: Windows cannot start one without a shebang handler (Unix-only here).
+#[cfg(unix)]
 fn real_programs_the_levels_are_asked_of_the_program_and_kept() {
     let w = world();
     let bin = w.base.join("bin");
     std::fs::create_dir_all(&bin).unwrap();
     let count = w.base.join("asked");
     std::fs::write(bin.join("codex"), format!("#!/bin/sh\necho x >> {}\nprintf '%s' '{}'\n", count.display(), codex_catalog())).unwrap();
-    use std::os::unix::fs::PermissionsExt;
-    std::fs::set_permissions(bin.join("codex"), std::fs::Permissions::from_mode(0o755)).unwrap();
+        sw::sys::set_mode(&bin.join("codex"), 0o755).unwrap();
     let run = |args: &[&str]| { let o = std::process::Command::new(env!("CARGO_BIN_EXE_herdr-projects")).args(args).current_dir(&w.root)
         .env("PATH", format!("{}:/usr/bin:/bin", bin.display())).env_remove("HERDR_PROJECTS_NO_MODEL_LIST").env("HERDR_SOCKET_PATH", "/nonexistent").env("HERDR_BIN_PATH", "/bin/false").output().unwrap();
         (o.status.code().unwrap_or(-1), String::from_utf8_lossy(&o.stdout).into_owned(), String::from_utf8_lossy(&o.stderr).into_owned()) };

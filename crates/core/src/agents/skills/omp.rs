@@ -106,7 +106,7 @@ pub fn list(p: &Place) -> Vec<Skill> {
             let n = f.name.trim().to_string();
             if n.is_empty() || n.starts_with('.') || f.fields.get("enabled") == Some(&Value::Bool(false)) || disabled.contains(&format!("skill:{n}"))
                 || ignored.iter().any(|g| glob(g, &n)) || (!included.is_empty() && !included.iter().any(|g| glob(g, &n))) { continue; }
-            if !names.insert(format!("skill:{n}")) || !seen_files.insert(std::fs::canonicalize(&f.path).unwrap_or(f.path.clone())) { continue; }
+            if !names.insert(format!("skill:{n}")) || !seen_files.insert(crate::sys::canonicalize(&f.path).unwrap_or(f.path.clone())) { continue; }
             out.push(Skill { typed: format!("/skill:{n}"), about: super::read::brief(&f.about) });
         } }
     };

@@ -14,7 +14,7 @@ impl Bench {
         let _ = std::fs::remove_dir_all(&base);
         std::fs::create_dir_all(base.join("repo/src")).unwrap();
         // The folder as the script's `pwd` gives it: macOS's temp folder is under /var, which is /private/var.
-        let b = Bench { base: base.canonicalize().unwrap() };
+        let b = Bench { base: sw::sys::plain_path(base.canonicalize().unwrap()) };
         b.git("repo", &["init", "-q", "-b", "main"]);
         b.write("repo", "src/a.rs", "a");
         b.write("repo", "src/b.rs", "b");
@@ -74,6 +74,8 @@ impl Drop for Bench { fn drop(&mut self) { let _ = std::fs::remove_dir_all(&self
 fn long_ago() -> SystemTime { SystemTime::UNIX_EPOCH + Duration::from_secs(1_000_000_000) }
 
 #[test]
+// Runs scripts/warm-start.sh through /bin/sh: Unix-only (Windows has no /bin/sh).
+#[cfg(unix)]
 fn real_programs_a_new_worktree_starts_from_the_build_kept_and_builds_again_only_what_changed_since() {
     let b = Bench::new("warm");
     let first = b.git("repo", &["rev-parse", "HEAD"]);
@@ -101,6 +103,8 @@ fn real_programs_a_new_worktree_starts_from_the_build_kept_and_builds_again_only
 }
 
 #[test]
+// Runs scripts/warm-start.sh through /bin/sh: Unix-only (Windows has no /bin/sh).
+#[cfg(unix)]
 fn real_programs_what_was_built_with_the_other_folders_path_in_it_is_built_again() {
     let b = Bench::new("path");
     b.worktree("one", "main");
@@ -119,6 +123,8 @@ fn real_programs_what_was_built_with_the_other_folders_path_in_it_is_built_again
 }
 
 #[test]
+// Runs scripts/warm-start.sh through /bin/sh: Unix-only (Windows has no /bin/sh).
+#[cfg(unix)]
 fn real_programs_no_build_is_kept_off_the_main_line_from_a_changed_folder_or_older_than_the_one_kept() {
     let b = Bench::new("kept");
     let first = b.git("repo", &["rev-parse", "HEAD"]);

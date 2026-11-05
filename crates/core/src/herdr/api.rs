@@ -106,9 +106,9 @@ impl Herdr {
         let info = self.process_info(id);
         let shell = info.as_ref().map(|i| i.i("shell_pid")).unwrap_or(-1);
         let pids: Vec<i64> = info.map(|i| i.arr("foreground_processes").iter().map(|p| p.i("pid")).filter(|p| *p > 1 && *p != shell).collect()).unwrap_or_default();
-        for sig in [libc::SIGTERM, libc::SIGKILL] {
+        for sig in [crate::sys::TERM_SIGNAL, crate::sys::KILL_SIGNAL] {
             if pids.is_empty() || gone() { break; }
-            for pid in &pids { match super::cli::fake() { Some(f) => f.kill(*pid), None => unsafe { libc::kill(*pid as i32, sig); } } }
+            for pid in &pids { match super::cli::fake() { Some(f) => f.kill(*pid), None => { crate::sys::send_signal(*pid, sig); } } }
             let until = crate::clock::now() + wait_ms / 2;
             while crate::clock::now() < until && !gone() { std::thread::sleep(std::time::Duration::from_millis(200)); }
         }
@@ -183,15 +183,18 @@ impl Herdr {
         run_raw(self.socket.as_deref(), &a, 60000, "")
     }
     // ---- the rest
+    /// The manifest's entrypoint for the board pane. Windows has its own copy with its own id (herdr rejects a duplicate
+    /// pane id, as it rejects a duplicate action id), so Windows opens `board-windows` and the rest open `board`.
+    pub fn board_entrypoint() -> &'static str { if cfg!(windows) { "board-windows" } else { "board" } }
     /// The board in a tab of its own, an ordinary pane that stays when you go elsewhere. Answers that pane's id (herdr
     /// answers the pane itself).
     pub fn open_board(&self) -> HRes<Option<String>> {
-        let p = self.call(args(&["plugin", "pane", "open", "--plugin", "herdr-projects", "--entrypoint", "board", "--placement", "tab"]))?.at("plugin_pane").at("pane").clone();
+        let p = self.call(args(&["plugin", "pane", "open", "--plugin", "herdr-projects", "--entrypoint", Self::board_entrypoint(), "--placement", "tab"]))?.at("plugin_pane").at("pane").clone();
         Ok(p.as_str().or(p.so("pane_id")).filter(|s| !s.is_empty()).map(String::from))
     }
     /// The board in herdr's popup. herdr refuses with `ui_busy` while a popup, anybody's, is open.
     pub fn open_board_popup(&self, width: &str, height: &str) -> HRes<Value> {
-        let mut a = args(&["plugin", "pane", "open", "--plugin", "herdr-projects", "--entrypoint", "board", "--placement", "popup"]);
+        let mut a = args(&["plugin", "pane", "open", "--plugin", "herdr-projects", "--entrypoint", Self::board_entrypoint(), "--placement", "popup"]);
         if !width.is_empty() { a.extend(args(&["--width", width])); }
         if !height.is_empty() { a.extend(args(&["--height", height])); }
         self.call(a)

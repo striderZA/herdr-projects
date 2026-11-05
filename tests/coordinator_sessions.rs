@@ -25,7 +25,7 @@ fn get(w: &World) -> Obj { state::get(&w.socket).unwrap_or_default() }
 fn tell(w: &World, t: &str) { send(&w.root, t, false, "", &w.socket).unwrap(); drain(); }
 fn again(w: &World) { restart(&w.socket).unwrap(); drain(); }
 fn unstamp(name: &str) { let _ = std::fs::remove_file(sw::store::marks::stamp_file(name)); }
-fn real_home(w: &World) -> String { std::fs::canonicalize(state::home(&w.socket)).unwrap().display().to_string() }
+fn real_home(w: &World) -> String { sw::sys::canonicalize(state::home(&w.socket)).unwrap().display().to_string() }
 fn touch(f: &Path, ms: i64) { let at = std::time::UNIX_EPOCH + std::time::Duration::from_millis(ms as u64); std::fs::File::options().write(true).open(f).unwrap().set_modified(at).unwrap(); }
 fn write(f: &Path, text: &str, ms: i64) { std::fs::create_dir_all(f.parent().unwrap()).unwrap(); std::fs::write(f, text).unwrap(); touch(f, ms); }
 fn now() -> i64 { sw::clock::now() }
@@ -114,7 +114,8 @@ fn pis_own_new_is_followed_too_the_newest_session_saved_for_its_folder_is_the_co
     let save = |id: &str, said: &str, cwd: &str, ms: i64| {
         let at = now() + ms * 10;
         let lines = [json!({ "type": "session", "version": 3, "id": id, "timestamp": sw::clock::iso(at), "cwd": cwd }), json!({ "type": "message", "id": format!("m-{id}"), "timestamp": sw::clock::iso(at), "message": { "role": "assistant", "content": [{ "type": "text", "text": said }], "stopReason": "stop" } })];
-        write(&dir.join(format!("2026-10-10T00-00-0{ms}-000Z_{id}.jsonl")), &format!("{}\n", lines.iter().map(|l| l.to_string()).collect::<Vec<_>>().join("\n")), at);
+        let filename_id = id.replace(':', "-");
+        write(&dir.join(format!("2026-10-10T00-00-0{ms}-000Z_{filename_id}.jsonl")), &format!("{}\n", lines.iter().map(|l| l.to_string()).collect::<Vec<_>>().join("\n")), at);
     };
     let seen = || { unstamp("coordinator-session-default"); look(&w.socket) };
     save(&first, "pineapple", &real_home(&w), 1);

@@ -55,7 +55,7 @@ pub fn portable_skill(f: &Found, root: &Path) -> bool {
     let Some(name) = f.s("name") else { return false };
     let allowed = ["name", "description", "license", "allowed-tools", "metadata", "compatibility"];
     let words = name.split('-').all(|w| !w.is_empty() && w.chars().all(char::is_alphanumeric));
-    let inside = match (std::fs::canonicalize(&f.path), std::fs::canonicalize(root)) { (Ok(a), Ok(b)) => a.starts_with(b), _ => false };
+    let inside = match (crate::sys::canonicalize(&f.path), crate::sys::canonicalize(root)) { (Ok(a), Ok(b)) => a.starts_with(b), _ => false };
     name == f.dir() && name.len() <= 64 && name == name.to_lowercase() && words && f.s("description").unwrap_or("").len() <= 1024
         && f.fields.keys().all(|k| allowed.contains(&k.as_str())) && ["license", "allowed-tools", "compatibility"].iter().all(|k| f.fields.get(*k).is_none_or(Value::is_string))
         && f.s("compatibility").is_none_or(|c| c.len() <= 500) && f.fields.get("metadata").is_none_or(|m| m.as_object().is_some_and(|o| o.values().all(Value::is_string))) && inside

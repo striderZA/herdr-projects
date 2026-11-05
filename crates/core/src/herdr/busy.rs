@@ -10,10 +10,12 @@ const UNSAID: &str = "herdr does not say what runs in it";
 
 /// A command line made short: its program, and the first word after it that is no flag (a path by its last part).
 pub fn short(argv: &[String]) -> String {
-    let base = |s: &str| s.trim_end_matches('/').rsplit('/').next().unwrap_or(s).chars().take(40).collect::<String>();
+    // Windows paths use backslashes too: a program named by its full path shows its file name there as here.
+    let seps: &[char] = if cfg!(windows) { &['/', '\\'] } else { &['/'] };
+    let base = |s: &str| s.trim_end_matches(seps).rsplit(seps).next().unwrap_or(s).chars().take(40).collect::<String>();
     let Some(first) = argv.first() else { return String::new() };
     let mut w = base(first);
-    if let Some(next) = argv.iter().skip(1).find(|a| !a.starts_with('-') && !a.is_empty()) { w.push(' '); if next.contains('/') { w.push_str("…/"); } w.push_str(&base(next)); }
+    if let Some(next) = argv.iter().skip(1).find(|a| !a.starts_with('-') && !a.is_empty()) { w.push(' '); if next.contains(seps) { w.push_str("…/"); } w.push_str(&base(next)); }
     w
 }
 /// One process herdr lists, in words: `node …/server.js (pid 812)`.

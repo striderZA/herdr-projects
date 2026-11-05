@@ -4,8 +4,10 @@
 //! Unknown (the system cannot be asked, the process is another user's): not a helper. What it is wired to instead is
 //! said in words when it keeps a space in use (busy.rs). Ending a process, and whether it still runs, go through a
 //! test's stand-in for its own processes.
+#[cfg(unix)]
 use std::process::Command;
 
+#[cfg(unix)]
 fn tty(s: &str) -> bool { s.starts_with("/dev/pts/") || s.starts_with("/dev/tty") || s == "/dev/console" }
 
 /// What a process's standard streams are wired to: only `Agent` is a helper.
@@ -30,26 +32,29 @@ pub fn wiring(pid: i64, group: &[i64]) -> Wiring {
     real_wiring(pid, group)
 }
 pub fn real_wired_to(pid: i64, group: &[i64]) -> Option<bool> { real_wiring(pid, group).wired() }
+#[cfg(windows)]
+pub fn real_wiring(_pid: i64, _group: &[i64]) -> Wiring { Wiring::Unknown } // no /proc and no lsof: a process's streams cannot be looked at
+#[cfg(not(windows))]
 pub fn real_wiring(pid: i64, group: &[i64]) -> Wiring { if cfg!(target_os = "linux") { linux(pid, group) } else { lsof(pid, group) } }
 /// Ask a process to end (`sig`): false where it cannot be (gone, another user's). A test's stand-in ends its own.
 pub fn signal(pid: i64, sig: i32) -> bool {
     if let Some(f) = super::cli::fake() { if f.alive(pid).is_some() { f.kill(pid); return true; } }
-    pid > 1 && unsafe { libc::kill(pid as i32, sig) } == 0
+    crate::sys::send_signal(pid, sig)
 }
 /// Does the process still run? A zombie that only waits for its parent to read it does not.
 pub fn running(pid: i64) -> bool {
     if let Some(a) = super::cli::fake().and_then(|f| f.alive(pid)) { return a; }
     if !crate::store::files::pid_alive(pid) { return false; }
-    !std::fs::read_to_string(format!("/proc/{pid}/stat")).ok().and_then(|s| s.rfind(')').map(|i| s[i + 2..].starts_with('Z'))).unwrap_or(false)
+    !crate::sys::zombie(pid)
 }
 /// A process's command line, where the system tells (`ps`).
 pub fn command(pid: i64) -> Option<String> {
     if let Some(c) = super::cli::fake().and_then(|f| f.command(pid)) { return Some(c); }
-    let o = Command::new("ps").args(["-o", "args=", "-p", &pid.to_string()]).output().ok()?;
-    Some(String::from_utf8_lossy(&o.stdout).trim().to_string()).filter(|s| !s.is_empty())
+    crate::sys::command_line(pid)
 }
 
 /// One end of a stream on Linux: `pipe:[N]` (both ends are the same pipe) or `socket:[N]`.
+#[cfg(unix)]
 fn link(pid: i64, fd: &str) -> Option<Option<String>> {
     match std::fs::read_link(format!("/proc/{pid}/fd/{fd}")) {
         Ok(p) => Some(Some(p.to_string_lossy().into_owned())),
@@ -57,16 +62,20 @@ fn link(pid: i64, fd: &str) -> Option<Option<String>> {
         Err(_) => None,
     }
 }
+#[cfg(unix)]
 fn links(pid: i64) -> Vec<String> {
     let Ok(dir) = std::fs::read_dir(format!("/proc/{pid}/fd")) else { return vec![] };
     dir.flatten().filter_map(|e| std::fs::read_link(e.path()).ok()).map(|p| p.to_string_lossy().into_owned()).collect()
 }
+#[cfg(unix)]
 fn inode(l: &str) -> Option<u64> { l.strip_prefix("socket:[")?.strip_suffix(']')?.parse().ok() }
 /// The other end of each connected unix socket, where the kernel tells (`ss`; a kernel without unix diagnostics says 0).
+#[cfg(unix)]
 fn socket_peers() -> Vec<(u64, u64)> {
     let Ok(o) = Command::new("ss").args(["-xH"]).output() else { return vec![] };
     String::from_utf8_lossy(&o.stdout).lines().filter_map(|l| { let w: Vec<&str> = l.split_whitespace().collect(); if w.len() < 8 { return None; } Some((w[5].parse().ok()?, w[7].parse().ok()?)) }).filter(|(_, p)| *p != 0).collect()
 }
+#[cfg(unix)]
 fn linux(pid: i64, group: &[i64]) -> Wiring {
     let (Some(i), Some(o), Some(e)) = (link(pid, "0"), link(pid, "1"), link(pid, "2")) else { return Wiring::Unknown };
     if e.as_deref().map(tty).unwrap_or(false) { return Wiring::Terminal; }
@@ -86,6 +95,7 @@ fn linux(pid: i64, group: &[i64]) -> Wiring {
     if ours(&i) && ours(&o) { Wiring::Agent } else if tty(&i) || tty(&o) { Wiring::Terminal } else { Wiring::Elsewhere }
 }
 /// Elsewhere (macOS): `lsof` names a pipe's or socket's own address (`d`) and its other end's (`n->0x…`).
+#[cfg(unix)]
 fn lsof(pid: i64, group: &[i64]) -> Wiring {
     let pids: Vec<String> = group.iter().chain((!group.contains(&pid)).then_some(&pid)).map(|p| p.to_string()).collect(); // itself too, when outside the group
     let Ok(o) = Command::new("lsof").args(["-n", "-P", "-p", &pids.join(","), "-F", "pfdn"]).output() else { return Wiring::Unknown };
