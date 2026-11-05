@@ -9,13 +9,14 @@ pub const REPO: &str = "eliasstravik/herdr-projects";
 
 /// The release files' name for a platform, from `uname -s`/`uname -m` or Rust's own names. None: no release is made.
 pub fn platform_of(os: &str, arch: &str) -> Option<(&'static str, &'static str)> {
-    let os = match os.to_ascii_lowercase().as_str() { "linux" => "linux", "darwin" | "macos" => "macos", _ => return None };
+    let os = match os.to_ascii_lowercase().as_str() { "linux" => "linux", "darwin" | "macos" => "macos", "windows" => "windows", _ => return None };
     let arch = match arch { "x86_64" | "amd64" => "x86_64", "aarch64" | "arm64" => "aarch64", _ => return None };
     Some((os, arch))
 }
 pub fn platform() -> Option<(&'static str, &'static str)> { platform_of(std::env::consts::OS, std::env::consts::ARCH) }
 /// `herdr-projects-linux-x86_64`: the release file, and the downloaded program's name in the plugin's bin/ folder.
-pub fn asset_name((os, arch): (&str, &str)) -> String { format!("herdr-projects-{os}-{arch}") }
+/// Windows programs end in `.exe`: `herdr-projects-windows-x86_64.exe`.
+pub fn asset_name((os, arch): (&str, &str)) -> String { let ext = if os == "windows" { ".exe" } else { "" }; format!("herdr-projects-{os}-{arch}{ext}") }
 /// Where the releases are: GitHub's, or HERDR_PROJECTS_RELEASES (a fork, a mirror, a folder as file:///…).
 pub fn releases() -> String {
     std::env::var("HERDR_PROJECTS_RELEASES").ok().filter(|v| !v.is_empty()).map(|v| v.trim_end_matches('/').to_string()).unwrap_or_else(|| format!("https://github.com/{REPO}/releases"))
@@ -126,7 +127,7 @@ pub fn update(exe: &Path, version: Option<&str>, fetch: &dyn Fn(&str, &Path) -> 
 /// PATH is the launcher `at` (or a link to it) or this program.
 pub fn path_problem(at: &Path, exe: &Path, path: &str) -> Option<(String, String)> {
     let dir = at.parent().map(Path::to_path_buf).unwrap_or_default();
-    let real = |p: &Path| std::fs::canonicalize(p).ok();
+    let real = |p: &Path| crate::sys::canonicalize(p).ok().map(crate::sys::plain_path);
     // As a shell looks: the first file of that name it may run.
     let runs = |f: &Path| crate::sys::is_program(f);
     match std::env::split_paths(path).flat_map(|d| crate::herdr::find::names("herdr-projects").into_iter().map(move |n| d.join(n))).find(|f| runs(f)) {
@@ -149,7 +150,7 @@ pub fn install(exe: &Path) -> String {
 /// The commands: `install`, `update [VERSION]`.
 pub fn main(cmd: &str, args: &[String]) -> i32 {
     let exe = bin();
-    let exe = std::fs::canonicalize(&exe).unwrap_or(exe);
+    let exe = crate::sys::plain_path(crate::sys::canonicalize(&exe).unwrap_or(exe));
     let out = if cmd == "install" { Ok(install(&exe)) } else { update(&exe, args.first().map(String::as_str), &fetch) };
     match out { Ok(s) => { println!("{s}"); 0 } Err(e) => { eprintln!("{}", e.msg); 1 } }
 }

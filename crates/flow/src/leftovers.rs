@@ -77,7 +77,7 @@ fn above_real(p: &Path) -> bool {
 pub fn removable(p: &Path) -> bool {
     let Ok(m) = std::fs::symlink_metadata(p) else { return false };
     if !m.is_dir() || !above_real(p) { return false; }
-    let real = std::fs::canonicalize(p).unwrap_or_else(|_| p.to_path_buf());
+    let real = crate::sys::canonicalize(p).unwrap_or_else(|_| p.to_path_buf());
     !guarded(p) && !guarded(&real)
 }
 /// `removable`; a link in a temporary folder's place, under real folders only, is taken away (what it points to
@@ -104,6 +104,8 @@ pub fn remove(p: &Path) -> u64 {
     let took = || size(p, Instant::now() + Duration::from_secs(10)).0;
     let before = took();
     if std::fs::remove_dir_all(p).is_err() { writable(p); let _ = std::fs::remove_dir_all(p); } // a read-only folder in it (Go's module cache)
+    // On Windows a stopped process keeps its folder for a moment after it has ended (its handles close last): try again.
+    if cfg!(windows) { let until = Instant::now() + Duration::from_secs(5); while p.exists() && Instant::now() < until { std::thread::sleep(Duration::from_millis(100)); let _ = std::fs::remove_dir_all(p); } }
     before.saturating_sub(if p.exists() { took() } else { 0 })
 }
 /// Every folder in it writable by its owner, so what is in them can go.

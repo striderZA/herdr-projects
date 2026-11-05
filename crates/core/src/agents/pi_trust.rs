@@ -13,7 +13,7 @@ fn decided(file: &Obj, folder: &Path) -> Option<bool> { folder.ancestors().find_
 /// Trusted in pi's trust.json, adding the folder (its real path, as pi looks it up) when no folder above it decided.
 /// False: its folder dialog shows.
 pub fn trust(folder: &Path) -> bool {
-    let folder = fs::canonicalize(folder).unwrap_or_else(|_| folder.to_path_buf());
+    let folder = crate::sys::canonicalize(folder).unwrap_or_else(|_| folder.to_path_buf());
     let file = pi_home().join("trust.json");
     let Some(all) = read(&file) else { return false };
     if let Some(yes) = decided(&all, &folder) { return yes; }

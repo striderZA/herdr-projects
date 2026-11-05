@@ -157,12 +157,19 @@ pub fn brief(about: &str) -> String {
     let s: String = t.into_iter().collect();
     s.strip_suffix('.').filter(|x| !x.ends_with('.')).map(String::from).unwrap_or(s)
 }
-/// Of these paths in the repo at `top`, those its .gitignore leaves out (git itself asked, once).
+/// Of these paths in the repo at `top`, those its .gitignore leaves out (git itself asked, once). Git takes repo paths
+/// relative to the repo's top with forward slashes: an absolute Windows path with backslashes is not one, so it is
+/// asked by its repo path and the answer is mapped back.
 pub fn git_ignored(top: &Path, paths: &[PathBuf]) -> std::collections::HashSet<PathBuf> {
     use std::io::Write;
     use std::process::{Command, Stdio};
     if paths.is_empty() || !top.join(".git").exists() { return Default::default(); }
+    let back: std::collections::HashMap<String, &PathBuf> = paths.iter().filter_map(|p| {
+        let rel = p.strip_prefix(top).ok()?.display().to_string().replace('\\', "/");
+        Some((rel, p))
+    }).collect();
+    if back.is_empty() { return Default::default(); }
     let Ok(mut c) = Command::new("git").arg("-C").arg(top).args(["check-ignore", "--stdin"]).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::null()).spawn() else { return Default::default() };
-    if let Some(mut i) = c.stdin.take() { let _ = i.write_all(paths.iter().map(|p| format!("{}\n", p.display())).collect::<String>().as_bytes()); }
-    c.wait_with_output().map(|o| String::from_utf8_lossy(&o.stdout).lines().map(PathBuf::from).collect()).unwrap_or_default()
+    if let Some(mut i) = c.stdin.take() { let _ = i.write_all(back.keys().map(|r| format!("{r}\n")).collect::<String>().as_bytes()); }
+    c.wait_with_output().map(|o| String::from_utf8_lossy(&o.stdout).lines().filter_map(|l| back.get(l).map(|p| (*p).clone())).collect()).unwrap_or_default()
 }

@@ -1,10 +1,21 @@
 //! Small tools the parts share: a random id, quoting for a shell, versions compared.
 use std::io::Read;
 
+/// Fills `buf` from the system's random source: /dev/urandom on Unix.
+#[cfg(not(windows))]
+fn fill_random(buf: &mut [u8]) -> std::io::Result<()> { std::fs::File::open("/dev/urandom").and_then(|mut f| f.read_exact(buf)) }
+/// Fills `buf` from the system's crypto RNG on Windows (BCryptGenRandom). Each id is then unique, whatever the clock says.
+#[cfg(windows)]
+fn fill_random(buf: &mut [u8]) -> std::io::Result<()> {
+    use windows_sys::Win32::Security::Cryptography::{BCryptGenRandom, BCRYPT_USE_SYSTEM_PREFERRED_RNG};
+    // SAFETY: buf is valid for buf.len() bytes; a null algorithm handle selects the system's preferred RNG.
+    let status = unsafe { BCryptGenRandom(std::ptr::null_mut(), buf.as_mut_ptr(), buf.len() as u32, BCRYPT_USE_SYSTEM_PREFERRED_RNG) };
+    if status == 0 { Ok(()) } else { Err(std::io::Error::other(format!("BCryptGenRandom failed: {status:#x}"))) }
+}
 /// `n` random bytes as hex.
 pub fn random_hex(n: usize) -> String {
     let mut buf = vec![0u8; n];
-    if std::fs::File::open("/dev/urandom").and_then(|mut f| f.read_exact(&mut buf)).is_err() {
+    if fill_random(&mut buf).is_err() {
         let t = crate::clock::now() as u64 ^ (std::process::id() as u64) << 32;
         for (i, b) in buf.iter_mut().enumerate() { *b = (t >> ((i % 8) * 8)) as u8 ^ i as u8; }
     }

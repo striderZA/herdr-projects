@@ -93,7 +93,7 @@ pub fn standing(kind: &str, text: &str, dir: &Path) -> Res<Vec<String>> {
     Ok(fill(a.standing, &f.display().to_string()))
 }
 pub fn has_standing(kind: &str) -> bool { kind == "codex" || super::kinds::kind(kind).map(|a| !a.standing.is_empty()).unwrap_or(false) }
-fn real(p: &Path) -> PathBuf { fs::canonicalize(p).unwrap_or_else(|_| p.to_path_buf()) }
+fn real(p: &Path) -> PathBuf { crate::sys::canonicalize(p).unwrap_or_else(|_| p.to_path_buf()) }
 fn dashed(p: &Path) -> String { p.display().to_string().chars().map(|c| if c.is_ascii_alphanumeric() { c } else { '-' }).collect() }
 /// Where a conversation is saved.
 pub fn transcript(kind: &str, session: &str, cwd: &Path) -> Option<PathBuf> {

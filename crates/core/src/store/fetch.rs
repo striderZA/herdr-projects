@@ -48,7 +48,9 @@ fn lock_file(said: &str) -> Option<String> { crate::re!(r"Unable to create '([^'
 fn lock_left(dir: &Path, said: &str) -> Option<String> {
     let r = crate::re!(r"fetching ref '?(refs/[^\s']+)'? failed: reference already exists").captures(said)?[1].to_string();
     let common = git_out(dir, &["rev-parse", "--path-format=absolute", "--git-common-dir"]).ok()?;
-    let f = Path::new(common.trim()).join(format!("{r}.lock"));
+    // git prints forward slashes on Windows: the path is built from native components.
+    let common = if cfg!(windows) { common.trim().replace('/', "\\") } else { common.trim().to_string() };
+    let f = Path::new(&common).join(r.split('/').collect::<std::path::PathBuf>()).with_file_name(format!("{}.lock", r.rsplit('/').next().unwrap_or(&r)));
     f.exists().then(|| f.display().to_string())
 }
 fn network(said: &str) -> bool {

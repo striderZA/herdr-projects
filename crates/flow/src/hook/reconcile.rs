@@ -12,7 +12,7 @@ use std::path::Path;
 
 pub fn same_dir(a: &str, b: &Path) -> bool {
     if a.is_empty() || b.as_os_str().is_empty() { return false; }
-    match (std::fs::canonicalize(a), std::fs::canonicalize(b)) { (Ok(x), Ok(y)) => x == y, _ => Path::new(a) == b }
+    match (crate::sys::canonicalize(a), crate::sys::canonicalize(b)) { (Ok(x), Ok(y)) => x == y, _ => Path::new(a) == b }
 }
 pub(super) fn upd(id: &str, f: impl FnOnce(&mut Task) -> bool) { let _ = update_wait(id, 10000, |t| Ok(if f(t) { Change::Write } else { Change::Keep })); }
 

@@ -58,7 +58,7 @@ fn resolved(socket: &str) -> PathBuf {
     let seen = seen.get_or_insert_with(Default::default);
     if let Some((p, at)) = seen.get(socket) { if at.elapsed().as_secs() < 60 { return p.clone(); } }
     let p = Path::new(socket);
-    let r = std::fs::canonicalize(p).ok().or_else(|| Some(std::fs::canonicalize(p.parent()?).ok()?.join(p.file_name()?))).unwrap_or_else(|| p.to_path_buf());
+    let r = crate::sys::canonicalize(p).ok().or_else(|| Some(crate::sys::canonicalize(p.parent()?).ok()?.join(p.file_name()?))).unwrap_or_else(|| p.to_path_buf());
     seen.insert(socket.to_string(), (r.clone(), std::time::Instant::now()));
     r
 }

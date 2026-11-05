@@ -9,7 +9,7 @@ use serde_json::Value;
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
-fn real(p: &Path) -> PathBuf { std::fs::canonicalize(p).unwrap_or_else(|_| p.to_path_buf()) }
+fn real(p: &Path) -> PathBuf { crate::sys::canonicalize(p).unwrap_or_else(|_| p.to_path_buf()) }
 pub fn list(p: &Place) -> Vec<Skill> {
     let home = codex_home();
     let config = toml_file(&home.join("config.toml"));

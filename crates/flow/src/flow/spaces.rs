@@ -11,7 +11,7 @@ use crate::store::settings::lookup::setting;
 use std::path::{Path, PathBuf};
 
 fn spaces_file() -> PathBuf { data_dir().join("spaces.json") }
-pub fn real(p: &Path) -> PathBuf { std::fs::canonicalize(p).unwrap_or_else(|_| crate::store::files::absolute(p)) }
+pub fn real(p: &Path) -> PathBuf { crate::sys::canonicalize(p).unwrap_or_else(|_| crate::store::files::absolute(p)) }
 fn repo_spaces(api: &Herdr, root: &Path) -> Vec<Value> {
     api.workspaces().unwrap_or_default().into_iter().filter(|w| w.at("worktree").is_object() && !w.at("worktree").b("is_linked_worktree") && real(Path::new(w.at("worktree").s("checkout_path"))) == real(root)).collect()
 }

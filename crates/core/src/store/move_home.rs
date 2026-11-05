@@ -10,7 +10,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 pub fn lstat(p: &Path) -> Option<fs::Metadata> { fs::symlink_metadata(p).ok() }
-pub fn real(p: &Path) -> PathBuf { fs::canonicalize(p).unwrap_or_else(|_| absolute(p)) }
+pub fn real(p: &Path) -> PathBuf { crate::sys::canonicalize(p).unwrap_or_else(|_| absolute(p)) }
 pub fn short(p: &Path, home: &Path) -> String {
     if p == home { "~".into() } else if let Ok(rest) = p.strip_prefix(home) { format!("~/{}", rest.display()) } else { p.display().to_string() }
 }

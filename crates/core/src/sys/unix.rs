@@ -77,6 +77,8 @@ pub fn proc_start(pid: i64) -> Option<String> {
 }
 /// A canonical path has no prefix to strip on Unix.
 pub fn plain_path(p: PathBuf) -> PathBuf { p }
+/// The folder a process runs in: /proc on Unix.
+pub fn cwd_of(pid: i64) -> Option<PathBuf> { std::fs::read_link(format!("/proc/{pid}/cwd")).ok() }
 /// A disk's free and whole size in bytes, as the disk itself says it.
 pub fn space(p: &Path) -> Option<(u64, u64)> {
     let c = std::ffi::CString::new(p.as_os_str().as_encoded_bytes()).ok()?;

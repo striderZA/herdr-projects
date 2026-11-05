@@ -28,7 +28,7 @@ fn resolved(p: &Path) -> PathBuf {
     let mut rest = vec![];
     let mut at = p;
     loop {
-        if let Ok(c) = std::fs::canonicalize(at) { return rest.iter().rev().fold(c, |c, x| c.join(x)); }
+        if let Ok(c) = crate::sys::canonicalize(at) { return rest.iter().rev().fold(c, |c, x| c.join(x)); }
         match (at.parent(), at.file_name()) { (Some(up), Some(name)) => { rest.push(name.to_os_string()); at = up; } _ => return p.to_path_buf() }
     }
 }

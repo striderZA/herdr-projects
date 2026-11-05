@@ -58,7 +58,7 @@ fn main_checkout(top: &Path) -> Option<PathBuf> {
     let git = std::fs::read_to_string(top.join(".git")).ok()?;
     let dir = top.join(git.strip_prefix("gitdir:")?.trim());
     let common = dir.join(std::fs::read_to_string(dir.join("commondir")).ok()?.trim());
-    std::fs::canonicalize(common).ok()?.parent().map(Path::to_path_buf)
+    crate::sys::canonicalize(common).ok()?.parent().map(Path::to_path_buf)
 }
 /// An environment variable that is set to something.
 pub fn env(k: &str) -> Option<String> { std::env::var(k).ok().filter(|v| !v.is_empty()) }

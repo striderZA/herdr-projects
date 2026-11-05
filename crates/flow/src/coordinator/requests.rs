@@ -48,7 +48,7 @@ fn tab_turn_of(pane: &str, co: &Co) -> bool {
 }
 /// The Coordinator's own folder (or one inside it) is never where the human is working.
 pub fn in_home(dir: &Path, socket: &str) -> bool {
-    let real = |p: &Path| std::fs::canonicalize(p).unwrap_or_else(|_| crate::store::files::absolute(p));
+    let real = |p: &Path| crate::sys::canonicalize(p).unwrap_or_else(|_| crate::store::files::absolute(p));
     real(dir).starts_with(real(&home(Co::top(socket))))
 }
 /// The pump is told which herdr session it serves: the keeper ticks for several from one process.

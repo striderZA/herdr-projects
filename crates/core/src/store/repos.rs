@@ -89,7 +89,7 @@ pub fn known_repos() -> Obj {
     *seen = Some((key, o.clone()));
     o
 }
-fn real(p: &Path) -> PathBuf { crate::sys::plain_path(fs::canonicalize(p).unwrap_or_else(|_| p.to_path_buf())) }
+fn real(p: &Path) -> PathBuf { crate::sys::plain_path(crate::sys::canonicalize(p).unwrap_or_else(|_| p.to_path_buf())) }
 /// The repo a folder belongs to, named on first sight, with its short key given then (store/keys_given.rs).
 pub fn repo_of(folder: &Path) -> Res<(String, PathBuf)> {
     let root = primary_root(folder);

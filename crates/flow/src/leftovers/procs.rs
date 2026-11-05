@@ -1,14 +1,15 @@
 //! Processes that run from a folder (a dev server a task's agent or reviewer started in its temporary folder), and
 //! stopping them before the folder goes, as stopping a task ends its panes: this user's own processes only, never this
 //! one or one it runs under. A process runs from a folder when its working folder or its program is in it (Linux:
-//! /proc; elsewhere `lsof`).
+//! /proc; Windows: sysinfo; elsewhere `lsof`).
 use std::path::{Path, PathBuf};
 
 fn inside(p: &Path, dir: &Path) -> bool { p.starts_with(dir) }
 /// The process a process runs under.
 fn parent_of(pid: i32) -> Option<i32> {
     #[cfg(target_os = "linux")] { std::fs::read_to_string(format!("/proc/{pid}/stat")).ok().and_then(|s| s.rfind(')').and_then(|i| s[i + 2..].split(' ').nth(1).and_then(|x| x.parse::<i32>().ok()))) }
-    #[cfg(not(target_os = "linux"))] { std::process::Command::new("ps").args(["-o", "ppid=", "-p", &pid.to_string()]).output().ok().and_then(|o| String::from_utf8_lossy(&o.stdout).trim().parse().ok()) }
+    #[cfg(windows)] { crate::sys::parent_of(pid as i64).map(|p| p as i32) }
+    #[cfg(all(unix, not(target_os = "linux")))] { std::process::Command::new("ps").args(["-o", "ppid=", "-p", &pid.to_string()]).output().ok().and_then(|o| String::from_utf8_lossy(&o.stdout).trim().parse().ok()) }
 }
 /// A process and the ones it runs under, up to the first.
 fn line_of(pid: i32) -> Vec<i32> {
@@ -33,7 +34,11 @@ fn running_from(dir: &Path) -> Vec<i32> {
     }
     out
 }
-#[cfg(not(target_os = "linux"))]
+#[cfg(windows)]
+fn running_from(dir: &Path) -> Vec<i32> {
+    crate::sys::process_folders().into_iter().filter(|(_, folders)| folders.iter().any(|f| inside(f, dir))).map(|(pid, _)| pid as i32).collect()
+}
+#[cfg(all(unix, not(target_os = "linux")))]
 fn running_from(dir: &Path) -> Vec<i32> {
     let uid = crate::agents::scratch::uid().to_string();
     let Ok(o) = std::process::Command::new("lsof").args(["-a", "-u", &uid, "-d", "cwd,txt", "-Fpn"]).stderr(std::process::Stdio::null()).output() else { return vec![] };
@@ -46,7 +51,8 @@ fn running_from(dir: &Path) -> Vec<i32> {
 }
 /// What runs from the folder now, this process and the ones it runs under left out.
 pub fn in_folder(dir: &Path) -> Vec<i32> {
-    let dir = std::fs::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf());
+    // Windows: a canonical path has a verbatim prefix that the process folders lack; plain_path strips it.
+    let dir = crate::sys::plain_path(crate::sys::canonicalize(dir).unwrap_or_else(|_| dir.to_path_buf()));
     let own = own_line();
     running_from(&dir).into_iter().filter(|p| !own.contains(p)).collect()
 }
@@ -57,7 +63,10 @@ pub fn in_folder_but(dir: &Path, under: Option<i32>) -> Vec<i32> {
 /// Stop what runs from the folder: asked to end, then, a few seconds on, ended. How many there were.
 pub fn stop_in(dir: &Path) -> usize {
     if std::fs::symlink_metadata(dir).map(|m| m.file_type().is_symlink()).unwrap_or(true) { return 0; } // never through a link
-    let pids = in_folder(dir);
+    let mut pids = in_folder(dir);
+    // On Windows the process that holds the folder is often a shell's child: a `cmd` runs its `ping` there, and the `ping` is the one that
+    // keeps it. Its children go with the ones found in the folder.
+    if cfg!(windows) { let mut i = 0; while i < pids.len() { for k in crate::sys::children(pids[i] as i64).unwrap_or_default() { let k = k as i32; if !pids.contains(&k) { pids.push(k); } } i += 1; } }
     end(&pids);
     pids.len()
 }
@@ -75,7 +84,7 @@ pub fn end(pids: &[i32]) -> Vec<i32> {
 /// task's agent and reviewers get, temp.rs) is in `tmp`. This program's own runs are left out. Linux only.
 pub fn started_in(tmp: &Path) -> Vec<i32> {
     if !cfg!(target_os = "linux") { return vec![]; }
-    let real = std::fs::canonicalize(tmp).unwrap_or_else(|_| tmp.to_path_buf());
+    let real = crate::sys::canonicalize(tmp).unwrap_or_else(|_| tmp.to_path_buf());
     let own = own_line();
     let me = crate::agents::scratch::uid();
     let mut out = vec![];

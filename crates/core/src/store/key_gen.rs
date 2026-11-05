@@ -54,7 +54,7 @@ pub fn valid(k: &str) -> bool {
 pub fn choices(name: &str, folder: &Path, home: &Path) -> Vec<String> {
     let mut out: Vec<String> = vec![];
     if folder == home { out.push("HOME".into()); }
-    if folder == Path::new("/") { out.push("ROOT".into()); }
+    if folder == crate::sys::root_dir().as_path() { out.push("ROOT".into()); }
     let (w, digits) = words(name);
     let room = 5usize.saturating_sub(digits.len()).max(1);
     let initials: String = w.iter().filter_map(|x| x.chars().next()).collect();
@@ -104,7 +104,7 @@ mod tests {
         assert_eq!(key("proj-2"), "PRJ2");
         assert_eq!(key("myCoolApp"), "MCA");
         assert_eq!(make_key("me", Path::new("/home/me"), Path::new("/home/me"), |_| false), "HOME");
-        assert_eq!(make_key("home", Path::new("/"), Path::new("/home/me"), |_| false), "ROOT");
+        assert_eq!(make_key("home", &crate::sys::root_dir(), Path::new("/home/me"), |_| false), "ROOT");
         assert_eq!(key("h"), "H1");
         assert!(valid(&key("h")) && valid(&key("2024")) && valid(&key("---")));
     }

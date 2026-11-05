@@ -25,7 +25,20 @@ pub fn root_dir() -> PathBuf {
 /// Windows keeps no numeric user id the board uses: every user is 0.
 pub fn uid() -> u32 { 0 }
 /// The user's profile folder, from the environment (Windows has no list of users read here).
-pub fn passwd_home() -> Option<String> { std::env::var("USERPROFILE").ok() }
+/// The user's own profile folder, as the system has it: not the environment's USERPROFILE, which a test may set.
+pub fn passwd_home() -> Option<String> {
+    use windows_sys::Win32::System::Com::CoTaskMemFree;
+    use windows_sys::Win32::UI::Shell::{FOLDERID_Profile, SHGetKnownFolderPath};
+    let mut p: windows_sys::core::PWSTR = std::ptr::null_mut();
+    // SAFETY: on success `p` is a path the system allocated; it is copied out here and freed.
+    unsafe {
+        if SHGetKnownFolderPath(&FOLDERID_Profile, 0, std::ptr::null_mut(), &mut p) != 0 || p.is_null() { return None; }
+        let len = (0..).take_while(|&i| *p.add(i) != 0).count();
+        let s = String::from_utf16_lossy(std::slice::from_raw_parts(p, len));
+        CoTaskMemFree(p as *const std::ffi::c_void);
+        Some(s)
+    }
+}
 /// The user's name, from the environment.
 pub fn passwd_name() -> Option<String> { std::env::var("USERNAME").ok() }
 /// A link to a folder or to a file: Windows needs a different link for each. A relative target is relative to the
@@ -137,7 +150,11 @@ pub fn socket_exists(path: &str) -> bool {
 }
 /// Whether a path is a program that runs: a file of a program's kind (Windows has no execute bit).
 pub fn is_program(p: &Path) -> bool {
-    std::fs::metadata(p).map(|m| m.is_file() && p.extension().and_then(|e| e.to_str()).map(|e| matches!(e.to_ascii_lowercase().as_str(), "exe" | "cmd" | "bat" | "com")).unwrap_or(false)).unwrap_or(false)
+    if !std::fs::metadata(p).map(|m| m.is_file()).unwrap_or(false) { return false; }
+    // A program has a runnable extension, or is a shell script (its first two bytes are #!): the launcher is one, and sh runs it.
+    let runnable_ext = p.extension().and_then(|e| e.to_str()).map(|e| matches!(e.to_ascii_lowercase().as_str(), "exe" | "cmd" | "bat" | "com")).unwrap_or(false);
+    use std::io::Read;
+    runnable_ext || std::fs::File::open(p).and_then(|mut f| { let mut two = [0u8; 2]; let n = f.read(&mut two)?; Ok(n == 2 && &two == b"#!") }).unwrap_or(false)
 }
 /// Windows has no mode bits: a read-only file says 0444, any other 0644.
 pub fn mode_bits(m: &Metadata) -> u32 { if m.permissions().readonly() { 0o444 } else { 0o644 } }
@@ -161,7 +178,8 @@ pub fn zombie(_pid: i64) -> bool { false }
 /// The process table, read for one question (Windows has no `ps`; sysinfo reads the table). None when sysinfo cannot read it.
 fn table() -> Option<sysinfo::System> {
     let mut s = sysinfo::System::new().ok()?;
-    s.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
+    // The command line is not in sysinfo's default refresh: asked for, or a process shows only as its number.
+    s.refresh_processes_specifics(sysinfo::ProcessesToUpdate::All, true, sysinfo::ProcessRefreshKind::nothing().with_cmd(sysinfo::UpdateKind::OnlyIfNotSet));
     Some(s)
 }
 /// A process's command line: its arguments joined by spaces.
@@ -176,6 +194,27 @@ pub fn children(pid: i64) -> Result<Vec<i64>, ()> {
     let s = table().ok_or(())?;
     let parent = sysinfo::Pid::from_u32(pid as u32);
     Ok(s.processes().values().filter(|p| p.parent() == Some(parent)).map(|p| p.pid().as_u32() as i64).collect())
+}
+/// The process that started a process, where the process table says.
+pub fn parent_of(pid: i64) -> Option<i64> {
+    let s = table()?;
+    s.process(sysinfo::Pid::from_u32(pid as u32))?.parent().map(|p| p.as_u32() as i64)
+}
+/// The folders each process runs from, by process number: its working folder and its program's (sysinfo reads them from
+/// the processes; Windows has no lsof). A process whose folders cannot be read (another user's) lists none.
+pub fn process_folders() -> Vec<(i64, Vec<PathBuf>)> {
+    let Ok(mut s) = sysinfo::System::new() else { return vec![] };
+    let kind = sysinfo::ProcessRefreshKind::nothing().with_cwd(sysinfo::UpdateKind::OnlyIfNotSet).with_exe(sysinfo::UpdateKind::OnlyIfNotSet);
+    s.refresh_processes_specifics(sysinfo::ProcessesToUpdate::All, true, kind);
+    s.processes().values().map(|p| (p.pid().as_u32() as i64, p.cwd().into_iter().chain(p.exe()).map(Path::to_path_buf).collect())).collect()
+}
+/// The folder a process runs in, read from the process table (Windows has no /proc). None when it cannot be read.
+pub fn cwd_of(pid: i64) -> Option<PathBuf> {
+    let mut s = sysinfo::System::new().ok()?;
+    let pid = sysinfo::Pid::from_u32(pid as u32);
+    s.refresh_processes_specifics(sysinfo::ProcessesToUpdate::Some(&[pid]), true, sysinfo::ProcessRefreshKind::nothing().with_cwd(sysinfo::UpdateKind::OnlyIfNotSet));
+    // sysinfo keeps the trailing separator ("…\\worktree\\"); a folder is named without it.
+    s.process(pid)?.cwd().map(|d| { let t = d.to_string_lossy().into_owned(); let t = if t.len() > 3 { t.trim_end_matches(['\\', '/']).to_string() } else { t }; plain_path(PathBuf::from(t)) })
 }
 /// Windows has no numeric user id: every file's owner is 0 here.
 pub fn owner_uid(_m: &Metadata) -> u32 { 0 }
