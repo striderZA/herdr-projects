@@ -60,7 +60,7 @@ pub fn shim() -> PathBuf {
         let tmp = dir.join(format!("herdr-projects.{}", std::process::id()));
         let mut o = std::fs::OpenOptions::new();
         let ok = crate::sys::executable_mode(o.write(true).create(true).truncate(true)).open(&tmp).and_then(|mut f| std::io::Write::write_all(&mut f, text.as_bytes())).is_ok();
-        if ok { let _ = std::fs::rename(&tmp, &file); }
+        if ok { let _ = crate::sys::replace_file(&tmp, &file); }
     }
     file
 }

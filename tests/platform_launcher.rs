@@ -3,7 +3,8 @@
 //! not used, and a second start within ten minutes does not try again. Windows only: the launcher is PowerShell.
 #![cfg(windows)]
 use std::path::{Path, PathBuf};
-use std::process::{Command, Output};
+use std::process::{Command, Output, Stdio};
+use std::time::Duration;
 
 const LAUNCHER: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/bin/run.ps1");
 const ASSET: &str = "herdr-projects-windows-x86_64.exe";
@@ -78,4 +79,29 @@ fn a_download_that_does_not_match_its_checksum_is_not_used_and_not_tried_again_a
     let second = launch(&plugin, &rel, &["notepad.exe"]);
     assert_eq!(second.status.code(), Some(1));
     assert!(!String::from_utf8_lossy(&second.stderr).contains("downloading"));
+}
+
+#[test]
+fn a_newer_download_replaces_a_program_that_is_running() {
+    // Windows will not write over a program that runs; the launcher moves that copy aside and puts the download in its place.
+    let (plugin, release) = folders("replace");
+    publish(&release, None);
+    let rel = plugin.parent().unwrap().join("rel");
+    assert!(launch(&plugin, &rel, &["--fetch"]).status.success());
+    let bin = plugin.join("bin");
+    let prog = bin.join(ASSET);
+    // The copy that runs is a long ping, and its version is older than the release, so the launcher downloads it again.
+    let system = std::env::var("SystemRoot").unwrap_or_else(|_| r"C:\Windows".into());
+    std::fs::copy(format!(r"{system}\System32\ping.exe"), &prog).unwrap();
+    std::fs::write(bin.join(format!("{ASSET}.version")), "1.2.26\n").unwrap();
+    let mut running = Command::new(&prog).args(["-n", "30", "127.0.0.1"]).stdout(Stdio::null()).spawn().unwrap();
+    std::thread::sleep(Duration::from_millis(300));
+    let ran = launch(&plugin, &rel, &["notepad.exe"]);
+    let still_running = running.try_wait().unwrap().is_none();
+    let _ = running.kill();
+    let _ = running.wait();
+    assert!(ran.status.success(), "{}", String::from_utf8_lossy(&ran.stderr));
+    assert!(String::from_utf8_lossy(&ran.stdout).to_lowercase().contains("notepad.exe"));
+    assert_eq!(std::fs::read_to_string(bin.join(format!("{ASSET}.version"))).unwrap().trim(), "1.2.27");
+    assert!(still_running, "the program that ran from the file was stopped by the download");
 }

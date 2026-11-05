@@ -115,8 +115,9 @@ pub fn update(exe: &Path, version: Option<&str>, fetch: &dyn Fn(&str, &Path) -> 
         let _ = std::fs::remove_file(&got.file);
         return Ok(format!("herdr-projects {VERSION} is the newest release."));
     }
-    // Renamed over it, never written into: a running program keeps its old file, and macOS kills one changed in place.
-    if let Err(e) = std::fs::rename(&got.file, exe) { let _ = std::fs::remove_file(&got.file); crate::fail!("could not put the new program in place of {}: {e}", exe.display()) }
+    // Put in place over it, never written into: a running program keeps its old file, and macOS kills one changed in place.
+    // On Windows, which will not replace a running program, replace_file moves that file aside first.
+    if let Err(e) = crate::sys::replace_file(&got.file, exe) { let _ = std::fs::remove_file(&got.file); crate::fail!("could not put the new program in place of {}: {e}", exe.display()) }
     let named = platform().map(|p| exe.file_name().map(|n| n == asset_name(p).as_str()).unwrap_or(false)).unwrap_or(false);
     if named || version_file(exe).exists() { write_atomic(&version_file(exe), format!("{}\n", got.version).as_bytes())?; }
     crate::flow::send::shim();

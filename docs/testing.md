@@ -353,6 +353,8 @@ Run the check from Git Bash, whose `sh` runs `scripts/check.sh`. Without MSVC, u
 
 Two tests make links, which Windows allows only with Developer Mode on or as an administrator (error 1314). Their link steps are gated with `#[cfg(unix)]` and that reason, so on Windows those lines are not checked.
 
+The tests of what only Windows does are `#![cfg(windows)]` and say what they check: `tests/platform_windows.rs` (a named pipe's connection, a file a running program is replaced from, a process tree stopped) and `tests/platform_launcher.rs` (the launcher's download and fetch). `tests/platform_manifest.rs` runs on every platform: it reads the manifest and checks that each entry names its platforms.
+
 ## Looking at the real thing
 
 Tests read the board as text and as frames. A real terminal is only for a task that changes what the board looks like. For any other task, the tests are the evidence.

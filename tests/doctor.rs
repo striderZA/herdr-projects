@@ -115,18 +115,32 @@ fn herdr_must_run_the_plugin_enabled_from_a_folder_that_is_there() {
     let s = setup(&w);
     std::fs::write(s.root.join("herdr-plugin.toml"), "id = \"herdr-projects\"\n").unwrap();
     let h = |v: Option<&str>, list: Vec<serde_json::Value>| plugin::Herdr { version: v.map(String::from), plugins: Ok(list) };
-    assert!(bad(&plugin::check(&h(None, vec![])))[0].starts_with("herdr does not run here"));
-    assert!(bad(&plugin::check(&h(Some("0.9.3"), vec![])))[0].starts_with("herdr 0.9.3 is older than 0.9.4"));
+    assert!(bad(&plugin::check_on(&h(None, vec![]), false))[0].starts_with("herdr does not run here"));
+    // The manifest's minimum (0.9.3) is what herdr enforces everywhere; Windows also needs 0.9.4, which only the doctor checks.
+    assert!(bad(&plugin::check_on(&h(Some("0.9.2"), vec![]), false))[0].starts_with("herdr 0.9.2 is older than 0.9.3"));
+    assert!(bad(&plugin::check_on(&h(Some("0.9.3"), vec![]), false)).iter().all(|f| !f.contains("older")));
+    assert!(bad(&plugin::check_on(&h(Some("0.9.3"), vec![]), true))[0].starts_with("herdr 0.9.3 is older than 0.9.4, what the plugin needs on Windows"));
+    assert!(bad(&plugin::check_on(&h(Some("0.9.4"), vec![]), true)).iter().all(|f| !f.contains("older")));
     assert!(bad(&plugin::check(&h(Some("0.9.4"), vec![])))[0].ends_with("→ Run: herdr plugin install eliasstravik/herdr-projects"));
     assert!(bad(&plugin::check(&h(Some("0.9.4"), vec![ours(false, &s.root, true)])))[0].ends_with("but turned off → Run: herdr plugin enable herdr-projects"));
     assert!(bad(&plugin::check(&h(Some("0.9.4"), vec![ours(true, &w.base.join("gone"), true)])))[0].contains("which is gone"));
-    assert!(bad(&plugin::check(&h(Some("0.9.1"), vec![ours(true, &s.root, true)])))[0].starts_with("herdr 0.9.1 is older than 0.9.3"));
+    assert!(bad(&plugin::check_on(&h(Some("0.9.1"), vec![ours(true, &s.root, true)]), false))[0].starts_with("herdr 0.9.1 is older than 0.9.3"));
     let f = plugin::check(&h(Some("0.9.4"), vec![ours(true, &s.root, true)]));
     assert_eq!(bad(&f), Vec::<String>::new());
     assert!(f[0].what.starts_with("herdr 0.9.4 runs the plugin 1.1.0, linked from "), "{:?}", f[0]);
     assert!(plugin::check(&h(Some("0.9.4"), vec![ours(true, &s.root, false)]))[0].what.ends_with("installed from GitHub"));
     assert_eq!(plugin::root_of(&h(Some("0.9.4"), vec![ours(true, &s.root, true)])), Some(s.root.clone()));
     assert!(bad(&plugin::check(&plugin::Herdr { version: Some("0.9.4".into()), plugins: Err("no server".into()) }))[0].contains("did not list its plugins: no server"));
+}
+
+#[test]
+fn the_board_refuses_an_older_herdr_only_on_windows() {
+    // Windows needs herdr 0.9.4; elsewhere the manifest's 0.9.3 is enough. A preview build of 0.9.4 counts as 0.9.4.
+    assert!(plugin::refused("0.9.3", true).unwrap().starts_with("herdr 0.9.3 is older than 0.9.4, what the plugin needs on Windows"));
+    assert!(plugin::refused("0.9.4", true).is_none());
+    assert!(plugin::refused("0.9.4-preview.2026-10-14-fbd2ae23927f", true).is_none());
+    assert!(plugin::refused("0.9.3", false).is_none());
+    assert!(plugin::refused("0.9.2", false).unwrap().starts_with("herdr 0.9.2 is older than 0.9.3"));
 }
 
 #[test]

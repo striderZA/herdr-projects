@@ -146,7 +146,7 @@ what takes the marked blocks out of `config.toml` and removes the how-to files (
 
 ## Windows
 
-Windows is not in the plugin's list of platforms yet: the manifest lists Linux and macOS until a live run on a real Windows machine passes. [windows.md](windows.md) says what differs there. Once it lists Windows, you need:
+Windows is listed in the plugin's manifest on this branch; merging it waits for a live run on a real Windows machine that passes. [windows.md](windows.md) says what differs there. You need:
 
 - Windows on x86_64.
 - Herdr 0.9.4 or newer, running. The board checks herdr's version when it starts and refuses an older one on Windows, naming the version it needs.

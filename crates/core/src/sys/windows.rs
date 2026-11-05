@@ -11,11 +11,14 @@ use windows_sys::Win32::Storage::FileSystem::{
     GetDiskFreeSpaceExW, GetFileInformationByHandle, LockFileEx, BY_HANDLE_FILE_INFORMATION, LOCKFILE_EXCLUSIVE_LOCK, LOCKFILE_FAIL_IMMEDIATELY,
 };
 use windows_sys::Win32::System::IO::OVERLAPPED;
-use windows_sys::Win32::System::Console::SetConsoleCtrlHandler;
 use windows_sys::Win32::System::Pipes::WaitNamedPipeW;
 use windows_sys::Win32::System::Threading::{GetExitCodeProcess, GetProcessTimes, OpenProcess, TerminateProcess, PROCESS_QUERY_LIMITED_INFORMATION, PROCESS_TERMINATE};
 mod local_stream;
 pub use local_stream::LocalStream;
+mod console;
+pub use console::*;
+mod replace;
+pub use replace::*;
 /// The variable that names the user's home folder: Windows's profile folder.
 pub const HOME_VAR: &str = "USERPROFILE";
 /// Where a path starts when nothing else says where: the root of the system drive.
@@ -24,7 +27,6 @@ pub fn root_dir() -> PathBuf {
 }
 /// Windows keeps no numeric user id the board uses: every user is 0.
 pub fn uid() -> u32 { 0 }
-/// The user's profile folder, from the environment (Windows has no list of users read here).
 /// The user's own profile folder, as the system has it: not the environment's USERPROFILE, which a test may set.
 pub fn passwd_home() -> Option<String> {
     use windows_sys::Win32::System::Com::CoTaskMemFree;
@@ -233,7 +235,9 @@ pub fn detach(c: &mut std::process::Command) { use std::os::windows::process::Co
 /// Windows has no signal numbers for these: each is a console event, and one handler takes them all.
 pub const INT_SIGNAL: i32 = 2;
 pub const HUP_SIGNAL: i32 = 1;
-/// Ends a process and the processes it started, children first (`pid` 0: this process). True when any was ended.
+/// Ends a process and the processes it started, the children before the process that started them (`pid` 0: this process,
+/// which goes last: TerminateProcess on itself ends it at once). True when any was ended. The tree is what the process table
+/// shows by parent: a process whose parent has already ended is not in it, and so is not reached (Unix's process group is).
 pub fn kill_group(pid: i32, sig: i32) -> bool {
     let root = if pid == 0 { std::process::id() as i64 } else { pid as i64 };
     let mut todo = vec![root];
@@ -242,29 +246,11 @@ pub fn kill_group(pid: i32, sig: i32) -> bool {
         all.push(p);
         if let Ok(kids) = children(p) { todo.extend(kids); }
     }
-    all.into_iter().fold(false, |hit, p| send_signal(p, sig) || hit)
-}
-static STOP: std::sync::OnceLock<extern "C" fn(i32)> = std::sync::OnceLock::new();
-/// A console event (Ctrl+C, Ctrl+Break, the console closed): the stop callback runs, and the event is handled.
-unsafe extern "system" fn console_event(_kind: u32) -> i32 {
-    if let Some(f) = STOP.get() { f(0); }
-    1
-}
-/// Calls `f` on a stop, which here is a console event. The first callback registered is the one kept.
-pub fn on_stop(f: extern "C" fn(i32), _sigs: &[i32]) {
-    if STOP.set(f).is_ok() { unsafe { SetConsoleCtrlHandler(Some(console_event), 1); } }
+    // Each process was found after its parent, so the reversed list has every child before the process that started it.
+    all.into_iter().rev().fold(false, |hit, p| send_signal(p, sig) || hit)
 }
 /// Ends this process (Windows has no exit path that skips what exit runs, so this is the ordinary exit).
 pub fn exit_now(code: i32) -> ! { std::process::exit(code) }
-/// Reads standard input for up to `ms` milliseconds: what came in (at most `buf` long); 0 when nothing did, or it ended.
-/// It waits on the console input first, so a read starts only when a record is there: a read started with no input would
-/// take the next key press, later, when nothing is left to answer it.
-pub fn read_input_within(buf: &mut [u8], ms: i32) -> usize {
-    use std::io::Read;
-    let h = unsafe { windows_sys::Win32::System::Console::GetStdHandle(windows_sys::Win32::System::Console::STD_INPUT_HANDLE) };
-    if unsafe { windows_sys::Win32::System::Threading::WaitForSingleObject(h, ms.max(0) as u32) } != windows_sys::Win32::Foundation::WAIT_OBJECT_0 { return 0; }
-    io::stdin().read(buf).unwrap_or(0)
-}
 /// Windows has no `ps`: no process table, so the board finds no views that hold a terminal (`held::holders` gives none).
 pub fn process_table() -> String { String::new() }
 /// Windows has no in-place exec: the command runs to its end with this program's terminal, and this program ends with its

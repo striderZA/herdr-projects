@@ -57,6 +57,8 @@ pub fn swap_paths(a: &Path, b: &Path) -> bool {
     #[cfg(not(any(target_os = "linux", target_os = "macos")))]
     { let _ = (ca, cb); false }
 }
+/// Puts `from` at `to` in place of what is there, in one rename: a program running from `to` keeps its file.
+pub fn replace_file(from: &Path, to: &Path) -> io::Result<()> { std::fs::rename(from, to) }
 /// This program's path without the " (deleted)" a running program's file gets once an update put a new file in its place.
 pub fn without_deleted(p: PathBuf) -> PathBuf {
     use std::os::unix::ffi::OsStrExt;

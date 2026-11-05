@@ -96,6 +96,22 @@ function Writable([string]$dir) {
   try { $f = Join-Path $dir ".write-test.$PID"; [IO.File]::WriteAllText($f, ''); Remove-Item -LiteralPath $f -Force; return $true } catch { return $false }
 }
 
+# Puts $from at $to, replacing what is there, as the program's own replace_file does (sys/windows.rs): Windows refuses a
+# replacement while a program runs from $to, or another process has it open; those pass in a moment, so the move is tried
+# for a second. After that a busy $to is moved aside (a running program may be renamed, not replaced) and $from put in its
+# place. The copies moved aside are removed the next time that happens.
+function Put-File([string]$from, [string]$to) {
+  for ($i = 0; $i -lt 50; $i++) {
+    try { Move-Item -LiteralPath $from -Destination $to -Force -ErrorAction Stop; return } catch { Start-Sleep -Milliseconds 20 }
+  }
+  $folder = Split-Path -Parent $to; $leaf = Split-Path -Leaf $to
+  Get-ChildItem -LiteralPath $folder -Filter "$leaf.*.old" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+  $aside = "$to.$PID.old"
+  Move-Item -LiteralPath $to -Destination $aside -Force -ErrorAction Stop
+  try { Move-Item -LiteralPath $from -Destination $to -Force -ErrorAction Stop }
+  catch { Move-Item -LiteralPath $aside -Destination $to -Force -ErrorAction SilentlyContinue; throw }
+}
+
 function Download {
   if (-not $arch) { Say "no release is made for Windows ${env:PROCESSOR_ARCHITECTURE}: build it here: cd '$root' && cargo build --release (Rust: https://rustup.rs)"; return $false }
   if (-not $want) { Say "cannot read the version in $root\Cargo.toml: $buildHint"; return $false }
@@ -128,8 +144,9 @@ function Download {
         Say "the download does not match its checksum, so it is not used: try again, $buildHint"
       } else {
         try {
-          # Renamed over the old one, never written into: a running program keeps its file.
-          Move-Item -LiteralPath $tmp -Destination $prog -Force -ErrorAction Stop
+          # Put in place over the old one, never written into: a running program keeps its file. Windows will not replace a
+          # running program, so Put-File moves that copy aside first (see there).
+          Put-File $tmp $prog
           Set-Content -LiteralPath "$prog.version.$PID" -Value $want
           Move-Item -LiteralPath "$prog.version.$PID" -Destination "$prog.version" -Force -ErrorAction Stop
           $ok = $true

@@ -1,4 +1,5 @@
 //! Small tools the parts share: a random id, quoting for a shell, versions compared.
+#[cfg(not(windows))]
 use std::io::Read;
 
 /// Fills `buf` from the system's random source: /dev/urandom on Unix.

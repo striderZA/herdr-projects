@@ -213,7 +213,7 @@ pub fn trust(kind: &str, root: &Path) -> bool {
             if j.at("projects").at(&root_s).b("hasTrustDialogAccepted") { return true; }
             j.obj_mut("projects").obj_mut(&root_s).put("hasTrustDialogAccepted", true);
             let tmp = PathBuf::from(format!("{}.{}.sw.tmp", file.display(), std::process::id()));
-            write_private(&tmp, &serde_json::to_string_pretty(&j).unwrap_or_default()).is_ok() && fs::rename(&tmp, &file).is_ok()
+            write_private(&tmp, &serde_json::to_string_pretty(&j).unwrap_or_default()).is_ok() && crate::sys::replace_file(&tmp, &file).is_ok()
         }
         "codex" => super::codex_trust::trust(root),
         "pi" => super::pi_trust::trust(root),

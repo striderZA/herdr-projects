@@ -30,6 +30,7 @@ impl Run {
 }
 fn spawn_job(tx: &Sender<Msg>, j: crate::board::job::Job) { let tx = tx.clone(); std::thread::spawn(move || { let d = crate::board::job::run(j); let _ = tx.send(Msg::Ev(Event::Done(d))); }); }
 pub fn open_board(folder: &std::path::Path) -> i32 {
+    if let Some(why) = crate::doctor::plugin::too_old_here() { eprintln!("herdr-projects: {why}. Update Herdr, then restart its server."); return 1; }
     let (mut s, theme, named) = start::prepare(folder);
     let (tx, rx) = channel::<Msg>();
     let wants = Arc::new(Mutex::new(Wants { ids: vec![s.sel.clone()], cwd: s.ctx.cwd.clone(), own_pane: place::own_name(), coord: String::new(), mine: None, looks: vec![], skills: String::new() }));

@@ -83,7 +83,7 @@ pub fn write_atomic(file: &Path, bytes: &[u8]) -> Res<()> {
     if let Some(d) = file.parent() { fs::create_dir_all(d)?; }
     let tmp = PathBuf::from(format!("{}.{}.tmp", file.display(), std::process::id()));
     fs::write(&tmp, bytes)?;
-    fs::rename(&tmp, file)?;
+    crate::sys::replace_file(&tmp, file)?;
     Ok(())
 }
 pub fn append_line(file: &Path, value: &Value) -> Res<()> {
