@@ -171,7 +171,7 @@ fn run(f: &F, pi: usize, prompt: &str, step: Value) {
         let st = f.st.borrow();
         let args: Vec<String> = st["panes"][pi]["agent"].arr("args").iter().map(text).collect();
         if let (Some(at), Some(home)) = (args.iter().position(|a| a == "--session-id" || a == "--resume"), std::env::var_os("CLAUDE_CONFIG_DIR")) {
-            let real = std::fs::canonicalize(dir).unwrap_or(dir.to_path_buf()).display().to_string();
+            let real = sw::sys::canonicalize(dir).unwrap_or(dir.to_path_buf()).display().to_string();
             let file = Path::new(&home).join("projects").join(real.chars().map(|c| if c.is_ascii_alphanumeric() { c } else { '-' }).collect::<String>()).join(format!("{}.jsonl", args[at + 1]));
             let seq = st.i("seq");
             let now = sw::clock::iso(sw::clock::now());
