@@ -87,7 +87,8 @@ fn the_boxs_edge_follows_the_status_of_whoever_it_talks_to_and_names_are_in_the_
         s.press(&["space"]);
         all(&mut s, "❯", Ink::Text, false);
         s.press(&["space"]); assert!(!s.s.reply);
-        assert!(s.text().contains(&format!("╭─  {head}  · Coordinator ─")), "{}", s.text());
+        // the box's top row names the whole machine: the row above cuts the name at `head`, the box title does not
+        assert!(s.text().contains(&format!("╭─  {host}  · Coordinator ─")), "{}", s.text());
     }
 }
 
