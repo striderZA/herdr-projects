@@ -21,7 +21,7 @@ pub fn ask() -> Herdr {
 }
 pub const ID: &str = "herdr-projects";
 /// The oldest herdr the plugin works with, where herdr does not say it (herdr-plugin.toml `min_herdr_version`).
-pub const MIN_HERDR: &str = "0.9.3";
+pub const MIN_HERDR: &str = "0.9.4";
 fn ours(h: &Herdr) -> Option<&Value> { h.plugins.as_ref().ok()?.iter().find(|p| p.s("plugin_id") == ID) }
 /// The folder herdr runs the plugin from.
 pub fn root_of(h: &Herdr) -> Option<PathBuf> { ours(h).map(|p| PathBuf::from(p.s("plugin_root"))).filter(|r| !r.as_os_str().is_empty() && r.exists()) }
