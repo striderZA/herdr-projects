@@ -15,7 +15,12 @@ fn worktree(w: &World, branch: &str, dir: &str) -> String {
     p.display().to_string()
 }
 fn whys(left: &[Left]) -> Vec<Why> { left.iter().map(|l| l.why.clone()).collect() }
-fn aged(p: &Path, secs: u64) { std::fs::File::open(p).unwrap().set_modified(std::time::SystemTime::now() - std::time::Duration::from_secs(secs)).unwrap(); }
+fn aged(p: &Path, secs: u64) {
+    // A folder opens only with backup semantics on Windows.
+    #[cfg(windows)] let f = { use std::os::windows::fs::OpenOptionsExt; std::fs::OpenOptions::new().write(true).custom_flags(0x0200_0000).open(p).unwrap() };
+    #[cfg(not(windows))] let f = std::fs::File::open(p).unwrap();
+    f.set_modified(std::time::SystemTime::now() - std::time::Duration::from_secs(secs)).unwrap();
+}
 
 #[test]
 fn a_done_task_s_worktree_is_a_leftover_unless_its_clean_up_is_to_come_or_off() {

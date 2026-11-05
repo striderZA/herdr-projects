@@ -14,7 +14,7 @@ pub fn put(file: &Path, text: &str, at: Option<i64>) {
 pub fn read(f: &Path) -> String { std::fs::read_to_string(f).unwrap_or_default() }
 pub fn is_link(p: &Path) -> bool { std::fs::symlink_metadata(p).map(|m| m.file_type().is_symlink()).unwrap_or(false) }
 pub fn is_dir(p: &Path) -> bool { std::fs::symlink_metadata(p).map(|m| m.is_dir()).unwrap_or(false) }
-pub fn ino(p: &Path) -> u64 { use std::os::unix::fs::MetadataExt; std::fs::metadata(p).unwrap().ino() }
+pub fn ino(p: &Path) -> u64 { sw::sys::file_key(&std::fs::metadata(p).unwrap()).1 }
 pub fn names(d: &Path) -> Vec<String> { let mut v: Vec<String> = std::fs::read_dir(d).unwrap().map(|e| e.unwrap().file_name().to_string_lossy().into_owned()).collect(); v.sort(); v }
 /// Every file under a folder with its text, links followed: what "nothing is lost" is checked against.
 pub fn all(dir: &Path) -> BTreeMap<String, String> {
@@ -37,7 +37,7 @@ static N: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0
 pub fn old_home(base: &Path, named: Option<&str>) -> Old {
     let home = base.join(format!("old-home-{}", N.fetch_add(1, std::sync::atomic::Ordering::SeqCst)));
     std::fs::create_dir_all(&home).unwrap();
-    let home = std::fs::canonicalize(&home).unwrap();
+    let home = sw::sys::canonicalize(&home).unwrap();
     let (data, settings, reports) = (home.join(".local/state/herdr-superwork"), home.join(".config/herdr-superwork"), home.join(".local/share/herdr-superwork-reports"));
     put(&data.join("tasks/proj/1/task.json"), r#"{"n":1}"#, None);
     put(&data.join("coordinator/default/state.json"), r#"{"session":"abc"}"#, None);

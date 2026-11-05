@@ -6,7 +6,7 @@ use serde_json::json;
 use std::path::{Path, PathBuf};
 use sw::doctor::{agents, disk, plugin, program, problems, say, Found};
 
-fn program_file(p: &Path) { std::fs::create_dir_all(p.parent().unwrap()).unwrap(); std::fs::write(p, "#!/bin/sh\n").unwrap(); use std::os::unix::fs::PermissionsExt; std::fs::set_permissions(p, std::fs::Permissions::from_mode(0o755)).unwrap(); }
+fn program_file(p: &Path) { std::fs::create_dir_all(p.parent().unwrap()).unwrap(); std::fs::write(p, "#!/bin/sh\n").unwrap(); sw::sys::set_mode(p, 0o755).unwrap(); }
 fn launcher_for(p: &Path) -> String { format!("#!/bin/sh\nexport HERDR_PROJECTS_DATA_DIR='/d'\nexec {} \"$@\"\n", sw::util::shell_word(&p.display().to_string(), sw::util::Shell::Posix)) }
 /// A plugin folder with its downloaded program, the launcher beside the data, and a PATH folder.
 struct Setup { root: PathBuf, prog: PathBuf, launcher: PathBuf, path: PathBuf }
@@ -41,19 +41,19 @@ fn the_launcher_must_name_the_plugin_s_own_program() {
     // Missing: what to run names the plugin's own run.sh.
     let f = program::check(&here(&s, None, true));
     assert!(f[0].what.starts_with("herdr-projects 1.1.0, downloaded: "), "{:?}", f[0]);
-    assert!(bad(&f)[0].contains("is missing") && bad(&f)[0].contains("/plugin/bin/run.sh install"), "{:?}", bad(&f));
+    assert!(bad(&f)[0].contains("is missing") && bad(&f)[0].contains(&format!("{} install", s.root.join("bin").join("run.sh").display())), "{:?}", bad(&f));
     // A program that is not there.
     let gone = s.root.join("old/herdr-projects");
     assert!(bad(&program::check(&here(&s, Some(launcher_for(&gone)), true)))[0].contains("which is not there"));
     // Another program than the plugin's.
-    let other = w.base.join("elsewhere/herdr-projects");
+    let other = w.base.join(format!("elsewhere/herdr-projects{}", std::env::consts::EXE_SUFFIX));
     program_file(&other);
     let f = bad(&program::check(&here(&s, Some(launcher_for(&other)), true)));
     assert!(f[0].contains("not the plugin's program in"), "{f:?}");
     // Without herdr's word on the plugin, any program that is there will do.
     assert!(!bad(&program::check(&here(&s, Some(launcher_for(&other)), false)))[0].contains("plugin's program"));
     // The plugin's own program, built in its folder, is right too.
-    let built = s.root.join("target/release/herdr-projects");
+    let built = s.root.join(format!("target/release/herdr-projects{}", std::env::consts::EXE_SUFFIX));
     program_file(&built);
     assert!(!bad(&program::check(&here(&s, Some(launcher_for(&built)), true))).iter().any(|l| l.contains("launcher")));
 }
@@ -68,22 +68,33 @@ fn a_shell_must_find_the_launcher_on_the_path() {
     let f = bad(&program::check(&here(&s, Some(launcher_for(&s.prog)), true)));
     assert_eq!(f.len(), 1, "{f:?}");
     assert!(f[0].starts_with("herdr-projects is not on your PATH → To type herdr-projects in any shell"), "{f:?}");
-    // A link to the launcher (~/.local/bin/herdr-projects) is the launcher.
-    std::os::unix::fs::symlink(&s.launcher, s.path.join("herdr-projects")).unwrap();
-    let f = program::check(&here(&s, Some(launcher_for(&s.prog)), true));
-    assert_eq!(bad(&f), Vec::<String>::new());
-    assert!(f[1].what.ends_with("and a shell finds it on the PATH"), "{:?}", f[1]);
-    // A launcher that cannot be run: agents and hooks cannot use it, and a shell does not find it.
-    use std::os::unix::fs::PermissionsExt;
-    std::fs::set_permissions(&s.launcher, std::fs::Permissions::from_mode(0o644)).unwrap();
-    let f = bad(&program::check(&here(&s, Some(launcher_for(&s.prog)), true)));
-    assert_eq!(f.len(), 1, "{f:?}");
-    assert!(f[0].contains("cannot be run: it is not executable → Run: sh "), "{f:?}");
-    std::fs::set_permissions(&s.launcher, std::fs::Permissions::from_mode(0o755)).unwrap();
-    // Something else of that name first.
-    std::fs::remove_file(s.path.join("herdr-projects")).unwrap();
-    program_file(&s.path.join("herdr-projects"));
-    assert!(bad(&program::check(&here(&s, Some(launcher_for(&s.prog)), true)))[0].contains("comes first on your PATH"));
+    // A link to the launcher (~/.local/bin/herdr-projects) is the launcher. Unix only: on Windows a link needs
+    // Developer Mode or an administrator (error 1314), so this part is gated there.
+    #[cfg(unix)]
+    {
+        sw::sys::symlink(&s.launcher, &s.path.join("herdr-projects")).unwrap();
+        let f = program::check(&here(&s, Some(launcher_for(&s.prog)), true));
+        assert_eq!(bad(&f), Vec::<String>::new());
+        assert!(f[1].what.ends_with("and a shell finds it on the PATH"), "{:?}", f[1]);
+    }
+    // A launcher that cannot be run: agents and hooks cannot use it, and a shell does not find it. Unix only: a mode
+    // bit with no execute bit has no Windows meaning, where a program is one with a program extension.
+    #[cfg(unix)]
+    {
+        sw::sys::set_mode(&s.launcher, 0o644).unwrap();
+        let f = bad(&program::check(&here(&s, Some(launcher_for(&s.prog)), true)));
+        assert_eq!(f.len(), 1, "{f:?}");
+        assert!(f[0].contains("cannot be run: it is not executable → Run: sh "), "{f:?}");
+        sw::sys::set_mode(&s.launcher, 0o755).unwrap();
+    }
+    // Something else of that name first. Unix only: it replaces the link made above, which Windows does not make
+    // without Developer Mode or an administrator (error 1314).
+    #[cfg(unix)]
+    {
+        std::fs::remove_file(s.path.join("herdr-projects")).unwrap();
+        program_file(&s.path.join("herdr-projects"));
+        assert!(bad(&program::check(&here(&s, Some(launcher_for(&s.prog)), true)))[0].contains("comes first on your PATH"));
+    }
 }
 
 #[test]

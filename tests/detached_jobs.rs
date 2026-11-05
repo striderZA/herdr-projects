@@ -27,6 +27,8 @@ fn real_programs_a_detached_job_that_ended_is_reaped_and_its_marker_reads_as_gon
     }
 }
 
+// Unix only: a zombie is a Unix process state; Windows has none to wait for
+#[cfg(unix)]
 #[test]
 fn real_programs_a_detached_job_nobody_waits_for_stays_a_zombie_that_reads_as_alive() {
     // What every job was before: started detached, and its `Child` dropped.

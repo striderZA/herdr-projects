@@ -49,6 +49,8 @@ fn a_done_task_whose_agent_stays_open_loses_its_temporary_files_but_the_folders_
 }
 
 #[test]
+// A symlink: on Windows one needs Developer Mode or an admin account, so this is Unix-only here.
+#[cfg(unix)]
 fn real_programs_a_link_in_a_temporary_folder_s_place_is_never_followed() {
     let w = world();
     let id = w.add("Linked");
@@ -58,9 +60,9 @@ fn real_programs_a_link_in_a_temporary_folder_s_place_is_never_followed() {
     let yours = w.base.join("home/projects/site");
     std::fs::create_dir_all(&yours).unwrap();
     std::fs::write(yours.join("index.html"), "mine\n").unwrap();
-    let mut server = std::process::Command::new("sleep").arg("60").current_dir(&yours).spawn().unwrap();
+    let mut server = crate::common::sleeper(60).current_dir(&yours).spawn().unwrap();
     std::fs::remove_dir(&tmp).unwrap();
-    std::os::unix::fs::symlink(&yours, &tmp).unwrap();
+    sw::sys::symlink(&yours, &tmp).unwrap();
     assert_eq!(sw::leftovers::free(&t), 0);
     assert!(server.try_wait().unwrap().is_none(), "yours runs on");
     assert!(yours.join("index.html").exists());
@@ -68,7 +70,7 @@ fn real_programs_a_link_in_a_temporary_folder_s_place_is_never_followed() {
     // a link further up (the board's own folder of task folders) is not followed either
     let base = sw::temp::board_base();
     std::fs::rename(&base, w.base.join("moved")).unwrap();
-    std::os::unix::fs::symlink(&yours, &base).unwrap();
+    sw::sys::symlink(&yours, &base).unwrap();
     let inside = base.join(sw::temp::name_of(&t));
     std::fs::create_dir_all(yours.join(inside.file_name().unwrap())).unwrap();
     assert!(!sw::leftovers::removable(&inside));
@@ -76,7 +78,7 @@ fn real_programs_a_link_in_a_temporary_folder_s_place_is_never_followed() {
     assert!(yours.join(inside.file_name().unwrap()).exists() && server.try_wait().unwrap().is_none());
     // and the sweep, for a done task with such a link, stops nothing of yours
     std::fs::remove_file(&base).unwrap(); std::fs::rename(w.base.join("moved"), &base).unwrap();
-    std::os::unix::fs::symlink(&yours, &tmp).unwrap();
+    sw::sys::symlink(&yours, &tmp).unwrap();
     sw::store::tasks::update(&id, |t| { t.put("stage", "done"); Ok(sw::store::tasks::Change::Write) }).unwrap();
     sw::leftovers::sweep::sweep();
     assert!(server.try_wait().unwrap().is_none() && yours.join("index.html").exists());
@@ -105,6 +107,8 @@ fn the_build_an_approved_plan_starts_waits_for_room_on_a_nearly_full_disk() {
 }
 
 #[test]
+// A symlink: on Windows one needs Developer Mode or an admin account, so this is Unix-only here.
+#[cfg(unix)]
 fn a_link_reached_through_another_link_is_never_taken_away() {
     let w = world();
     let id = w.add("Linked twice");
@@ -112,10 +116,10 @@ fn a_link_reached_through_another_link_is_never_taken_away() {
     let yours = w.base.join("home/stuff");
     std::fs::create_dir_all(yours.join("site")).unwrap();
     std::fs::write(yours.join("site/keep.txt"), "mine\n").unwrap();
-    std::os::unix::fs::symlink(yours.join("site"), yours.join("shortcut")).unwrap();
+    sw::sys::symlink(&yours.join("site"), &yours.join("shortcut")).unwrap();
     let base = sw::temp::board_base();
     std::fs::create_dir_all(&base).unwrap();
-    std::os::unix::fs::symlink(&yours, base.join("parent")).unwrap();
+    sw::sys::symlink(&yours, &base.join("parent")).unwrap();
     let tmp = base.join("parent/shortcut");
     sw::store::tasks::update(&id, |t| { t.put("tmp", tmp.display().to_string()); t.put("stage", "done"); Ok(sw::store::tasks::Change::Write) }).unwrap();
     assert_eq!(sw::leftovers::free(&task(&id)), 0);

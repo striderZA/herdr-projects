@@ -29,7 +29,11 @@ fn plan_ready_is_said_everywhere_the_worktree_stays_untouched_and_the_work_is_re
     let t = settle(&id);
     assert_eq!(t.s("stage"), "plan", "{}", t.at("failure"));
     assert_eq!(t.at("plan").s("link"), P::plan_file(&t).display().to_string());
-    assert!(!t.at("plan").b("undone"), "nothing got in, so nothing had to be put back");
+    // Unix: nothing gets in, so nothing is put back. Windows: a read-only folder still takes new files, which the board puts
+    // back (listed as undone); a tracked file cannot be written and is never listed.
+    let undone: Vec<String> = t.at("plan").at("undone").at("list").as_array().map(|a| a.iter().map(text).collect()).unwrap_or_default();
+    if cfg!(windows) { assert!(!undone.iter().any(|f| f.starts_with("a.txt")), "a tracked file got in: {undone:?}"); }
+    else { assert!(!t.at("plan").b("undone"), "nothing got in, so nothing had to be put back: {}", t.at("plan")); }
     assert!(is_locked(&t));
     assert!(!t.b("reviewRound"));
     // The row, the State line, herdr's sidebar and the notification all say it.

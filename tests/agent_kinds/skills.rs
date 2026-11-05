@@ -82,7 +82,7 @@ fn codex_offers_the_skills_of_the_plugins_turned_on_in_its_config_and_leaves_out
     // no [plugins] table: every plugin in the cache counts
     assert_eq!(typed(&offered("codex", &w.root)), vec!["$local-check", "$not-on", "$plugin-check", "$turned-off"]);
     write(&w.base.join("codex.toml"), "");
-    write(&codex.join("config.toml"), &format!("[plugins.\"tools@demo\"]\nenabled = true\n\n[plugins.\"other@demo\"]\nenabled = false\n\n[[skills.config]]\npath = \"{}\"\nenabled = false\n", codex.join("skills/turned-off/SKILL.md").display()));
+    write(&codex.join("config.toml"), &format!("[plugins.\"tools@demo\"]\nenabled = true\n\n[plugins.\"other@demo\"]\nenabled = false\n\n[[skills.config]]\npath = '{}'\nenabled = false\n", codex.join("skills/turned-off/SKILL.md").display()));
     let l = offered("codex", &w.root);
     assert_eq!(typed(&l), vec!["$local-check", "$plugin-check"]);
     assert_eq!(about(&l, "$plugin-check"), "Check from a plugin");

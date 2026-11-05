@@ -28,7 +28,11 @@ fn nothing_is_changed_before_the_yes_what_gets_in_is_put_back_and_a_change_the_b
     let t = settle(&id);
     assert_eq!(t.s("stage"), "plan", "{}", t.at("failure"));
     assert!(!t.at("plan").b("approvedAt"));
-    assert!(!t.at("plan").b("undone"), "nothing had to be put back: nothing got in");
+    // Unix: the read-only folder refuses new files too, so nothing gets in and nothing is put back. Windows: a read-only
+    // folder still takes new files, so the board puts those back (listed as undone); a tracked file cannot be written.
+    let undone: Vec<String> = t.at("plan").at("undone").at("list").as_array().map(|a| a.iter().map(text).collect()).unwrap_or_default();
+    if cfg!(windows) { assert!(!undone.iter().any(|f| f.starts_with("a.txt")), "a tracked file got in: {undone:?}"); }
+    else { assert!(!t.at("plan").b("undone"), "nothing had to be put back: nothing got in: {}", t.at("plan")); }
     assert!(w.pane_of(&t).at("agent").arr("args").iter().any(|a| text(a) == "--dangerously-bypass-approvals-and-sandbox"));
     let tree = t.t("worktree");
     let at = |rel: &str| Path::new(&tree).join(rel);

@@ -29,14 +29,14 @@ fn close(b: &Board) { sw::board::run::prefs::save(&b.s); }
 /// herdr's socket, for the subscription and the one question the board asks once herdr has taken it: each connection
 /// is answered in turn, then the tabs that come to show are told on the first.
 fn herdr_socket(path: &std::path::Path, shows: Value, tabs: &'static [&'static str]) -> std::thread::JoinHandle<Vec<Value>> {
-    let l = std::os::unix::net::UnixListener::bind(path).unwrap();
+    let l = bind_socket(&path.display().to_string());
     std::thread::spawn(move || {
         let mut asked = vec![];
-        let (mut sub, _) = l.accept().unwrap();
+        let mut sub = accept_one(&l).unwrap();
         let mut line = String::new(); BufReader::new(sub.try_clone().unwrap()).read_line(&mut line).unwrap();
         asked.push(serde_json::from_str::<Value>(&line).unwrap());
         sub.write_all(format!("{}\n", json!({ "id": "x", "result": { "type": "subscription_started" } })).as_bytes()).unwrap();
-        let (mut q, _) = l.accept().unwrap();
+        let mut q = accept_one(&l).unwrap();
         let mut line = String::new(); BufReader::new(q.try_clone().unwrap()).read_line(&mut line).unwrap();
         asked.push(serde_json::from_str::<Value>(&line).unwrap());
         let a = if shows.is_null() { json!({ "id": "x", "error": { "code": "tab_not_found", "message": "no" } }) } else { json!({ "id": "x", "result": shows }) };
@@ -72,9 +72,20 @@ fn the_popup_is_never_left_behind_its_board_closes_the_moment_herdr_shows_anothe
     assert_eq!(closes(&w, 3, "w9:t1", json!({ "tab": { "tab_id": "w9:t1", "focused": true } }), &[]).0, 0, "its tab shows: it stays");
     assert_eq!(closes(&w, 4, "w9:t1", Value::Null, &["w9:t1"]).0, 0, "herdr did not say: it stays, and the next tab that shows closes it");
     // A board that was not told its tab watches nothing: nothing is asked of herdr.
-    let path = w.base.join("events-5.sock"); let l = std::os::unix::net::UnixListener::bind(&path).unwrap(); l.set_nonblocking(true).unwrap();
-    sw::board::run::start::watch_tab(Some(path.display().to_string()), "", || panic!("never"));
-    assert!(l.accept().is_err());
+    let path = w.base.join("events-5.sock");
+    // Unix only: a nonblocking listener, so "nothing connected" is an accept that fails at once. Windows pipes have no
+    // nonblocking accept; there the watch is still made, and must not call back.
+    #[cfg(unix)]
+    {
+        let l = std::os::unix::net::UnixListener::bind(&path).unwrap(); l.set_nonblocking(true).unwrap();
+        sw::board::run::start::watch_tab(Some(path.display().to_string()), "", || panic!("never"));
+        assert!(l.accept().is_err());
+    }
+    #[cfg(windows)]
+    {
+        let _l = bind_socket(&path.display().to_string());
+        sw::board::run::start::watch_tab(Some(path.display().to_string()), "", || panic!("never"));
+    }
 }
 
 #[test]

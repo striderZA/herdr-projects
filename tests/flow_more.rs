@@ -77,6 +77,8 @@ fn real_shim(w: &World) -> std::path::PathBuf { sw::herdr::cli::set_fake(None); 
 fn env_obj(v: Vec<(String, String)>) -> Value { Value::Object(v.into_iter().map(|(k, v)| (k, json!(v))).collect()) }
 
 #[test]
+// Needs a symlink: on Windows one needs Developer Mode or an admin account.
+#[cfg(unix)]
 fn a_board_kept_in_its_own_folder_the_agents_command_and_its_herdr_space_both_name_that_board() {
     let w = world_with(Opts { repo: false, ..Default::default() }); // a plain folder: its space is herdr's to make, not a worktree
     w.script(json!({ "worker": [{ "status": "working" }, { "status": "working" }] }));
@@ -98,11 +100,13 @@ fn a_board_kept_in_its_own_folder_the_agents_command_and_its_herdr_space_both_na
     assert_eq!(got, want);
     for (k, v) in &want { assert!(text.contains(&format!("export {k}='{v}'")), "{text}"); }
     // a shim an older version left as a link is replaced
-    std::fs::remove_file(&cmd).unwrap(); std::os::unix::fs::symlink(sw::store::files::bin(), &cmd).unwrap();
+    std::fs::remove_file(&cmd).unwrap(); sw::sys::symlink(&sw::store::files::bin(), &cmd).unwrap();
     assert!(!std::fs::symlink_metadata(real_shim(&w)).unwrap().file_type().is_symlink());
 }
 
 #[test]
+// Runs a #!/bin/sh program directly: Windows cannot start one without a shebang handler.
+#[cfg(unix)]
 fn real_programs_the_agents_command_names_its_board_with_nothing_in_the_environment_pointing_at_it() {
     let w = world_with(Opts { repo: false, ..Default::default() });
     let cmd = real_shim(&w);

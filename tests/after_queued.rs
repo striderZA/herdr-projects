@@ -18,6 +18,8 @@ fn said_ink(id: &str) -> (String, Ink) { let s = sw::shown::row_says::sentence(&
 #[test]
 fn a_task_only_to_wait_for_others_stays_in_to_do_saying_nothing_of_it_on_its_row_and_never_starts_by_itself() {
     let w = world();
+    // A frozen clock: the ages on the row read "0s", whatever the machine's speed.
+    sw::clock::set(Some(sw::clock::now()));
     w.script(json!({ "worker": [{ "status": "working" }] }));
     let dep = w.add("First");
     let id = w.add("Second");

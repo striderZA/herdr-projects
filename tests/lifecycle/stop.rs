@@ -4,7 +4,7 @@
 use crate::common;
 use common::*;
 use serde_json::{json, Value};
-use std::process::{Child, Command, Stdio};
+use std::process::{Child, Stdio};
 use sw::json::*;
 
 /// A task whose agent is at work, with its pane's flags set (`child`, `helper`, `tool`).
@@ -19,8 +19,8 @@ fn working(w: &World, flags: Value) -> Obj {
 }
 fn killed(w: &World) -> Vec<i64> { w.state().arr("killed").iter().filter_map(|v| v.as_i64()).collect() }
 fn sleep_in(dir: &std::path::Path, env: &[(&str, &std::path::Path)]) -> Child {
-    let mut c = Command::new("sleep");
-    c.arg("60").current_dir(dir).stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null());
+    let mut c = crate::common::sleeper(60);
+    c.current_dir(dir).stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null());
     for (k, v) in env { c.env(k, v); }
     c.spawn().unwrap()
 }
@@ -64,11 +64,11 @@ fn what_runs_from_its_worktree_or_temporary_folder_is_ended_your_checkout_is_not
     let mut away = sleep_in(&w.base, &[("TMPDIR", &tmp)]); // started for the task, working elsewhere now
     let said = sw::actions::talk::stop(t.s("id")).unwrap();
     assert!(ended(&mut check) && ended(&mut preview), "{}", said.msg);
-    assert!(said.msg.starts_with("Ended what it started: ") && said.msg.contains(&format!("(pid {})", check.id())) && said.msg.contains(&format!("sleep 60 (pid {})", preview.id())), "{}", said.msg);
+    assert!(said.msg.starts_with("Ended what it started: ") && said.msg.contains(&format!("(pid {})", check.id())) && said.msg.contains(&format!("{} (pid {})", crate::common::sleep_text(60), preview.id())), "{}", said.msg);
     assert!(yours.try_wait().unwrap().is_none() && !said.msg.contains(&format!("pid {})", yours.id())), "{}", said.msg);
     if cfg!(target_os = "linux") {
         assert!(away.try_wait().unwrap().is_none(), "named, not ended");
-        assert!(said.msg.contains(&format!("Still running, end it yourself: sleep 60 (pid {}), in {}.", away.id(), std::fs::canonicalize(&w.base).unwrap().display())), "{}", said.msg);
+        assert!(said.msg.contains(&format!("Still running, end it yourself: {} (pid {}), in {}.", crate::common::sleep_text(60), away.id(), sw::sys::canonicalize(&w.base).unwrap().display())), "{}", said.msg);
     }
     for c in [&mut yours, &mut away] { let _ = c.kill(); let _ = c.wait(); }
 }
@@ -82,7 +82,7 @@ fn where_herdr_does_not_say_what_runs_in_its_panes_what_runs_from_its_worktree_i
     let said = sw::actions::talk::stop(t.s("id")).unwrap();
     assert!(shell.try_wait().unwrap().is_none(), "not ended: {}", said.msg);
     assert!(said.msg.starts_with("Ended what it started: sleep 600 (pid 3)."), "the agent's own command still goes: {}", said.msg);
-    assert!(said.msg.contains(&format!("sleep 60 (pid {}), in its folders, not ended as herdr does not say what runs in its other panes", shell.id())), "{}", said.msg);
+    assert!(said.msg.contains(&format!("{} (pid {}), in its folders, not ended as herdr does not say what runs in its other panes", crate::common::sleep_text(60), shell.id())), "{}", said.msg);
     let _ = shell.kill(); let _ = shell.wait();
     drop(w);
     let w = world_with(Opts { repo: true, settings: json!({ "review.when": "never" }), ..Default::default() });
@@ -92,7 +92,7 @@ fn where_herdr_does_not_say_what_runs_in_its_panes_what_runs_from_its_worktree_i
     let said = sw::actions::talk::stop(t.s("id")).unwrap();
     assert!(check.try_wait().unwrap().is_none() && killed(&w).is_empty(), "nothing ended: {}", said.msg);
     assert!(said.msg.starts_with("Still running, end it yourself: what runs in its agent's terminal, as herdr does not say what runs in its agent's terminal; "), "{}", said.msg);
-    assert!(said.msg.contains(&format!("sleep 60 (pid {}), in its folders, not ended as herdr does not say what runs in its agent's terminal", check.id())), "{}", said.msg);
+    assert!(said.msg.contains(&format!("{} (pid {}), in its folders, not ended as herdr does not say what runs in its agent's terminal", crate::common::sleep_text(60), check.id())), "{}", said.msg);
     let _ = check.kill(); let _ = check.wait();
 }
 
@@ -122,6 +122,6 @@ fn what_runs_in_your_own_pane_of_its_space_is_never_ended_also_when_herdr_cannot
     w.patch(|s| { let p = s["panes"].as_array_mut().unwrap().iter_mut().find(|p| p.s("pane_id") == mine).unwrap(); p["infoFails"] = json!(true); });
     let said = sw::actions::talk::stop(t.s("id")).unwrap();
     assert!(yours.try_wait().unwrap().is_none(), "{}", said.msg);
-    assert!(said.msg.contains(&format!("sleep 60 (pid {}), in its folders, not ended as herdr does not say what runs in its other panes", yours.id())), "{}", said.msg);
+    assert!(said.msg.contains(&format!("{} (pid {}), in its folders, not ended as herdr does not say what runs in its other panes", crate::common::sleep_text(60), yours.id())), "{}", said.msg);
     let _ = yours.kill(); let _ = yours.wait();
 }

@@ -138,7 +138,7 @@ fn a_merge_that_cannot_fetch_main_waits_as_behind_main_and_is_not_failed_and_goe
 fn a_lock_file_left_in_the_way_is_named_in_plain_words_and_the_work_waits_behind_main_until_it_is_gone() {
     let w = world_with(Opts { repo: true, origin: true, settings: json!({ "review.when": "never" }), ..Default::default() });
     let id = to_approval(&w, "Locked");
-    let lock = w.root.join(".git/refs/remotes/origin/main.lock");
+    let lock = w.root.join(".git").join("refs").join("remotes").join("origin").join("main.lock");
     std::fs::write(&lock, "").unwrap();
     they_push(&w, "main", "theirs.txt");
     let t = task(&id);
@@ -151,6 +151,7 @@ fn a_lock_file_left_in_the_way_is_named_in_plain_words_and_the_work_waits_behind
 }
 
 #[test]
+#[cfg(unix)] // This fixture runs a /bin/sh upload-pack program, which Windows does not run.
 fn git_2_53s_reference_already_exists_is_a_held_lock_only_when_its_lock_file_is_there() {
     use std::os::unix::fs::PermissionsExt;
     let w = world_with(Opts { repo: true, origin: true, settings: json!({ "review.when": "never" }), ..Default::default() });
@@ -173,7 +174,7 @@ fn git_2_53s_reference_already_exists_is_a_held_lock_only_when_its_lock_file_is_
     let lock = w.root.join(".git/refs/remotes/origin/main.lock");
     std::fs::write(&lock, "").unwrap();
     let r = sw::sync::sync_main(&t, t.s("worktree"));
-    let named = std::fs::canonicalize(&lock).unwrap();
+    let named = sw::sys::canonicalize(&lock).unwrap();
     assert!(r.detail.starts_with(&format!("git's lock file {} stayed in the way on every try", named.display())), "{}", r.detail);
     assert_eq!(calls(), 4, "tried three times");
     std::fs::remove_file(&lock).unwrap();

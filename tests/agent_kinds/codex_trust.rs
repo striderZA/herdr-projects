@@ -18,10 +18,11 @@ fn level(conf: &toml::Table, root: &Path) -> Option<String> {
 fn an_entry_in_any_quoting_or_as_a_dotted_key_is_already_there_and_the_file_is_left_as_it_is() {
     let w = world();
     let r = w.root.display().to_string();
+    let rq = r.replace('\\', "\\\\"); // for a basic-string key ("...") the backslashes are escapes
     for text in [
         format!("model = \"gpt-6\"\n\n[projects.'{r}']\ntrust_level = \"trusted\"\n"),
-        format!("# mine\n[projects.\"{r}\"]\ntrust_level = \"trusted\"\n"),
-        format!("projects.\"{r}\".trust_level = \"trusted\"\n"),
+        format!("# mine\n[projects.\"{rq}\"]\ntrust_level = \"trusted\"\n"),
+        format!("projects.\"{rq}\".trust_level = \"trusted\"\n"),
         format!("[projects]\n'{r}' = {{ trust_level = \"trusted\" }}\n"),
     ] {
         file(&text);
@@ -74,7 +75,8 @@ fn a_file_that_does_not_read_or_that_our_table_would_break_is_never_touched() {
 fn doctor_names_a_projects_table_that_is_in_the_file_twice_and_how_to_remove_it() {
     let w = world();
     let r = w.root.display().to_string();
-    file(&format!("model = \"gpt-6\"\n[projects.'/elsewhere']\ntrust_level = \"trusted\"\n[projects.'{r}']\ntrust_level = \"trusted\"\n[projects.\"{r}\"]\ntrust_level = \"trusted\"\n"));
+    let rq = r.replace('\\', "\\\\");
+    file(&format!("model = \"gpt-6\"\n[projects.'/elsewhere']\ntrust_level = \"trusted\"\n[projects.'{r}']\ntrust_level = \"trusted\"\n[projects.\"{rq}\"]\ntrust_level = \"trusted\"\n"));
     assert_eq!(twice(&read(&codex_file())), [r.clone()]);
     let (what, fix) = problem().expect("a problem");
     assert!(what.contains(&r) && what.contains("twice"), "{what}");

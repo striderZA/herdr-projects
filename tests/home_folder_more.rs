@@ -9,12 +9,14 @@ use std::process::Command;
 use sw::store::move_home::{move_home, swap_now};
 use util::*;
 
-fn hold(f: &Path) -> std::fs::File { use std::os::fd::AsRawFd; let h = std::fs::File::open(f).unwrap(); assert_eq!(unsafe { libc::flock(h.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) }, 0); h }
+fn hold(f: &Path) -> std::fs::File { let h = std::fs::File::open(f).unwrap(); assert!(sw::sys::lock_file(&h, false), "{} is taken", f.display()); h }
 /// Whether another program finds the file locked: a flock belongs to one opening of the file, so the file opened again
 /// here is asked as another program would ask (with no `flock` command, which macOS has not).
-fn taken(f: &Path) -> bool { use std::os::fd::AsRawFd; let Ok(h) = std::fs::File::open(f) else { return false }; unsafe { libc::flock(h.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) != 0 } }
+fn taken(f: &Path) -> bool { let Ok(h) = std::fs::File::open(f) else { return false }; !sw::sys::lock_file(&h, false) }
 
 #[test]
+// Moving the home folder is refused on Windows for now (docs/windows.md): the move is Unix-only here.
+#[cfg(unix)]
 fn the_lock_file_in_the_place_in_use_is_never_replaced_or_removed_and_the_new_places_copy_goes_only_while_nobody_holds_it() {
     let w = world_with(Opts::default());
     let both = || { let h = old_home(&w.base, None); let t = sw::clock::now(); let (old, now) = (h.data.join("locks/a2VlcGVy.lock"), h.to.join("data/locks/a2VlcGVy.lock")); put(&old, "", Some(t - 60000)); put(&now, "", Some(t)); (h, old, now) };
@@ -38,6 +40,8 @@ fn the_lock_file_in_the_place_in_use_is_never_replaced_or_removed_and_the_new_pl
 }
 
 #[test]
+// Moving the home folder is refused on Windows for now (docs/windows.md): the move is Unix-only here.
+#[cfg(unix)]
 fn what_is_not_the_boards_to_move_stays_a_folder_you_named_another_copys_board_old_places_named_by_xdg_are_found() {
     let w = world_with(Opts::default());
     // A board kept somewhere of its own (the tests' own, too): its folders are where you put them.
@@ -69,6 +73,8 @@ fn what_is_not_the_boards_to_move_stays_a_folder_you_named_another_copys_board_o
 }
 
 #[test]
+// Moving the home folder is refused on Windows for now (docs/windows.md): the move is Unix-only here.
+#[cfg(unix)]
 fn real_programs_a_lock_file_that_was_replaced_between_opening_it_and_locking_it_is_not_taken_for_the_lock() {
     let w = world_with(Opts::default());
     let file = sw::store::files::data_dir().join("locks").join(format!("{}.lock", sw::store::files::base64url(b"x")));
@@ -86,12 +92,14 @@ fn real_programs_a_lock_file_that_was_replaced_between_opening_it_and_locking_it
 }
 
 #[test]
+// Moving the home folder is refused on Windows for now (docs/windows.md): the move is Unix-only here.
+#[cfg(unix)]
 fn real_programs_the_old_command_runs_at_every_moment_of_a_real_move_and_a_lock_held_through_it_stays_held() {
     let w = world_with(Opts::default());
     let h = old_home(&w.base, None);
     let launcher = h.data.join("bin").join(OLD_NAME);
     put(&launcher, "#!/bin/sh\necho ran\n", None);
-    use std::os::unix::fs::PermissionsExt; std::fs::set_permissions(&launcher, std::fs::Permissions::from_mode(0o755)).unwrap();
+    sw::sys::set_mode(&launcher, 0o755).unwrap();
     let lock = h.data.join("locks/dGFzaw.lock");
     let holder = hold(&lock);
     // At each of the two steps in which paths change places, before and after it, the old command is started.

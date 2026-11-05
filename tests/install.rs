@@ -13,14 +13,14 @@ fn scratch() -> (PathBuf, MutexGuard<'static, ()>) {
     let base = std::env::temp_dir().join(format!("sw-install-{}-{}", std::process::id(), N.fetch_add(1, std::sync::atomic::Ordering::SeqCst)));
     let _ = std::fs::remove_dir_all(&base);
     std::fs::create_dir_all(base.join("home")).unwrap();
-    let base = std::fs::canonicalize(&base).unwrap();
+    let base = sw::sys::canonicalize(&base).unwrap();
     set("HOME", &base.join("home").display().to_string());
     set("HERDR_PROJECTS_HOME", &base.join("sw").display().to_string());
     for k in ["HERDR_PROJECTS_DATA_DIR", "HERDR_PROJECTS_CONFIG_DIR", "HERDR_PROJECTS_RELEASES"] { unsafe { std::env::remove_var(k) } }
     (base, one)
 }
 fn write(p: &Path, text: &str) { std::fs::create_dir_all(p.parent().unwrap()).unwrap(); std::fs::write(p, text).unwrap(); }
-fn exec(p: &Path, text: &str) { write(p, text); use std::os::unix::fs::PermissionsExt; std::fs::set_permissions(p, std::fs::Permissions::from_mode(0o755)).unwrap(); }
+fn exec(p: &Path, text: &str) { write(p, text); sw::sys::set_mode(p, 0o755).unwrap(); }
 fn read(p: &Path) -> String { std::fs::read_to_string(p).unwrap_or_default() }
 fn here() -> (&'static str, &'static str) { platform().expect("the tests run on a platform a release is made for") }
 
@@ -84,6 +84,8 @@ impl Release {
 fn listing(dir: &Path) -> Vec<String> { let mut v: Vec<String> = std::fs::read_dir(dir).unwrap().flatten().map(|e| e.file_name().to_string_lossy().into_owned()).collect(); v.sort(); v }
 
 #[test]
+// Runs run.sh through sh: Unix-only (a Windows account has no /bin/sh and the script is a shell script).
+#[cfg(unix)]
 fn update_puts_the_newest_release_in_place() {
     let (b, _one) = scratch();
     let exe = b.join("plugin/bin").join(asset_name(here()));
@@ -106,6 +108,8 @@ fn update_puts_the_newest_release_in_place() {
 }
 
 #[test]
+// Runs run.sh through sh: Unix-only (a Windows account has no /bin/sh and the script is a shell script).
+#[cfg(unix)]
 fn update_changes_nothing_when_anything_is_wrong() {
     let (b, _one) = scratch();
     let exe = b.join("plugin/bin").join(asset_name(here()));
@@ -133,10 +137,13 @@ fn update_changes_nothing_when_anything_is_wrong() {
 fn install_writes_the_launcher_for_this_program() {
     let (b, _one) = scratch();
     let exe = sw::store::files::bin();
-    let launcher = b.join("sw/data/bin/herdr-projects");
+    let launcher = b.join("sw").join("data").join("bin").join("herdr-projects");
     // The PATH is the whole test program's: it keeps /bin (sh and cat are only there on macOS) and is given back.
-    let was = std::env::var("PATH").unwrap_or_default();
-    set("PATH", "/usr/bin:/bin");
+    // Given back when the test ends however it ends: a failed assert must not leave the next test without git.
+    struct PathBack(String);
+    impl Drop for PathBack { fn drop(&mut self) { set("PATH", &self.0); } }
+    let _back = PathBack(std::env::var("PATH").unwrap_or_default());
+    set("PATH", &path_of(&[std::path::PathBuf::from("/usr/bin"), std::path::PathBuf::from("/bin")]));
     let said = install(&exe);
     let text = read(&launcher);
     assert!(text.starts_with("#!/bin/sh\n") && text.contains(&format!("exec '{}' \"$@\"", exe.display())), "{text}");
@@ -145,14 +152,13 @@ fn install_writes_the_launcher_for_this_program() {
     assert!(said.starts_with(&format!("{} runs {}", launcher.display(), exe.display())), "{said}");
     assert!(said.contains(&format!("export PATH=\"{}:$PATH\"", launcher.parent().unwrap().display())), "{said}");
     // Another herdr-projects comes first on the PATH (npm link's): said, with the way out.
-    exec(&b.join("npm/bin/herdr-projects"), "#!/bin/sh\n");
-    set("PATH", &format!("{}:{}:/usr/bin:/bin", b.join("npm/bin").display(), launcher.parent().unwrap().display()));
+    exec(&b.join("npm").join("bin").join("herdr-projects"), "#!/bin/sh\n");
+    set("PATH", &path_of(&[b.join("npm").join("bin"), launcher.parent().unwrap().to_path_buf(), std::path::PathBuf::from("/usr/bin"), std::path::PathBuf::from("/bin")]));
     let said = install(&exe);
-    assert!(said.contains(&format!("{} comes first on your PATH", b.join("npm/bin/herdr-projects").display())), "{said}");
+    assert!(said.contains(&format!("{} comes first on your PATH", b.join("npm").join("bin").join("herdr-projects").display())), "{said}");
     // The launcher's folder is on the PATH first: nothing more to say.
-    set("PATH", &format!("{}:/usr/bin:/bin", launcher.parent().unwrap().display()));
+    set("PATH", &path_of(&[launcher.parent().unwrap().to_path_buf(), std::path::PathBuf::from("/usr/bin"), std::path::PathBuf::from("/bin")]));
     let lines = install(&exe).lines().count();
-    set("PATH", &was);
     assert_eq!(lines, 1);
 }
 
@@ -176,6 +182,8 @@ fn run_sh(b: &Path, args: &[&str]) -> (i32, String, String) {
 }
 
 #[test]
+// Runs run.sh through sh: Unix-only (a Windows account has no /bin/sh and the script is a shell script).
+#[cfg(unix)]
 fn real_programs_run_sh_downloads_once_and_runs_it() {
     let (b, _one) = scratch();
     if std::process::Command::new("curl").arg("--version").output().is_err() { eprintln!("no curl here: skipped"); return; }
@@ -220,3 +228,6 @@ fn real_programs_run_sh_downloads_once_and_runs_it() {
     // --fetch only gets the program.
     assert_eq!(run_sh(&b, &["--fetch"]), (0, String::new(), String::new()));
 }
+
+/// A PATH string of these folders, joined the way this platform's PATH is (`:` on Unix, `;` on Windows).
+fn path_of(dirs: &[std::path::PathBuf]) -> String { std::env::join_paths(dirs).unwrap().to_string_lossy().into_owned() }

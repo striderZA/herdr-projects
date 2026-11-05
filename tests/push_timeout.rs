@@ -13,8 +13,7 @@ fn at(name: &str, scope: &Scope) -> (Value, String) { let f = lookup(name, scope
 fn slow_hook(w: &World) {
     let hook = w.root.join(".git").join("hooks").join("pre-push");
     std::fs::write(&hook, "#!/bin/sh\nsleep 1.5\n").unwrap();
-    use std::os::unix::fs::PermissionsExt;
-    std::fs::set_permissions(&hook, std::fs::Permissions::from_mode(0o755)).unwrap();
+        sw::sys::set_mode(&hook, 0o755).unwrap();
 }
 fn pushed(w: &World, branch: &str) -> bool { !git(&w.root, &["ls-remote", "--heads", "origin", branch]).is_empty() }
 

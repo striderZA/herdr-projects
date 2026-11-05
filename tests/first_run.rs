@@ -13,7 +13,7 @@ fn scratch() -> (PathBuf, PathBuf, MutexGuard<'static, ()>) {
     let base = std::env::temp_dir().join(format!("sw-first-run-{}-{}", std::process::id(), N.fetch_add(1, std::sync::atomic::Ordering::SeqCst)));
     let _ = std::fs::remove_dir_all(&base);
     std::fs::create_dir_all(base.join("home")).unwrap();
-    let base = std::fs::canonicalize(&base).unwrap();
+    let base = sw::sys::canonicalize(&base).unwrap();
     set("HOME", &base.join("home").display().to_string());
     set("HERDR_PROJECTS_HOME", &base.join("home/.herdr-projects").display().to_string());
     for (k, v) in [("XDG_STATE_HOME", "home/.state"), ("XDG_CONFIG_HOME", "home/.config"), ("XDG_DATA_HOME", "home/.share")] { set(k, &base.join(v).display().to_string()); }
@@ -29,7 +29,7 @@ fn node_data(data: &Path, version: Option<&str>) {
     write(&data.join("tasks/proj/1/inbox.jsonl"), "{\"a\":1}\n");
     write(&data.join("bin").join(OLD_NAME), NODE_LAUNCHER);
     if let Some(v) = version { write(&data.join("keeper.json"), &format!("{{\"pid\":1,\"version\":\"{v}\"}}")); }
-    std::os::unix::fs::symlink("tasks/proj", data.join("latest")).unwrap();
+    sw::sys::symlink(std::path::Path::new("tasks/proj"), &data.join("latest")).unwrap();
 }
 /// Every path under a folder with what it holds (a link: where it points), to compare two folders.
 fn tree(dir: &Path) -> Vec<(String, String)> {
@@ -66,6 +66,8 @@ fn who_wrote_the_data() {
 }
 
 #[test]
+// Needs a symlink: on Windows one needs Developer Mode or an admin account.
+#[cfg(unix)]
 fn the_copy_is_the_data_as_it_was_and_made_once() {
     let (_b, data, _one) = scratch();
     node_data(&data, Some("0.2.0"));
@@ -86,6 +88,8 @@ fn the_copy_is_the_data_as_it_was_and_made_once() {
 }
 
 #[test]
+// Needs a symlink: on Windows one needs Developer Mode or an admin account.
+#[cfg(unix)]
 fn a_copy_already_there_or_half_made_before() {
     let (_b, data, _one) = scratch();
     node_data(&data, None);
@@ -104,6 +108,8 @@ fn a_copy_already_there_or_half_made_before() {
 }
 
 #[test]
+// Needs a symlink: on Windows one needs Developer Mode or an admin account.
+#[cfg(unix)]
 fn the_first_run_makes_it_and_says_it_once() {
     let (b, data, _one) = scratch();
     node_data(&data, Some("0.2.0"));
@@ -123,6 +129,8 @@ fn the_first_run_makes_it_and_says_it_once() {
 }
 
 #[test]
+// Needs a symlink: on Windows one needs Developer Mode or an admin account.
+#[cfg(unix)]
 fn the_program_keeps_the_copy_before_its_first_command() {
     let (_b, data, _one) = scratch();
     node_data(&data, Some("0.2.0"));

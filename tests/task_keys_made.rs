@@ -31,7 +31,7 @@ fn a_repo_a_plain_folder_the_home_folder_and_the_root_each_get_a_key_the_moment_
     // A folder that is no git repo, the home folder and `/`: tasks in no repo have a key of their own folder's.
     let notes = add_in(&folder(&w, "meeting-notes"), "Plain folder");
     let home = add_in(&sw::store::files::user_home(), "At home");
-    let root = add_in(std::path::Path::new("/"), "At the root");
+    let root = add_in(&sw::sys::root_dir(), "At the root");
     assert_eq!((short(&notes), short(&home), short(&root)), ("NTS-1".into(), "HOME-1".into(), "ROOT-1".into()));
     assert_eq!(find("home-1").unwrap().t("title"), "At home"); assert_eq!(find("root-1").unwrap().t("title"), "At the root");
     // Named as the human would: team-paperwork, gtm-skills, open-crm.

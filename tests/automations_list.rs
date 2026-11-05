@@ -102,7 +102,7 @@ fn more_automations_than_fit_the_list_says_how_many_it_does_not_show_and_the_sel
     let l1 = list(&lines);
     assert!(lines.iter().any(|l| regex::Regex::new(r"^▌  ○ PRJ-\d Task \d").unwrap().is_match(l)), "{}", lines.join("\n")); assert!(l1.iter().any(|x| x == "   ▾ automations"));
     assert!(l1.iter().any(|x| regex::Regex::new(r"^   ⟳ on {4}Automation 01 {2}every 1h +next in {2}1h$").unwrap().is_match(x)), "{}", lines.join("\n"));
-    assert_eq!(note(&l1), format!(" ↓ {} automations", 16 - shown(&l1))); assert!(shown(&l1) >= 2 && shown(&l1) < 16);
+    assert_eq!(note(&l1), format!(" ↓ {} automations", 16 - shown(&l1)), "{}", lines.join("\n")); assert!(shown(&l1) >= 2 && shown(&l1) < 16);
     // no task gives way for them: every task shows
     for n in 1..=3 { assert!(l1.iter().any(|x| x.contains(&format!("Task {n}")))); }
     // down to the last one: it is in view, and the line says what is above now, tasks and automations apart

@@ -24,7 +24,12 @@ fn with_no_herdr_to_be_found_tell_fails_saying_the_message_is_queued_not_deliver
     w.patch(|st| st["noProgram"] = json!(true));
     let e = tell("hello").expect_err("tell must fail where herdr cannot be found");
     assert!(e.msg.starts_with("Queued for the Coordinator, but not delivered: the herdr program was not found here"), "{}", e.msg);
-    assert!(e.msg.contains("~/.local/bin") && e.msg.contains("HERDR_BIN_PATH"), "{}", e.msg);
+    let searched = if cfg!(windows) {
+        "(not on PATH, not in ~/.cargo/bin, ~/bin, ~/.herdr/packages/standalone/releases, %LOCALAPPDATA%/Programs/Herdr/bin, not on a login shell's PATH)"
+    } else {
+        "(not on PATH, not in ~/.local/bin"
+    };
+    assert!(e.msg.contains(searched) && e.msg.contains("HERDR_BIN_PATH"), "{}", e.msg);
     assert_eq!(queued(&w), vec!["hello"], "the message is kept in the queue");
     assert!(agents(&w).is_empty(), "nothing was started");
     // Just sent, it is still on its way; a while later doctor names it as a problem.

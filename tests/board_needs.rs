@@ -43,6 +43,8 @@ fn a_blocked_tasks_mark_says_what_it_needs_and_is_never_the_mark_of_one_that_wen
 
 #[test]
 fn the_words_beside_the_mark_agree_with_the_kind() {
+    // A frozen clock: "0s ago" is the test's own age, whatever the machine's speed.
+    sw::clock::set(Some(sw::clock::now()));
     assert!(has(&page(&asks(Some("question")), 80, false), r"\n State        \? asks you · 0s ago\n") && has(&page(&asks(Some("question")), 80, false), r"\n Asks you ─+\n What one job must v1 nail\?"), "{}", page(&asks(Some("question")), 80, false));
     assert!(has(&page(&asks(Some("permission")), 80, false), r"\n State        ! asks for your OK · 0s ago\n") && has(&page(&asks(Some("permission")), 80, false), r"\n Asks for your OK ─+\n"));
     assert!(has(&page(&asks(Some("auth")), 80, false), r"\n State        @ needs a login · 0s ago\n") && has(&page(&asks(Some("auth")), 80, false), r"\n Needs a login ─+\n"));

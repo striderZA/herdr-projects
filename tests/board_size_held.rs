@@ -5,19 +5,27 @@
 use crate::common;
 use common::board::{open, Board};
 use common::*;
+#[cfg(unix)]
 use serde_json::json;
+#[cfg(unix)]
 use sw::board::keys::key_name;
 use sw::board::state::Held;
 use sw::board::update::size::Shown;
 use sw::board::update::{update, Effect, Event};
 
 fn has(text: &str, re: &str) -> bool { regex::Regex::new(re).unwrap().is_match(text) }
+#[cfg(unix)]
 fn squash(lines: &[String]) -> String { regex::Regex::new(r"\s+").unwrap().replace_all(&lines.join(" "), " ").to_string() }
+#[cfg(unix)]
 fn set(k: &str, v: &str) { unsafe { std::env::set_var(k, v) } }
+#[cfg(unix)]
 fn unset(k: &str) { unsafe { std::env::remove_var(k) } }
 /// One look, as the board's runtime takes it every five seconds, for a terminal of this size.
+#[cfg(unix)]
 fn look(b: &mut Board, cols: u16, rows: u16) { let h = sw::board::run::held::look(cols, rows); update(&mut b.s, Event::Held(h, sw::board::run::held::viewed())); }
 
+// Unix only: the test reads the signal that ended a process: a Unix signal
+#[cfg(unix)]
 #[test]
 fn the_board_says_so_top_left_when_another_view_holds_its_panes_size_and_stops_when_the_size_is_its_own_again() {
     let w = world();
@@ -45,7 +53,7 @@ fn the_board_says_so_top_left_when_another_view_holds_its_panes_size_and_stops_w
         assert!(!has(&s.screen(width).join("\n"), r"kill \d+"));
     }
     {
-        let mut view = std::process::Command::new("sleep").arg("30").spawn().unwrap(); // stands for the remote view's process
+        let mut view = crate::common::sleeper(30).spawn().unwrap(); // stands for the remote view's process
         s.s.held.as_mut().unwrap().by = vec![(view.id() as i64, 2400)];
         s.press(&["ctrl+k"]);
         use std::os::unix::process::ExitStatusExt;

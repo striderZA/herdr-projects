@@ -187,9 +187,9 @@ fn merged_with(w: &World, flag: &str) -> Obj {
 #[cfg(target_os = "linux")]
 #[test]
 fn real_programs_a_helper_is_wired_to_the_agent_and_a_command_left_running_is_not() {
-    use std::process::{Command, Stdio};
+    use std::process::Stdio;
     let me = std::process::id() as i64;
-    let sleep = |i: Stdio, o: Stdio| Command::new("sleep").arg("30").stdin(i).stdout(o).stderr(Stdio::null()).spawn().unwrap();
+    let sleep = |i: Stdio, o: Stdio| crate::common::sleeper(30).stdin(i).stdout(o).stderr(Stdio::null()).spawn().unwrap();
     let wired = |c: &std::process::Child, group: &[i64]| sw::herdr::procs::real_wired_to(c.id() as i64, group);
     // talks to this process through pipes, as an MCP server does with its agent: a helper
     let mut piped = sleep(Stdio::piped(), Stdio::piped());

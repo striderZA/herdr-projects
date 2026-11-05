@@ -30,7 +30,7 @@ impl Bench {
     fn stub(&self, name: &str, body: &str) {
         let p = self.base.join("bin").join(name);
         std::fs::write(&p, format!("#!/bin/sh\n{body}\n")).unwrap();
-        std::fs::set_permissions(&p, std::os::unix::fs::PermissionsExt::from_mode(0o755)).unwrap();
+        sw::sys::set_mode(&p, 0o755).unwrap();
     }
     fn git(&self, a: &[&str]) {
         let o = Command::new("git").args(a).current_dir(self.base.join("proj")).env("GIT_CONFIG_GLOBAL", "/dev/null").env("GIT_CONFIG_NOSYSTEM", "1").output().unwrap();
@@ -51,7 +51,7 @@ impl Bench {
     fn check(&self, env: &[(&str, &str)]) -> (i32, String, String) { self.sh(&["scripts/check.sh", "--all"], env) }
     /// Another check running now: a live process, written down as a running check writes itself down.
     fn another(&mut self) -> u32 {
-        let c = Command::new("sleep").arg("60").spawn().unwrap();
+        let c = crate::common::sleeper(60).spawn().unwrap();
         let pid = c.id();
         self.others.push(c);
         std::fs::create_dir_all(self.running()).unwrap();
@@ -83,6 +83,8 @@ fn files(dir: &Path) -> Vec<String> {
 }
 
 #[test]
+// Runs a script through /bin/sh: Unix-only (Windows has no /bin/sh).
+#[cfg(unix)]
 fn real_programs_a_lone_check_starts_in_an_empty_home_on_every_core_and_says_why_it_stopped() {
     let b = Bench::new("empty");
     let (code, err, saw) = b.check(&[]);
@@ -96,6 +98,8 @@ fn real_programs_a_lone_check_starts_in_an_empty_home_on_every_core_and_says_why
 }
 
 #[test]
+// Runs a script through /bin/sh: Unix-only (Windows has no /bin/sh).
+#[cfg(unix)]
 fn real_programs_the_cores_are_shared_between_the_checks_running_now_and_one_that_died_is_not_counted() {
     let mut b = Bench::new("shared");
     let one = b.another();
@@ -115,6 +119,8 @@ fn real_programs_the_cores_are_shared_between_the_checks_running_now_and_one_tha
 }
 
 #[test]
+// Runs a script through /bin/sh: Unix-only (Windows has no /bin/sh).
+#[cfg(unix)]
 fn real_programs_your_own_job_count_wins_and_reaches_cargo_as_its_jobs_not_where_the_build_cache_keys_on_it() {
     let mut b = Bench::new("yours");
     b.another();
@@ -126,6 +132,8 @@ fn real_programs_your_own_job_count_wins_and_reaches_cargo_as_its_jobs_not_where
 }
 
 #[test]
+// Runs a script through /bin/sh: Unix-only (Windows has no /bin/sh).
+#[cfg(unix)]
 fn real_programs_the_tests_run_on_the_share_when_they_start_or_on_your_own_count() {
     let mut b = Bench::new("tests");
     // a cargo that builds one test program, which writes down how many threads it was given
@@ -149,6 +157,8 @@ fn real_programs_the_tests_run_on_the_share_when_they_start_or_on_your_own_count
 }
 
 #[test]
+// Runs a script through /bin/sh: Unix-only (Windows has no /bin/sh).
+#[cfg(unix)]
 fn real_programs_a_check_that_stops_before_it_starts_says_why_once() {
     let b = Bench::new("refused");
     let (code, err, saw) = {

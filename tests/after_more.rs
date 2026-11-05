@@ -14,6 +14,8 @@ fn has(text: &str, re: &str) -> bool { regex::Regex::new(re).unwrap().is_match(t
 #[test]
 fn the_board_shows_what_a_task_waits_for_and_its_key_asks_before_it_starts_one_early() {
     let w = world();
+    // A frozen clock: the ages on the screen read "0s", whatever the machine's speed.
+    sw::clock::set(Some(sw::clock::now()));
     w.script(json!({ "worker": [step(1)] }));
     let dep = w.add("Change the skill");
     let id = w.add("Take it in");

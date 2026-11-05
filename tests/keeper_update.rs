@@ -5,7 +5,6 @@
 use crate::common;
 use common::*;
 use std::io::Write;
-use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
@@ -20,7 +19,7 @@ fn copy(w: &World) -> PathBuf {
 fn start(w: &World, exe: &Path) -> std::process::Child {
     let herdr = w.base.join("bin").join("herdr");
     std::fs::write(&herdr, "#!/bin/sh\necho '{\"workspaces\":[]}'\n").unwrap();
-    std::fs::set_permissions(&herdr, std::fs::Permissions::from_mode(0o755)).unwrap();
+    sw::sys::set_mode(&herdr, 0o755).unwrap();
     std::process::Command::new(exe).arg("keeper").current_dir(&w.root)
         .env_remove("HERDR_PROJECTS_NO_KEEPER").env_remove("HERDR_PROJECTS_INLINE")
         .env("HERDR_BIN_PATH", &herdr).env("HERDR_PROJECTS_STAMP_MS", "100")
@@ -31,13 +30,15 @@ fn log() -> String { std::fs::read_to_string(sw::store::files::data_dir().join("
 /// The keepers that started, by their process numbers, in order.
 fn started() -> Vec<i64> { log().lines().filter(|l| l.contains(" started (plugin")).filter_map(|l| l.split(' ').nth(1)?.parse().ok()).collect() }
 fn until(ms: u64, done: impl Fn() -> bool) -> bool { let end = Instant::now() + Duration::from_millis(ms); while Instant::now() < end { if done() { return true; } std::thread::sleep(Duration::from_millis(20)); } done() }
-fn alive(pid: i64) -> bool { unsafe { libc::kill(pid as i32, 0) == 0 } }
+fn alive(pid: i64) -> bool { sw::sys::pid_alive(pid) }
 /// The new program in the old one's place, as cargo puts it: the old file goes (the running keeper's own file is then
 /// "… (deleted)") and a new one takes its path, with a later time.
 fn replace(exe: &Path, write: impl FnOnce(&Path)) {
-    std::fs::remove_file(exe).unwrap();
+    // Windows will not delete a program that is running: the old one is moved aside (it goes when the keeper exits).
+    #[cfg(windows)] std::fs::rename(exe, exe.with_extension("old")).unwrap();
+    #[cfg(not(windows))] std::fs::remove_file(exe).unwrap();
     write(exe);
-    std::fs::set_permissions(exe, std::fs::Permissions::from_mode(0o755)).unwrap();
+    sw::sys::set_mode(exe, 0o755).unwrap();
     std::fs::File::options().write(true).open(exe).unwrap().set_modified(std::time::SystemTime::now() + Duration::from_secs(60)).unwrap();
 }
 /// After the update: the old keeper has gone and its successor, a new process, is the one keeper, beating. It is
@@ -52,9 +53,10 @@ fn successor_runs(mut old: std::process::Child) {
     let beat: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(sw::store::files::data_dir().join("keeper.json")).unwrap()).unwrap();
     assert_eq!(beat["pid"], next, "{}", log());
     assert!(alive(next));
-    unsafe { libc::kill(next as i32, libc::SIGTERM); }
+    sw::sys::send_signal(next, sw::sys::TERM_SIGNAL);
     assert!(until(10000, || !alive(next)), "the successor did not stop");
-    assert!(log().ends_with("ending: a signal\n"), "{}", log());
+    // Windows has no soft signal: TERM is a kill that runs no code, so the successor cannot write its own ending.
+    #[cfg(unix)] assert!(log().ends_with("ending: a signal\n"), "{}", log());
 }
 
 #[test]

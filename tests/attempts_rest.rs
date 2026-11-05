@@ -70,7 +70,8 @@ fn each_attempt_has_a_tab_in_the_tasks_one_space_and_a_check_changed_while_it_wa
     let labels: Vec<String> = w.state().arr("tabs").iter().filter(|x| x.s("workspace_id") == space).map(|x| x.t("label")).collect();
     assert_eq!(labels, vec!["Agent A", "Agent B", "Agent C"], "the Picker's tab closed");
     assert_eq!(sw::store::tasks::list(Default::default()).len(), 1, "no task of its own for an attempt");
-    assert!(kid(&id, "A").at("diff").s("file").ends_with("/1a/artifacts/diff.txt"), "{}", kid(&id, "A").at("diff"));
+    let diff = std::path::Path::new("1a").join("artifacts").join("diff.txt").to_string_lossy().into_owned();
+    assert!(kid(&id, "A").at("diff").s("file").ends_with(&diff), "{}", kid(&id, "A").at("diff"));
     let shown = b.text();
     assert!(!shown.contains("Asks for your OK"), "{shown}");
     like(&shown, r"  C +claude");
