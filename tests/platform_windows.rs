@@ -91,6 +91,38 @@ fn a_silent_server_times_out_and_the_connection_is_let_go() {
 }
 
 #[test]
+fn an_empty_read_returns_at_once_and_waits_for_nothing() {
+    // Read's contract: an empty buffer reads nothing and returns at once. The server here answers nothing, so a read that
+    // waited for an answer would time out; and the empty read must leave nothing pending for the next read to take.
+    let name = pipe_name("empty-read");
+    let listener = common::pipe::Listener::bind(&name).unwrap();
+    let (done_tx, done_rx) = std::sync::mpsc::channel::<()>();
+    let server = std::thread::spawn(move || {
+        let mut s = listener.accept().unwrap();
+        let mut buf = [0u8; 64];
+        let _ = s.read(&mut buf);
+        // Keeps the pipe open until the client is done with it.
+        let _ = done_rx.recv();
+    });
+    let (empty, took, after) = within(10, "the empty read", move || {
+        let mut c = sw::sys::connect_local(&name).unwrap();
+        c.set_read_timeout(Some(Duration::from_secs(5))).unwrap();
+        c.write_all(b"ask\n").unwrap();
+        let started = Instant::now();
+        let empty = c.read(&mut []).map_err(|e| e.kind());
+        let took = started.elapsed();
+        c.set_read_timeout(Some(Duration::from_millis(200))).unwrap();
+        let after = c.read(&mut [0u8; 8]).map_err(|e| e.kind());
+        (empty, took, after)
+    });
+    assert_eq!(empty, Ok(0), "an empty read returned something other than Ok(0)");
+    assert!(took < Duration::from_secs(2), "the empty read waited {took:?} for the server");
+    assert_eq!(after, Err(std::io::ErrorKind::TimedOut), "the empty read left data for the next read");
+    done_tx.send(()).unwrap();
+    server.join().unwrap();
+}
+
+#[test]
 fn a_file_a_program_runs_from_is_replaced_and_the_program_keeps_running() {
     let dir = folder("running");
     let prog = dir.join("prog.exe");

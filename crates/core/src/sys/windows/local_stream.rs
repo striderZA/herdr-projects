@@ -74,6 +74,10 @@ impl LocalStream {
 
 impl Read for LocalStream {
     fn read(&mut self, out: &mut [u8]) -> io::Result<usize> {
+        // An empty buffer asks for nothing: no request is sent, and nothing is waited for (Read's contract).
+        if out.is_empty() {
+            return Ok(0);
+        }
         if self.pending.is_empty() {
             if self.ended {
                 return Ok(0);
