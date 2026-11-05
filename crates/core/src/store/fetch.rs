@@ -126,7 +126,7 @@ mod tests {
     fn plain_words() {
         assert!(locked("error: cannot lock ref 'refs/remotes/origin/main': is at 27 but expected 68") && moved("is at 27 but expected 68"));
         let held = "error: cannot lock ref 'refs/remotes/origin/main': Unable to create '/r/.git/refs/remotes/origin/main.lock': File exists.";
-        assert!(locked(held) && !moved(held) && plain(held, "main").starts_with("git's lock file /r/.git/refs/remotes/origin/main.lock stayed"), "{}", plain(held, "main"));
+        assert!(locked(held) && !moved(held) && plain(held, "main").starts_with(&format!("git's lock file {} stayed", native("/r/.git/refs/remotes/origin/main.lock"))), "{}", plain(held, "main"));
         assert!(plain("error: cannot lock ref 'refs/remotes/origin/main': is at 27 but expected 68", "main").starts_with("another fetch"));
         assert!(plain("fatal: couldn't find remote ref trunk", "trunk").starts_with("origin has no branch trunk"));
         assert!(plain("git@github.com: Permission denied (publickey).\nfatal: Could not read from remote repository.", "main").starts_with("origin asked for a login"));
