@@ -343,6 +343,16 @@ whole check passed there too). A test holds on both when it asks what both have:
 
 A new area of that kind goes in the macOS job's list.
 
+## On Windows too
+
+Run the check from Git Bash, whose `sh` runs `scripts/check.sh`. Without MSVC, use the MinGW toolchain: `RUSTUP_TOOLCHAIN=stable-x86_64-pc-windows-gnu npm run check`. The CI workflow runs the whole check on a Windows runner (`.github/workflows/ci.yml`, job `windows`). A test holds on Windows when it asks what Windows has:
+
+- a process's start time through the platform layer, not `/proc` (Windows has none);
+- a command line quoted for the pane's shell (`util::shell_word`): PowerShell quotes differently from `sh`;
+- a test that needs a Unix program (`sh`, `chmod`, `ps`, `flock`) is gated with `#[cfg(unix)]` and its reason, not left to fail.
+
+Two tests make links, which Windows allows only with Developer Mode on or as an administrator (error 1314). Their link steps are gated with `#[cfg(unix)]` and that reason, so on Windows those lines are not checked.
+
 ## Looking at the real thing
 
 Tests read the board as text and as frames. A real terminal is only for a task that changes what the board looks like. For any other task, the tests are the evidence.

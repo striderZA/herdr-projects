@@ -144,6 +144,20 @@ Everything the board keeps for you is in one folder, `~/.herdr-projects/`: [the 
 what takes the marked blocks out of `config.toml` and removes the how-to files ([roles and commands](roles-and-commands.md)).
 
 
+## Windows
+
+Windows is not in the plugin's list of platforms yet: the manifest lists Linux and macOS until a live run on a real Windows machine passes. [windows.md](windows.md) says what differs there. Once it lists Windows, you need:
+
+- Windows on x86_64.
+- Herdr 0.9.4 or newer, running. The board checks herdr's version when it starts and refuses an older one on Windows, naming the version it needs.
+- PowerShell 7 (`pwsh.exe`) as herdr's default shell, set by `default_shell` in herdr's `config.toml`. Without it herdr uses Windows PowerShell 5.1.
+
+Install with the same command as on Linux and macOS, in PowerShell:
+
+    herdr plugin install eliasstravik/herdr-projects
+
+Herdr runs `bin/run.ps1` on Windows. It runs the program built from this checkout when there is one, and otherwise the release file `herdr-projects-windows-x86_64.exe`, downloaded and checked against its `.sha256`.
+
 ## Details: which program runs
 
 The program is one file per platform: `herdr-projects-linux-x86_64`, `-linux-aarch64`, `-macos-x86_64`,
