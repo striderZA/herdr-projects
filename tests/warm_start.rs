@@ -13,6 +13,13 @@ impl Bench {
         let base = std::env::temp_dir().join(format!("sw-warm-start-{}-{name}", std::process::id()));
         let _ = std::fs::remove_dir_all(&base);
         std::fs::create_dir_all(base.join("repo/src")).unwrap();
+        // A stand-in rustc on the script's PATH: the script records the compiler with each build it keeps. The real
+        // rustup proxy, run by several of these tests at once, sometimes prints nothing (macOS-15 CI), so a kept build
+        // looked made by no compiler at all and was not used.
+        std::fs::create_dir_all(base.join("bin")).unwrap();
+        std::fs::write(base.join("bin/rustc"), "#!/bin/sh\necho 'rustc 1.0.0 (stand-in)'\n").unwrap();
+        #[cfg(unix)]
+        { use std::os::unix::fs::PermissionsExt; std::fs::set_permissions(base.join("bin/rustc"), std::fs::Permissions::from_mode(0o755)).unwrap(); }
         // The folder as the script's `pwd` gives it: macOS's temp folder is under /var, which is /private/var.
         let b = Bench { base: sw::sys::plain_path(base.canonicalize().unwrap()) };
         b.git("repo", &["init", "-q", "-b", "main"]);
@@ -56,6 +63,7 @@ impl Bench {
         let built = if build { format!("mkdir -p target/quick && echo 'built in {wt}' > target/quick/herdr-projects") } else { ":".into() };
         let o = Command::new("/bin/sh").arg("-c").arg(format!("set -e; . '{}'; ws_seed; {built}; ws_keep", script.display()))
             .current_dir(self.dir(wt)).env("XDG_CACHE_HOME", self.base.join("cache")).env_remove("HERDR_PROJECTS_NO_WARM")
+            .env("PATH", format!("{}:{}", self.base.join("bin").display(), std::env::var("PATH").unwrap_or_default()))
             .env_remove("CARGO_TARGET_DIR").env("GIT_CONFIG_GLOBAL", "/dev/null").env("GIT_CONFIG_NOSYSTEM", "1").output().unwrap();
         assert!(o.status.success(), "the setup's steps failed: {}", String::from_utf8_lossy(&o.stderr));
         String::from_utf8_lossy(&o.stdout).into_owned()
