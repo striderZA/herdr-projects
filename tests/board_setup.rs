@@ -106,6 +106,7 @@ fn the_key_that_opens_the_board_is_found_in_any_spelling() {
         ("an inline array under [keys]", format!("[keys]\ncommand = [{{ key = \"prefix+w\", type = \"plugin_action\", {open} }}]\n")),
         ("a top-level dotted key", format!("keys.command = [{{ key = \"alt+x\", {open} }}, {{ key = \"prefix+w\", type = \"plugin_action\", {open} }}]\n")),
         ("after another command", format!("[[keys.command]]\nkey = \"alt+x\"\ncommand = \"other.thing\"\n\n[[keys.command]]\nkey = \"prefix+w\"\n{open}\n")),
+        ("the Windows action", format!("[[keys.command]]\nkey = \"prefix+w\"\ntype = \"plugin_action\"\ncommand = \"herdr-projects.open-windows\"\n")),
     ] {
         std::fs::write(&file, &text).unwrap();
         let want = if how == "a top-level dotted key" { "alt+x" } else { "prefix+w" };
@@ -154,4 +155,20 @@ fn text_to_paste_is_whole_in_a_small_window_the_arrows_scroll_it_and_any_other_k
     assert!(b.text().contains("any key continues"));
     b.press(&["down"]);
     assert!(b.s.paste_text.is_empty());
+}
+
+#[test]
+fn the_key_the_board_writes_names_an_action_this_platform_runs() {
+    // herdr refuses an action on a platform its manifest does not list it for: the key must name the one that runs here.
+    let block: toml::Table = sw::extras::block_text("key", "prefix+a").parse().unwrap();
+    let command = block.get("keys").and_then(toml::Value::as_table).and_then(|k| k.get("command")).and_then(toml::Value::as_array)
+        .and_then(|a| a.first()).and_then(toml::Value::as_table).and_then(|c| c.get("command")).and_then(toml::Value::as_str).unwrap().to_string();
+    let manifest: toml::Table = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/herdr-plugin.toml")).parse().unwrap();
+    let here = if cfg!(windows) { "windows" } else if cfg!(target_os = "macos") { "macos" } else { "linux" };
+    let listed = manifest.get("actions").and_then(toml::Value::as_array).into_iter().flatten().filter_map(toml::Value::as_table).any(|a| {
+        let id = a.get("id").and_then(toml::Value::as_str).unwrap_or_default();
+        let platforms: Vec<&str> = a.get("platforms").and_then(toml::Value::as_array).into_iter().flatten().filter_map(toml::Value::as_str).collect();
+        format!("herdr-projects.{id}") == command && platforms.contains(&here)
+    });
+    assert!(listed, "{command} is not an action the manifest lists for {here}");
 }
