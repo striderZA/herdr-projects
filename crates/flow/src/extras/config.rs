@@ -19,7 +19,7 @@ fn begin(what: &str) -> String { format!("# >>> herdr-projects {what} (added by 
 fn end(what: &str) -> String { format!("# <<< herdr-projects {what}") }
 fn block(what: &str, arg: &str) -> String {
     match what {
-        "key" => format!("[[keys.command]]\nkey = \"{arg}\"\ntype = \"plugin_action\"\ncommand = \"herdr-projects.open\"\ndescription = \"work board\""),
+        "key" => format!("[[keys.command]]\nkey = \"{arg}\"\ntype = \"plugin_action\"\ncommand = \"{}\"\ndescription = \"work board\"", keys::board_action()),
         // Row 1: herdr's dot, the machine where there is more than one, and the space's name, which for a task is its
         // number and title (flow/sidebar.rs); the tab's name too, but not a task's own tabs. Row 2: who is on it and
         // where it stands. Row 3: what it says, its percent and time left.
@@ -42,7 +42,7 @@ fn herdr_out(a: &[&str], env: Option<(&str, String)>) -> Option<(i32, String)> {
 pub fn offers() -> Value {
     let text = read();
     let x = extras();
-    let bound = regex::Regex::new(r#"command\s*=\s*["']herdr-projects\.open["']"#).unwrap().is_match(&text);
+    let bound = regex::Regex::new(r#"command\s*=\s*["']herdr-projects\.open(?:-windows)?["']"#).unwrap().is_match(&text);
     let offer_key = !bound && x.s("key") != "no"; // an existing binding is left as it is
     let (key, note) = if offer_key && !x.b("asked") { keys::suggest(&text, &keys::defaults()) } else { (String::new(), String::new()) };
     // Rows of the user's own, in any spelling, are kept: ours added beside them would make herdr reject the file.
