@@ -60,7 +60,7 @@ fn real_programs_a_link_in_a_temporary_folder_s_place_is_never_followed() {
     let yours = w.base.join("home/projects/site");
     std::fs::create_dir_all(&yours).unwrap();
     std::fs::write(yours.join("index.html"), "mine\n").unwrap();
-    let mut server = crate::common::sleeper(60).current_dir(&yours).spawn().unwrap();
+    let mut server = crate::common::sleeper(600).current_dir(&yours).spawn().unwrap();
     std::fs::remove_dir(&tmp).unwrap();
     sw::sys::symlink(&yours, &tmp).unwrap();
     assert_eq!(sw::leftovers::free(&t), 0);

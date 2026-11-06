@@ -121,7 +121,7 @@ fn real_programs_what_runs_from_a_task_s_temporary_folder_is_stopped_before_the_
     let t = task(&id);
     let tmp = sw::temp::made(&t);
     std::fs::create_dir_all(tmp.join("preview")).unwrap();
-    let mut server = crate::common::sleeper(60).current_dir(tmp.join("preview")).spawn().unwrap();
+    let mut server = crate::common::sleeper(600).current_dir(tmp.join("preview")).spawn().unwrap();
     assert_eq!(sw::leftovers::procs::in_folder(&tmp), vec![server.id() as i32]);
     assert!(sw::leftovers::procs::in_folder(&w.root).is_empty());
     sw::leftovers::free(&t);

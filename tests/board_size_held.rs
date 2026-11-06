@@ -53,7 +53,7 @@ fn the_board_says_so_top_left_when_another_view_holds_its_panes_size_and_stops_w
         assert!(!has(&s.screen(width).join("\n"), r"kill \d+"));
     }
     {
-        let mut view = crate::common::sleeper(30).spawn().unwrap(); // stands for the remote view's process
+        let mut view = crate::common::sleeper(600).spawn().unwrap(); // stands for the remote view's process
         s.s.held.as_mut().unwrap().by = vec![(view.id() as i64, 2400)];
         s.press(&["ctrl+k"]);
         use std::os::unix::process::ExitStatusExt;

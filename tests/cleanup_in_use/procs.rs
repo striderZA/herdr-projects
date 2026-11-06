@@ -10,7 +10,7 @@ use std::process::{Child, Stdio};
 use sw::actions::{archive, filing, finish_line};
 use sw::json::*;
 
-fn sleep_in(dir: &Path) -> Child { crate::common::sleeper(60).current_dir(dir).stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null()).spawn().unwrap() }
+fn sleep_in(dir: &Path) -> Child { crate::common::sleeper(600).current_dir(dir).stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null()).spawn().unwrap() }
 fn ended(c: &mut Child) -> bool { (0..250).any(|_| { if c.try_wait().unwrap().is_some() { return true; } std::thread::sleep(std::time::Duration::from_millis(20)); false }) }
 fn running(c: &mut Child) -> bool { c.try_wait().unwrap().is_none() }
 fn done_with(c: &mut Child) { let _ = c.kill(); let _ = c.wait(); }

@@ -19,7 +19,7 @@ fn working(w: &World, flags: Value) -> Obj {
 }
 fn killed(w: &World) -> Vec<i64> { w.state().arr("killed").iter().filter_map(|v| v.as_i64()).collect() }
 fn sleep_in(dir: &std::path::Path, env: &[(&str, &std::path::Path)]) -> Child {
-    let mut c = crate::common::sleeper(60);
+    let mut c = crate::common::sleeper(600);
     c.current_dir(dir).stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null());
     for (k, v) in env { c.env(k, v); }
     c.spawn().unwrap()
@@ -70,7 +70,7 @@ fn what_runs_from_its_worktree_or_temporary_folder_is_ended_your_checkout_is_not
     assert!(yours.try_wait().unwrap().is_none() && !said.msg.contains(&format!("pid {})", yours.id())), "{}", said.msg);
     if cfg!(target_os = "linux") {
         assert!(away.try_wait().unwrap().is_none(), "named, not ended");
-        assert!(said.msg.contains(&format!("Still running, end it yourself: {} (pid {}), in {}.", crate::common::sleep_text(60), away.id(), sw::sys::canonicalize(&w.base).unwrap().display())), "{}", said.msg);
+        assert!(said.msg.contains(&format!("Still running, end it yourself: {} (pid {}), in {}.", crate::common::sleep_text(600), away.id(), sw::sys::canonicalize(&w.base).unwrap().display())), "{}", said.msg);
     }
     for c in [&mut yours, &mut away] { let _ = c.kill(); let _ = c.wait(); }
 }
