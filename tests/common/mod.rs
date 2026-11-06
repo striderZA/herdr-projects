@@ -9,9 +9,11 @@ pub mod fixtures;
 pub mod gh;
 pub mod herdr;
 pub mod opener;
+pub mod origin;
 pub mod panes;
 pub mod pipe;
 pub mod worktrees;
+pub use origin::{reach, reach_push, ORIGIN_URL};
 
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
@@ -115,8 +117,8 @@ pub fn world_with(o: Opts) -> World {
         std::fs::write(root.join("a.txt"), "one\n").unwrap();
         if let Some(rs) = &o.repo_settings { std::fs::write(root.join(".herdr-projects.json"), rs.to_string()).unwrap(); }
         git(&root, &["add", "-A"]); git(&root, &["commit", "-qm", "init"]);
-        // A Windows path (C:/...) would be read by git as a host, so the origin URL uses forward slashes.
-        if o.origin { let bare = base.join("origin.git"); git(&base, &["init", "-q", "--bare", "-b", "main", &bare.display().to_string()]); git(&root, &["remote", "add", "origin", &bare.display().to_string().replace('\\', "/")]); git(&root, &["push", "-q", "-u", "origin", "main"]); }
+        // The origin is a GitHub URL (ORIGIN_URL), reached at the bare repo by insteadOf: gh is asked for o/r, as for the real one.
+        if o.origin { let bare = base.join("origin.git"); git(&base, &["init", "-q", "--bare", "-b", "main", &bare.display().to_string()]); git(&root, &["remote", "add", "origin", ORIGIN_URL]); reach(&root, &bare.display().to_string()); git(&root, &["push", "-q", "-u", "origin", "main"]); }
     }
     let fake = Rc::new(herdr::FakeHerdr { st: std::cell::RefCell::new(herdr::empty()), dir: base.join("fake"), script: std::cell::RefCell::new(json!({})), env: vec![] });
     std::fs::create_dir_all(base.join("fake")).unwrap();

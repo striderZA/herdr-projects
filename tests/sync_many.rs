@@ -82,7 +82,7 @@ fn a_finished_turn_whose_remote_cannot_be_reached_at_all_waits_before_its_push_a
     delegate(&id);
     assert_eq!(settle(&id).s("stage"), "asks");
     // neither fetching nor pushing works
-    git(&w.root, &["remote", "set-url", "origin", &gone]);
+    reach(&w.root, &gone);
     talk::tell(&id, "The first one.", false).unwrap();
     let t = settle(&id);
     assert_eq!(t.s("stage"), "approval", "{}", t.at("failure")); assert!(t.at("failure").is_null(), "{}", t.at("failure")); assert!(!t.b("reviewedHead")); assert!(!t.b("pr"));
@@ -97,7 +97,7 @@ fn a_finished_turn_whose_remote_cannot_be_reached_at_all_waits_before_its_push_a
     let t = settle(&id);
     assert_eq!(t.s("stage"), "approval"); assert!(t.at("syncBlocked").b("rerun"), "{}", t.at("syncBlocked")); assert!(t.at("failure").is_null());
     // the remote answers: pushed, its pull request opened, and ready to approve
-    git(&w.root, &["remote", "set-url", "origin", &bare]);
+    reach(&w.root, &bare);
     update(&id, |t| { t.put("syncRetryAt", sw::clock::now() - 1); Ok(Change::Write) }).unwrap();
     housekeep(&w);
     let t = settle(&id);
@@ -114,8 +114,8 @@ fn a_merge_that_cannot_fetch_main_waits_as_behind_main_and_is_not_failed_and_goe
     let id = to_approval(&w, "Approved");
     // main cannot be fetched now, pushing still works
     let (bare, gone) = (w.base.join("origin.git").display().to_string(), w.base.join("gone.git").display().to_string());
-    git(&w.root, &["remote", "set-url", "--push", "origin", &bare]);
-    git(&w.root, &["remote", "set-url", "origin", &gone]);
+    reach_push(&w.root, &bare);
+    reach(&w.root, &gone);
     finish_line::approve(&id, None, false).unwrap();
     let t = settle(&id);
     assert_eq!(t.s("stage"), "approval"); assert!(t.at("failure").is_null(), "{}", t.at("failure")); assert!(!t.b("mergeFailed")); assert!(t.at("mergeIntent").is_null());
@@ -124,7 +124,7 @@ fn a_merge_that_cannot_fetch_main_waits_as_behind_main_and_is_not_failed_and_goe
     assert!(t.s("msg").starts_with("Behind main")); assert_ne!(row(&id).s("state"), "error");
     assert!(!gh_log(&w).contains("pr merge"), "nothing merged on a main it could not see");
     // the remote answers again: the board's own retry clears it, and the approval goes through
-    git(&w.root, &["remote", "set-url", "origin", &bare]);
+    reach(&w.root, &bare);
     update(&id, |t| { t.put("syncRetryAt", sw::clock::now() - 1); Ok(Change::Write) }).unwrap();
     housekeep(&w);
     let t = settle(&id);

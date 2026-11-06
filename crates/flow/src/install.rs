@@ -28,12 +28,7 @@ pub fn releases(exe: &Path) -> String {
 /// `herdr plugin install` clones it, and the program is in its bin/). The upstream repo when there is no such checkout,
 /// as for a program run from anywhere else.
 pub fn repo_of(exe: &Path) -> String {
-    exe.parent().filter(|d| d.file_name().is_some_and(|n| n == "bin")).and_then(Path::parent).and_then(origin_repo).unwrap_or_else(|| UPSTREAM.to_string())
-}
-/// The `owner/name` of the origin remote of the checkout at `root`, when it is a GitHub repo.
-fn origin_repo(root: &Path) -> Option<String> {
-    let out = std::process::Command::new("git").arg("-C").arg(root).args(["remote", "get-url", "origin"]).stderr(std::process::Stdio::null()).output().ok()?;
-    out.status.success().then(|| repo_of_remote(&String::from_utf8_lossy(&out.stdout))).flatten()
+    exe.parent().filter(|d| d.file_name().is_some_and(|n| n == "bin")).and_then(Path::parent).and_then(crate::flow::git::origin_repo).unwrap_or_else(|| UPSTREAM.to_string())
 }
 /// `owner/name` of a GitHub remote URL (https, ssh, or the scp form `git@github.com:owner/name`), or None for any other.
 pub fn repo_of_remote(url: &str) -> Option<String> {

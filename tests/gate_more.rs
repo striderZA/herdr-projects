@@ -113,6 +113,6 @@ fn the_pull_request_shows_every_finding_those_below_the_gate_marked_not_required
     let t = settle(&id);
     assert_eq!(t.s("stage"), "approval", "{}", t.at("failure"));
     let log = gh_log(&w);
-    assert!(re(r"pr comment 7 --body \*\*Review 1 · Pass · 1 minor\*\*[\s\S]*\*\*Not required \(below the gate\)\*\*\n- \*\*minor\*\*: The name could be clearer \(`f\.txt`\)", &log), "{log}");
+    assert!(re(r"pr comment https://github\.com/o/r/pull/7 --body \*\*Review 1 · Pass · 1 minor\*\*[\s\S]*\*\*Not required \(below the gate\)\*\*\n- \*\*minor\*\*: The name could be clearer \(`f\.txt`\)", &log), "{log}");
 
 }
