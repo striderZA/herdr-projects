@@ -28,9 +28,7 @@ fn a_merged_task_s_dev_server_in_its_worktree_is_ended_before_the_worktree_goes_
     assert_eq!(c.s("stage"), "done", "{}", c.at("failure"));
     assert!(ended(&mut server), "{}", c.s("msg"));
     assert!(!Path::new(t.s("worktree")).exists() && c.b("cleaned") && !c.b("kept") && !c.b("stillRunning"), "{c:?}");
-    // The command line can be unreadable on Windows under load: the board then names it "a process (pid X)"; the pid is
-    // the part that must be there.
-    assert!(c.s("msg").contains("Ended what it started: ") && c.s("msg").contains(&format!("(pid {})", server.id())) && !c.s("msg").contains("Kept:"), "{}", c.s("msg"));
+    assert!(c.s("msg").contains(&format!("Ended what it started: {} (pid {}).", crate::common::sleep_text(600), server.id())) && !c.s("msg").contains("Kept:"), "{}", c.s("msg"));
     assert!(running(&mut yours) && !c.s("msg").contains(&format!("pid {})", yours.id())), "{}", c.s("msg"));
     done_with(&mut yours);
 }
@@ -43,7 +41,7 @@ fn clear_ends_it_too_and_what_runs_in_another_of_its_panes_is_left_and_named() {
     let mut server = sleep_in(Path::new(t.s("worktree")));
     let (_, kept, ends) = archive::clear(&id).unwrap();
     assert!(ended(&mut server) && !Path::new(t.s("worktree")).exists(), "{kept:?} {ends:?}");
-    assert!(ends.said().starts_with("Ended what it started: ") && ends.said().contains(&format!("(pid {})", server.id())), "{:?}", ends.said());
+    assert_eq!(ends.said(), format!("Ended what it started: {} (pid {}).", crate::common::sleep_text(600), server.id()));
     // a pane you split off in its space, whose shell (this test's process) runs a command in its worktree
     w.script(json!({ "worker": [{ "files": { "g.txt": "x\n" }, "commit": "g", "note": "Did it." }] }));
     let id = to_approval(&w, "Yours beside it");
@@ -53,7 +51,7 @@ fn clear_ends_it_too_and_what_runs_in_another_of_its_panes_is_left_and_named() {
     let (mut theirs, wt) = (sleep_in(Path::new(t.s("worktree"))), real(t.s("worktree")));
     let (_, _, ends) = archive::clear(&id).unwrap();
     assert!(running(&mut theirs), "{:?}", ends);
-    assert!(ends.said().contains(&format!("(pid {}), in {wt}, from another of its panes.", theirs.id())), "{:?}", ends.said());
+    assert_eq!(ends.said(), format!("Still running, end it yourself: {} (pid {}), in {wt}, from another of its panes.", crate::common::sleep_text(600), theirs.id()));
     done_with(&mut theirs);
 }
 
@@ -72,11 +70,8 @@ fn a_worktree_kept_for_its_uncommitted_changes_ends_nothing_and_archive_names_wh
     let a = archive::archive(&id).unwrap();
     let wt = real(t.s("worktree"));
     assert!(running(&mut server), "{}", a.s("msg"));
-    assert!(a.s("msg").contains(&format!("(pid {}), in {wt}.", server.id())) && !a.s("msg").contains("Ended"), "{}", a.s("msg"));
-    let running = a.at("stillRunning");
-    let entry = running.get(0).map(text).unwrap_or_default();
-    assert_eq!(running.as_array().map(|v| v.len()), Some(1), "{running}");
-    assert!(entry.contains(&format!("(pid {})", server.id())) && entry.contains(&format!("in {wt}")), "{running}");
+    assert!(a.s("msg").contains(&format!("Still running, end it yourself: {} (pid {}), in {wt}.", crate::common::sleep_text(600), server.id())) && !a.s("msg").contains("Ended"), "{}", a.s("msg"));
+    assert_eq!(a.at("stillRunning"), &json!([format!("{} (pid {}), in {wt}", crate::common::sleep_text(600), server.id())]));
     assert_eq!(finish_line::details(&id).unwrap().at("stillRunning"), a.at("stillRunning"));
     done_with(&mut server);
 }

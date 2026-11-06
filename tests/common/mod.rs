@@ -55,7 +55,14 @@ pub fn sleeper(secs: u64) -> std::process::Command {
     #[cfg(unix)]
     { let mut c = std::process::Command::new("sleep"); c.arg(secs.to_string()); c }
     #[cfg(windows)]
-    { let mut c = std::process::Command::new("ping"); c.args(["-n", &(secs + 1).to_string(), "127.0.0.1"]); c }
+    {
+        use std::os::windows::process::CommandExt;
+        let mut c = std::process::Command::new("ping");
+        c.args(["-n", &(secs + 1).to_string(), "127.0.0.1"]);
+        // No console, and so no console host beside it: the process the tests find and name is the ping itself.
+        c.creation_flags(0x0800_0000);
+        c
+    }
 }
 /// Makes every file and folder under `p` writable, so it can be removed (a read-only file cannot be, on Windows).
 /// Links are not followed: a link's target is not the world's to change.
