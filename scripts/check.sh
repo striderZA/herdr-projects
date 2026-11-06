@@ -37,6 +37,7 @@ if ! command -v cargo >/dev/null 2>&1; then
   for d in "$HOME/.cargo/bin"; do [ ! -x "$d/cargo" ] || PATH="$d:$PATH"; done
 fi
 command -v cargo >/dev/null 2>&1 || quit "The check needs Rust (cargo): https://rustup.rs"
+. scripts/toolchain.sh
 # Compiles through the build cache every worktree shares, when the workspace setup installed it, on its share of the
 # cores: counted among the checks running now from here until it ends (docs/testing.md).
 . scripts/build-cache.sh

@@ -345,7 +345,7 @@ A new area of that kind goes in the macOS job's list.
 
 ## On Windows too
 
-Run the check from Git Bash, whose `sh` runs `scripts/check.sh`. Without MSVC, use the MinGW toolchain: `RUSTUP_TOOLCHAIN=stable-x86_64-pc-windows-gnu npm run check`. The CI workflow runs the whole check on a Windows runner (`.github/workflows/ci.yml`, job `windows`). A test holds on Windows when it asks what Windows has:
+Run the check from Git Bash, whose `sh` runs `scripts/check.sh`. Without MSVC, use the MinGW toolchain: `RUSTUP_TOOLCHAIN=stable-x86_64-pc-windows-gnu npm run check`; the setup and the check choose it by themselves when no MSVC linker is on the PATH, and a `RUSTUP_TOOLCHAIN` you set yourself wins. The CI workflow runs the whole check on a Windows runner (`.github/workflows/ci.yml`, job `windows`). A test holds on Windows when it asks what Windows has:
 
 - a process's start time through the platform layer, not `/proc` (Windows has none);
 - a command line quoted for the pane's shell (`util::shell_word`): PowerShell quotes differently from `sh`;
