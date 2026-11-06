@@ -49,7 +49,12 @@ pub fn nothing_to_land(t: &Task, tree: &Path, own: bool, ask: bool) -> Option<St
 }
 /// The repo is archived on GitHub: read-only, nothing can be pushed to it or merged.
 pub fn archived(cwd: &Path) -> bool {
-    let r = gh(&["repo", "view", "--json", "isArchived", "--jq", ".isArchived"], cwd, 60000);
+    // `repo view` answers for gh's default repo whatever GH_REPO says, so the origin's repo is named when it is known.
+    let repo = crate::flow::git::origin_repo(cwd);
+    let mut a = vec!["repo", "view"];
+    if let Some(r) = &repo { a.push(r.as_str()); }
+    a.extend(["--json", "isArchived", "--jq", ".isArchived"]);
+    let r = gh(&a, cwd, 60000);
     r.status == 0 && r.stdout.trim() == "true"
 }
 /// The failure for work that cannot land because its repo is archived. It is not on main, so it is never done.

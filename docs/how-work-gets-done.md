@@ -120,6 +120,9 @@ When the agent's turn ends, the board:
    - A new round starts clean: the failure of the round before (a failed commit, a reviewer out of credits) is cleared
      as soon as the check starts, so the row and the details never show it while the work is checked and reviewed.
 2. **Pushes the branch and opens a draft pull request**, when there is an `origin` remote and `gh`.
+   - The pull request is opened in the GitHub repo that `origin` is (`owner/name`, named on the command), and the board's
+     `gh` calls for the clone are for that repo too, so a clone whose `upstream` is the original does not send them there.
+     An `origin` that is not on GitHub names no repo: `gh` then uses its own default.
    - A pull request the agent already opened for the task's branch is taken on instead, and goes through the review and
      the merge as usual.
    - The push may run for `merge.pushTimeout` (2 minutes unless set), the repo's pre-push hook included. A repo whose

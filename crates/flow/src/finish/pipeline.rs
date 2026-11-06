@@ -199,8 +199,11 @@ pub fn pipeline(id: &str, g: &mut Guard, text: &str, keep_intent: bool, reason: 
                 if own.is_none() {
                     // One `Closes #N` line for each issue it closes (`merge.closes`): GitHub closes them when it merges.
                     let (body, lines) = crate::land::closes::with_lines(&format!("{}\n\nTask: {}", if text.is_empty() { t.t("title") } else { text.to_string() }, task_ref(id, &repo_keys())), &crate::land::closes::issues(&t));
+                    // Named, as the repo the branch is pushed to: gh's own default is the clone's `upstream` before `origin`.
+                    let pr_repo = flow::git::origin_repo(&root);
                     let mut args = vec!["pr", "create", "--draft", "--head", t.s("branch"), "--title", if t.b("title") { t.s("title") } else { id }, "--body", &body];
                     if let Some(b) = &onto { args.extend(["--base", b.as_str()]); }
+                    if let Some(r) = &pr_repo { args.extend(["--repo", r.as_str()]); }
                     let r = flow::git::gh(&args, tp, 120000);
                     url = r.stdout.split_whitespace().find(|w| w.starts_with("http://") || w.starts_with("https://")).unwrap_or("").to_string();
                     // The agent opened one itself for this branch: the board goes on with that one.

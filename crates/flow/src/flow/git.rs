@@ -26,12 +26,23 @@ pub fn gh(args: &[&str], cwd: &Path, timeout_ms: u64) -> GhOut {
     let a: Vec<String> = args.iter().map(|s| s.to_string()).collect();
     if let Some(f) = FAKE_GH.with(|x| x.borrow().clone()) { return f(&a); }
     crate::runner::user_env();
-    let child = Command::new("gh").args(&a).current_dir(cwd).env("GH_PROMPT_DISABLED", "1").env("GIT_TERMINAL_PROMPT", "0").stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::piped()).spawn();
+    let mut cmd = Command::new("gh");
+    cmd.args(&a).current_dir(cwd).env("GH_PROMPT_DISABLED", "1").env("GIT_TERMINAL_PROMPT", "0").stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::piped());
+    // gh takes the repo from the clone's remotes, `upstream` before `origin`: a fork's clone would get the original's pull
+    // requests, checks and issues. A call here is for the repo the branch is pushed to (origin), named by GH_REPO. gh's
+    // `repo view` ignores GH_REPO: already.rs names that repo itself.
+    if let Some(r) = origin_repo(cwd) { cmd.env("GH_REPO", r); }
+    let child = cmd.spawn();
     let late = |e: crate::herdr::cli::HerdrError| if e.code == "timeout" { stopped(&format!("gh {}", args.iter().take(2).copied().collect::<Vec<_>>().join(" ")), timeout_ms) } else { e.message };
     match child.map_err(|e| e.to_string()).and_then(|c| crate::herdr::cli::wait_with_timeout(c, timeout_ms).map_err(late)) {
         Ok(r) => GhOut { status: r.status, stdout: r.stdout, stderr: r.stderr },
         Err(e) => GhOut { status: -1, stdout: String::new(), stderr: e },
     }
+}
+/// The `owner/name` of the origin remote at `cwd`, the repo a task's branch is pushed to and its pull request is in, when
+/// that is a GitHub repo. None without an origin, or with one on another host.
+pub fn origin_repo(cwd: &Path) -> Option<String> {
+    git_out(cwd, &["config", "--get", "remote.origin.url"]).ok().and_then(|u| crate::install::repo_of_remote(&u))
 }
 pub fn pr_number(pr: &str) -> String { pr.split("/pull/").nth(1).map(|r| r.chars().take_while(|c| c.is_ascii_digit()).collect()).filter(|s: &String| !s.is_empty()).unwrap_or_else(|| pr.to_string()) }
 /// How GitHub words a check's result.
