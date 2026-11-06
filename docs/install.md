@@ -87,13 +87,16 @@ rows = [["state_icon", "machine", "workspace", { token = "tab", rules = [{ equal
 rows = [["state_icon", "workspace"], ["branch", "git_status"], [{ token = "$summary", dim = true }, "$progress"]]
 ```
 
+On Windows, use `command = "herdr-projects.open-windows"` instead. `herdr-projects.open` runs on Linux and macOS only, and
+Herdr refuses it on Windows.
+
 **Careful with the key.** A `[[keys.command]]` beats Herdr's own binding of the same key, with no warning. Written by
 hand on a key Herdr uses, it switches Herdr's action off. (An early version of this page showed `prefix+w` here, which
 took away Herdr's workspace picker.) `herdr --default-config` lists most of the keys Herdr binds (not copy mode,
 `prefix+[`, nor swapping panes, `prefix+shift+h` `j` `k` `l`). To move the board's key, change the `key` line and run
 `herdr server reload-config`.
 
-Optionally bind `herdr-projects.approve-current` too. For the task that owns the focused pane, it opens the board on
+Optionally bind `herdr-projects.approve-current` too (`herdr-projects.approve-current-windows` on Windows). For the task that owns the focused pane, it opens the board on
 that task with the merge question up (`y` = yes, `n` or `esc` = no). Anywhere else it does nothing.
 
 ## The command on your PATH

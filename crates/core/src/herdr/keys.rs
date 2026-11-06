@@ -4,6 +4,11 @@ use std::collections::BTreeMap;
 
 /// What the first run offers, in order: the first one nothing uses. None of them is a herdr default (0.9.3).
 pub const OFFERED: [&str; 5] = ["prefix+a", "prefix+y", "prefix+u", "prefix+i", "prefix+m"];
+/// The plugin action that opens the board, as the manifest names it on this platform: `open` runs on Linux and macOS,
+/// `open-windows` on Windows. herdr refuses an action on a platform the manifest does not list it for.
+pub fn board_action() -> &'static str { if cfg!(windows) { "herdr-projects.open-windows" } else { "herdr-projects.open" } }
+/// Is this the board's own binding, whichever platform wrote it?
+pub fn is_board_action(command: &str) -> bool { command == "herdr-projects.open" || command == "herdr-projects.open-windows" }
 /// The commented [[keys.command]] example's fields are no actions.
 const NOT_ACTIONS: [&str; 6] = ["key", "type", "command", "description", "width", "height"];
 pub type Defaults = BTreeMap<String, String>;
@@ -68,7 +73,7 @@ pub fn used(text: &str, defs: &Defaults) -> BTreeMap<String, Use> {
     }
     if let Some(toml::Value::Array(cmds)) = keys.get("command") {
         for c in cmds.iter().filter_map(|c| c.as_table()) {
-            if c.get("command").and_then(|v| v.as_str()) == Some("herdr-projects.open") { continue; }
+            if c.get("command").and_then(|v| v.as_str()).is_some_and(is_board_action) { continue; }
             let what = c.get("description").or_else(|| c.get("command")).and_then(|v| v.as_str()).unwrap_or("a command").to_string();
             for k in list(c.get("key")) { put(&k, "config", what.clone()); }
         }
