@@ -10,7 +10,8 @@
 #      download is tried again ten minutes later, not on every command.
 # When there is none it says on stderr what to do and exits 1: it never waits long, so it never holds herdr up.
 # `run.ps1 --fetch` only gets the program (the plugin's build step), building it from source when it cannot download.
-# HERDR_PROJECTS_RELEASES names another place for the releases (a fork, a mirror, a folder as file:///...).
+# HERDR_PROJECTS_RELEASES names another place for the releases (a mirror, a folder as file:///...). Without it they are the
+# releases of the repo this checkout was cloned from (its git origin; the upstream repo when there is none).
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $root = Split-Path -Parent $here
 
@@ -53,7 +54,10 @@ $os = 'windows'
 $arch = switch ($env:PROCESSOR_ARCHITECTURE) { 'AMD64' { 'x86_64' } default { '' } }
 $name = "herdr-projects-$os-$arch"
 $prog = Join-Path $here "$name.exe"
-$base = if ($env:HERDR_PROJECTS_RELEASES) { $env:HERDR_PROJECTS_RELEASES } else { 'https://github.com/eliasstravik/herdr-projects/releases' }
+# The releases: HERDR_PROJECTS_RELEASES, else those of the repo this checkout was cloned from (its git origin).
+$repo = 'eliasstravik/herdr-projects'
+try { $origin = (& git -C $root remote get-url origin 2>$null | Out-String); if ($LASTEXITCODE -eq 0 -and $origin -match '[/@]github\.com[:/]([^/\s]+/[^/\s]+?)(\.git)?/?\s*$') { $repo = $Matches[1] } } catch { }
+$base = if ($env:HERDR_PROJECTS_RELEASES) { $env:HERDR_PROJECTS_RELEASES } else { "https://github.com/$repo/releases" }
 $base = $base.TrimEnd('/')
 
 # AtLeast a b: a is b or newer, part by part as numbers (0.10.0 is newer than 0.9.1).
@@ -76,7 +80,7 @@ function Have {
 }
 if ($arch -and (Have)) { Run-Program $prog }
 
-$ghRepo = 'https://github.com/eliasstravik/herdr-projects/releases/download/'
+$ghRepo = "https://github.com/$repo/releases/download/"
 function Fetch([string]$url, [string]$dest) {
   if ($url.StartsWith('file:')) {
     try { Copy-Item -LiteralPath ([uri]$url).LocalPath -Destination $dest -Force; return $true } catch { return $false }
@@ -88,7 +92,7 @@ function Fetch([string]$url, [string]$dest) {
   $tail = $url.Substring($ghRepo.Length)
   $tag = $tail.Split('/')[0]
   $file = $tail.Substring($tag.Length + 1)
-  & gh release download $tag -R eliasstravik/herdr-projects -p $file -O $dest --clobber *> $null
+  & gh release download $tag -R $repo -p $file -O $dest --clobber *> $null
   return ($LASTEXITCODE -eq 0)
 }
 $buildHint = "or build it here: cd '$root' && cargo build --release (Rust: https://rustup.rs)"

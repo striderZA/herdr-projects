@@ -2,7 +2,7 @@
 //! GitHub, or linked from a folder of yours), enabled, and its folder still there.
 use super::Found;
 use crate::herdr::cli::{args, bin, run_raw};
-use crate::install::REPO;
+use crate::install::UPSTREAM;
 use crate::json::*;
 use crate::store::marks::tilde;
 use crate::util::newer;
@@ -54,13 +54,13 @@ pub fn check_on(h: &Herdr, windows: bool) -> Vec<Found> {
     let manifest = ours(h).map(|p| p.t("min_herdr_version")).filter(|m| !m.is_empty()).unwrap_or_else(|| MIN_HERDR.into());
     if let Some(why) = refused_under(&manifest, v, windows) { out.push(Found::bad(why, "Update Herdr, then restart its server.")); }
     let Some(p) = list.iter().find(|p| p.s("plugin_id") == ID) else {
-        out.push(Found::bad(format!("The {ID} plugin is not installed in herdr {v}"), format!("Run: herdr plugin install {REPO}")));
+        out.push(Found::bad(format!("The {ID} plugin is not installed in herdr {v}"), format!("Run: herdr plugin install {UPSTREAM}")));
         return out;
     };
     let root = p.s("plugin_root");
     let from = if p.at("source").s("kind") == "local" { format!("linked from {}", tilde(root)) } else { "installed from GitHub".into() };
     if !std::path::Path::new(root).join("herdr-plugin.toml").exists() {
-        out.push(Found::bad(format!("herdr runs the plugin from {}, which is gone", tilde(root)), format!("Link a checkout again (herdr plugin link <folder>), or run: herdr plugin install {REPO}")));
+        out.push(Found::bad(format!("herdr runs the plugin from {}, which is gone", tilde(root)), format!("Link a checkout again (herdr plugin link <folder>), or run: herdr plugin install {UPSTREAM}")));
         return out;
     }
     if p.at("enabled") == &json!(false) { out.push(Found::bad(format!("The plugin is in herdr, {from}, but turned off"), format!("Run: herdr plugin enable {ID}"))); return out; }

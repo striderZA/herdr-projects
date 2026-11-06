@@ -5,7 +5,8 @@ use crate::err::Res;
 use crate::store::files::{bin, write_atomic, VERSION};
 use std::path::{Path, PathBuf};
 
-pub const REPO: &str = "eliasstravik/herdr-projects";
+/// The upstream project's repo: where a plugin that was not cloned from a GitHub repo of its own gets its releases.
+pub const UPSTREAM: &str = "eliasstravik/herdr-projects";
 
 /// The release files' name for a platform, from `uname -s`/`uname -m` or Rust's own names. None: no release is made.
 pub fn platform_of(os: &str, arch: &str) -> Option<(&'static str, &'static str)> {
@@ -17,9 +18,33 @@ pub fn platform() -> Option<(&'static str, &'static str)> { platform_of(std::env
 /// `herdr-projects-linux-x86_64`: the release file, and the downloaded program's name in the plugin's bin/ folder.
 /// Windows programs end in `.exe`: `herdr-projects-windows-x86_64.exe`.
 pub fn asset_name((os, arch): (&str, &str)) -> String { let ext = if os == "windows" { ".exe" } else { "" }; format!("herdr-projects-{os}-{arch}{ext}") }
-/// Where the releases are: GitHub's, or HERDR_PROJECTS_RELEASES (a fork, a mirror, a folder as file:///…).
-pub fn releases() -> String {
-    std::env::var("HERDR_PROJECTS_RELEASES").ok().filter(|v| !v.is_empty()).map(|v| v.trim_end_matches('/').to_string()).unwrap_or_else(|| format!("https://github.com/{REPO}/releases"))
+/// Where the releases are: HERDR_PROJECTS_RELEASES (a fork, a mirror, a folder as file:///…), else GitHub's releases of
+/// the repo the plugin was cloned from (see repo_of).
+pub fn releases(exe: &Path) -> String {
+    std::env::var("HERDR_PROJECTS_RELEASES").ok().filter(|v| !v.is_empty()).map(|v| v.trim_end_matches('/').to_string()).unwrap_or_else(|| format!("https://github.com/{}/releases", repo_of(exe)))
+}
+
+/// The repo the releases are of: the one the plugin checkout that holds this program was cloned from (its git origin;
+/// `herdr plugin install` clones it, and the program is in its bin/). The upstream repo when there is no such checkout,
+/// as for a program run from anywhere else.
+pub fn repo_of(exe: &Path) -> String {
+    exe.parent().filter(|d| d.file_name().is_some_and(|n| n == "bin")).and_then(Path::parent).and_then(origin_repo).unwrap_or_else(|| UPSTREAM.to_string())
+}
+/// The `owner/name` of the origin remote of the checkout at `root`, when it is a GitHub repo.
+fn origin_repo(root: &Path) -> Option<String> {
+    let out = std::process::Command::new("git").arg("-C").arg(root).args(["remote", "get-url", "origin"]).stderr(std::process::Stdio::null()).output().ok()?;
+    out.status.success().then(|| repo_of_remote(&String::from_utf8_lossy(&out.stdout))).flatten()
+}
+/// `owner/name` of a GitHub remote URL (https, ssh, or the scp form `git@github.com:owner/name`), or None for any other.
+pub fn repo_of_remote(url: &str) -> Option<String> {
+    let u = url.trim().trim_end_matches('/');
+    let u = u.strip_suffix(".git").unwrap_or(u);
+    let at = u.find("github.com")?;
+    if !matches!(u[..at].chars().last(), None | Some('/') | Some('@')) { return None; }
+    let path = u[at + "github.com".len()..].strip_prefix(['/', ':'])?;
+    let mut parts = path.split('/');
+    let (owner, name) = (parts.next()?, parts.next()?);
+    (parts.next().is_none() && !owner.is_empty() && !name.is_empty()).then(|| format!("{owner}/{name}"))
 }
 /// The file of one release (`0.3.1` or `v0.3.1`), or of the newest one (None).
 pub fn asset_url(base: &str, version: Option<&str>, asset: &str) -> String {
@@ -44,13 +69,14 @@ pub fn version_file(prog: &Path) -> PathBuf { PathBuf::from(format!("{}.version"
 
 // ---- the network and the tools: what the tests replace -------------------------------------------------------------
 /// A private repo's release is not handed out to curl: gh, logged in, fetches it. The gh command for a GitHub release
-/// URL of this repo, or None.
+/// URL (of any repo), or None.
 pub fn gh_args(url: &str, to: &Path) -> Option<Vec<String>> {
-    let rest = url.strip_prefix(&format!("https://github.com/{REPO}/releases/"))?;
+    let (repo, rest) = url.strip_prefix("https://github.com/")?.split_once("/releases/")?;
+    if repo.matches('/').count() != 1 { return None; }
     let (tag, asset) = match rest.strip_prefix("latest/download/") { Some(a) => (None, a), None => { let (t, a) = rest.strip_prefix("download/")?.split_once('/')?; (Some(t), a) } };
     let mut v: Vec<String> = vec!["release".into(), "download".into()];
     v.extend(tag.map(String::from));
-    v.extend(["-R", REPO, "-p", asset, "-O", &to.display().to_string(), "--clobber"].map(String::from));
+    v.extend(["-R", repo, "-p", asset, "-O", &to.display().to_string(), "--clobber"].map(String::from));
     Some(v)
 }
 /// One URL into one file, with curl or wget (or gh, for a private repo), never waiting for long.
@@ -88,7 +114,7 @@ pub struct Got { pub version: String, pub file: PathBuf }
 pub fn download(exe: &Path, version: Option<&str>, fetch: &dyn Fn(&str, &Path) -> Res<()>) -> Res<Got> {
     let Some(plat) = platform() else { crate::fail!("No release is made for {} {}: build it from source (cargo build --release).", std::env::consts::OS, std::env::consts::ARCH) };
     let (name, dir) = (asset_name(plat), exe.parent().map(Path::to_path_buf).unwrap_or_else(|| PathBuf::from(".")));
-    let url = asset_url(&releases(), version, &name);
+    let url = asset_url(&releases(exe), version, &name);
     let file = dir.join(format!(".{name}.{}.download", std::process::id()));
     let sums = PathBuf::from(format!("{}.sha256", file.display()));
     let got = (|| -> Res<Got> {
