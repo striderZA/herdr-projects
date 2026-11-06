@@ -58,11 +58,39 @@ fn platform_names_urls_and_versions() {
 }
 
 #[test]
-fn releases_are_github_unless_named() {
-    let (_b, _one) = scratch();
-    assert_eq!(releases(), "https://github.com/eliasstravik/herdr-projects/releases");
+fn releases_are_the_repo_the_plugin_was_cloned_from() {
+    let (b, _one) = scratch();
+    let exe = b.join("plugin/bin").join(asset_name(here()));
+    std::fs::create_dir_all(exe.parent().unwrap()).unwrap();
+    assert_eq!(releases(&exe), "https://github.com/eliasstravik/herdr-projects/releases", "no checkout: the upstream repo");
+    git(&b.join("plugin"), &["init", "-q"]);
+    git(&b.join("plugin"), &["remote", "add", "origin", "https://github.com/striderZA/herdr-projects"]);
+    assert_eq!(releases(&exe), "https://github.com/striderZA/herdr-projects/releases", "the checkout's origin");
     set("HERDR_PROJECTS_RELEASES", "file:///mirror/releases/");
-    assert_eq!(releases(), "file:///mirror/releases");
+    assert_eq!(releases(&exe), "file:///mirror/releases", "named, it is used as it is");
+}
+
+#[test]
+fn a_github_remote_names_its_repo() {
+    for (url, want) in [
+        ("https://github.com/striderZA/herdr-projects", Some("striderZA/herdr-projects")),
+        ("https://github.com/striderZA/herdr-projects.git\n", Some("striderZA/herdr-projects")),
+        ("git@github.com:striderZA/herdr-projects.git", Some("striderZA/herdr-projects")),
+        ("ssh://git@github.com/striderZA/herdr-projects", Some("striderZA/herdr-projects")),
+        ("https://user@github.com/a/b/", Some("a/b")),
+        ("https://gitlab.com/striderZA/herdr-projects", None),
+        ("https://notgithub.com/a/b", None),
+        ("https://github.com/a", None),
+        ("https://github.com/a/b/c", None),
+    ] {
+        assert_eq!(repo_of_remote(url), want.map(String::from), "{url:?}");
+    }
+}
+
+/// `git -C dir ARGS`, which must succeed.
+fn git(dir: &Path, args: &[&str]) {
+    let ok = std::process::Command::new("git").arg("-C").arg(dir).args(args).stderr(std::process::Stdio::null()).status().unwrap().success();
+    assert!(ok, "git {args:?} in {}", dir.display());
 }
 
 /// A release of its own: a program that says it is `version`, and its checksum, handed out by a fetch that records
@@ -94,7 +122,7 @@ fn update_puts_the_newest_release_in_place() {
     let said = update(&exe, None, &|u, t| r.fetch(u, t)).unwrap();
     assert!(said.starts_with(&format!("Updated herdr-projects {} → 9.9.9 (", sw::store::files::VERSION)), "{said}");
     let name = asset_name(here());
-    assert_eq!(*r.asked.borrow(), vec![format!("{}/latest/download/{name}", releases()), format!("{}/latest/download/{name}.sha256", releases())]);
+    assert_eq!(*r.asked.borrow(), vec![format!("{}/latest/download/{name}", releases(&exe)), format!("{}/latest/download/{name}.sha256", releases(&exe))]);
     assert_eq!(read(&exe), read(&r.file), "the program is the release's");
     assert_eq!(read(&version_file(&exe)), "9.9.9\n", "run.sh reads its version without running it");
     assert_eq!(listing(&exe.parent().unwrap()), vec![name.clone(), format!("{name}.version")], "no download left beside it");
@@ -103,7 +131,7 @@ fn update_puts_the_newest_release_in_place() {
     // A version named: that one's file is asked for.
     let r2 = release(&b, "9.9.8", false);
     update(&exe, Some("9.9.8"), &|u, t| r2.fetch(u, t)).unwrap();
-    assert_eq!(r2.asked.borrow()[0], format!("{}/download/v9.9.8/{name}", releases()));
+    assert_eq!(r2.asked.borrow()[0], format!("{}/download/v9.9.8/{name}", releases(&exe)));
     assert_eq!(read(&version_file(&exe)), "9.9.8\n", "named, an older one is put back");
 }
 
@@ -231,3 +259,28 @@ fn real_programs_run_sh_downloads_once_and_runs_it() {
 
 /// A PATH string of these folders, joined the way this platform's PATH is (`:` on Unix, `;` on Windows).
 fn path_of(dirs: &[std::path::PathBuf]) -> String { std::env::join_paths(dirs).unwrap().to_string_lossy().into_owned() }
+
+#[test]
+// Runs run.sh through sh, with a fake curl and gh that log what they are asked and fail: nothing reaches the network.
+// Unix-only (a Windows account has no /bin/sh and the script is a shell script).
+#[cfg(unix)]
+fn run_sh_asks_the_repo_its_checkout_came_from() {
+    let (b, _one) = scratch();
+    let plugin = b.join("plugin");
+    std::fs::create_dir_all(plugin.join("bin")).unwrap();
+    std::fs::copy(Path::new(env!("CARGO_MANIFEST_DIR")).join("bin/run.sh"), plugin.join("bin/run.sh")).unwrap();
+    write(&plugin.join("Cargo.toml"), "[package]\nname = \"herdr-projects\"\nversion = \"1.2.28\"\n");
+    git(&plugin, &["init", "-q"]);
+    git(&plugin, &["remote", "add", "origin", "git@github.com:striderZA/herdr-projects.git"]);
+    let log = b.join("calls.log");
+    for tool in ["curl", "gh"] {
+        exec(&b.join("shims").join(tool), &format!("#!/bin/sh\necho \"{tool} $*\" >> '{}'\nexit 22\n", log.display()));
+    }
+    let old = std::env::var("PATH").unwrap_or_default();
+    set("PATH", &format!("{}:{old}", b.join("shims").display()));
+    let out = std::process::Command::new("sh").arg(plugin.join("bin/run.sh")).output().unwrap();
+    set("PATH", &old);
+    let calls = read(&log);
+    assert!(calls.contains("https://github.com/striderZA/herdr-projects/releases/download/v1.2.28/herdr-projects-"), "{calls}\n{}", String::from_utf8_lossy(&out.stderr));
+    assert!(!calls.contains("eliasstravik"), "{calls}");
+}

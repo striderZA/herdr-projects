@@ -2,7 +2,7 @@
 //! GitHub, or linked from a folder of yours), enabled, and its folder still there.
 use super::Found;
 use crate::herdr::cli::{args, bin, run_raw};
-use crate::install::REPO;
+use crate::install::UPSTREAM;
 use crate::json::*;
 use crate::store::marks::tilde;
 use crate::util::newer;
@@ -54,7 +54,7 @@ pub fn check_on(h: &Herdr, windows: bool) -> Vec<Found> {
     let manifest = ours(h).map(|p| p.t("min_herdr_version")).filter(|m| !m.is_empty()).unwrap_or_else(|| MIN_HERDR.into());
     if let Some(why) = refused_under(&manifest, v, windows) { out.push(Found::bad(why, "Update Herdr, then restart its server.")); }
     let Some(p) = list.iter().find(|p| p.s("plugin_id") == ID) else {
-        out.push(Found::bad(format!("The {ID} plugin is not installed in herdr {v}"), format!("Run: herdr plugin install {REPO}")));
+        out.push(Found::bad(format!("The {ID} plugin is not installed in herdr {v}"), format!("Run: herdr plugin install {UPSTREAM}")));
         return out;
     };
     let root = p.s("plugin_root");

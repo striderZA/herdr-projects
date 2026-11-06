@@ -167,8 +167,8 @@ Every command Herdr runs for the plugin goes through `bin/run.sh`, which runs th
 
 1. a program built in this checkout (`target/release/herdr-projects`) that no source file is newer than;
 2. the downloaded one in `bin/`, when it is this checkout's version (`Cargo.toml`) or newer;
-3. that file, downloaded now from the project's GitHub release of this checkout's version: its checksum checked, put in
-   place in one step, one download at a time;
+3. that file, downloaded now from the GitHub release of this checkout's version, in the repo the checkout was cloned from
+   (its git origin; the upstream repo when there is none): its checksum checked, put in place in one step, one download at a time;
 4. failing all that, an older build or an older download, with a line saying so. A download that failed is tried again
    ten minutes later, not on every command (each of Herdr's hooks would wait for it).
 
@@ -176,5 +176,5 @@ With none, it says what to do and stops at once, so Herdr is never held up.
 
 - The plugin's build step (`sh bin/run.sh --fetch`) only gets the program, and builds it from source when it cannot
   download it.
-- `HERDR_PROJECTS_RELEASES` names another place for the releases (a fork, a mirror, a folder as `file:///…`).
+- `HERDR_PROJECTS_RELEASES` names another place for the releases (a mirror, a folder as `file:///…`). Without it, the releases of the checkout's git origin are used, so a fork's installs get the fork's files.
 - The release files are built for every version tag by `.github/workflows/release.yml`.
