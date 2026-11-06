@@ -40,7 +40,7 @@ fn the_panel_beside_the_list_cuts_a_long_description_short_and_the_whole_panel_s
     assert!(has(&text, r"Line 8 of a very long description\. … *\n") && has(&text, &keyed(r"│ +{2}{panel} shows the whole task")), "{text}");
     assert!(!text.contains("Line 9 of") && !text.contains("Line 80 of"));
     // The title, the status under its headline as facts, then the description, then the settings: an empty line between.
-    assert!(has(&text, r"│ +{2}PRJ-2 Long one *\n[^\n]*│ +*\n[^\n]*│ +{2}Status ─+ *\n[^\n]*│ +{2}State {8}○ to do · \ds ago *\n[^\n]*│ +*\n[^\n]*│ +{2}Description ─+ *\n"), "{text}");
+    assert!(has(&text, r"│ +{2}PRJ-2 Long one *\n[^\n]*│ +*\n[^\n]*│ +{2}Status ─+ *\n[^\n]*│ +{2}State {8}○ to do · \d+[smhd] ago *\n[^\n]*│ +*\n[^\n]*│ +{2}Description ─+ *\n"), "{text}");
     assert!(has(&text, r"│ +{2}Settings ─+ *\n[^\n]*│ +{2}Agent {8}claude · default model *\n[^\n]*│ +{15}default effort *\n[^\n]*│ +{2}Plan first {3}off *\n"), "{text}");
     assert!(!text.contains("as usual"));
     let whole = text_of(&panel_of(&mut s, 80, true));
@@ -56,10 +56,10 @@ fn the_panel_beside_the_list_cuts_a_long_description_short_and_the_whole_panel_s
     { let side = beside(&w, &big, 32); every(&side, "32 rows");
       assert!(has(&side.join("\n"), r"\n {2}Description ─+\n {2}Line 1 of a very long description\.\n {2}Line 2 of a very long description\.\n {2}Line 3 of a very long description\.\n {2}Line 4 of a very long description\. …\n\n {2}Settings ─"), "{}", side.join("\n")); }
     { let side = beside(&w, &big, 30); every(&side, "30 rows"); let t = side.join("\n");
-      assert!(has(&t, r"\n {2}State {8}○ to do · \ds ago\n\n {2}Description ─+\n {2}Line 1 of a very long description\.\n {2}Line 2 of a very long description\. …\n\n {2}Settings ─") && !t.contains("Line 3 of"), "{t}"); }
+      assert!(has(&t, r"\n {2}State {8}○ to do · \d+[smhd] ago\n\n {2}Description ─+\n {2}Line 1 of a very long description\.\n {2}Line 2 of a very long description\. …\n\n {2}Settings ─") && !t.contains("Line 3 of"), "{t}"); }
     { let side = beside(&w, &big, 27); every(&side, "27 rows"); let t = side.join("\n"); assert!(!has(&t, "Description|Line 1 of"), "{t}"); }
     { let side = beside(&w, &big, 20); let t = side.join("\n");
-      assert!(has(&t, &keyed(r"\n {2}Status ─+\n {2}State {8}○ to do · \ds ago\n\n {2}Settings ─+\n {2}Agent {8}claude · default model\n {15}default effort\n {2}Reviewer {5}codex · default model\n {15}default effort\n {2}Review when {2}in a repo · with evidence\n {2}Send back {4}major or worse · 3 rounds max\n {2}14 more settings · {settings} shows them\n\n {2}{panel} shows the whole task")), "{t}");
+      assert!(has(&t, &keyed(r"\n {2}Status ─+\n {2}State {8}○ to do · \d+[smhd] ago\n\n {2}Settings ─+\n {2}Agent {8}claude · default model\n {15}default effort\n {2}Reviewer {5}codex · default model\n {15}default effort\n {2}Review when {2}in a repo · with evidence\n {2}Send back {4}major or worse · 3 rounds max\n {2}14 more settings · {settings} shows them\n\n {2}{panel} shows the whole task")), "{t}");
       assert!(!side.iter().any(|l| l.ends_with('…')), "nothing is cut in the middle of a line"); }
     // With too little room for all, a value somebody chose comes before the built-in ones.
     set("limit.time", "2h", &big);
@@ -135,7 +135,7 @@ fn the_panel_never_opens_full_screen_by_itself_something_going_wrong_only_change
     assert!(has(&s.screen(50).join("\n"), &keyed(r"\n[ ▌] {1}{sendBack} tell this task's agent to fix it *$")), "{}", s.screen(50).join("\n"));
     // Wide, the panel beside the list already says it, in order: where it stands, then what it needs from you.
     let text = s.screen(120).join("\n");
-    assert!(has(&text, &keyed(r"│ +{2}State {8}✗ needs you · \ds ago *\n(?:[^\n]*│ +{2}On it[^\n]*\n)?[^\n]*│ +*\n[^\n]*│ +{2}Went wrong ─+ *\n[^\n]*│ +{2}Merge conflict with main *\n[^\n]*│ +{2}The agent can fix this: {sendBack} sends it\. *\n[^\n]*│ +{2}Next step {4}Resolve the conflict\. *\n[^\n]*│ +{2}Details {6}Conflicting files: *\n[^\n]*│ +{15}src/board/view\.js")), "{text}");
+    assert!(has(&text, &keyed(r"│ +{2}State {8}✗ needs you · \d+[smhd] ago *\n(?:[^\n]*│ +{2}On it[^\n]*\n)?[^\n]*│ +*\n[^\n]*│ +{2}Went wrong ─+ *\n[^\n]*│ +{2}Merge conflict with main *\n[^\n]*│ +{2}The agent can fix this: {sendBack} sends it\. *\n[^\n]*│ +{2}Next step {4}Resolve the conflict\. *\n[^\n]*│ +{2}Details {6}Conflicting files: *\n[^\n]*│ +{15}src/board/view\.js")), "{text}");
     // Narrow, space does what it does at every width: the chat names the task, and the list stays. alt+t opens the
     // same panel full screen; esc leaves it, and the chat stays the task's.
     s.cols = 80; s.screen(80); s.press(&["space"]);

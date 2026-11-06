@@ -41,9 +41,9 @@ fn one_header_line_five_groups_a_mark_for_each_state_and_the_task_panel_from_90_
     assert_eq!(ink_of(&inks, "50%").map(|x| x.0), Some(Ink::Yellow)); assert_eq!(ink_of(&inks, "12m left").map(|x| x.0), Some(Ink::Yellow));
     // Under the machine's row on top, a step in.
     assert!(has(&text, r"\n   ▾ working +│") && has(&text, r"\n   ▾ to do +│"), "{text}");
-    assert!(has(&text, r"◐ PRJ-2 My own task +█+░+ +50% 12m left +\ds {5}│[^\n]*\n[ ▌] {10}half way +│"), "{text}");
+    assert!(has(&text, r"◐ PRJ-2 My own task +█+░+ +50% 12m left +\d+[smhd] {5}│[^\n]*\n[ ▌] {10}half way +│"), "{text}");
     assert!(has(&text, r"│  Progress     █+░+ 50% · 12m left *\n"));
-    assert!(has(&text, r"│  PRJ-2 My own task") && has(&text, r"│  State        ◐ working · for \ds *\n") && has(&text, r"│  On it        you *\n"), "{text}");
+    assert!(has(&text, r"│  PRJ-2 My own task") && has(&text, r"│  State        ◐ working · for \d+[smhd] *\n") && has(&text, r"│  On it        you *\n"), "{text}");
     // No coordinator can run here: the box adds tasks, under no line that names anyone.
     assert!(has(&text, r"\n─[^\n]*\n❯ Add a task *\n") && !text.contains("Coordinator") && !text.contains("coordinator"), "{text}");
     assert_eq!(s.screen(120).len(), 34);
@@ -64,7 +64,7 @@ fn one_header_line_five_groups_a_mark_for_each_state_and_the_task_panel_from_90_
     s.cols = 120;
     s.press(&["down", "down", "alt+t"]); // past the heading of to do
     let text = s.screen(80).join("\n");
-    assert!(text.starts_with(" Task details  PRJ-1 \"") && has(&text, r"\n State        ○ to do · \ds ago *\n") && has(&text, r"Description ─+ *\n All of them\."), "{text}");
+    assert!(text.starts_with(" Task details  PRJ-1 \"") && has(&text, r"\n State        ○ to do · \d+[smhd] ago *\n") && has(&text, r"Description ─+ *\n All of them\."), "{text}");
     assert!(!text.split("Session ─").next().unwrap().contains("proj/1"), "the task is named as its row names it");
     assert!(!s.s.reply && has(&text, r"\n─[^\n]*\n❯ Add a task"), "{text}");
     s.press(&["space"]); assert!(s.s.reply && s.s.full);
@@ -114,8 +114,8 @@ fn work_whose_review_failed_stands_under_needs_you_and_its_yes_is_merge_anyway()
     use sw::shown::states::{group_of, standing};
     assert_eq!((group_of(&rows[&bad]), standing(&rows[&bad]), group_of(&rows[&good]), standing(&rows[&good])), ("needs you", "review failed".to_string(), "ready to approve", "ready to approve".to_string()));
     let t = s.text();
-    assert!(has(&t, r"\n   ▾ needs you *\n[ ▌]  ! PRJ-1 +Add an undo for clear +R#1 +\d+s ago *\n[ ▌] {10}Review failed · 1 critical, 1 major *\n"), "{t}");
-    assert!(has(&t, r"\n   ▾ ready to approve *\n[ ▌]  ◆ PRJ-2 +Max length for titles +R#1 +\d+s ago *\n[ ▌] {10}Pass *\n"), "{t}");
+    assert!(has(&t, r"\n   ▾ needs you *\n[ ▌]  ! PRJ-1 +Add an undo for clear +R#1 +\d+[smhd] ago *\n[ ▌] {10}Review failed · 1 critical, 1 major *\n"), "{t}");
+    assert!(has(&t, r"\n   ▾ ready to approve *\n[ ▌]  ◆ PRJ-2 +Max length for titles +R#1 +\d+[smhd] ago *\n[ ▌] {10}Pass *\n"), "{t}");
     assert!(t.starts_with(" herdr-projects  proj · PRJ") && has(&t, r"\n All 2   Coordinators \d+   Needs you 1   Working 0   Ready 1   "), "{t}");
     s.s.sel = bad.clone(); s.load();
     assert!(s.text().contains(&format!("  {} send the review to this task's agent · {} merge this task anyway · ", key_name("sendBack"), key_name("yes"))), "{}", s.text());
