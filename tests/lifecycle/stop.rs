@@ -21,11 +21,17 @@ fn working(w: &World, flags: Value) -> Obj {
     t
 }
 fn killed(w: &World) -> Vec<i64> { w.state().arr("killed").iter().filter_map(|v| v.as_i64()).collect() }
-fn sleep_in(dir: &std::path::Path, env: &[(&str, &std::path::Path)]) -> Child {
+/// A sleeping process the test started. It is killed when the test ends, also when an assertion fails part way: a failing
+/// test leaves none running.
+struct Sleeper(Child);
+impl std::ops::Deref for Sleeper { type Target = Child; fn deref(&self) -> &Child { &self.0 } }
+impl std::ops::DerefMut for Sleeper { fn deref_mut(&mut self) -> &mut Child { &mut self.0 } }
+impl Drop for Sleeper { fn drop(&mut self) { let _ = self.0.kill(); let _ = self.0.wait(); } }
+fn sleep_in(dir: &std::path::Path, env: &[(&str, &std::path::Path)]) -> Sleeper {
     let mut c = crate::common::sleeper(LIVES);
     c.current_dir(dir).stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null());
     for (k, v) in env { c.env(k, v); }
-    c.spawn().unwrap()
+    Sleeper(c.spawn().unwrap())
 }
 fn ended(c: &mut Child) -> bool { (0..50).any(|_| { if c.try_wait().unwrap().is_some() { return true; } std::thread::sleep(std::time::Duration::from_millis(20)); false }) }
 
