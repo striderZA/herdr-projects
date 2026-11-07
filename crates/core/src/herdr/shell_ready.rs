@@ -1,6 +1,6 @@
 //! A start typed into a pane whose shell is not at its prompt yet, tried again. herdr refuses it in two ways while the
 //! shell is still starting. It takes no line longer than the terminal takes while it is in canonical mode, before the
-//! shell's line editor is up (macOS: 1024 bytes, Linux: 4096): "input contains a 3570-byte line but the terminal is in
+//! shell's line editor is up (some terminals: 1024 bytes, Linux: 4096): "input contains a 3570-byte line but the terminal is in
 //! canonical mode with a 1024-byte limit; wait for the shell prompt and retry" (herdr 0.9.5, issue #175). And it does
 //! not see a shell in a pane just made yet (a zsh that takes a second to start): `agent_pane_busy`, "agent target pane
 //! w1:p1 is not an available shell" (issue #202). Nothing was typed then, so the board waits for the prompt and tries

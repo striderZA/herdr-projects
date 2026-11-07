@@ -37,14 +37,14 @@ Two limits once made long text fail to start an agent, with no reason given. Bot
 
 - **Long rules go in a file.** Herdr starts a program by typing its command into the pane's shell. While that shell is
   still starting (its line editor not up yet: a slow `.bashrc` or `.zshrc`), the terminal takes at most 4096 bytes on one
-  line, and on macOS only 1024. Codex used to get a task's rules inline, in `-c developer_instructions=…`. With your own
+  line, and some only 1024. Codex used to get a task's rules inline, in `-c developer_instructions=…`. With your own
   `worker.instructions`, that went over the limit: the command arrived cut off, the shell waited at its `>` continuation
   prompt, and the start timed out. Now rules longer than 300 bytes go in a file in the task's folder (`rules.md`), and
   Codex is told to read it and follow it for the whole session. Claude Code, pi, Droid and the rest always take their
   rules as a file name, so their start command stays short: Codex alone takes them only as text.
 - **A shell not at its prompt yet is waited for.** Herdr 0.9.5 refuses a line longer than the terminal takes before the
   shell's prompt is up ("the terminal is in canonical mode with a 1024-byte limit; wait for the shell prompt and retry"):
-  a new task's first start failed that way on macOS. The board now waits for the pane to show its prompt and tries again,
+  a new task's first start failed that way. The board now waits for the pane to show its prompt and tries again,
   up to 3 more times within about 15 seconds, for every start (a task's agent, a reviewer, the Coordinator, a
   comparison's picker). It looks for an agent in the pane first, so it never starts a second one.
 - **A shell herdr does not see yet is waited for too.** Herdr 0.9.5 also refuses a start in a pane it has just made while
