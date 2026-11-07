@@ -28,23 +28,33 @@ pub fn releases(exe: &Path) -> String {
 /// `herdr plugin install` clones it, and the program is in its bin/). The upstream repo when there is no such checkout,
 /// as for a program run from anywhere else.
 pub fn repo_of(exe: &Path) -> String {
-    exe.parent().filter(|d| d.file_name().is_some_and(|n| n == "bin")).and_then(Path::parent).and_then(origin_repo).unwrap_or_else(|| UPSTREAM.to_string())
+    exe.parent().filter(|d| d.file_name().is_some_and(|n| n == "bin")).and_then(Path::parent).and_then(checkout_origin).and_then(|u| repo_of_remote(&u)).unwrap_or_else(|| UPSTREAM.to_string())
 }
-/// The `owner/name` of the origin remote of the checkout at `root`, when it is a GitHub repo.
-fn origin_repo(root: &Path) -> Option<String> {
-    let out = std::process::Command::new("git").arg("-C").arg(root).args(["remote", "get-url", "origin"]).stderr(std::process::Stdio::null()).output().ok()?;
-    out.status.success().then(|| repo_of_remote(&String::from_utf8_lossy(&out.stdout))).flatten()
-}
-/// `owner/name` of a GitHub remote URL (https, ssh, or the scp form `git@github.com:owner/name`), or None for any other.
-pub fn repo_of_remote(url: &str) -> Option<String> {
+/// The origin's URL as git's own `remote get-url` gives it (`insteadOf` applied), or None without one: the release lookup
+/// has always read it this way.
+fn checkout_origin(dir: &Path) -> Option<String> { crate::store::repos::git_out(dir, &["remote", "get-url", "origin"]).ok() }
+/// A remote's host, the `owner/name` it names, and whether the URL is an ssh one (its host may then be an alias of
+/// ~/.ssh/config): `https://[user@]host[:port]/owner/name`, `ssh://[user@]host[:port]/owner/name`, and the scp form
+/// `[user@]host:owner/name`. A `.git` suffix and a trailing slash are left out. None for a URL that names no repo on a host.
+pub struct Remote { pub host: String, pub repo: String, pub ssh: bool }
+pub fn remote_of(url: &str) -> Option<Remote> {
     let u = url.trim().trim_end_matches('/');
     let u = u.strip_suffix(".git").unwrap_or(u);
-    let at = u.find("github.com")?;
-    if !matches!(u[..at].chars().last(), None | Some('/') | Some('@')) { return None; }
-    let path = u[at + "github.com".len()..].strip_prefix(['/', ':'])?;
+    // The part before the path is the host with its user and port: after `scheme://`, or before the first `:` of the scp form.
+    let (ssh, authority, path) = match u.split_once("://") {
+        Some((scheme, rest)) => { let (a, p) = rest.split_once('/')?; (scheme.eq_ignore_ascii_case("ssh"), a, p) }
+        None => { let (a, p) = u.split_once(':')?; (true, a, p) }
+    };
+    let host = authority.rsplit('@').next()?.split(':').next()?.to_ascii_lowercase();
+    // One letter before the colon is a Windows drive (`C:/a/b`), not a host.
+    if host.len() < 2 || host.contains(['/', '\\']) { return None; }
     let mut parts = path.split('/');
     let (owner, name) = (parts.next()?, parts.next()?);
-    (parts.next().is_none() && !owner.is_empty() && !name.is_empty()).then(|| format!("{owner}/{name}"))
+    (parts.next().is_none() && !owner.is_empty() && !name.is_empty()).then(|| Remote { host, repo: format!("{owner}/{name}"), ssh })
+}
+/// `owner/name` of a GitHub remote URL (github.com, or ssh.github.com), or None for any other host.
+pub fn repo_of_remote(url: &str) -> Option<String> {
+    remote_of(url).filter(|r| matches!(r.host.as_str(), "github.com" | "ssh.github.com")).map(|r| r.repo)
 }
 /// The file of one release (`0.3.1` or `v0.3.1`), or of the newest one (None).
 pub fn asset_url(base: &str, version: Option<&str>, asset: &str) -> String {

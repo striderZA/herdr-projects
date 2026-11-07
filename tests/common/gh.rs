@@ -48,7 +48,8 @@ impl FakeGh {
             ("pr", "create") => if c.b("createFail") { fail(c.s("createFail")) } else {
                 *self.head_branch.borrow_mut() = a.iter().position(|s| s == "--head").and_then(|i| a.get(i + 1)).cloned().unwrap_or_default();
                 *self.body.borrow_mut() = a.iter().position(|s| s == "--body").and_then(|i| a.get(i + 1)).cloned();
-                ok("https://github.com/o/r/pull/7")
+                let repo = a.iter().position(|s| s == "--repo").and_then(|i| a.get(i + 1)).map(String::as_str).unwrap_or("o/r");
+                ok(&format!("https://github.com/{repo}/pull/7"))
             },
             ("pr", "edit") if c.b("editFail") => fail(c.s("editFail")),
             ("pr", "edit") => { if let Some(b) = a.iter().position(|s| s == "--body").and_then(|i| a.get(i + 1)) { *self.body.borrow_mut() = Some(b.clone()); } ok("") }

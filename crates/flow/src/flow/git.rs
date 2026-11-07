@@ -24,16 +24,87 @@ thread_local! { static FAKE_GH: std::cell::RefCell<Option<std::rc::Rc<dyn Fn(&[S
 pub fn set_fake_gh(f: Option<std::rc::Rc<dyn Fn(&[String]) -> GhOut>>) { FAKE_GH.with(|x| *x.borrow_mut() = f); }
 pub fn gh(args: &[&str], cwd: &Path, timeout_ms: u64) -> GhOut {
     let a: Vec<String> = args.iter().map(|s| s.to_string()).collect();
+    // A call the board does not make is refused before anything runs: a test's fake answers only what passes this too.
+    let mut cmd = match gh_command(args, cwd) {
+        Ok(c) => c,
+        Err(why) => return GhOut { status: -1, stdout: String::new(), stderr: why },
+    };
     if let Some(f) = FAKE_GH.with(|x| x.borrow().clone()) { return f(&a); }
     crate::runner::user_env();
-    let child = Command::new("gh").args(&a).current_dir(cwd).env("GH_PROMPT_DISABLED", "1").env("GIT_TERMINAL_PROMPT", "0").stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::piped()).spawn();
+    let child = cmd.spawn();
     let late = |e: crate::herdr::cli::HerdrError| if e.code == "timeout" { stopped(&format!("gh {}", args.iter().take(2).copied().collect::<Vec<_>>().join(" ")), timeout_ms) } else { e.message };
     match child.map_err(|e| e.to_string()).and_then(|c| crate::herdr::cli::wait_with_timeout(c, timeout_ms).map_err(late)) {
         Ok(r) => GhOut { status: r.status, stdout: r.stdout, stderr: r.stderr },
         Err(e) => GhOut { status: -1, stdout: String::new(), stderr: e },
     }
 }
-pub fn pr_number(pr: &str) -> String { pr.split("/pull/").nth(1).map(|r| r.chars().take_while(|c| c.is_ascii_digit()).collect()).filter(|s: &String| !s.is_empty()).unwrap_or_else(|| pr.to_string()) }
+/// The command that runs gh for a call made in `cwd`, or why the call is not made. gh takes the repo a call is about from
+/// the clone's remotes, `upstream` before `origin`: in a fork's clone that is the original. So the board names its origin's
+/// repo (GH_REPO: `owner/name`, with the host when it is not github.com), and makes no call at all in a clone whose origin
+/// names no repo on a host, as gh would take another one. A pull request URL the call names must be in that same repo. A
+/// clone with no origin keeps gh's own default, and names no pull request URL: it has no pull request of the board's to go to.
+pub fn gh_command(args: &[&str], cwd: &Path) -> Result<Command, String> {
+    let mut cmd = Command::new("gh");
+    cmd.args(args).current_dir(cwd).env("GH_PROMPT_DISABLED", "1").env("GIT_TERMINAL_PROMPT", "0").stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::piped());
+    let urls: Vec<&str> = args.iter().copied().filter(|a| is_pull_request_url(a)).collect();
+    match origin_url(cwd) {
+        Err(why) => return Err(format!("The clone's origin could not be read ({why}), so gh is not asked: it would take its upstream first.")),
+        Ok(None) => { if let Some(u) = urls.first() { return Err(format!("{u} is a pull request, and this clone has no origin to check it against: gh is not asked.")); } }
+        Ok(Some(url)) => {
+            let Some(t) = target_of(&url) else {
+                return Err("The clone's origin is not a GitHub repo (https://host/owner/name or git@host:owner/name), so gh is not asked: it would take another repo, the clone's upstream first.".into());
+            };
+            if let Some(u) = urls.iter().find(|u| !u.to_lowercase().starts_with(&t.web)) { return Err(format!("{u} is not a pull request of {}, the clone's origin: the board does not act on it.", t.gh)); }
+            cmd.env("GH_REPO", t.gh);
+        }
+    }
+    Ok(cmd)
+}
+/// One argument that is a pull request's link: a single http(s) word with `/pull/` in it.
+fn is_pull_request_url(a: &str) -> bool { (a.starts_with("https://") || a.starts_with("http://")) && a.contains("/pull/") && !a.contains(char::is_whitespace) }
+/// The origin's URL as the clone names it (`remote.origin.url`, before any `insteadOf`). Ok(None) without an origin. An
+/// Err is git failing to say (a broken clone), which is not taken for having no origin; outside a repo there is none.
+pub fn origin_url(cwd: &Path) -> Result<Option<String>, String> {
+    match git_out(cwd, &["remote"]) {
+        Ok(list) if !list.lines().any(|l| l.trim() == "origin") => Ok(None),
+        Ok(_) => git_out(cwd, &["config", "--get", "remote.origin.url"]).map(Some).map_err(|e| e.msg),
+        Err(_) if git_out(cwd, &["rev-parse", "--git-dir"]).is_err() => Ok(None),
+        Err(e) => Err(e.msg),
+    }
+}
+/// A GitHub repo as gh names it, and where its pull requests' links start.
+pub struct Target { pub gh: String, pub web: String }
+/// The repo a remote URL names: `gh` is its GH_REPO (`owner/name`, or `host/owner/name` on another host), `web` where its
+/// pull requests' links start. An ssh alias is the host `ssh -G` says it is. None for a URL that names no repo on a host.
+pub fn target_of(url: &str) -> Option<Target> {
+    let r = crate::install::remote_of(url)?;
+    let host = if r.ssh && !matches!(r.host.as_str(), "github.com" | "ssh.github.com") { ssh_host(&r.host).unwrap_or_else(|| r.host.clone()) } else { r.host.clone() };
+    let host = if host == "ssh.github.com" { "github.com".to_string() } else { host };
+    let gh = if host == "github.com" { r.repo.clone() } else { format!("{host}/{}", r.repo) };
+    Some(Target { web: format!("https://{host}/{}/pull/", r.repo).to_lowercase(), gh })
+}
+/// The host an ssh alias resolves to, as `ssh -G` says it (it makes no connection). None when ssh cannot say.
+fn ssh_host(alias: &str) -> Option<String> {
+    if alias.starts_with('-') { return None; }
+    let out = Command::new("ssh").args(["-G", alias]).stdin(Stdio::null()).stderr(Stdio::null()).output().ok()?;
+    out.status.success().then(|| hostname_in(&String::from_utf8_lossy(&out.stdout))).flatten()
+}
+/// The `hostname` line of `ssh -G` output: the host an alias names.
+pub fn hostname_in(out: &str) -> Option<String> {
+    out.lines().find_map(|l| l.strip_prefix("hostname ")).map(|h| h.trim().to_ascii_lowercase()).filter(|h| !h.is_empty())
+}
+/// The repo a task's branch is pushed to and its pull request is in, as gh names it, when the origin names one. None
+/// without an origin, or with one that names no repo on a host.
+pub fn origin_repo(cwd: &Path) -> Option<String> {
+    origin_url(cwd).ok().flatten().and_then(|u| target_of(&u)).map(|t| t.gh)
+}
+/// Refused before anything is pushed when `merge.repo` names another repo than the origin. Unset (`none`, or empty): no check.
+pub fn check_target(cwd: &Path, expected: &str) -> Result<(), String> {
+    if matches!(expected, "" | "none") { return Ok(()); }
+    let got = origin_repo(cwd).unwrap_or_else(|| "not a repo on a host".to_string());
+    if got.eq_ignore_ascii_case(expected) { return Ok(()); }
+    Err(format!("The clone's origin is {got}, but this repo's pull requests go to {expected} (merge.repo). Nothing is pushed or opened: point origin at {expected}, or change merge.repo."))
+}
 /// How GitHub words a check's result.
 pub const CHECK_BAD: [&str; 7] = ["FAILURE", "ERROR", "TIMED_OUT", "CANCELLED", "ACTION_REQUIRED", "STARTUP_FAILURE", "STALE"];
 pub const CHECK_GOOD: [&str; 3] = ["SUCCESS", "NEUTRAL", "SKIPPED"];
@@ -57,7 +128,7 @@ pub fn remote_head(root: &Path, branch: &str) -> String {
 pub fn cancel_auto_merge(t: &Task) -> Res<()> {
     if !t.b("autoMerge") { return Ok(()); }
     if t.b("autoMergeLocal") { update_wait(t.s("id"), 10000, |t| { t.put("autoMerge", false); t.put("autoMergeLocal", false); t.put("requireApproval", true); Ok(Change::Write) })?; return Ok(()); }
-    let r = gh(&["pr", "merge", &pr_number(t.s("pr")), "--disable-auto"], &folder_of(t.s("id")), 60000);
+    let r = gh(&["pr", "merge", t.s("pr"), "--disable-auto"], &folder_of(t.s("id")), 60000);
     if r.status != 0 {
         let said = if r.stderr.trim().is_empty() { r.stdout.clone() } else { r.stderr.clone() };
         crate::fail!("{}", format!("Could not cancel the pending auto-merge; nothing was sent. {}", said.trim().lines().last().unwrap_or("")).trim());

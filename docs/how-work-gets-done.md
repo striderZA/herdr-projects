@@ -120,6 +120,13 @@ When the agent's turn ends, the board:
    - A new round starts clean: the failure of the round before (a failed commit, a reviewer out of credits) is cleared
      as soon as the check starts, so the row and the details never show it while the work is checked and reviewed.
 2. **Pushes the branch and opens a draft pull request**, when there is an `origin` remote and `gh`.
+   - The pull request is opened in the repo that `origin` is, named on the command (`owner/name`, or `host/owner/name` on
+     another host: GitHub Enterprise, or an ssh alias that `ssh -G` resolves to its host). The board's `gh` calls for the
+     clone are for that repo too, so a clone whose `upstream` is the original does not send them there. A clone whose
+     `origin` is not a repo on a host (a local folder) gets no `gh` call at all: the finish fails and says so. With
+     `merge.repo` set (in the repo's `.herdr-projects.json`, under `merge`), no branch is pushed to any other repo: the
+     finish fails before the push and names both repos. A pull request link of another repo, stored on a task, is not
+     acted on either.
    - A pull request the agent already opened for the task's branch is taken on instead, and goes through the review and
      the merge as usual.
    - The push may run for `merge.pushTimeout` (2 minutes unless set), the repo's pre-push hook included. A repo whose

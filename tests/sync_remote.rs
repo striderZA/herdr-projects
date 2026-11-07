@@ -66,8 +66,8 @@ fn a_fetch_that_fails_is_not_a_sync_a_finished_turn_is_held_and_a_waiting_task_i
     let id = w.add("Offline");
     delegate(&id);
     assert_eq!(settle(&id).s("stage"), "asks");
-    git(&w.root, &["remote", "set-url", "--push", "origin", &bare]);
-    git(&w.root, &["remote", "set-url", "origin", &gone]);
+    reach_push(&w.root, &bare);
+    reach(&w.root, &gone);
     talk::tell(&id, "The first one.", false).unwrap();
     let t = settle(&id);
     assert_eq!(t.s("stage"), "approval", "{}", t.at("failure")); assert!(t.at("failure").is_null()); assert!(t.b("reviewedHead"));
@@ -75,7 +75,7 @@ fn a_fetch_that_fails_is_not_a_sync_a_finished_turn_is_held_and_a_waiting_task_i
     assert!(t.at("syncBlocked").s("detail").contains("does not appear to be a git repository"), "{}", t.at("syncBlocked"));
     assert!(t.s("msg").starts_with("Behind main")); assert_ne!(row(&id).s("state"), "error"); assert_eq!(place(&t), "behind main");
     assert!(finish_line::approve(&id, None, false).unwrap_err().msg.contains("behind main and cannot be approved yet"));
-    git(&w.root, &["remote", "set-url", "origin", &bare]);
+    reach(&w.root, &bare);
     update(&id, |t| { t.put("syncRetryAt", sw::clock::now() - 1); Ok(Change::Write) }).unwrap();
     clear_jobs();
     housekeep(&w);
@@ -86,7 +86,7 @@ fn a_fetch_that_fails_is_not_a_sync_a_finished_turn_is_held_and_a_waiting_task_i
     let target = they_push(&w, "a.txt", "theirs\n");
     sw::housekeeping::poll_prs();
     let seen = task(&id).at("syncSeen").clone();
-    git(&w.root, &["remote", "set-url", "origin", &gone]);
+    reach(&w.root, &gone);
     clear_jobs();
     housekeep(&w);
     assert_eq!(sync_jobs(), 1);
@@ -100,7 +100,7 @@ fn a_fetch_that_fails_is_not_a_sync_a_finished_turn_is_held_and_a_waiting_task_i
     housekeep(&w);
     assert_eq!(sync_jobs(), 0, "not hammered: it waits for the pause");
     // the remote is back, and main has not moved again: the retry still comes, and finds the conflict
-    git(&w.root, &["remote", "set-url", "origin", &bare]);
+    reach(&w.root, &bare);
     update(&id, |t| { t.put("syncRetryAt", sw::clock::now() - 1); Ok(Change::Write) }).unwrap();
     w.script(json!({ "worker": [{ "note": null, "status": "working" }] }));
     housekeep(&w);
@@ -139,7 +139,7 @@ fn when_the_periodic_fetch_fails_nothing_is_known_about_main_waiting_tasks_are_h
     assert_eq!(settle(&id).s("stage"), "approval");
     // main moves at the remote with a conflict, and the remote cannot be reached: the local ref still says "nothing new"
     let target = they_push(&w, "a.txt", "theirs\n");
-    git(&w.root, &["remote", "set-url", "origin", &gone]);
+    reach(&w.root, &gone);
     clear_jobs();
     sw::housekeeping::poll_prs();
     let t = settle(&id);
@@ -147,7 +147,7 @@ fn when_the_periodic_fetch_fails_nothing_is_known_about_main_waiting_tasks_are_h
     assert_eq!((row(&id).at("asReview").clone(), place(&t)), (json!(false), "behind main".to_string()));
     assert!(finish_line::approve(&id, None, false).unwrap_err().msg.contains("behind main and cannot be approved yet"));
     // the remote is back: the retry finds the conflict
-    git(&w.root, &["remote", "set-url", "origin", &bare]);
+    reach(&w.root, &bare);
     update(&id, |t| { t.put("syncRetryAt", 0); Ok(Change::Write) }).unwrap();
     housekeep(&w);
     let t = settle(&id);
@@ -187,6 +187,6 @@ fn with_approve_main_moving_at_the_remote_makes_no_merge_and_no_push_while_it_wa
     let t = settle(&calm);
     assert_eq!(t.s("stage"), "done", "{}", t.at("failure"));
     // merged through its pull request at a commit that holds main, the one pushed after main was merged in
-    let at = gh_log(&w).lines().filter_map(|l| l.strip_prefix("pr merge 7 --squash --match-head-commit ")).last().unwrap_or("").to_string();
+    let at = gh_log(&w).lines().filter_map(|l| l.strip_prefix("pr merge https://github.com/o/r/pull/7 --squash --match-head-commit ")).last().unwrap_or("").to_string();
     assert!(w.gh.merged.get()); assert!(!at.is_empty() && common::worktrees::git(&w.base.join("origin.git"), &["merge-base", "--is-ancestor", &target, &at]).is_ok(), "merged at a commit that holds main: {at}");
 }
