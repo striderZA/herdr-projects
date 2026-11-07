@@ -8,7 +8,7 @@ use sw::agents::talk::Said;
 use sw::board::textbox::images::labelled;
 use sw::board::view::talk::{with_mine, Part};
 
-const HERDR: &str = "/var/folders/gf/7lzcszfj0712mkfw2ptky5vw0000gn/T/herdr-clipboard-images-501/client-373-clipboard-1792666061783975000-0.png";
+const HERDR: &str = "/tmp/herdr-test-temp-folder-with-a-long-name/herdr-clipboard-images-501/client-373-clipboard-1792666061783975000-0.png";
 fn herdr(n: usize) -> String { HERDR.replace("-0.png", &format!("-{n}.png")) }
 
 #[test]
@@ -18,9 +18,9 @@ fn every_picture_in_sent_words_is_its_chip_numbered_per_message() {
     // What Claude Code wrote for the first, the path of the second: one count.
     assert_eq!(labelled(&format!("[Image #39] and {}", herdr(1))), "[Image 1] and [Image 2]");
     // A dropped file, escaped or in quotes, on another machine (no file here), and one under ~/.
-    assert_eq!(labelled("see /Users/you/Desktop/Screen\\ Shot.PNG, '/tmp/a b.jpg' ~/.herdr-projects/inbox/x.webp"), "see [Image 1], [Image 2] [Image 3]");
+    assert_eq!(labelled("see /home/you/Pictures/a\\ picture.PNG, '/tmp/a b.jpg' ~/.herdr-projects/inbox/x.webp"), "see [Image 1], [Image 2] [Image 3]");
     // As a chat box sends one.
-    assert_eq!(labelled("@/Users/you/x.png what is this"), "[Image 1] what is this");
+    assert_eq!(labelled("@/home/you/x.png what is this"), "[Image 1] what is this");
     // No picture: as it was.
     for words in ["Look at /tmp/notes.txt and src/x.png and https://x.dev/a.png.", "[Image 2] typed by hand"] { assert_eq!(labelled(words), words); }
 }

@@ -44,7 +44,7 @@ pub fn agent(f: &F, verb: &str, arg2: &str, argv: &[String], flag: &dyn Fn(&str)
                 return fail("timeout", "timed out waiting for agent startup");
             }
             // `canonical`: that many starts find the pane's shell not at its prompt yet, its terminal taking 1024 bytes
-            // on a line (macOS): herdr types nothing and says so. `canonicalLate`: it says so, and the program came up.
+            // on a line (some do): herdr types nothing and says so. `canonicalLate`: it says so, and the program came up.
             // `canonicalName`: only the agents whose name ends so.
             let refused = st.i("canonical") > 0 && arg2.ends_with(st.s("canonicalName"));
             if refused { st["canonical"] = json!(st.i("canonical") - 1); }
