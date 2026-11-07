@@ -127,7 +127,7 @@ pub fn report(k: &mut Kit, c: &Ctx, r: &Obj) {
     if has { lines.extend(artifact_rows(&json!({ "link": rep.at("link"), "caption": "Open report", "detail": if c.full { format!("{}{}", rep.s("file"), if rep.b("at") { format!(" · kept {} ago", age(c.now - rep.i("at"))) } else { String::new() }) } else { String::new() } }), room, c.full)); }
     // How to open it: the board's key, or the terminal's own click on a link.
     if has {
-        let click = if rep.s("link").starts_with("http") { format!(", or {}+click", if crate::board::key_style::mac() { "cmd" } else { "ctrl" }) } else { String::new() };
+        let click = if rep.s("link").starts_with("http") { ", or ctrl+click".to_string() } else { String::new() };
         lines.extend(Kit::wrap_at(&format!("{} opens it{click}", key_name("openLink")), room.saturating_sub(2).max(1)).into_iter().map(|l| Inked::plain("  ").add(l.recolor(Ink::Muted))));
     }
     k.part(lines);

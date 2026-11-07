@@ -25,8 +25,7 @@ work while you type and leave the draft alone.
 ## The `?` menu
 
 It lists the same three groups as the tables below, each line with its key. A `Ctrl` or `Alt` line can also be picked
-there, which does what the key does. So a terminal that does not pass `Alt` on (a Mac terminal without "Option as Meta",
-some phone keyboards) loses nothing.
+there, which does what the key does. So a terminal that does not pass `Alt` on (some phone keyboards) loses nothing.
 
 ## Questions: the board asks before what cannot be undone
 
@@ -166,21 +165,6 @@ herdr-projects set board.keys "chatMessage=ctrl+g, chatScrollUp=ctrl+up, chatScr
   counts for nothing: that key keeps its own chord, and `herdr-projects show` says why.
 
 The tables below always show the chords the board comes with.
-
-## Key names on a Mac
-
-**On a Mac the `Alt` keys are pressed with Option, and the board can say so.** With `board.keyStyle mac` the hint line,
-the `?` menu and the board's messages write `opt+c` where they wrote `alt+c`, and the menu's group reads `opt: only shows
-or hides`. `Ctrl` stays `ctrl`: a Mac's terminal passes Control on to the board, never Cmd. Only the names change; the
-keys are the same. (The terminal must send Option as `Alt`: "Use Option as Meta key" in Terminal, "Esc+" in iTerm2.)
-
-```
-herdr-projects set board.keyStyle mac
-```
-
-`auto`, the built-in value, goes by the system the board runs on. A board on a Linux machine you use from a Mac cannot
-see your keyboard, so it says `alt` there: set `mac` on that machine. `pc` always says `alt`. The tables
-below always use the PC names.
 
 ## All the keys
 

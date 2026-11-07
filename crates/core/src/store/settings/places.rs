@@ -26,6 +26,8 @@ fn leaves(o: &Value, prefix: &str, out: &mut Vec<(String, Value)>) {
         if v.is_object() && entry_of(&name).is_none() { leaves(v, &name, out); } else { out.push((name, v.clone())); }
     }
 }
+/// Settings a version took away: a file that still has one reads as if it were not there, with no problem said.
+const RETIRED: [&str; 1] = ["board.keyStyle"];
 /// The settings said in one place, checked. `allowed`: the names this place may hold.
 pub fn read(o: &Value, place: &str, allowed: &[&str], why: &str) -> (Obj, Vec<Problem>) {
     let mut values = Obj::new();
@@ -33,6 +35,7 @@ pub fn read(o: &Value, place: &str, allowed: &[&str], why: &str) -> (Obj, Vec<Pr
     let mut all = vec![];
     leaves(o, "", &mut all);
     for (name, v) in all {
+        if RETIRED.contains(&name.as_str()) { continue; }
         if !allowed.contains(&name.as_str()) {
             let near = nearest(&name, allowed);
             let why = if entry_of(&name).is_some() { format!("{name} {}", if why.is_empty() { "cannot be set here" } else { why }) }
