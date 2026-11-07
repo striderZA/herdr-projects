@@ -1,7 +1,7 @@
 # Windows
 
 herdr-projects runs natively on Windows, without WSL, as a herdr plugin. It has the same board and the same checks as
-Linux and macOS. The Unix and Windows code sits in one platform layer, `crates/core/src/sys/`: `sys/unix.rs` keeps the
+Linux. The Unix and Windows code sits in one platform layer, `crates/core/src/sys/`: `sys/unix.rs` keeps the
 Unix bodies as they were, and `sys/windows.rs` gives each function its Windows body. The rest of the program calls the
 same functions on both.
 

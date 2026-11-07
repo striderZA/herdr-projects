@@ -25,8 +25,7 @@ work while you type and leave the draft alone.
 ## The `?` menu
 
 It lists the same three groups as the tables below, each line with its key. A `Ctrl` or `Alt` line can also be picked
-there, which does what the key does. So a terminal that does not pass `Alt` on (a Mac terminal without "Option as Meta",
-some phone keyboards) loses nothing.
+there, which does what the key does. So a terminal that does not pass `Alt` on (some phone keyboards) loses nothing.
 
 ## Questions: the board asks before what cannot be undone
 
@@ -167,21 +166,6 @@ herdr-projects set board.keys "chatMessage=ctrl+g, chatScrollUp=ctrl+up, chatScr
 
 The tables below always show the chords the board comes with.
 
-## Key names on a Mac
-
-**On a Mac the `Alt` keys are pressed with Option, and the board can say so.** With `board.keyStyle mac` the hint line,
-the `?` menu and the board's messages write `opt+c` where they wrote `alt+c`, and the menu's group reads `opt: only shows
-or hides`. `Ctrl` stays `ctrl`: a Mac's terminal passes Control on to the board, never Cmd. Only the names change; the
-keys are the same. (The terminal must send Option as `Alt`: "Use Option as Meta key" in Terminal, "Esc+" in iTerm2.)
-
-```
-herdr-projects set board.keyStyle mac
-```
-
-`auto`, the built-in value, goes by the system the board runs on. A board on a Linux machine you use from a Mac cannot
-see your keyboard, so it says `alt` there: set `mac` on that machine. `pc` always says `alt`. The tables
-below always use the PC names.
-
 ## All the keys
 
 <!-- made:keys Made by `herdr-projects docs` from crates/flow/src/board/keys.rs. Do not edit between these two lines. -->
@@ -210,7 +194,7 @@ below always use the PC names.
 | `Ctrl+X` | stop the agent, when one is running (working, starting, checking, under review, or waiting for your answer); the selection stays where you were, on the next row when the stopped task moves to another group. On a task with no agent running (idle, never started, stopped, finished, archived) it asks to remove the task instead: `y` removes it, its worktree too. A task you marked as your own work in progress has no agent to stop: there the key puts it back in to do. A stop never goes on to that question by itself: removing takes a second `Ctrl+X`, and a `y`. On an automation's row: remove the automation (it asks first; the tasks it made stay). On a coordinator's row: stop that coordinator (with no project's or task's row selected: the main Coordinator); your next message, or `Ctrl+S`, starts it again in the same conversation |
 | `Ctrl+A` | archive the selected task, or restore it from the archive. Archiving closes its space (its agent ends) and frees its temporary files; its worktree, branch and history stay. Restoring starts nothing. On a project's row (a repo's heading, grouped by repo, `Alt+S`): archive the whole project with its tasks, after a yes when one of them works, waits or is to do; in the archive, on an archived project's heading: restore it with its tasks as they were |
 | `Ctrl+P` | pin the selected row, or unpin it: a task or a project's row. Nothing moves: the row gets a yellow pin mark `★` and shows under Pinned, the last filter on the filter row (`Tab`) ([pinned.md](pinned.md)) |
-| `Ctrl+D` | open the selected task's link in the browser: its report when it has one ([research.md](research.md#where-a-report-goes)), else its pull request. It opens with this machine's own opener (`open` on macOS, `xdg-open` on Linux with a display). Where nothing can open it (no opener, ssh without a display) it copies the link instead (OSC 52, as the board's copy does, [mouse.md](mouse.md)) and says so. On a task with neither it does nothing |
+| `Ctrl+D` | open the selected task's link in the browser: its report when it has one ([research.md](research.md#where-a-report-goes)), else its pull request. It opens with this machine's own opener (`xdg-open` on Linux with a display, `cmd start` on Windows). Where nothing can open it (no opener, ssh without a display) it copies the link instead (OSC 52, as the board's copy does, [mouse.md](mouse.md)) and says so. On a task with neither it does nothing |
 | `Ctrl+E` `Ctrl+U` | the selected task's settings, full screen: every work setting by its name and its value. `↑` `↓` move to a row; `Enter` changes it (a switch or a choice goes to its next value, anything else is typed and saved with `Enter`); rows set for this task only are marked `*` (where any other value comes from is `herdr-projects show <id>`'s). `Ctrl+U` puts the selected row back to what it would be without this task's own answer. `Esc` or `Ctrl+E` again goes back ([settings.md](settings.md)). On an automation's row: the automation's own settings, the same page. On a coordinator's row (a project's row or the top row stands for its coordinator): that coordinator's own settings first (`coordinator.*`), then your own settings, which every task starts from (on a repo's heading: your entry for that repo), changed as `herdr-projects set` changes them |
 | `Ctrl+Z` | undo: bring back a draft that was put away, or take the last archiving back |
 | `Ctrl+F` | find: type, and the list shows only the tasks that match, archived ones too. `Enter` keeps the filter, `Esc` leaves find; `Esc` on the list clears a filter that is kept |

@@ -12,7 +12,7 @@
 # Cargo is given its share as `-j` (`sc_cargo`), never in CARGO_BUILD_JOBS: the build cache keys every compile on the
 # CARGO_ variables cargo hands the compiler, so a job count that changes from run to run there would miss the cache
 # every time. CARGO_BUILD_JOBS or RUST_TEST_THREADS set by you wins over the share.
-sc_cores=$(getconf _NPROCESSORS_ONLN 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 1)
+sc_cores=$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 1)
 case "$sc_cores" in ''|0*|*[!0-9]*) sc_cores=1 ;; esac
 sc_dir="${XDG_CACHE_HOME:-$HOME/.cache}/herdr-projects/running"
 sc_mine=""

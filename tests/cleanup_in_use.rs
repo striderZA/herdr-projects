@@ -87,6 +87,6 @@ fn the_line_names_the_first_thing_and_how_many_more_details_has_them_all() {
     let u = InUse { ctx: "beside its agent", what: vec!["node …/a.js (pid 5) streams to the terminal".into(), "tsserver (pid 6) is not wired to its agent".into(), "x (pid 7) runs in a group of its own".into()] };
     assert_eq!(u.line("p/7"), "its space is in use beside its agent: node …/a.js (pid 5) streams to the terminal; and 2 more (herdr-projects details p/7)");
     assert_eq!(u.all()[1], "beside its agent: tsserver (pid 6) is not wired to its agent");
-    assert_eq!(sw::herdr::busy::short(&["/usr/local/bin/node".into(), "--max-old-space-size=4096".into(), "/Users/me/.npm/_npx/1/node_modules/tsserver/lib/server.js".into()]), "node …/server.js");
+    assert_eq!(sw::herdr::busy::short(&["/usr/local/bin/node".into(), "--max-old-space-size=4096".into(), "/home/me/.npm/_npx/1/node_modules/tsserver/lib/server.js".into()]), "node …/server.js");
     assert_eq!(sw::herdr::busy::short(&["uv".into(), "tool".into(), "uvx".into()]), "uv tool");
 }

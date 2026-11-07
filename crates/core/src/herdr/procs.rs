@@ -32,10 +32,10 @@ pub fn wiring(pid: i64, group: &[i64]) -> Wiring {
     real_wiring(pid, group)
 }
 pub fn real_wired_to(pid: i64, group: &[i64]) -> Option<bool> { real_wiring(pid, group).wired() }
-#[cfg(windows)]
-pub fn real_wiring(_pid: i64, _group: &[i64]) -> Wiring { Wiring::Unknown } // no /proc and no lsof: a process's streams cannot be looked at
-#[cfg(not(windows))]
-pub fn real_wiring(pid: i64, group: &[i64]) -> Wiring { if cfg!(target_os = "linux") { linux(pid, group) } else { lsof(pid, group) } }
+#[cfg(not(target_os = "linux"))]
+pub fn real_wiring(_pid: i64, _group: &[i64]) -> Wiring { Wiring::Unknown } // no /proc: a process's streams cannot be looked at
+#[cfg(target_os = "linux")]
+pub fn real_wiring(pid: i64, group: &[i64]) -> Wiring { linux(pid, group) }
 /// Ask a process to end (`sig`): false where it cannot be (gone, another user's). A test's stand-in ends its own.
 pub fn signal(pid: i64, sig: i32) -> bool {
     if let Some(f) = super::cli::fake() { if f.alive(pid).is_some() { f.kill(pid); return true; } }
@@ -93,27 +93,4 @@ fn linux(pid: i64, group: &[i64]) -> Wiring {
         }
     };
     if ours(&i) && ours(&o) { Wiring::Agent } else if tty(&i) || tty(&o) { Wiring::Terminal } else { Wiring::Elsewhere }
-}
-/// Elsewhere (macOS): `lsof` names a pipe's or socket's own address (`d`) and its other end's (`n->0x…`).
-#[cfg(unix)]
-fn lsof(pid: i64, group: &[i64]) -> Wiring {
-    let pids: Vec<String> = group.iter().chain((!group.contains(&pid)).then_some(&pid)).map(|p| p.to_string()).collect(); // itself too, when outside the group
-    let Ok(o) = Command::new("lsof").args(["-n", "-P", "-p", &pids.join(","), "-F", "pfdn"]).output() else { return Wiring::Unknown };
-    if o.stdout.is_empty() { return Wiring::Unknown; }
-    let (mut p, mut fd) = (0i64, String::new());
-    let (mut own, mut theirs) = (Vec::<(String, String)>::new(), Vec::<String>::new()); // own: (fd, the other end)
-    let (mut err_tty, mut on_tty, mut open) = (false, false, Vec::<String>::new());
-    for l in String::from_utf8_lossy(&o.stdout).lines() {
-        let (k, v) = l.split_at(1.min(l.len()));
-        match k {
-            "p" => p = v.parse().unwrap_or(0),
-            "f" => fd = v.to_string(),
-            "d" if p != pid => theirs.push(v.to_string()),
-            "n" if p == pid => { open.push(fd.clone()); if tty(v) { if fd == "2" { err_tty = true; } else if fd == "0" || fd == "1" { on_tty = true; } } if let Some(peer) = v.strip_prefix("->") { own.push((fd.clone(), peer.to_string())); } }
-            _ => {}
-        }
-    }
-    if err_tty { return Wiring::Terminal; }
-    let ours = |f: &str| own.iter().any(|(x, peer)| x == f && theirs.contains(peer));
-    if ours("0") && ours("1") { Wiring::Agent } else if on_tty { Wiring::Terminal } else if !open.iter().any(|f| f == "0") || !open.iter().any(|f| f == "1") { Wiring::Closed } else { Wiring::Elsewhere }
 }

@@ -1,4 +1,4 @@
-//! Opening a link in the browser of the machine the board runs on: its own opener (`open` on macOS, `xdg-open` on
+//! Opening a link in the browser of the machine the board runs on: its own opener (`xdg-open` on
 //! Linux with a display), or why there is none (no opener, ssh without a display), so that the board copies the link
 //! instead. A test answers for the opener itself (`set_fake`), so no program is started then.
 use std::cell::RefCell;
@@ -17,9 +17,6 @@ pub fn pick(os: &str, set: impl Fn(&str) -> bool, found: impl Fn(&str) -> bool) 
     let ssh = set("SSH_CONNECTION") || set("SSH_TTY");
     let display = set("DISPLAY") || set("WAYLAND_DISPLAY");
     match os {
-        // Over ssh a Mac's browser opens on that Mac's screen, not in front of you.
-        "macos" if ssh => Err("the board runs over ssh".into()),
-        "macos" => Ok("open"),
         "windows" if ssh => Err("the board runs over ssh".into()),
         "windows" => Ok("cmd-start"),
         _ if !display => Err(if ssh { "the board runs over ssh with no display" } else { "this machine has no display" }.into()),
@@ -72,8 +69,6 @@ mod tests {
     #[test]
     fn which_opener() {
         let env = |v: &'static [&'static str]| move |k: &str| v.contains(&k);
-        assert_eq!(pick("macos", env(&[]), |_| false), Ok("open"));
-        assert!(pick("macos", env(&["SSH_CONNECTION"]), |_| true).is_err());
         assert_eq!(pick("linux", env(&["DISPLAY"]), |_| true), Ok("xdg-open"));
         assert_eq!(pick("windows", env(&[]), |_| false), Ok("cmd-start"));
         assert!(pick("windows", env(&["SSH_TTY"]), |_| true).is_err());

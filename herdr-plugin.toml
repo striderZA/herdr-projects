@@ -2,10 +2,10 @@ id = "herdr-projects"
 name = "Projects"
 version = "1.2.29"
 # The oldest herdr this plugin runs on: herdr refuses the plugin on an older one, on every platform. Windows also needs
-# herdr 0.9.4, which the doctor checks on Windows alone. Verified: Linux and macOS on 0.9.3.
+# herdr 0.9.4, which the doctor checks on Windows alone. Verified: Linux on 0.9.3.
 min_herdr_version = "0.9.3"
 description = "A work board: one list of tasks, each delegated one an ordinary herdr agent in its own space"
-platforms = ["linux", "macos", "windows"]
+platforms = ["linux", "windows"]
 
 # Commands go through bin/run.sh: herdr starts them with its server's environment, which may lack the user's PATH. It
 # runs the program built here, or the one downloaded for this platform from this version's GitHub release. The Windows
@@ -15,7 +15,7 @@ platforms = ["linux", "macos", "windows"]
 
 # Gets the program when the plugin is installed: downloads it, or builds it from source when it cannot.
 [[build]]
-platforms = ["linux", "macos"]
+platforms = ["linux"]
 command = ["sh", "bin/run.sh", "--fetch"]
 
 [[build]]
@@ -23,7 +23,7 @@ platforms = ["windows"]
 command = ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "bin/run.ps1", "--fetch"]
 
 [[startup]]
-platforms = ["linux", "macos"]
+platforms = ["linux"]
 command = ["sh", "bin/run.sh", "hook"]
 
 [[startup]]
@@ -33,7 +33,7 @@ command = ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File"
 [[actions]]
 id = "open"
 title = "Open the work board"
-platforms = ["linux", "macos"]
+platforms = ["linux"]
 command = ["sh", "bin/run.sh", "open"]
 
 [[actions]]
@@ -45,7 +45,7 @@ command = ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File"
 [[actions]]
 id = "coordinator"
 title = "Go into the Coordinator's chat"
-platforms = ["linux", "macos"]
+platforms = ["linux"]
 command = ["sh", "bin/run.sh", "open-coordinator"]
 
 [[actions]]
@@ -58,7 +58,7 @@ command = ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File"
 id = "approve-current"
 title = "Approve the task in the focused pane (the board asks first)"
 contexts = ["pane"]
-platforms = ["linux", "macos"]
+platforms = ["linux"]
 command = ["sh", "bin/run.sh", "approve-current"]
 
 [[actions]]
@@ -70,7 +70,7 @@ command = ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File"
 
 [[events]]
 on = "pane.agent_status_changed"
-platforms = ["linux", "macos"]
+platforms = ["linux"]
 command = ["sh", "bin/run.sh", "hook"]
 
 [[events]]
@@ -81,7 +81,7 @@ command = ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File"
 # An agent exiting to its shell fires this (released) on herdr 0.9.3.
 [[events]]
 on = "pane.agent_detected"
-platforms = ["linux", "macos"]
+platforms = ["linux"]
 command = ["sh", "bin/run.sh", "hook"]
 
 [[events]]
@@ -91,7 +91,7 @@ command = ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File"
 
 [[events]]
 on = "pane.closed"
-platforms = ["linux", "macos"]
+platforms = ["linux"]
 command = ["sh", "bin/run.sh", "hook"]
 
 [[events]]
@@ -101,7 +101,7 @@ command = ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File"
 
 [[events]]
 on = "worktree.removed"
-platforms = ["linux", "macos"]
+platforms = ["linux"]
 command = ["sh", "bin/run.sh", "hook"]
 
 [[events]]
@@ -115,7 +115,7 @@ title = "Work board"
 # A tab of its own unless you choose the popup (`board.open`): the board key then opens this pane as herdr's popup
 # instead, a window over everything (src/board/run/place.rs).
 placement = "tab"
-platforms = ["linux", "macos"]
+platforms = ["linux"]
 command = ["sh", "bin/run.sh", "board"]
 
 [[panes]]

@@ -9,8 +9,8 @@ herdr plugin install eliasstravik/herdr-projects
 
 ## What you need
 
-- Linux or macOS, on x86_64 or aarch64.
-- Herdr 0.9.3 or newer. Your **running** Herdr server must be 0.9.3 or newer too: an older one refuses the plugin until
+- Linux, on x86_64 or aarch64, or Windows on x86_64 (see [Windows](#windows) below).
+- Herdr 0.9.3 or newer (0.9.4 on Windows). Your **running** Herdr server must be 0.9.3 or newer too: an older one refuses the plugin until
   it is restarted.
 - `git`, and `curl` or `wget` to download the program.
 - Optional: `gh` (pull requests).
@@ -87,7 +87,7 @@ rows = [["state_icon", "machine", "workspace", { token = "tab", rules = [{ equal
 rows = [["state_icon", "workspace"], ["branch", "git_status"], [{ token = "$summary", dim = true }, "$progress"]]
 ```
 
-On Windows, use `command = "herdr-projects.open-windows"` instead. `herdr-projects.open` runs on Linux and macOS only, and
+On Windows, use `command = "herdr-projects.open-windows"` instead. `herdr-projects.open` runs on Linux only, and
 Herdr refuses it on Windows.
 
 **Careful with the key.** A `[[keys.command]]` beats Herdr's own binding of the same key, with no warning. Written by
@@ -155,7 +155,7 @@ Windows is listed in the plugin's manifest on this branch; merging it waits for 
 - Herdr 0.9.4 or newer, running. The board checks herdr's version when it starts and refuses an older one on Windows, naming the version it needs.
 - PowerShell 7 (`pwsh.exe`) as herdr's default shell, set by `default_shell` in herdr's `config.toml`. Without it herdr uses Windows PowerShell 5.1.
 
-Install with the same command as on Linux and macOS, in PowerShell:
+Install with the same command as on Linux, in PowerShell:
 
     herdr plugin install eliasstravik/herdr-projects
 
@@ -163,8 +163,8 @@ Herdr runs `bin/run.ps1` on Windows. It runs the program built from this checkou
 
 ## Details: which program runs
 
-The program is one file per platform: `herdr-projects-linux-x86_64`, `-linux-aarch64`, `-macos-x86_64`,
-`-macos-aarch64`. The Linux ones run on any Linux.
+The program is one file per platform: `herdr-projects-linux-x86_64`, `-linux-aarch64`, `herdr-projects-windows-x86_64.exe`.
+The Linux ones run on any Linux.
 
 Every command Herdr runs for the plugin goes through `bin/run.sh`, which runs the first of these it finds:
 

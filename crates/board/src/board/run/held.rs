@@ -20,7 +20,7 @@ pub fn held_size(cols: u16, rows: u16, layout: &Value, pane: &str) -> Option<(u1
 /// The attach processes on this machine that hold a terminal, oldest first: (pid, seconds).
 pub fn holders(terminal: &str) -> Vec<(i64, i64)> {
     if terminal.is_empty() { return vec![]; }
-    // `etime`, not `etimes`, in sys::process_table: macOS's ps has no `etimes`.
+    // `etime`, not `etimes`, in sys::process_table: holders_in reads that format.
     let out = crate::sys::process_table();
     holders_in(terminal, &out)
 }

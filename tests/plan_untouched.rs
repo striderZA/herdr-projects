@@ -126,7 +126,7 @@ fn a_stop_a_delegate_with_the_plan_taken_off_and_a_yes_to_a_failed_plan_step_eac
     let old = w.add("Stuck");
     delegate(&old);
     assert_eq!(settle(&old).s("stage"), "plan");
-    sw::store::tasks::patch(&old, |t| { t.put("stage", "failed"); t.put("failure", json!({ "stage": "plan", "title": "The plan's review failed", "detail": "The reviewer could not check the plan: sandbox-exec" })); }).unwrap();
+    sw::store::tasks::patch(&old, |t| { t.put("stage", "failed"); t.put("failure", json!({ "stage": "plan", "title": "The plan's review failed", "detail": "The reviewer could not check the plan: its sandbox could not start" })); }).unwrap();
     assert!(is_locked(&task(&old)));
     approve(&old);
     let t = settle(&old);

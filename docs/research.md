@@ -28,11 +28,11 @@ Every agent the board starts is told the same, in every repo:
 The task panel shows the link under **Report**, beside the list and full screen (full screen also shows the file's name
 and the full link). `herdr-projects details <id>` has it as `report`. To open it:
 
-- **`Ctrl+D`** on the task opens its report in the browser of the machine the board runs on (`open` on macOS,
-  `xdg-open` on Linux with a display); on a task with no report it opens the pull request. A done task's hint line names
+- **`Ctrl+D`** on the task opens its report in the browser of the machine the board runs on (`xdg-open` on Linux
+  with a display, `cmd start` on Windows); on a task with no report it opens the pull request. A done task's hint line names
   the key. Where nothing can open a link there (no opener, ssh without a display), the key copies the link to your
   clipboard instead (OSC 52, as the board's copy does: [mouse](mouse.md)) and says so. The full list: [keys](keys.md).
-- **The terminal's own click on a link**: `Cmd`+click on a Mac, `Ctrl`+click in most other terminals. A plain click does
+- **The terminal's own click on a link**: `Ctrl`+click in most terminals. A plain click does
   nothing, and some terminals do not pass the link through herdr at all. A report is a file's path: `Ctrl+D` opens that too.
 
 This holds for any task. A task that changes code and also wrote a report has both: its change in the pull request, and

@@ -4,7 +4,7 @@ use crate::common;
 use common::*;
 use std::time::{Duration, Instant};
 
-/// A process's state letter as `ps` gives it, on Linux and macOS alike (`Z`: a zombie, ended and nobody waited for
+/// A process's state letter as `ps` gives it (`Z`: a zombie, ended and nobody waited for
 /// it), None once it is gone.
 fn state(pid: u32) -> Option<char> {
     let o = std::process::Command::new("ps").args(["-o", "stat=", "-p", &pid.to_string()]).output().ok()?;

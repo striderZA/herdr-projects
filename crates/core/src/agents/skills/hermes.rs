@@ -41,7 +41,7 @@ pub fn slug(n: &str) -> String {
 }
 fn platform_ok(f: &Fields) -> bool {
     let p = f.get("platforms").map(texts).unwrap_or_default();
-    let me = match std::env::consts::OS { "macos" => "macos", "windows" => "windows", o => o };
+    let me = std::env::consts::OS;
     p.is_empty() || p.iter().any(|x| x.to_lowercase() == me)
 }
 pub fn list(p: &Place) -> Vec<Skill> {

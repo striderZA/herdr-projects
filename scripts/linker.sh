@@ -13,13 +13,13 @@ ln_install() {
     Linux-x86_64) a=x86_64; sum=6ff270c9bf07d2bec5c98aa324eb7c4daf6a1a4d815c05ff1708049616047855 ;;
     Linux-aarch64|Linux-arm64) a=aarch64; sum=16b025652d3d7456689e6025a77e1903bb2a15e7630877c26cc133f5df95b9c6 ;;
     Linux-*) echo "No mold for $(uname -m): this machine links as Rust does by itself." >&2; return 0 ;;
-    *) return 0 ;; # macOS links with Apple's own linker, already as quick
+    *) return 0 ;; # not Linux: no mold, the linker Rust uses by itself
   esac
   name="mold-$ln_version-$a-linux"; url="https://github.com/rui314/mold/releases/download/v$ln_version/$name.tar.gz"
   tmp=$(mktemp -d) || return 0
   if command -v curl >/dev/null 2>&1; then curl -fsSL -o "$tmp/a.tgz" "$url"; else wget -qO "$tmp/a.tgz" "$url"; fi || {
     rm -rf "$tmp"; echo "Could not download mold ($url): this machine links as Rust does by itself." >&2; return 0; }
-  got=$( (sha256sum "$tmp/a.tgz" 2>/dev/null || shasum -a 256 "$tmp/a.tgz") | cut -d' ' -f1)
+  got=$(sha256sum "$tmp/a.tgz" 2>/dev/null | cut -d' ' -f1)
   if [ "$got" = "$sum" ] && tar -xzf "$tmp/a.tgz" -C "$tmp" && "$tmp/$name/bin/mold" --version >/dev/null 2>&1 \
     && mkdir -p "${ln_dir%/*}" && mv "$tmp/$name" "$ln_dir.$$"; then
     # one rename: a link that starts while it installs finds all of mold or none of it

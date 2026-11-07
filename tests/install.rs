@@ -27,12 +27,9 @@ fn here() -> (&'static str, &'static str) { platform().expect("the tests run on 
 #[test]
 fn platform_names_urls_and_versions() {
     assert_eq!(platform_of("Linux", "x86_64"), Some(("linux", "x86_64")));
-    assert_eq!(platform_of("Darwin", "arm64"), Some(("macos", "aarch64")), "uname on a Mac");
-    assert_eq!(platform_of("macos", "aarch64"), Some(("macos", "aarch64")), "Rust's own names");
     assert_eq!(platform_of("linux", "amd64"), Some(("linux", "x86_64")));
     assert_eq!(platform_of("FreeBSD", "x86_64"), None);
     assert_eq!(platform_of("Linux", "riscv64"), None);
-    assert_eq!(asset_name(("macos", "aarch64")), "herdr-projects-macos-aarch64");
     let base = "https://github.com/eliasstravik/herdr-projects/releases";
     assert_eq!(asset_url(base, Some("0.3.1"), "herdr-projects-linux-x86_64"), format!("{base}/download/v0.3.1/herdr-projects-linux-x86_64"));
     assert_eq!(asset_url(base, Some("v0.3.1"), "a"), format!("{base}/download/v0.3.1/a"), "a version typed with its v");
@@ -175,7 +172,7 @@ fn install_writes_the_launcher_for_this_program() {
     let (b, _one) = scratch();
     let exe = sw::store::files::bin();
     let launcher = b.join("sw").join("data").join("bin").join("herdr-projects");
-    // The PATH is the whole test program's: it keeps /bin (sh and cat are only there on macOS) and is given back.
+    // The PATH is the whole test program's: it is the system folders only (sh and cat run from there), and is given back.
     // Given back when the test ends however it ends: a failed assert must not leave the next test without git.
     struct PathBack(String);
     impl Drop for PathBack { fn drop(&mut self) { set("PATH", &self.0); } }

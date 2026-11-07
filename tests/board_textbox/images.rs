@@ -7,7 +7,7 @@ use crate::common;
 use common::board::open;
 use common::*;
 
-const HERDR: &str = "/var/folders/gf/7lzcszfj0712mkfw2ptky5vw0000gn/T/herdr-clipboard-images-501/client-327-clipboard-1792608324073248000-0.png";
+const HERDR: &str = "/tmp/herdr-test-temp-folder-with-a-long-name/herdr-clipboard-images-501/client-327-clipboard-1792608324073248000-0.png";
 fn herdr(n: usize) -> String { HERDR.replace("-0.png", &format!("-{n}.png")) }
 /// The words as the box holds them, checked against its rows on the screen. The screen is wide enough that no path wraps
 /// at its spaces: a long temp folder (the board's own) would otherwise break a file name `Screen Shot.png` across rows.

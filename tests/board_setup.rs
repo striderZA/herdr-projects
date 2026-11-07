@@ -164,7 +164,7 @@ fn the_key_the_board_writes_names_an_action_this_platform_runs() {
     let command = block.get("keys").and_then(toml::Value::as_table).and_then(|k| k.get("command")).and_then(toml::Value::as_array)
         .and_then(|a| a.first()).and_then(toml::Value::as_table).and_then(|c| c.get("command")).and_then(toml::Value::as_str).unwrap().to_string();
     let manifest: toml::Table = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/herdr-plugin.toml")).parse().unwrap();
-    let here = if cfg!(windows) { "windows" } else if cfg!(target_os = "macos") { "macos" } else { "linux" };
+    let here = if cfg!(windows) { "windows" } else { "linux" };
     let listed = manifest.get("actions").and_then(toml::Value::as_array).into_iter().flatten().filter_map(toml::Value::as_table).any(|a| {
         let id = a.get("id").and_then(toml::Value::as_str).unwrap_or_default();
         let platforms: Vec<&str> = a.get("platforms").and_then(toml::Value::as_array).into_iter().flatten().filter_map(toml::Value::as_str).collect();

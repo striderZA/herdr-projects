@@ -12,8 +12,7 @@
 //! docs/keys.md; `help` a plain key's line in the ? menu; `hint` its usual words on the hint line; `draft` the board's
 //! key with a draft in the text box too; in doc, help and hint, another key is named as {name}, never by its chord.
 //! The order is the order everywhere. Your own chord for a key
-//! (`board.keys`, remap.rs) takes the place of `keys` and `raw` in is() and in every name of the key; your style
-//! (`board.keyStyle`, key_style.rs) writes its modifiers as your keyboard does.
+//! (`board.keys`, remap.rs) takes the place of `keys` and `raw` in is() and in every name of the key.
 /// The groups, in the order the ? menu and docs/keys.md show them.
 pub const GROUPS: [(&str, &str); 3] = [("plain", "plain keys"), ("ctrl", "ctrl: does something"), ("alt", "alt: only shows or hides")];
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -67,7 +66,7 @@ pub static KEYS: &[Key] = &[
     Key { id: K::Pin, name: "pin", keys: &["ctrl+p"], raw: &[], show: None, gap: None, group: Some("ctrl"), with: None, fixed: false, draft: false, help: None, hint: None,
         doc: Some("pin the selected row, or unpin it: a task or a project's row. Nothing moves: the row gets a yellow pin mark `★` and shows under Pinned, the last filter on the filter row ({filter}) ([pinned.md](pinned.md))") },
     Key { id: K::OpenLink, name: "openLink", keys: &["ctrl+d"], raw: &[], show: None, gap: None, group: Some("ctrl"), with: None, fixed: false, draft: false, help: None, hint: Some("open its report"),
-        doc: Some("open the selected task's link in the browser: its report when it has one ([research.md](research.md#where-a-report-goes)), else its pull request. It opens with this machine's own opener (`open` on macOS, `xdg-open` on Linux with a display). Where nothing can open it (no opener, ssh without a display) it copies the link instead (OSC 52, as the board's copy does, [mouse.md](mouse.md)) and says so. On a task with neither it does nothing") },
+        doc: Some("open the selected task's link in the browser: its report when it has one ([research.md](research.md#where-a-report-goes)), else its pull request. It opens with this machine's own opener (`xdg-open` on Linux with a display, `cmd start` on Windows). Where nothing can open it (no opener, ssh without a display) it copies the link instead (OSC 52, as the board's copy does, [mouse.md](mouse.md)) and says so. On a task with neither it does nothing") },
     Key { id: K::Settings, name: "settings", keys: &["ctrl+e"], raw: &[], show: None, gap: None, group: Some("ctrl"), with: None, fixed: false, draft: false, help: None, hint: None,
         doc: Some("the selected task's settings, full screen: every work setting by its name and its value. {up} {down} move to a row; {enter} changes it (a switch or a choice goes to its next value, anything else is typed and saved with {enter}); rows set for this task only are marked `*` (where any other value comes from is `herdr-projects show <id>`'s). {putBack} puts the selected row back to what it would be without this task's own answer. {back} or {settings} again goes back ([settings.md](settings.md)). On an automation's row: the automation's own settings, the same page. On a coordinator's row (a project's row or the top row stands for its coordinator): that coordinator's own settings first (`coordinator.*`), then your own settings, which every task starts from (on a repo's heading: your entry for that repo), changed as `herdr-projects set` changes them") },
     Key { id: K::PutBack, name: "putBack", keys: &["ctrl+u"], raw: &[], show: None, gap: None, group: None, with: Some("settings"), fixed: false, draft: false, help: None, hint: None,
@@ -132,11 +131,9 @@ pub fn is(p: &Press, id: K) -> bool {
 pub fn typed(p: &Press, pick: impl Fn(&Key) -> bool) -> Option<K> { KEYS.iter().find(|k| pick(k) && is(p, k.id)).map(|k| k.id) }
 
 fn own(k: &Key) -> String {
-    if let Some(mine) = super::remap::chords(k.name) { return super::key_style::spell(&mine[0]); }
-    super::key_style::spell(k.show.unwrap_or(k.keys.first().copied().unwrap_or("")))
+    if let Some(mine) = super::remap::chords(k.name) { return mine[0].clone(); }
+    k.show.unwrap_or(k.keys.first().copied().unwrap_or("")).to_string()
 }
-/// A group's heading in the ? menu, its modifier in your style ("opt: only shows or hides" on a Mac).
-pub fn group_name(g: &str, name: &str) -> String { match name.split_once(": ") { Some((m, rest)) if m == g => format!("{}: {rest}", super::key_style::modifier(m)), _ => name.to_string() } }
 /// The chord a key is pressed with, yours where `board.keys` moves it ("ctrl+l"); "" for a key typed as a character.
 pub fn chord(id: K) -> String { let k = entry(id); super::remap::chords(k.name).map(|m| m[0].clone()).unwrap_or_else(|| if k.raw.is_empty() { k.keys.first().copied().unwrap_or("").to_string() } else { String::new() }) }
 /// The key called `id` as the board writes it: "ctrl+a".

@@ -94,7 +94,7 @@ in one line, the first time you would see it (on the board when it opens, or aft
   2. the old folder and the spare link change places;
   3. the new place and the spare name change places.
 
-  "Change places" is one system call (Linux `renameat2`, a Mac's `renamex_np`), so a command started at the old path at
+  "Change places" is one system call (Linux `renameat2`), so a command started at the old path at
   any moment finds its file. A run that was cut off is carried on by the next from the shape it left, and a second run
   finds nothing to do. `moved.json` is written before the first step.
 - **The old places become links to the new ones.** Everything that still holds an old path keeps working on the same

@@ -123,7 +123,7 @@ impl FakeHerdr {
     }
     fn answer(&self, argv: &[String]) -> Out {
         let mut st = self.st.borrow_mut();
-        // Long enough for a call's last flags also under macOS's long temp folders (/private/var/folders/…).
+        // Long enough for a call's last flags also under a long temp folder.
         let calls = arr(&mut st, "calls"); calls.push(json!(argv.join(" ").chars().take(2000).collect::<String>()));
         let flag = |n: &str| argv.iter().position(|a| a == n).and_then(|i| argv.get(i + 1)).cloned();
         let has = |n: &str| argv.iter().any(|a| a == n);

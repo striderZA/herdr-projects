@@ -1,4 +1,4 @@
-//! The plugin manifest's platforms: every entry names its own, and no entry mixes Windows with Linux or macOS. herdr gives an
+//! The plugin manifest's platforms: every entry names its own, and no entry mixes Windows with Linux. herdr gives an
 //! entry with none the plugin's list, and that list has Windows in it, so an unnamed entry would also run on Windows.
 use std::path::Path;
 
@@ -16,7 +16,7 @@ fn every_manifest_entry_names_its_platforms_and_windows_stands_apart() {
             };
             let names: Vec<&str> = list.iter().filter_map(|p| p.as_str()).collect();
             let windows = names.contains(&"windows");
-            assert!(!(windows && (names.contains(&"linux") || names.contains(&"macos"))), "{section} entry {name} mixes windows with unix: {names:?}");
+            assert!(!(windows && names.contains(&"linux")), "{section} entry {name} mixes windows with unix: {names:?}");
         }
     }
     assert!(entries >= 20, "the manifest has {entries} entries: the test read the wrong file");

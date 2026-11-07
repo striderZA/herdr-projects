@@ -15,7 +15,7 @@
 # releases of the repo this checkout was cloned from (its git origin; the upstream repo when there is none).
 here=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 root=$(dirname -- "$here")
-PATH="${PATH:+$PATH:}/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin:$HOME/.cargo/bin"; export PATH
+PATH="${PATH:+$PATH:}/usr/local/bin:/usr/bin:/bin:$HOME/.cargo/bin"; export PATH
 say() { printf 'herdr-projects: %s\n' "$*" >&2; }
 fetch_only=""; [ "$1" = "--fetch" ] && { fetch_only=1; shift; }
 run() { [ -n "$fetch_only" ] && exit 0; exec "$@"; }
@@ -25,7 +25,7 @@ fresh() { [ -x "$built" ] && [ -z "$(find "$root/src" "$root/crates" "$root/Carg
 fresh && run "$built" "$@"
 
 want=$(sed -n 's/^version *= *"\([^"]*\)".*/\1/p' "$root/Cargo.toml" 2>/dev/null | head -n 1)
-case "$(uname -s)" in Linux) os=linux ;; Darwin) os=macos ;; *) os="" ;; esac
+case "$(uname -s)" in Linux) os=linux ;; *) os="" ;; esac
 case "$(uname -m)" in x86_64 | amd64) arch=x86_64 ;; aarch64 | arm64) arch=aarch64 ;; *) arch="" ;; esac
 name="herdr-projects-$os-$arch"
 prog="$here/$name"
@@ -60,7 +60,7 @@ fetch() {
   rest=${1#"$gh_repo"}
   gh release download "${rest%%/*}" -R "$repo" -p "${rest#*/}" -O "$2" --clobber </dev/null >/dev/null 2>&1
 }
-sha256() { { sha256sum "$1" || shasum -a 256 "$1" || openssl dgst -sha256 -r "$1"; } 2>/dev/null | cut -d ' ' -f 1; }
+sha256() { { sha256sum "$1" || openssl dgst -sha256 -r "$1"; } 2>/dev/null | cut -d ' ' -f 1; }
 build_hint="or build it here: cd '$root' && cargo build --release (Rust: https://rustup.rs)"
 
 download() {
@@ -86,11 +86,11 @@ download() {
   if ! fetch "$url" "$tmp" || ! fetch "$url.sha256" "$tmp.sha256"; then
     say "could not download $url (no network, no release v$want with this file yet, or a private repo: log in with gh auth login): try again later, $build_hint"
   elif sum=$(cut -d ' ' -f 1 < "$tmp.sha256") && got=$(sha256 "$tmp") && [ -z "$got" ]; then
-    say "no sha256sum, shasum or openssl here to check the download: install one, $build_hint"
+    say "no sha256sum or openssl here to check the download: install one, $build_hint"
   elif [ "$sum" != "$got" ]; then
     say "the download does not match its checksum, so it is not used: try again, $build_hint"
   else
-    # Renamed over the old one, never written into: a running program keeps its file, and macOS kills one changed in place.
+    # Renamed over the old one, never written into: a running program keeps its file.
     chmod 755 "$tmp" && mv -f "$tmp" "$prog" && printf '%s\n' "$want" > "$prog.version.$$" && mv -f "$prog.version.$$" "$prog.version" && ok=1
   fi
   rm -rf "$lock" "$tmp" "$tmp.sha256"; trap - EXIT INT TERM HUP

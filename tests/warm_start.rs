@@ -14,13 +14,13 @@ impl Bench {
         let _ = std::fs::remove_dir_all(&base);
         std::fs::create_dir_all(base.join("repo/src")).unwrap();
         // A stand-in rustc on the script's PATH: the script records the compiler with each build it keeps. The real
-        // rustup proxy, run by several of these tests at once, sometimes prints nothing (macOS-15 CI), so a kept build
+        // rustup proxy, run by several of these tests at once, sometimes prints nothing (seen on CI), so a kept build
         // looked made by no compiler at all and was not used.
         std::fs::create_dir_all(base.join("bin")).unwrap();
         std::fs::write(base.join("bin/rustc"), "#!/bin/sh\necho 'rustc 1.0.0 (stand-in)'\n").unwrap();
         #[cfg(unix)]
         { use std::os::unix::fs::PermissionsExt; std::fs::set_permissions(base.join("bin/rustc"), std::fs::Permissions::from_mode(0o755)).unwrap(); }
-        // The folder as the script's `pwd` gives it: macOS's temp folder is under /var, which is /private/var.
+        // The folder as the script's `pwd` gives it: a temp folder can be reached through a link, so its real path is taken.
         let b = Bench { base: sw::sys::plain_path(base.canonicalize().unwrap()) };
         b.git("repo", &["init", "-q", "-b", "main"]);
         b.write("repo", "src/a.rs", "a");

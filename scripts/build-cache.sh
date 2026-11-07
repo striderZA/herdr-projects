@@ -13,15 +13,13 @@ bc_install() {
   case "$(uname -s)-$(uname -m)" in
     Linux-x86_64) t=x86_64-unknown-linux-musl; sum=45f1447fbe231e3037bde351ef70677dd212216c8d62ae7ca409fecc4d6acc89 ;;
     Linux-aarch64|Linux-arm64) t=aarch64-unknown-linux-musl; sum=2b3284d5da3b46a47dc4229e75bb7b88ac4aa99c8d754fb7d2f84997e5a4354a ;;
-    Darwin-x86_64) t=x86_64-apple-darwin; sum=1dade83cc49eeb42337565eccd534b05982820a8e44b851bd7937467a18c7aef ;;
-    Darwin-arm64) t=aarch64-apple-darwin; sum=308184519b646f5125289e8515b36f6ca65a13a041923994aebe702348674e8e ;;
     *) echo "No shared build cache for $(uname -s) $(uname -m): this worktree builds on its own." >&2; return 0 ;;
   esac
   name="sccache-v$bc_version-$t"; url="https://github.com/mozilla/sccache/releases/download/v$bc_version/$name.tar.gz"
   tmp=$(mktemp -d) || return 0
   if command -v curl >/dev/null 2>&1; then curl -fsSL -o "$tmp/a.tgz" "$url"; else wget -qO "$tmp/a.tgz" "$url"; fi || {
     rm -rf "$tmp"; echo "Could not download the shared build cache ($url): this worktree builds on its own." >&2; return 0; }
-  got=$( (sha256sum "$tmp/a.tgz" 2>/dev/null || shasum -a 256 "$tmp/a.tgz") | cut -d' ' -f1)
+  got=$(sha256sum "$tmp/a.tgz" 2>/dev/null | cut -d' ' -f1)
   if [ "$got" = "$sum" ] && tar -xzf "$tmp/a.tgz" -C "$tmp" "$name/sccache" && mkdir -p "${bc_bin%/*}"; then
     mv "$tmp/$name/sccache" "$bc_bin.$$" && mv "$bc_bin.$$" "$bc_bin" && echo "Installed the shared build cache: $bc_bin"
   else echo "The shared build cache did not install (sha256 $got): this worktree builds on its own." >&2; fi

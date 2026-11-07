@@ -4,7 +4,7 @@ use std::collections::BTreeMap;
 
 /// What the first run offers, in order: the first one nothing uses. None of them is a herdr default (0.9.3).
 pub const OFFERED: [&str; 5] = ["prefix+a", "prefix+y", "prefix+u", "prefix+i", "prefix+m"];
-/// The plugin action that opens the board, as the manifest names it on this platform: `open` runs on Linux and macOS,
+/// The plugin action that opens the board, as the manifest names it on this platform: `open` runs on Linux,
 /// `open-windows` on Windows. herdr refuses an action on a platform the manifest does not list it for.
 pub fn board_action() -> &'static str { if cfg!(windows) { "herdr-projects.open-windows" } else { "herdr-projects.open" } }
 /// Is this the board's own binding, whichever platform wrote it?
@@ -32,8 +32,8 @@ pub fn defaults() -> Defaults {
     if let Some(more) = out.and_then(|o| parse_defaults(&o)) { d.extend(more); }
     d
 }
-fn named(p: &str) -> &str { match p { "-" => "minus", "," => "comma", "`" => "backtick", "&" => "ampersand", "return" => "enter", "escape" => "esc", "super" => "cmd", x => x } }
-const MODS: [&str; 4] = ["ctrl", "alt", "shift", "cmd"];
+fn named(p: &str) -> &str { match p { "-" => "minus", "," => "comma", "`" => "backtick", "&" => "ampersand", "return" => "enter", "escape" => "esc", x => x } }
+const MODS: [&str; 4] = ["ctrl", "alt", "shift", "super"];
 /// One spelling per key, so "Prefix+Shift+Ctrl+X" and "prefix+ctrl+shift+x" are seen as the same key.
 pub fn norm(key: &str) -> String {
     let low = key.trim().to_lowercase();
@@ -82,7 +82,7 @@ pub fn used(text: &str, defs: &Defaults) -> BTreeMap<String, Use> {
     if let Some(toml::Value::Table(ix)) = keys.get("indexed") { for (what, mods) in ix { if let Some(m) = mods.as_str().filter(|m| !m.is_empty()) { put(&format!("{m}+1..9"), "config", format!("switch {what}")); } } }
     // A config the reader cannot follow still has its keys found, wherever they stand: better one refusal too many.
     if conf.is_none() {
-        let chord = regex::Regex::new(r#"(?i)["']((?:(?:prefix|ctrl|alt|shift|cmd|super)\+)+[^"'\s]+|f\d+)["']"#).unwrap();
+        let chord = regex::Regex::new(r#"(?i)["']((?:(?:prefix|ctrl|alt|shift|super)\+)+[^"'\s]+|f\d+)["']"#).unwrap();
         for m in chord.captures_iter(text) { put(&m[1], "config", "a binding".into()); }
     }
     for (action, key) in defs { if !moved.contains(action) || conf.is_none() { put(key, "herdr", words(action)); } }
@@ -107,7 +107,7 @@ pub fn suggest(text: &str, defs: &Defaults) -> (String, String) {
     let note = if key.is_empty() { format!("{why}, and so are the other keys this would offer.") } else { format!("{why}, so this is the next free key.") };
     (key, note)
 }
-fn pressed(key: &str) -> String { norm(key).split('+').map(|p| match p { "minus" => "-", "comma" => ",", "backtick" => "`", "ampersand" => "&", "cmd" => "super", x => x }.to_string()).collect::<Vec<_>>().join("+") }
+fn pressed(key: &str) -> String { norm(key).split('+').map(|p| match p { "minus" => "-", "comma" => ",", "backtick" => "`", "ampersand" => "&", x => x }.to_string()).collect::<Vec<_>>().join("+") }
 /// What a key of herdr's config is as key presses, for a program herdr hands every key to (its popup): "prefix+a" is
 /// one of the prefix keys and then `a`; a key without the prefix is itself. (first: the prefix keys, key); None for no
 /// key, and when the prefix is not known.

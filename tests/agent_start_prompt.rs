@@ -1,5 +1,5 @@
 //! A start while the pane's shell is not at its prompt yet (issue #175): herdr refuses a line longer than the terminal
-//! takes then (macOS: 1024 bytes). The board waits for the prompt and tries again a few times, never starts a second
+//! takes then (some terminals: 1024 bytes). The board waits for the prompt and tries again a few times, never starts a second
 //! program, and says in plain words what happened when it still could not. A start command stays under 1024 bytes.
 //! The same for a pane whose shell herdr does not see yet (issue #202): `agent_pane_busy`, "not an available shell".
 use crate::common;
@@ -119,7 +119,7 @@ fn the_coordinator_waits_for_a_shell_herdr_does_not_see_yet() {
 }
 
 #[test]
-fn a_codex_workers_start_command_fits_a_macos_terminal_line() {
+fn a_codex_workers_start_command_fits_a_terminal_line() {
     let mine = format!("Always write tests first. {}", (0..300).map(|i| format!("word{i}")).collect::<Vec<_>>().join(" "));
     let w = world_with(Opts { repo: true, settings: json!({ "worker.agent": "codex/gpt-5.5", "worker.effort": "high", "worker.instructions": mine, "review.when": "never" }), ..Default::default() });
     w.script(json!({ "worker": [work()] }));

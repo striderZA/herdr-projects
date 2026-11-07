@@ -10,7 +10,7 @@ pub const UPSTREAM: &str = "eliasstravik/herdr-projects";
 
 /// The release files' name for a platform, from `uname -s`/`uname -m` or Rust's own names. None: no release is made.
 pub fn platform_of(os: &str, arch: &str) -> Option<(&'static str, &'static str)> {
-    let os = match os.to_ascii_lowercase().as_str() { "linux" => "linux", "darwin" | "macos" => "macos", "windows" => "windows", _ => return None };
+    let os = match os.to_ascii_lowercase().as_str() { "linux" => "linux", "windows" => "windows", _ => return None };
     let arch = match arch { "x86_64" | "amd64" => "x86_64", "aarch64" | "arm64" => "aarch64", _ => return None };
     Some((os, arch))
 }
@@ -107,7 +107,7 @@ pub fn fetch(url: &str, to: &Path) -> Res<()> {
 /// The SHA-256 of a file, from whichever tool is here.
 pub fn sha256(file: &Path) -> Option<String> {
     let f = file.display().to_string();
-    for (tool, args) in [("sha256sum", vec![f.as_str()]), ("shasum", vec!["-a", "256", f.as_str()]), ("openssl", vec!["dgst", "-sha256", "-r", f.as_str()])] {
+    for (tool, args) in [("sha256sum", vec![f.as_str()]), ("openssl", vec!["dgst", "-sha256", "-r", f.as_str()])] {
         if let Ok(o) = std::process::Command::new(tool).args(&args).output() { if o.status.success() { if let Some(h) = sum_in(&String::from_utf8_lossy(&o.stdout)) { return Some(h); } } }
     }
     None
@@ -131,7 +131,7 @@ pub fn download(exe: &Path, version: Option<&str>, fetch: &dyn Fn(&str, &Path) -
         fetch(&url, &file)?;
         fetch(&format!("{url}.sha256"), &sums)?;
         let Some(want) = std::fs::read_to_string(&sums).ok().and_then(|t| sum_in(&t)) else { crate::fail!("{url}.sha256 holds no checksum: nothing was changed") };
-        let Some(have) = sha256(&file) else { crate::fail!("no sha256sum, shasum or openssl here to check the download: nothing was changed") };
+        let Some(have) = sha256(&file) else { crate::fail!("no sha256sum or openssl here to check the download: nothing was changed") };
         if have != want { crate::fail!("the download does not match its checksum: nothing was changed. Try again.") }
         crate::sys::set_mode(&file, 0o755)?;
         let Some(v) = version_of(&file) else { crate::fail!("the downloaded program does not run here: nothing was changed") };
@@ -151,7 +151,7 @@ pub fn update(exe: &Path, version: Option<&str>, fetch: &dyn Fn(&str, &Path) -> 
         let _ = std::fs::remove_file(&got.file);
         return Ok(format!("herdr-projects {VERSION} is the newest release."));
     }
-    // Put in place over it, never written into: a running program keeps its old file, and macOS kills one changed in place.
+    // Put in place over it, never written into: a running program keeps its old file.
     // On Windows, which will not replace a running program, replace_file moves that file aside first.
     if let Err(e) = crate::sys::replace_file(&got.file, exe) { let _ = std::fs::remove_file(&got.file); crate::fail!("could not put the new program in place of {}: {e}", exe.display()) }
     let named = platform().map(|p| exe.file_name().map(|n| n == asset_name(p).as_str()).unwrap_or(false)).unwrap_or(false);
