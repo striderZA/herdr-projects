@@ -106,6 +106,7 @@ Agents and hooks are handed the launcher `~/.herdr-projects/data/bin/herdr-proje
 - The board writes it when it opens. With `herdr plugin install`, open the board first, with the plugin's action "Open
   the work board".
 - `herdr-projects install` writes it again, and says if something else named `herdr-projects` comes first on your PATH.
+- **On Windows** the folder holds `herdr-projects.cmd`, which cmd and PowerShell type by name and agents and hooks run, and a shell script `herdr-projects` that Git Bash types by name. Put the folder on your PATH. A `herdr-projects.exe` an older install left there is removed, since PowerShell would run it first.
 - To type `herdr-projects` in a shell, put that folder on your PATH (in `~/.profile` or your shell's start-up file).
 
 

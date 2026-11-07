@@ -171,7 +171,7 @@ fn update_changes_nothing_when_anything_is_wrong() {
 fn install_writes_the_launcher_for_this_program() {
     let (b, _one) = scratch();
     let exe = sw::store::files::bin();
-    let launcher = b.join("sw").join("data").join("bin").join("herdr-projects");
+    let launcher = b.join("sw").join("data").join("bin").join(if cfg!(windows) { "herdr-projects.cmd" } else { "herdr-projects" });
     // The PATH is the whole test program's: it is the system folders only (sh and cat run from there), and is given back.
     // Given back when the test ends however it ends: a failed assert must not leave the next test without git.
     struct PathBack(String);
@@ -180,9 +180,12 @@ fn install_writes_the_launcher_for_this_program() {
     set("PATH", &path_of(&[std::path::PathBuf::from("/usr/bin"), std::path::PathBuf::from("/bin")]));
     let said = install(&exe);
     let text = read(&launcher);
-    assert!(text.starts_with("#!/bin/sh\n") && text.contains(&format!("exec '{}' \"$@\"", exe.display())), "{text}");
-    assert!(text.contains(&format!("export HERDR_PROJECTS_HOME='{}'", b.join("sw").display())), "{text}");
-    assert_eq!(sw::store::move_home::launcher_target(text.lines().last().unwrap()), Some(exe.display().to_string()), "the move reads it back");
+    assert_eq!(sw::flow::launcher::launcher_target(&text), Some(exe.clone()), "the program the launcher runs: {text}");
+    assert!(text.contains(&b.join("sw").display().to_string()), "its environment: {text}");
+    // On Windows the shell script beside the batch file (Git Bash's launcher) names the program with forward slashes, and
+    // the move reads that one back.
+    let sh = read(&launcher.with_file_name("herdr-projects"));
+    assert_eq!(sw::store::move_home::launcher_target(sh.lines().last().unwrap()), Some(exe.display().to_string().replace('\\', "/")), "the move reads it back");
     assert!(said.starts_with(&format!("{} runs {}", launcher.display(), exe.display())), "{said}");
     assert!(said.contains(&format!("export PATH=\"{}:$PATH\"", launcher.parent().unwrap().display())), "{said}");
     // Another herdr-projects comes first on the PATH (npm link's): said, with the way out.

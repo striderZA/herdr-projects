@@ -159,6 +159,7 @@ mod install;
 mod install_remotes;
 mod keeper_update;
 mod keys_list;
+mod launcher;
 mod lifecycle;
 mod lifecycle_more;
 mod lifecycle_popups;

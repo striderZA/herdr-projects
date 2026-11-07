@@ -9,13 +9,11 @@ use crate::clock::now;
 use crate::err::Res;
 use crate::json::*;
 use crate::research::is_research;
-use crate::store::files::{board_env, data_dir, marker_alive, bin};
+use crate::store::files::marker_alive;
 use crate::store::inbox::queue_text;
 use crate::store::retries::waiting_of;
 use crate::store::tasks::{get, one_line, update_wait, Change, Task};
 use crate::submit::{hand, note_sent};
-use crate::util::{shell_word, Shell};
-use std::path::PathBuf;
 
 /// "sent": typed, with enter pressed (whether the agent then started on it is looked at again: submit.rs); "queued".
 /// `first`: the text is all a freshly started program is given.
@@ -43,27 +41,7 @@ pub fn prompt_tail(t: &Task) -> String {
     [rules, note].into_iter().filter(|s| !s.is_empty()).collect::<Vec<_>>().join("\n\n")
 }
 pub fn with_tail(t: &Task, text: &str) -> String { [text.to_string(), prompt_tail(t)].into_iter().filter(|s| !s.is_empty()).collect::<Vec<_>>().join("\n\n") }
-/// Where the launcher is, without writing it (`doctor` looks at it as it is).
-pub fn launcher_file() -> PathBuf { data_dir().join("bin").join("herdr-projects") }
-/// The absolute path of the command, kept in the data folder, so agents and hooks find it without anything on their
-/// PATH. It names its own board: herdr cannot hand a worktree's space any environment.
-pub fn shim() -> PathBuf {
-    let file = launcher_file();
-    let dir = data_dir().join("bin");
-    let mut text = "#!/bin/sh\n".to_string();
-    for (k, v) in board_env() { text.push_str(&format!("export {k}={}\n", shell_word(&v, Shell::Posix))); }
-    text.push_str(&format!("exec {} \"$@\"\n", shell_word(&bin().display().to_string(), Shell::Posix)));
-    let is_link = std::fs::symlink_metadata(&file).map(|m| m.file_type().is_symlink()).unwrap_or(false);
-    let have = if is_link { None } else { std::fs::read_to_string(&file).ok() };
-    if have.as_deref() != Some(text.as_str()) && crate::herdr::cli::fake().is_none() {
-        let _ = std::fs::create_dir_all(&dir);
-        let tmp = dir.join(format!("herdr-projects.{}", std::process::id()));
-        let mut o = std::fs::OpenOptions::new();
-        let ok = crate::sys::executable_mode(o.write(true).create(true).truncate(true)).open(&tmp).and_then(|mut f| std::io::Write::write_all(&mut f, text.as_bytes())).is_ok();
-        if ok { let _ = crate::sys::replace_file(&tmp, &file); }
-    }
-    file
-}
+pub use super::launcher::{launcher_file, shim};
 pub fn note_rule(t: &Task) -> String { format!("Before you stop, write your closing summary (or your question to the human, if you cannot continue) to {} (the board's own folder for this task, not the folder you work in).", note_file(t).display()) }
 /// A prompt the plugin itself sends (check output, review findings, conflict or pull-request repair). It writes
 /// expectedWake first, so the turn it causes is known to be the plugin's own: counters and an approved merge survive.
