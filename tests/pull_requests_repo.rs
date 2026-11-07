@@ -106,3 +106,10 @@ fn archived_is_asked_of_the_origin_repo_by_name_and_not_asked_at_all_for_a_clone
     assert!(!already::archived(&w.root));
     assert_eq!(gh_log(&w), before, "no call was made");
 }
+
+#[test]
+fn a_clone_whose_origin_is_ssh_with_a_port_is_asked_by_its_repo_name() {
+    let w = pr_world();
+    git(&w.root, &["remote", "set-url", "origin", "ssh://git@github.com:22/o/r.git"]);
+    assert_eq!(gh_repo_of(&gh_command(&["pr", "view", "7"], &w.root).unwrap()).as_deref(), Some("o/r"));
+}

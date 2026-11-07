@@ -30,13 +30,19 @@ pub fn releases(exe: &Path) -> String {
 pub fn repo_of(exe: &Path) -> String {
     exe.parent().filter(|d| d.file_name().is_some_and(|n| n == "bin")).and_then(Path::parent).and_then(crate::flow::git::origin_repo).unwrap_or_else(|| UPSTREAM.to_string())
 }
-/// `owner/name` of a GitHub remote URL (https, ssh, or the scp form `git@github.com:owner/name`), or None for any other.
+/// `owner/name` of a GitHub remote URL, or None for any other host or a path that is not exactly two names. The forms:
+/// `https://[user@]github.com[:port]/owner/name`, `ssh://[user@]github.com[:port]/owner/name` (`ssh.github.com` too), and
+/// the scp form `git@github.com:owner/name`; a `.git` suffix and a trailing slash are left out.
 pub fn repo_of_remote(url: &str) -> Option<String> {
     let u = url.trim().trim_end_matches('/');
     let u = u.strip_suffix(".git").unwrap_or(u);
-    let at = u.find("github.com")?;
-    if !matches!(u[..at].chars().last(), None | Some('/') | Some('@')) { return None; }
-    let path = u[at + "github.com".len()..].strip_prefix(['/', ':'])?;
+    // The part before the path is the host with its user and port: after `scheme://`, or before the first `:` of the scp form.
+    let (authority, path) = match u.split_once("://") {
+        Some((_, rest)) => rest.split_once('/')?,
+        None => u.split_once(':')?,
+    };
+    let host = authority.rsplit('@').next()?.split(':').next()?;
+    if !matches!(host.to_ascii_lowercase().as_str(), "github.com" | "ssh.github.com") { return None; }
     let mut parts = path.split('/');
     let (owner, name) = (parts.next()?, parts.next()?);
     (parts.next().is_none() && !owner.is_empty() && !name.is_empty()).then(|| format!("{owner}/{name}"))
