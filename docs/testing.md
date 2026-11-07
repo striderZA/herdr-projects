@@ -329,7 +329,7 @@ about them.
 
 ## On Windows too
 
-Run the check from Git Bash, whose `sh` runs `scripts/check.sh`. Without MSVC, use the MinGW toolchain: `RUSTUP_TOOLCHAIN=stable-x86_64-pc-windows-gnu npm run check`. The CI workflow runs the whole check on a Windows runner too (`.github/workflows/ci.yml`, the Windows leg of its `check` matrix). A test holds on Windows when it asks what Windows has:
+Run the check from Git Bash, whose `sh` runs `scripts/check.sh`. Without MSVC, use the MinGW toolchain: `RUSTUP_TOOLCHAIN=stable-x86_64-pc-windows-gnu npm run check`. The CI workflow runs the whole check on a Windows runner too (`.github/workflows/ci.yml`, the Windows leg of its `check` matrix). It does not start for a change to docs alone (the Markdown at the top, `docs/`, `LICENSE`, `assets/`): the board runs this check before each pull request. A test holds on Windows when it asks what Windows has:
 
 - a process's start time through the platform layer, not `/proc` (Windows has none);
 - a command line quoted for the pane's shell (`util::shell_word`): PowerShell quotes differently from `sh`;

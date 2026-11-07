@@ -127,4 +127,16 @@ mod tests {
         assert!(runs(&parse("x.yml", "on: {pull_request: [unclosed\n"), &pr(&["a"])), "unreadable: waited for, never missed");
         assert!(glob("**/*.js", "a.js") && glob("**/*.js", "x/y/a.js") && !glob("*.js", "x/a.js") && glob("feature/*", "feature/a") && !glob("feature/*", "feature/a/b"));
     }
+    // The repo's own workflow: a change to its docs starts no run of it, a change to code or to the workflow does.
+    #[test]
+    fn the_repos_own_check_skips_doc_only_changes() {
+        let ci = parse(".github/workflows/ci.yml", include_str!("../../../../.github/workflows/ci.yml"));
+        let on = |base: &str, branch: &str, files: &[&str]| runs_for(&ci, &Pr { base, branch, files: Some(files.iter().map(|s| s.to_string()).collect()) });
+        assert_eq!(on("master", "work/1-x", &["docs/keys.md", "README.md"]), Runs::Never, "a pull request of docs only");
+        assert_eq!(on("master", "work/1-x", &["LICENSE", "assets/herdr-projects-launch.webp"]), Runs::Never, "and of the license and pictures");
+        assert_eq!(on("master", "master", &["docs/windows.md"]), Runs::Never, "a push of docs only");
+        assert_eq!(on("master", "work/1-x", &["docs/keys.md", "crates/flow/src/board/keys.rs"]), Runs::Always, "a code change runs it");
+        assert_eq!(on("master", "work/1-x", &[".github/workflows/ci.yml"]), Runs::Always, "and so does a change to the workflow");
+        assert_eq!(on("master", "master", &["scripts/check.sh"]), Runs::Always, "and a push of code");
+    }
 }
