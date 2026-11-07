@@ -177,6 +177,8 @@ pub fn pipeline(id: &str, g: &mut Guard, text: &str, keep_intent: bool, reason: 
         let pushed = (|| -> Res<Option<String>> {
             let has_commits = git_out(tp, &["rev-list", "--count", &format!("{base}..HEAD")])?.parse::<i64>().unwrap_or(0) > 0;
             if !(has_commits && flow::git::has_origin(&root)) { return Ok(None); }
+            // Nothing goes to another repo than `merge.repo` names, when it names one: checked before anything is pushed.
+            flow::git::check_target(&root, &ch.s("merge.repo")).map_err(|e| crate::err::Error::new(format!("target:{e}")))?;
             t = g.set(|t| { t.put("stage", "pushing"); t.put("msg", "Pushing the branch"); })?;
             // The branch is the board's own and an agent may have rebuilt it: overwrite what was pushed before, but only
             // while the remote still holds what was last seen here.
@@ -225,6 +227,7 @@ pub fn pipeline(id: &str, g: &mut Guard, text: &str, keep_intent: bool, reason: 
             Ok(Some(url)) => note = format!(" Pull request: {url}"),
             Ok(None) => {}
             Err(e) if is_aborted(&e) => return Err(e),
+            Err(e) if e.msg.starts_with("target:") => { fail(g, failure("push", "The branch would go to another repo", &format!("Branch: {}\nFolder: {tree}\n\n{}", t.s("branch"), &e.msg[7..]), "Point the clone's origin at the repo merge.repo names (git remote set-url origin <url>), or change merge.repo, then finish again."), FailHow::default())?; return Ok(()); }
             Err(_) if already::archived(Path::new(&tree)) => { fail(g, already::archived_failure(t.s("branch"), &tree), FailHow::default())?; return Ok(()); }
             Err(e) if e.msg.starts_with("prbase:") => { fail(g, failure("pr", "The agent's pull request merges into another branch", &format!("Branch: {}\nFolder: {tree}\n\n{}", t.s("branch"), &e.msg[7..]), &format!("Change that pull request's base to {0} (gh pr edit <number> --base {0}), or close it, then finish again. The board goes on with it once it merges into {0}.", sync::main_branch(&root, &t))), FailHow::default())?; return Ok(()); }
             // The remote cannot be reached (main could not be fetched either): it waits, and goes on by itself.

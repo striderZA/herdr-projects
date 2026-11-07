@@ -8,7 +8,7 @@ use std::path::Path;
 use std::process::Command;
 use sw::actions::finish_line;
 use sw::finish::already;
-use sw::flow::git::gh_command;
+use sw::flow::git::{check_target, gh_command, hostname_in};
 use sw::json::*;
 use sw::store::tasks::{update, Change};
 
@@ -112,4 +112,79 @@ fn a_clone_whose_origin_is_ssh_with_a_port_is_asked_by_its_repo_name() {
     let w = pr_world();
     git(&w.root, &["remote", "set-url", "origin", "ssh://git@github.com:22/o/r.git"]);
     assert_eq!(gh_repo_of(&gh_command(&["pr", "view", "7"], &w.root).unwrap()).as_deref(), Some("o/r"));
+}
+
+#[test]
+fn a_clone_whose_origin_is_on_another_host_is_asked_by_host_and_name() {
+    let w = pr_world();
+    git(&w.root, &["remote", "set-url", "origin", "https://ghe.example.com/striderZA/herdr-projects.git"]);
+    assert_eq!(gh_repo_of(&gh_command(&["pr", "view", "7"], &w.root).unwrap()).as_deref(), Some("ghe.example.com/striderZA/herdr-projects"));
+    assert!(gh_command(&["pr", "merge", "https://ghe.example.com/striderZA/herdr-projects/pull/7", "--squash"], &w.root).is_ok());
+    assert!(refused(&["pr", "merge", "https://github.com/striderZA/herdr-projects/pull/7"], &w.root).contains("is not a pull request of ghe.example.com/striderZA/herdr-projects"));
+}
+
+#[test]
+fn an_ssh_alias_is_asked_by_the_host_it_resolves_to_and_the_repo_by_name() {
+    let w = pr_world();
+    // ssh -G answers an alias it does not know with the alias itself, so the host is kept; an alias its config maps is asked by that host.
+    git(&w.root, &["remote", "set-url", "origin", "git@no-such-host.herdr-projects.invalid:striderZA/herdr-projects.git"]);
+    assert_eq!(gh_repo_of(&gh_command(&["pr", "view", "7"], &w.root).unwrap()).as_deref(), Some("no-such-host.herdr-projects.invalid/striderZA/herdr-projects"));
+}
+
+#[test]
+fn merge_repo_is_checked_against_the_origin_as_gh_names_it() {
+    let w = pr_world();
+    assert!(check_target(&w.root, "").is_ok(), "no merge.repo: no check");
+    assert!(check_target(&w.root, "o/r").is_ok());
+    assert!(check_target(&w.root, "O/R").is_ok(), "a name is not case-sensitive");
+    let why = check_target(&w.root, FORK).unwrap_err();
+    assert!(why.contains("o/r") && why.contains(FORK) && why.contains("Nothing is pushed"), "{why}");
+}
+
+#[test]
+fn hostname_is_the_host_an_ssh_alias_resolves_to() {
+    assert_eq!(hostname_in("user git\nhostname github.com\nport 22\n").as_deref(), Some("github.com"));
+    assert_eq!(hostname_in("hostname GHE.Example.com\n").as_deref(), Some("ghe.example.com"));
+    assert_eq!(hostname_in("port 22\n"), None);
+}
+
+/// Commits the repo's own file naming where its pull requests go: a task starts from this commit, and the board reads it there.
+fn commit_merge_repo(w: &World, repo: &str) {
+    std::fs::write(w.root.join(".herdr-projects.json"), format!("{{\"merge\": {{\"repo\": \"{repo}\"}}}}\n")).unwrap();
+    git(&w.root, &["add", ".herdr-projects.json"]);
+    git(&w.root, &["-c", "user.email=h@test", "-c", "user.name=h", "commit", "-q", "-m", "merge.repo: the pull requests go to the fork"]);
+    git(&w.root, &["push", "-q", "origin", "main"]); // a task starts from origin's main: the file must be there
+}
+/// Whether the test's bare repo holds the branch: a push that was not refused lands there.
+fn pushed_to(w: &World, branch: &str) -> bool {
+    let root = bare(w);
+    let spec = format!("refs/heads/{branch}");
+    Command::new("git").args(["-C", root.as_str(), "rev-parse", "--verify", "-q", spec.as_str()]).output().unwrap().status.success()
+}
+
+#[test]
+fn a_clone_whose_origin_is_not_the_repo_merge_repo_names_pushes_nothing_and_opens_no_pull_request() {
+    let w = pr_world();
+    commit_merge_repo(&w, FORK);
+    git(&w.root, &["config", "remote.origin.url", ORIGINAL_URL]);
+    reach(&w.root, &bare(&w)); // so a push that were not refused would land in the test's bare repo
+    w.script(json!({ "worker": [{ "files": { "f.txt": "v1\n" }, "commit": "v1", "note": "Did v1." }] }));
+    let id = w.add("Origin is the original");
+    delegate(&id);
+    let t = settle(&id);
+    assert_eq!(t.s("stage"), "failed", "{}", t.at("failure"));
+    assert_eq!(t.at("failure").s("title"), "The branch would go to another repo", "{}", t.at("failure"));
+    assert!(t.at("failure").s("detail").contains("eliasstravik/shepherdr") && t.at("failure").s("detail").contains(FORK), "{}", t.at("failure"));
+    assert!(!pushed_to(&w, &t.s("branch")), "the branch was pushed");
+    assert!(!gh_log(&w).contains("pr create"), "{}", gh_log(&w));
+}
+
+#[test]
+fn a_clone_whose_origin_is_the_repo_merge_repo_names_opens_its_pull_request_there() {
+    let w = pr_world();
+    commit_merge_repo(&w, FORK);
+    name_fork(&w);
+    let id = to_approval(&w, "In the fork, checked");
+    assert_eq!(task(&id).s("pr"), "https://github.com/striderZA/herdr-projects/pull/7");
+    assert!(first_call(&w, "pr create").contains(&format!("--repo {FORK}")));
 }
