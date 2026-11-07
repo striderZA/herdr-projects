@@ -4,7 +4,7 @@
 use std::path::Path;
 
 /// The origin's URL in every world (`Opts { origin: true }`): the repo `o/r`, the one the fake gh answers for.
-pub const ORIGIN_URL: &str = "https://github.com/o/r.git";
+pub const ORIGIN_URL: &str = "git@github.com:o/r.git";
 
 /// Makes the origin of the clone at `root` answer from `path` (a folder that is not there: the remote cannot be reached).
 pub fn reach(root: &Path, path: &str) { answer(root, "insteadof", path) }

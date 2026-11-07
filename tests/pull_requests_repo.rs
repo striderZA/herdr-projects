@@ -13,8 +13,8 @@ use sw::json::*;
 use sw::store::tasks::{update, Change};
 
 const FORK: &str = "striderZA/herdr-projects";
-const FORK_URL: &str = "https://github.com/striderZA/herdr-projects.git";
-const ORIGINAL_URL: &str = "https://github.com/eliasstravik/shepherdr.git";
+const FORK_URL: &str = "git@github.com:striderZA/herdr-projects.git";
+const ORIGINAL_URL: &str = "git@github.com:eliasstravik/shepherdr.git";
 const ORIGINAL_PR: &str = "https://github.com/eliasstravik/shepherdr/pull/7";
 
 fn pr_world() -> World {
