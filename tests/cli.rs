@@ -79,6 +79,5 @@ fn real_programs_a_flag_a_command_does_not_know_is_refused_with_the_nearest_righ
 #[test]
 fn a_release_file_is_named_by_its_platform_with_exe_only_on_windows() {
     assert_eq!(sw::install::asset_name(("linux", "x86_64")), "herdr-projects-linux-x86_64");
-    assert_eq!(sw::install::asset_name(("macos", "aarch64")), "herdr-projects-macos-aarch64");
     assert_eq!(sw::install::asset_name(("windows", "x86_64")), "herdr-projects-windows-x86_64.exe");
 }

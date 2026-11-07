@@ -2,7 +2,7 @@
 #
 # Runs when a tag `v*` is pushed (`git tag v1.2.27 && git push origin v1.2.27`), or by hand with a tag to build the files
 # of an existing release again; by hand with `dry_run` it builds and checks every file but attaches nothing, to test the
-# workflow itself. Each file is `herdr-projects-<os>-<arch>` (os linux|macos|windows, arch x86_64|aarch64; the Windows file ends in .exe) with its `.sha256`
+# workflow itself. Each file is `herdr-projects-<os>-<arch>` (os linux|windows, arch x86_64|aarch64; the Windows file ends in .exe) with its `.sha256`
 # beside it: bin/run.sh and `herdr-projects update` download exactly these names. The Linux files are static (musl), so
 # they run on any Linux. The tag must be the version in Cargo.toml and herdr-plugin.toml, or the run fails: run.sh asks
 # for the release named by Cargo.toml's version.
@@ -35,8 +35,6 @@ jobs:
         include:
           - { target: x86_64-unknown-linux-musl, runner: ubuntu-24.04, file: herdr-projects-linux-x86_64, runs: true }
           - { target: aarch64-unknown-linux-musl, runner: ubuntu-24.04, file: herdr-projects-linux-aarch64, zig: true }
-          - { target: x86_64-apple-darwin, runner: macos-15-intel, file: herdr-projects-macos-x86_64 }
-          - { target: aarch64-apple-darwin, runner: macos-15, file: herdr-projects-macos-aarch64, runs: true }
           - { target: x86_64-pc-windows-msvc, runner: windows-latest, file: herdr-projects-windows-x86_64.exe, ext: .exe, runs: true }
     runs-on: ${{ matrix.runner }}
     defaults:
@@ -77,9 +75,8 @@ jobs:
         run: |
           mkdir dist
           cp target/${{ matrix.target }}/release/herdr-projects${{ matrix.ext }} dist/${{ matrix.file }}
-          # Windows' Git Bash has no shasum; its sha256sum writes the same "hash  name" line.
           cd dist
-          if command -v shasum >/dev/null; then shasum -a 256 ${{ matrix.file }}; else sha256sum ${{ matrix.file }}; fi > ${{ matrix.file }}.sha256
+          sha256sum ${{ matrix.file }} > ${{ matrix.file }}.sha256
           cat ${{ matrix.file }}.sha256
 
       - name: Check it runs and says the release's version
@@ -117,7 +114,7 @@ jobs:
       - name: Check every file is there
         working-directory: dist
         run: |
-          for f in herdr-projects-linux-x86_64 herdr-projects-linux-aarch64 herdr-projects-macos-x86_64 herdr-projects-macos-aarch64 herdr-projects-windows-x86_64.exe; do
+          for f in herdr-projects-linux-x86_64 herdr-projects-linux-aarch64 herdr-projects-windows-x86_64.exe; do
             [ -s "$f" ] && [ -s "$f.sha256" ] || { echo "::error::$f or its checksum is missing"; exit 1; }
             sha256sum -c "$f.sha256"
           done

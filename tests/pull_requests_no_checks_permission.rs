@@ -66,11 +66,11 @@ fn a_failed_job_goes_back_to_the_agent_with_its_log_and_a_failed_status_fails_to
     let id = to_approval(&w, "Fine-grained, red");
     let head = task(&id).t("prHead");
     w.script(json!({ "worker": [{ "files": { "f.txt": "fixed\n" }, "commit": "fix", "note": "Fixed CI." }] }));
-    w.gh_says(says(&head, ("completed", "failure"), json!([job("build", "completed", "success", 9), job("test (macos)", "completed", "failure", 10)]), json!([])));
+    w.gh_says(says(&head, ("completed", "failure"), json!([job("build", "completed", "success", 9), job("test (windows)", "completed", "failure", 10)]), json!([])));
     finish_line::approve(&id, None, false).unwrap();
     let t = settle(&id);
     let sent = pane_prompts(&w, &id).last().cloned().unwrap_or_default();
-    assert!(sent.contains("GitHub's checks failed on the pull request") && sent.contains("test (macos) (failure)") && sent.contains("test parses_flags ... FAILED"), "{sent}");
+    assert!(sent.contains("GitHub's checks failed on the pull request") && sent.contains("test (windows) (failure)") && sent.contains("test parses_flags ... FAILED"), "{sent}");
     assert!(gh_log(&w).contains("run view --job 10 --log-failed"), "{}", gh_log(&w));
     assert!(!merged(&w)); no_login_asked(&t, &id);
     drop(w); // one world at a time: each holds the tests' one lock
