@@ -40,7 +40,7 @@ say, what runs from its folders:
 
 ```
 Merged into main. Ended what it started: node …/vite.js (pid 81234). Still running, end it yourself: node …/mock.js
-(pid 81240), in /home/me/wt/proj/work-12-x, from another of its panes.
+(pid 81240), in /home/me/wt/proj/feat-12-x, from another of its panes.
 ```
 
 `herdr-projects details <id>` lists what still runs under `stillRunning`. Removing a task (`clear`) says the same in
@@ -66,7 +66,7 @@ reached through a link: a folder goes only where it and each folder above it, up
 caches or the worktree folder it is in, is a real folder. A link in a temporary folder's place is taken away, and
 what it points to, and what runs there, stays. An agent's
 folder for a worktree counts as the board's only when its name is a known worktree folder followed by a name as the
-task branches start (`work-`), no folder of that name is there, and no other folder beside it starts so. What the
+task branches start (`feat-`, `fix-`, …), no folder of that name is there, and no other folder beside it starts so. What the
 last sweep removed is kept in `~/.herdr-projects/data/sweep.json`.
 
 ## A nearly full disk

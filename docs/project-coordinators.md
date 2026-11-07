@@ -6,7 +6,7 @@ coordinator; the top row is the Coordinator itself ([the Coordinator](coordinato
 | Row | Its agent | Named | Lives in Herdr |
 |---|---|---|---|
 | The top row: the machine with all its projects | the Coordinator | `the Coordinator` | a `Coordinator` tab in the home space (`~`) |
-| A project's row (a repo's heading) | its project coordinator | after the repo: `gtm's coordinator`, `~'s coordinator` for the home folder | a tab of that name in the repo's own space |
+| A project's row (a repo's heading) | its project coordinator | after the repo: `gtm's coordinator`, `~'s coordinator` for the home folder | a tab in the repo's own space, named `gtm coordinator` |
 | A task's row | its agent | `GTM-14's agent` | its own tab |
 
 **The board opens with the top row selected**, so the chat starts with the Coordinator. `Space` on a project's row

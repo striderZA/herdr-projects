@@ -29,7 +29,7 @@ Only ever the count: finished out of total. It is 100% only when all are finishe
 - Once a run is past its usual time, the minutes follow its own pace so far (and are left out while under a twentieth
   is done). With no run timed yet, they follow its own pace too.
 - Never under a minute while work is left.
-- **Waiting:** one usual run for each run ahead, minus the time since the line last moved, then the check's own run.
+- **Waiting:** one usual run for each run ahead (at least one), minus the time since the line last moved, then the check's own run.
   With no timed run, none are shown.
 
 ### When it stands still

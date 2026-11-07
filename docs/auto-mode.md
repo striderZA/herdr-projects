@@ -34,8 +34,8 @@ its `Auto mode` column ([agents](agents.md)).
   and **Qoder** `qodercli --permission-mode auto` (from 0.2.14): each its own classifier, as its documentation says.
   These three were read from their documentation, not tried here.
 
-Some programs have a flag called `auto` that is not this: `kilo --auto`, `opencode --auto`, `kimi --auto` and
-MastraCode's `--permission-mode auto` approve everything, as `full` does. Hermes and Grok have a checked mode in their
+Some programs have a flag called `auto` that is not this: `kilo --auto`, `opencode --auto` and `kimi --auto` approve everything, as
+`full` does. Hermes and Grok have a checked mode in their
 own settings files but no flag to start in it. None of these is given `auto`.
 
 Every other program has no such mode, and `auto` is refused for it, never made `full` or `ask` behind your back:

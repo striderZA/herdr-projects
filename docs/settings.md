@@ -45,7 +45,7 @@ One setting is neither: `repo.key`, a fact about one repo.
    the repo → the repo's own file → built in.** It is refused on a task and for yourself. Every repo and folder has one:
    the board makes it from the repo's name when it first sees the repo, and saves it as your entry for that repo
    (`"repos": { "gtm-skills": { "repo": { "key": "SKL" } } }`). More: [task numbers and repo keys](task-numbers.md).
-6. **A task in no repo** skips the two repo places. `workspace.*`, `check.*` and `merge.*` do not apply to it, and `show`
+6. **A task in no repo** skips the two repo places. `workspace.*`, `check.*`, `merge.*` and `attempts.*` do not apply to it, and `show`
    says so.
 
 ## The places
@@ -55,7 +55,7 @@ One setting is neither: `repo.key`, a fact about one repo.
 - **This task**: saved on the task, only the settings that differ. A task an [automation](automations.md) made starts with
   the automation's own settings here; an automation is not a place of its own.
 - **The repo's own file**: `.herdr-projects.json`, committed in that repo. It may hold these facts only: `research.only`,
-  `chat.only`, `workspace.setup`, `workspace.include`, `workspace.teardown`, `check.command`, `check.timeout` and `repo.key`.
+  `chat.only`, `workspace.setup`, `workspace.include`, `workspace.teardown`, `check.command`, `check.again`, `check.timeout`, `merge.pushTimeout`, `merge.repo` and `repo.key`.
   - Anything else in it is refused, and said on the task (a `Note` in the task panel, and `show <id>`).
   - It is read from the commit the worktree started from. So code written by agents can never loosen a guard: it cannot
     switch on merging by itself, drop the review, or change the rules its own branch is checked by.

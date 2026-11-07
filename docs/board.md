@@ -145,7 +145,7 @@ the screen with nothing under it. (A list of fewer than eight lines keeps every 
 
 1. **The done rows take no room**: the list shows none of them, only the line that counts them (see above).
 2. **The to-dos give way**, from the last one up, down to the first, with a line under them that counts the rest
-   (`… 4 more to do`).
+   (`↓ 4 more to do`).
 
 So the live tasks, the ones that need your eye, stay on screen, also on a phone where each takes three to five lines.
 

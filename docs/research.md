@@ -88,7 +88,7 @@ than its own counts as a change.
 
 - The branch is not brought up to date with main, the repo's check does not run, nothing is pushed, and no pull request
   is opened.
-- The reviewer reviews the report, unless the task has no review (`reviewer: off` or `review: none`). It is told the task
+- The reviewer reviews the report, unless the task has no review (`review.when` is `never`). It is told the task
   is research only: it reads the report and checks it against what was asked and against the code and sources it speaks
   of. A change to the repo that it finds (a commit elsewhere, something pushed) is a critical finding, and so is a missing
   report. A review that fails the gate goes back to the agent like any other ([the gate](gate.md)).

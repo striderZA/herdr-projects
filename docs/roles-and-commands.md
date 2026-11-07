@@ -23,7 +23,7 @@ this to the board" without being told how.
 
 `add`, `list`, `report`, `describe`, `delegate`, `after` ([one task after another](after.md)), `tell`, `stop`,
 `approve`, `review`, `retry`, `fix`, `finish`, `details`, `pin`, `unpin` ([pins](pinned.md)), `archive`, `restore`, `clear`, `set`, `unset`, `show`,
-`automations` ([automations](automations.md)), `install`, `update` ([installing](install.md)), `remove-extras`.
+`automations` ([automations](automations.md)), `install`, `update` ([installing](install.md)), `remove-extras`, `models` ([models](models.md)), `pick` ([several attempts](attempts.md)), `coordinator`, `sweep`, `doctor` and `version`.
 
 `herdr-projects help` lists them.
 
@@ -41,7 +41,7 @@ Coordinator's closing line use them too):
 | `archive`, `restore` | `archived`, `restored` |
 | `archive --done [--repo NAME]` | `Archived 50 done tasks of mstars.`, and what it left out: `Left out: 1 done but pinned, 2 working.` |
 | `archive --repo NAME`, `restore --repo NAME` | `Archived mstars and its 6 tasks.`, `Restored mstars and its 6 tasks.`, and the tasks it stopped first ([archiving a project](board.md#archiving-a-project)) |
-| `approve` | `approved` |
+| `approve` | `approved, merging` |
 | `pin`, `unpin` (a task or a project) | `proj/12: pinned`, `mstars: unpinned` ([pins](pinned.md)) |
 | `stop` | `stopped`, and what it ended beside the agent: `proj/12: stopped. Ended what it started: bun …/check (pid 812).` |
 

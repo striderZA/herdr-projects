@@ -8,7 +8,7 @@
 
 <p align="center"><a href="https://github.com/eliasstravik/herdr-projects/blob/main/docs/get-started.md"><img src="assets/buttons/install-herdr-projects.svg" alt="Install herdr-projects" /></a></p>
 
-<p align="center"><sub>✓&nbsp;Free,&nbsp;MIT&nbsp;licensed &nbsp; ✓&nbsp;Runs&nbsp;on&nbsp;your&nbsp;machine,&nbsp;no&nbsp;hosted&nbsp;service &nbsp; ✓&nbsp;Linux&nbsp;and&nbsp;Windows,&nbsp;Herdr&nbsp;0.9.3+</sub></p>
+<p align="center"><sub>✓&nbsp;Free,&nbsp;MIT&nbsp;licensed &nbsp; ✓&nbsp;Runs&nbsp;on&nbsp;your&nbsp;machine,&nbsp;no&nbsp;hosted&nbsp;service &nbsp; ✓&nbsp;Linux&nbsp;and&nbsp;Windows,&nbsp;Herdr&nbsp;0.9.3+&nbsp;(0.9.4+&nbsp;on&nbsp;Windows)</sub></p>
 
 <br />
 
@@ -40,7 +40,7 @@ The board's list holds your tasks in five groups, in the order they need you: `n
 
 ### ⚡ Stop briefing every agent yourself
 
-Type what needs doing and press `Enter`: the Coordinator, one long-lived agent chat, makes it a task or several. Send it with `Tab` instead and every task it adds gets an agent at once. Each agent starts on Claude Code, Codex, pi or [another agent herdr supports](docs/agents.md), with the task and the board's rules, in a worktree of its own. Want more control? Ask for [a plan first](docs/plan.md), [several attempts and one kept](docs/attempts.md), [limits](docs/limits.md) on time and tokens, or [automations](docs/automations.md) that add tasks on a schedule.
+Type what needs doing and press `Enter`: the Coordinator, one long-lived agent chat, makes it a task or several. Each agent starts on Claude Code, Codex, pi or [another agent herdr supports](docs/agents.md), with the task and the board's rules, in a worktree of its own. Want more control? Ask for [a plan first](docs/plan.md), [several attempts and one kept](docs/attempts.md), [limits](docs/limits.md) on time and tokens, or [automations](docs/automations.md) that add tasks on a schedule.
 
 ### 💬 Know when a task needs an answer
 
@@ -51,8 +51,8 @@ An agent that asks you something, wants a permission or a sign-in says so to the
 <table>
 <tr>
 <td align="center" valign="top" width="33%"><h3>1️⃣</h3><b>Install the plugin</b><br /><sub>Run <code>herdr plugin install eliasstravik/herdr-projects</code>. It downloads the one program for your platform: no Node, no npm.</sub></td>
-<td align="center" valign="top" width="33%"><h3>2️⃣</h3><b>Open the board</b><br /><sub>Run the plugin's action "Open the work board", or <code>herdr plugin action invoke open --plugin herdr-projects</code> in a Herdr pane. Its first screen offers a key that opens it from anywhere in Herdr.</sub></td>
-<td align="center" valign="top" width="33%"><h3>3️⃣</h3><b>Type what needs doing</b><br /><sub>Press <code>Enter</code> and the Coordinator makes it a task, or <code>Tab</code> and each task gets an agent at once. <code>?</code> shows everything else you can do.</sub></td>
+<td align="center" valign="top" width="33%"><h3>2️⃣</h3><b>Open the board</b><br /><sub>Run the plugin's action "Open the work board", or <code>herdr plugin action invoke open --plugin herdr-projects</code> (<code>open-windows</code> on Windows) in a Herdr pane. Its first screen offers a key that opens it from anywhere in Herdr.</sub></td>
+<td align="center" valign="top" width="33%"><h3>3️⃣</h3><b>Type what needs doing</b><br /><sub>Press <code>Enter</code> and the Coordinator makes it a task. <code>Ctrl+S</code> puts an agent on the task you select. <code>?</code> shows everything else you can do.</sub></td>
 </tr>
 </table>
 
@@ -102,7 +102,7 @@ No. The board keeps its files in a folder on your machine and talks to your loca
 
 ### Will it touch my branches or worktrees on its own?
 
-Only the ones it made. Every task works in its own worktree, on its own branch `work/<n>-<title>`, never in your checkout. The board merges main into those branches so the reviewer sees the work as it will really land, and rolls a real conflict back at once and hands it to the task's agent. It merges only on your yes, at the commit that was reviewed, unless you set `merge.by itself`. When a task is done its worktree and branch are removed; a checkout with unsaved or unmerged work stays on disk with its branch. `workspace.cleanup false` keeps everything.
+Only the ones it made. Every task works in its own worktree, on its own branch, named from its title (`feat/12-add-a-greeting`; the setting `workspace.branch` changes the pattern), never in your checkout. The board merges main into those branches so the reviewer sees the work as it will really land, and rolls a real conflict back at once and hands it to the task's agent. It merges only on your yes, at the commit that was reviewed, unless you set `merge.by itself`. When a task is done its worktree and branch are removed; a checkout with unsaved or unmerged work stays on disk with its branch. `workspace.cleanup false` keeps everything.
 
 ### Where do my tasks live?
 
@@ -114,7 +114,7 @@ You don't need to: one board holds every repo, each task tagged with its repo, a
 
 ### Do I have to start every task through the Coordinator?
 
-No. Select a task on the board and press `Tab` to put an agent on it, or run `herdr-projects add "<title>" --delegate` and `herdr-projects delegate <id>` yourself. An [automation](docs/automations.md) adds tasks on a schedule or when something happens on the board, such as a merge.
+No. Select a task on the board and press `Ctrl+S` to put an agent on it, or run `herdr-projects add "<title>" --delegate` and `herdr-projects delegate <id>` yourself. An [automation](docs/automations.md) adds tasks on a schedule or when something happens on the board, such as a merge.
 
 ### What if the safety settings aren't enough?
 
@@ -130,4 +130,4 @@ Herdr Projects is free and [MIT licensed](LICENSE). Your agent CLI's usual usage
 
 <p align="center"><a href="https://github.com/eliasstravik/herdr-projects/blob/main/docs/get-started.md"><img src="assets/buttons/install-herdr-projects.svg" alt="Install herdr-projects" /></a></p>
 
-<p align="center"><sub>✓&nbsp;Free,&nbsp;MIT&nbsp;licensed &nbsp; ✓&nbsp;Runs&nbsp;on&nbsp;your&nbsp;machine,&nbsp;no&nbsp;hosted&nbsp;service &nbsp; ✓&nbsp;Linux&nbsp;and&nbsp;Windows,&nbsp;Herdr&nbsp;0.9.3+</sub></p>
+<p align="center"><sub>✓&nbsp;Free,&nbsp;MIT&nbsp;licensed &nbsp; ✓&nbsp;Runs&nbsp;on&nbsp;your&nbsp;machine,&nbsp;no&nbsp;hosted&nbsp;service &nbsp; ✓&nbsp;Linux&nbsp;and&nbsp;Windows,&nbsp;Herdr&nbsp;0.9.3+&nbsp;(0.9.4+&nbsp;on&nbsp;Windows)</sub></p>

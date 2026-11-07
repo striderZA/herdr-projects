@@ -23,7 +23,7 @@ with `✗` is a problem, with what to do under it. It exits 1 when there is a pr
 | It checks | A problem it reports | What to do |
 |---|---|---|
 | this program | its version and how it was installed (downloaded, built from source); older than the plugin's own version | `herdr-projects update`, or build it again |
-| the launcher | `~/.herdr-projects/data/bin/herdr-projects` (what agents and hooks run) is missing, names a program that is gone, or not the plugin's | `sh <plugin folder>/bin/run.sh install`, or open the board once from Herdr |
+| the launcher | `~/.herdr-projects/data/bin/herdr-projects` (what agents and hooks run) is missing, names a program that is gone, or not the plugin's | `sh <plugin folder>/bin/run.sh install` (on Windows, `bin/run.ps1 install`), or open the board once from Herdr |
 | your PATH | `herdr-projects` is not on it, or something else of that name comes first | put the launcher's folder first ([installing](install.md#the-command-on-your-path)) |
 | Herdr and the plugin | Herdr not found, older than the plugin needs, the plugin not installed, turned off, or linked to a folder that is gone | install or update Herdr; `herdr plugin enable herdr-projects`; link or install the plugin again |
 | each agent program your settings name | not installed, older than the board was checked on, not signed in (Claude Code, Codex and Cursor can say), missing Herdr's integration | install it or choose another; `claude auth login`, `codex login`, `cursor-agent login`; `herdr integration install <name>` |
@@ -194,10 +194,10 @@ The task panel shows most of this already. `herdr-projects details <id>` prints 
   `~/.herdr-projects/data/bin` to your PATH ([installing](install.md#the-command-on-your-path)).
 - **`herdr` is not found although it is installed**: a command run over plain SSH (`ssh host herdr-projects …`) gets
   no login shell, so its PATH often lacks `~/.local/bin`. When PATH has no `herdr`, the board looks in
-  `~/.local/bin`, `~/.cargo/bin`, `~/bin` and `/usr/local/bin`, then in a login shell's PATH. Herdr
+  `~/.local/bin`, `~/.cargo/bin`, `~/bin` and `/usr/local/bin` (on Windows: `~/.cargo/bin`, `~/bin`, `~/.herdr/packages/standalone/releases` and `%LOCALAPPDATA%\Programs\Herdr\bin`), then in a login shell's PATH. Herdr
   somewhere else: set `HERDR_BIN_PATH` to its full path.
 - **The board key does nothing**: a popup of another plugin may be open (close it first), or the key is not bound. The
   board offers the key on its first screen ([installing](install.md#the-first-run)).
 - **The board looks cut off or half empty**: another Herdr window on the same session (a second device, a browser tab)
   has the size. Type a key in this window ([the board's size](board-size.md)).
-- **Herdr refuses the plugin**: your running Herdr server must be 0.9.3 or newer. Restart it after updating Herdr.
+- **Herdr refuses the plugin**: your running Herdr server must be 0.9.3 or newer (0.9.4 on Windows). Restart it after updating Herdr.

@@ -19,12 +19,12 @@ Paste this into Claude Code, Codex or pi, running inside Herdr:
 
 ```text
 Install the herdr-projects plugin for Herdr and set it up for me.
-1. Check `herdr --version` is 0.9.3 or newer, and that git and curl (or wget) exist. Stop and tell me if not.
+1. Check `herdr --version` is 0.9.3 or newer (0.9.4 on Windows), and that git and curl (or wget) exist. Stop and tell me if not.
 2. Run `herdr plugin install eliasstravik/herdr-projects`.
-3. Find the plugin's folder with `herdr plugin list` and run `sh <that folder>/bin/run.sh install`.
+3. Find the plugin's folder with `herdr plugin list` and run `sh <that folder>/bin/run.sh install` (on Windows, `powershell -File <that folder>\bin\run.ps1 install`).
 4. Add ~/.herdr-projects/data/bin to my PATH in my shell's start-up file, so `herdr-projects` works in new shells.
 5. Run `herdr-projects doctor` and fix anything it reports.
-6. Open the board: `herdr plugin action invoke open --plugin herdr-projects`.
+6. Open the board: `herdr plugin action invoke open --plugin herdr-projects` (on Windows, `open-windows` in place of `open`).
 Then tell me in two lines: it is ready, and to say yes to the key it offers (prefix+a) on its first screen.
 Details if you need them: https://github.com/eliasstravik/herdr-projects/blob/main/docs/install.md
 ```

@@ -79,7 +79,7 @@ a `closing-1.md` beside `data` and `settings` comes from. Now:
 
 Older versions kept the data in `~/.local/state/herdr-superwork`, the settings in `~/.config/herdr-superwork`, and
 agents' reports in `~/.local/share/herdr-superwork-reports`. **The first run of a new version moves all three into
-`~/.herdr-projects/` by itself**: any run, whether the board, a command, or the hook Herdr calls. It then says so once,
+`~/.herdr-projects/` by itself**: any run, whether the board, a command, or the hook Herdr calls (on Windows no move is made: the folders stay where they are). It then says so once,
 in one line, the first time you would see it (on the board when it opens, or after a command you typed):
 
     Moved the board's files into ~/.herdr-projects: data (from ~/.local/state/herdr-superwork), settings (from

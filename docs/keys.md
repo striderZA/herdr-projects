@@ -29,7 +29,7 @@ there, which does what the key does. So a terminal that does not pass `Alt` on (
 
 ## Questions: the board asks before what cannot be undone
 
-Only merging and removing a task ask. Nothing else does.
+Merging, removing a task, starting a task that waits for others, keeping one attempt of several, archiving a project with tasks that work, wait or are to do, and removing an automation ask first. Nothing else does.
 
 ```
  Merge HSW-18 "Add an undo for clear" (PR#18) into main?
@@ -174,7 +174,7 @@ The tables below always show the chords the board comes with.
 | Key | Does |
 |---|---|
 | `↑` `↓` | move between tasks and their headings, and on to the automations under them |
-| `←` `→` | on a heading (the top row, a repo, a status group): fold it to its one line, which says what it holds. On a task's or an automation's row: go to the heading it stands under. With words typed, ← and → move in them ([list-headings.md](list-headings.md)) |
+| `←` `→` | on a heading (the top row, a repo, a status group): fold it to its one line, which says what it holds, and → unfolds it again. On a task's or an automation's row: go to the heading it stands under. With words typed, ← and → move in them ([list-headings.md](list-headings.md)) |
 | `Pgup` `Pgdn` | a page up or down: ten tasks in the list, a page of text in the whole task |
 | `Tab` | the filter row on top (All · Coordinators · Needs you · Working · Ready · To do · Done · Automations · Pinned, each with its count): `Tab` moves to the next, shift+tab to the one before, a click picks one. The list then shows only that kind of row, in its places: Coordinators leaves the projects' rows whose coordinators run (started and not stopped, or failed; the top row is the Coordinator: it is who the chat talks to); Pinned leaves what you pinned, a pinned project with its rows under it ([board.md](board.md#the-filter-row), [pinned.md](pinned.md)) |
 | `Enter` | send what you typed. With nothing typed, on a heading (the top row, a repo, a status group): fold it to its one line, which says what it holds, and unfold it; its caret says which it is, `▾` open, `▸` folded ([list-headings.md](list-headings.md)). On a task's row it does nothing: `Alt+O` goes into its agent, `Space` talks to it. On an automation's row: open the automation, whole ([automations.md](automations.md)) |
@@ -218,6 +218,5 @@ The tables below always show the chords the board comes with.
 
 | Key | Does |
 |---|---|
-| `→` | on a folded heading: unfold it |
 | `Shift+Enter` | a new line in what you are typing. Like the cursor keys and backspace, it is the text box's own editing key, not a key of the board |
 <!-- /made:keys -->

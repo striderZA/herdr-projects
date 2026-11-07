@@ -92,7 +92,7 @@ run. (The first column of `herdr-projects list` is the short name, lined up.)
 
 ## How a repo gets its key
 
-Every repo and folder the board knows has a key: a git repo, a plain folder, the home folder, `/`. A task in no repo
+Every repo and folder the board knows has a key: a git repo, a plain folder, the home folder, and the root of the file system (`/`, or the system drive `C:\` on Windows). A task in no repo
 belongs to the folder it was added in, so it has that folder's key too (`HOME-3` for a task added in the home folder).
 
 **Made from the name, at once.** The moment the board first sees a repo or folder (a task is added there, the board is
@@ -109,7 +109,7 @@ in `~/.herdr-projects/settings/config.json`:
 | `gtm-skills`, `open-crm` | `SKL`, `CRM` | two words: the last one, which says what it is; a short word as it is, a longer one by its first letter and the consonants after it |
 | `proj`, `tmp`, `repo` | `PRJ`, `TMP`, `REPO` | one word: the same; a word with too few consonants by its first four letters |
 | `proj-2` | `PRJ2` | a number in the name goes at the end |
-| your home folder, `/` | `HOME`, `ROOT` | |
+| your home folder, the root (`/`, or the system drive `C:\` on Windows) | `HOME`, `ROOT` | |
 
 - **Never a key another repo on this machine has, or once had.** When the best key is taken, the next way of writing the
   name is tried (`PRO` for a second `proj`), then the best one with a number (`PRJ2`, `PRJ3`, …). The same names always

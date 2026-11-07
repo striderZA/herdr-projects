@@ -26,7 +26,7 @@ in [`.herdr-projects.json`](../.herdr-projects.json)).
   program's name before): it reads only that name.
 
 **Picking tests by name.** A name is first an area: `board-panel` (or `board_panel`) runs `tests/board_panel.rs` and every
-`tests/board_panel_*.rs`, exactly those (not `board_panel_extra.rs`). A name that is no area is matched against each test's
+`tests/board_panel_*.rs`. A name that is no area is matched against each test's
 own name, as `cargo test` matches it: a test in `tests/` is named by its file and its function
 (`board_hints::the_hint_line_names_the_task_once_…`), and one beside the code by its module path. So
 `npm run check textbox` runs the tests that say `textbox`, wherever they are. A word that matches no test runs none, and
@@ -80,13 +80,13 @@ files. `scripts/changed-tests.sh <commit>` picks them, for each file changed:
 | Changed | The test files it reaches |
 |---|---|
 | a test file (`tests/sync.rs`) | that file |
-| a module the files share (`tests/far/`) | the files that use it (`crate::far`) |
+| a module the files share (`tests/common/`) | the files that use it (`crate::common`) |
 | a kept frame (`tests/frames/`) | `board_frames` |
 | a file of the program (`crates/flow/src/sync/conflict.rs`) | those whose names hold its name or its folder's as a word (`sync_conflict`, `sync`, `sync_behind`), and those that write its module's path (`sync::conflict`); a `mod.rs` goes by its folder |
 | a page (`docs/keys.md`, `README.md`) | those that write its name, and `guard` |
 
 **Every test runs** (it says why: `Every test runs: …`) when it cannot tell: for `tests/main.rs`, `tests/common/` and
-`tests/fixtures/` (every test uses them); `src/lib.rs`, `src/main.rs` and the crates' root files (`src/sw_*.rs`); a file
+`tests/fixtures/` (every test uses them); `src/lib.rs`, `src/main.rs` and the crates' root files (`crates/*/src/lib.rs`); a file
 of the program that no test file is named by or writes the path of; any other file (`Cargo.toml`, `crates/`, `scripts/`,
 `.github/`); a commit that is not on the branch; and a change that reaches every test file anyway.
 
@@ -104,7 +104,7 @@ way in Rust. Cargo compiles and links the tests once. (A program per file meant 
 library again, and about 2.3 GB of programs in every worktree.)
 
 - A test file is still the file of one area.
-- What the files share (`common`, `far`, `review_kit`, `move_home`) is declared once in `tests/main.rs`. A file reaches it
+- What the files share (`common`, `move_home`, `review_kit`) is declared once in `tests/main.rs`. A file reaches it
   as `use crate::common;`.
 - **A new test file is one `mod` line in `tests/main.rs`**, in its place in the list. The guard fails a file left out,
   which would never be built or run.
@@ -184,7 +184,7 @@ line (`target/quick`), and only what changed since is built again.
 - **Where:** `~/.cache/herdr-projects/warm/<repo>/`, one folder each, with `current` naming the newest. A new one is made
   beside the old and then named, so worktrees set up at the same moment each copy a whole build. An old one goes 30
   minutes after it stopped being current.
-- **The copy** is a clone where the file system can (APFS, Btrfs, XFS: no extra space), a plain copy elsewhere (ext4:
+- **The copy** is a clone where the file system can (Btrfs, XFS: no extra space), a plain copy elsewhere (ext4:
   about 500 MB a kept build); never hard links, since cargo writes into some of its files in place.
 - **Timestamps:** cargo judges what is out of date by when files changed, and every file of a fresh worktree is new. The
   files whose content is the kept build's commit's get an old time, so cargo takes them as built; the rest (changed on
@@ -290,7 +290,7 @@ something that says when it is done: a real terminal is read until its frame is 
 - **The rows every screen test draws** (`tests/common/fixtures.rs`): one task in each state the board shows, with the
   long, wide and odd text that breaks a layout. A new state is one new row there, and every screen test draws it.
 
-## Four kinds of tests
+## Three kinds of tests
 
 - **The board's state, updated.** `common::board::open(&w.root, rows)` opens the real board on a world, without a
   terminal. `press(&["alt+t", "esc", "ctrl+l"])` and `typed("…")` go through the board's one `update`, what they start
@@ -323,7 +323,7 @@ left a fake task (`probe/12`) on the human's board, because a variable it inheri
 its scratch `HERDR_PROJECTS_HOME`.
 
 **A real program is started only where the program itself is what is tested.** Those tests say so in their name
-(`real_programs_…`): the command line (`tests/cli.rs`) and the real terminal (`tests/real_terminal.rs`). They run the program cargo built for the tests, inside the test's world, with no Herdr to
+(`real_programs_…`): the command line (`tests/cli.rs`), the real terminal (`tests/real_terminal.rs`) and the repo's own scripts (`tests/check_script.rs`, `tests/warm_start.rs`). They run the program cargo built for the tests, inside the test's world, with no Herdr to
 reach. A repo's own `setup`, `check` and `teardown` commands are shell commands by nature, and run as such in the tests
 about them.
 

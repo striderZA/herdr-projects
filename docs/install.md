@@ -10,7 +10,7 @@ herdr plugin install eliasstravik/herdr-projects
 ## What you need
 
 - Linux, on x86_64 or aarch64, or Windows on x86_64 (see [Windows](#windows) below).
-- Herdr 0.9.3 or newer (0.9.4 on Windows). Your **running** Herdr server must be 0.9.3 or newer too: an older one refuses the plugin until
+- Herdr 0.9.3 or newer (0.9.4 on Windows). Your **running** Herdr server must be 0.9.3 or newer too (0.9.4 on Windows): an older one refuses the plugin until
   it is restarted.
 - `git`, and `curl` or `wget` to download the program.
 - Optional: `gh` (pull requests).
@@ -20,7 +20,7 @@ No Node, no npm: the board is one program.
 ## What the install does
 
 Herdr clones the repo's main branch into its own plugins folder (`herdr plugin list` shows where) and runs the plugin's
-build step there, which downloads the program. `--ref v1.2.27` takes a given release.
+build step there, which downloads the program. `--ref v1.2.29` takes a given release.
 
 To keep a checkout of your own instead:
 
@@ -29,6 +29,8 @@ git clone https://github.com/eliasstravik/herdr-projects && cd herdr-projects
 herdr plugin link "$PWD"          # hooks, the board's tab and the actions
 sh bin/run.sh install             # gets the program, writes its launcher, says how to put it on your PATH
 ```
+
+On Windows, run `powershell -File bin\run.ps1 install` in the checkout instead.
 
 ## The first run
 
@@ -150,11 +152,11 @@ what takes the marked blocks out of `config.toml` and removes the how-to files (
 
 ## Windows
 
-Windows is listed in the plugin's manifest on this branch; merging it waits for a live run on a real Windows machine that passes. [windows.md](windows.md) says what differs there. You need:
+Windows is supported: the plugin's manifest lists it, and every release since 1.2.28 ships a Windows file. [windows.md](windows.md) says what differs there. You need:
 
 - Windows on x86_64.
 - Herdr 0.9.4 or newer, running. The board checks herdr's version when it starts and refuses an older one on Windows, naming the version it needs.
-- PowerShell 7 (`pwsh.exe`) as herdr's default shell, set by `default_shell` in herdr's `config.toml`. Without it herdr uses Windows PowerShell 5.1.
+- PowerShell 7 (`pwsh.exe`) recommended as herdr's default shell, set by `default_shell` in herdr's `config.toml`. Without it herdr uses Windows PowerShell 5.1.
 
 Install with the same command as on Linux, in PowerShell:
 
@@ -167,7 +169,7 @@ Herdr runs `bin/run.ps1` on Windows. It runs the program built from this checkou
 The program is one file per platform: `herdr-projects-linux-x86_64`, `-linux-aarch64`, `herdr-projects-windows-x86_64.exe`.
 The Linux ones run on any Linux.
 
-Every command Herdr runs for the plugin goes through `bin/run.sh`, which runs the first of these it finds:
+On Linux, every command Herdr runs for the plugin goes through `bin/run.sh`, which runs the first of these it finds (on Windows, `bin/run.ps1` runs the same steps):
 
 1. a program built in this checkout (`target/release/herdr-projects`) that no source file is newer than;
 2. the downloaded one in `bin/`, when it is this checkout's version (`Cargo.toml`) or newer;
@@ -178,7 +180,7 @@ Every command Herdr runs for the plugin goes through `bin/run.sh`, which runs th
 
 With none, it says what to do and stops at once, so Herdr is never held up.
 
-- The plugin's build step (`sh bin/run.sh --fetch`) only gets the program, and builds it from source when it cannot
+- The plugin's build step (`sh bin/run.sh --fetch`, on Windows `bin/run.ps1 --fetch`) only gets the program, and builds it from source when it cannot
   download it.
 - `HERDR_PROJECTS_RELEASES` names another place for the releases (a mirror, a folder as `file:///…`). Without it, the releases of the checkout's git origin are used, so a fork's installs get the fork's files.
 - The release files are built for every version tag by `.github/workflows/release.yml`.

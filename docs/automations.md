@@ -148,7 +148,7 @@ whoever finds it taken skips). So it works with the board closed. An automation 
 ## On the board
 
 **An automation belongs to this machine**, and the list shows it there ([the board](board.md)). (There is no separate
-list behind a key any more: `Alt+O` is no key of the board.)
+list behind a key any more: `Alt+O` goes into the selected row's agent, not into a list of automations.)
 
 - **By status**, the automations are a group of their own under the heading `automations`, after the task groups
   (`working`, `to do`, `done` …). With none, there is no such heading.

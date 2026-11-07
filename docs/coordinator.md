@@ -74,7 +74,7 @@ On the board you see only what it said and what you said, never its program's sc
 whole conversation, its dialogs, slash commands and menus, **go into it** in Herdr:
 
 - It is an ordinary agent in the `Coordinator` tab of your home space.
-- The plugin action `herdr-projects.coordinator` (bind a key to it) goes straight to its pane from anywhere in Herdr,
+- The plugin action `herdr-projects.coordinator` (on Windows, `herdr-projects.coordinator-windows`; bind a key to it) goes straight to its pane from anywhere in Herdr,
   and starts it first if it is not running.
 - Get back the way you do from any agent: your board key, or `herdr-projects`.
 
@@ -87,7 +87,7 @@ whole conversation, its dialogs, slash commands and menus, **go into it** in Her
 - Your first message starts it, and it stays. If its program exited or Herdr restarted, your next message starts it
   again in the same conversation.
 - **Closing the board does not stop it**, and the board says so as you close it. One Coordinator serves every board of
-  the machine (a tab, the popup) and `coordinator tell`, and a turn of it may still be at work.
+  the herdr session (a tab, the popup) and `coordinator tell`, and a turn of it may still be at work.
   `herdr-projects coordinator stop` closes its tab; your next message starts it again, in the same conversation.
 - The agent's own new-chat command (`/clear`, `/new`) is followed: the chat and a restart go with the conversation it
   is in now.

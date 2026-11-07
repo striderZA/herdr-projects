@@ -7,8 +7,7 @@ same functions on both.
 
 ## Status
 
-This branch lists Windows in the plugin's manifest (`herdr-plugin.toml`). Merging it to master waits for a live run on a
-real Windows machine that passes. [install.md](install.md) says what Windows needs.
+Windows is on master. The plugin's manifest lists it (`herdr-plugin.toml`), and every release since 1.2.28 ships a Windows file. Points not yet checked on a live Windows machine say so where they come up below. [install.md](install.md) says what Windows needs.
 
 ## What differs
 
@@ -31,7 +30,7 @@ real Windows machine that passes. [install.md](install.md) says what Windows nee
   block it): the write retries for up to a second, then leaves the old file as it was and reports the failure. The new file is kept, so the write can be tried again.
 - **Locks** use `LockFileEx` on the lock file.
 - **Links**: the program makes no links on Windows. The one-time move into the home folder is not made here, so the
-  folders stay where they are. Links need Developer Mode or an administrator (error 1314); the two tests that make links
+  folders stay where they are. Links need Developer Mode or an administrator (error 1314); the tests that make links
   are gated on Windows until then.
 - **Held panes**: Windows has no process table of terminals, so the board cannot tell which views hold a pane. That check
   is off, and a held pane is not reported.
@@ -39,10 +38,10 @@ real Windows machine that passes. [install.md](install.md) says what Windows nee
   the console that started it is closed (a pane closed) has not been checked on a live Windows run.
 - **Launcher**: `bin/run.ps1` runs the same steps as `bin/run.sh`, with the same release file names plus `.exe`.
 - **Command on PATH**: the launcher is `herdr-projects.cmd` in the data folder (cmd and PowerShell run it by name; agents and hooks get its path), with a shell script `herdr-projects` beside it for Git Bash ([installing](install.md#the-command-on-your-path)).
+- **Opening a link** (`Ctrl+D`: a report or a pull request): `cmd /C start` opens it. Where nothing can open it (over ssh, with no display), the board copies the link instead.
 
 ## Not on Windows yet
 
-- **Voice calls** are off on Windows: a call says so in one line.
 - **Remote machines** and **the web board** are not part of this program on any platform.
 - **WSL** is not a target. The Windows build is native.
 - **ARM Windows** is not built. The release file is `herdr-projects-windows-x86_64.exe`.
