@@ -38,6 +38,7 @@ real Windows machine that passes. [install.md](install.md) says what Windows nee
 - **Background jobs**: a job starts in its own process group, not in a console of its own. Whether it keeps running when
   the console that started it is closed (a pane closed) has not been checked on a live Windows run.
 - **Launcher**: `bin/run.ps1` runs the same steps as `bin/run.sh`, with the same release file names plus `.exe`.
+- **Command on PATH**: the launcher is `herdr-projects.cmd` in the data folder (cmd and PowerShell run it by name; agents and hooks get its path), with a shell script `herdr-projects` beside it for Git Bash ([installing](install.md#the-command-on-your-path)).
 
 ## Not on Windows yet
 

@@ -161,19 +161,19 @@ pub fn update(exe: &Path, version: Option<&str>, fetch: &dyn Fn(&str, &Path) -> 
 }
 
 /// What is in the way of typing `herdr-projects` in a shell, as (what, what to do); None when the first one on the
-/// PATH is the launcher `at` (or a link to it) or this program.
+/// PATH is the launcher `at` (or the shell script beside it, Git Bash's name for the same launcher, or a link to it) or this program.
 pub fn path_problem(at: &Path, exe: &Path, path: &str) -> Option<(String, String)> {
     let dir = at.parent().map(Path::to_path_buf).unwrap_or_default();
     let real = |p: &Path| crate::sys::canonicalize(p).ok().map(crate::sys::plain_path);
     // As a shell looks: the first file of that name it may run.
     let runs = |f: &Path| crate::sys::is_program(f);
     match std::env::split_paths(path).flat_map(|d| crate::herdr::find::names("herdr-projects").into_iter().map(move |n| d.join(n))).find(|f| runs(f)) {
-        Some(f) if f == at || real(&f).is_some() && (real(&f) == real(at) || real(&f) == real(exe)) => None,
+        Some(f) if f == at || (f.parent() == at.parent() && f.extension().is_none()) || real(&f).is_some() && (real(&f) == real(at) || real(&f) == real(exe)) => None,
         Some(f) => Some((format!("{} comes first on your PATH (an older install? `npm unlink -g herdr-projects` takes out the Node one)", f.display()), format!("Remove it, or put {} before it.", dir.display()))),
         None => Some(("herdr-projects is not on your PATH".into(), format!("To type herdr-projects in any shell, put its folder on your PATH (in ~/.profile or your shell's start-up file): export PATH=\"{}:$PATH\"", dir.display()))),
     }
 }
-/// `install`: the launcher in the data folder names this program (flow/send.rs writes it, the only writer), and what
+/// `install`: the launcher in the data folder names this program (flow/launcher.rs writes it, the only writer), and what
 /// is in the way of typing `herdr-projects` in a shell is said.
 pub fn install(exe: &Path) -> String {
     let at = crate::flow::send::shim();

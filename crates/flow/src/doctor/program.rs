@@ -13,12 +13,7 @@ pub fn here(launcher: PathBuf, launcher_text: Option<String>, plugin_root: Optio
 }
 fn t(p: &Path) -> String { tilde(&p.display().to_string()) }
 fn real(p: &Path) -> PathBuf { crate::sys::plain_path(crate::sys::canonicalize(p).unwrap_or_else(|_| p.to_path_buf())) }
-/// The program a launcher runs: its `exec '<program>' "$@"` line (flow/send.rs writes it).
-pub fn launcher_target(text: &str) -> Option<PathBuf> {
-    let q = text.lines().find_map(|l| l.strip_prefix("exec "))?.strip_suffix(" \"$@\"")?;
-    let inner = q.strip_prefix('\'')?.strip_suffix('\'')?;
-    Some(PathBuf::from(inner.replace("'\\''", "'")))
-}
+pub use crate::flow::launcher::launcher_target;
 /// The programs the plugin runs (bin/run.sh): the one built in its folder, or the one downloaded for this platform.
 pub fn plugin_programs(root: &Path) -> Vec<PathBuf> {
     let mut v = vec![root.join("target/release").join(format!("herdr-projects{}", std::env::consts::EXE_SUFFIX))];
@@ -46,6 +41,9 @@ pub fn check(h: &Here) -> Vec<Found> {
         }
     }
     let fix = match root { Some(r) => format!("Run: sh {} install  (or open the board once from Herdr)", t(&r.join("bin").join("run.sh"))), None => "Open the board once from Herdr, or run: herdr-projects install".into() };
+    for p in crate::flow::launcher::stale_copies(h.launcher.parent().unwrap_or(Path::new(""))) {
+        out.push(Found::bad(format!("{} is an older copy of the program: PowerShell runs it before the launcher", t(&p)), "Remove it: herdr-projects install does, once no program runs from it"));
+    }
     let l = t(&h.launcher);
     let target = match &h.launcher_text {
         None => { out.push(Found::bad(format!("The launcher {l} is missing: agents and hooks run herdr-projects through it"), fix)); return out; }
