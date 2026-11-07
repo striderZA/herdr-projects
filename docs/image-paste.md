@@ -12,7 +12,7 @@ place, so the agent opens the picture as before.
 
 - **What becomes a chip:** every picture's path in a paste. That is the path herdr pastes for a picture on your
   clipboard (`…/herdr-clipboard-images-501/client-327-clipboard-…-0.png`), and a picture file dropped in the terminal
-  (`/Users/you/Desktop/Screen\ Shot.png`, or in quotes). Several in one paste give several chips, and so does a paste
+  (`/home/you/Pictures/a\ picture.png`, or in quotes). Several in one paste give several chips, and so does a paste
   with words around them (`<path> also look at <path> here` goes in as `[Image 1] also look at [Image 2] here`). A
   picture is a path that ends in `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.bmp`, `.heic`, `.tif` or `.tiff` and is a
   file on this machine (herdr's own is taken as it is).
@@ -50,7 +50,7 @@ place, so the agent opens the picture as before.
 
 - **What becomes a chip:** every picture's path in a paste. That is the path herdr pastes for a picture on your
   clipboard (`…/herdr-clipboard-images-501/client-327-clipboard-…-0.png`), and a picture file dropped in the terminal
-  (`/Users/you/Desktop/Screen\ Shot.png`, or in quotes). Several in one paste give several chips, and so does a paste
+  (`/home/you/Pictures/a\ picture.png`, or in quotes). Several in one paste give several chips, and so does a paste
   with words around them (`<path> also look at <path> here` goes in as `[Image 1] also look at [Image 2] here`). A
   picture is a path that ends in `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp`, `.bmp`, `.heic`, `.tif` or `.tiff` and is a
   file on this machine (herdr's own is taken as it is).
