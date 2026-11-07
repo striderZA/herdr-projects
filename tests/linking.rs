@@ -89,9 +89,9 @@ fn the_cargo_config_is_the_same_words_in_every_worktree() {
     assert_eq!(std::fs::read_link(root().join("scripts/ld/ld")).unwrap(), Path::new("../linker.sh"));
 }
 
-/// The platforms the program is built on (Linux and macOS, x86_64 and ARM) and for (the release files, musl on Linux).
+/// The platforms the program is built on (Linux, x86_64 and ARM) and for (the release files, musl on Linux).
 const TARGETS: &[&str] = &["x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "x86_64-unknown-linux-musl",
-    "aarch64-unknown-linux-musl", "x86_64-apple-darwin", "aarch64-apple-darwin"];
+    "aarch64-unknown-linux-musl"];
 
 /// The rustc that built the tests, by rustup's words for it as they were then: the tests' worlds move HOME and PATH.
 fn rustc() -> std::process::Command {

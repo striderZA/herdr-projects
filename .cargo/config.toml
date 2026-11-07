@@ -3,7 +3,7 @@
 # builds. On x86_64 it is also told not to ask for Rust's own lld, its default there; that flag is unstable on every
 # other target (aarch64 Linux fails at once with it), where the C compiler's own `ld` is already the default. The words
 # are the same in every worktree, so a build copied from another one (scripts/warm-start.sh) and the shared build cache
-# stay good. macOS keeps Apple's own linker. A test runs rustc with each target's flags (tests/linking.rs).
+# stay good. A test runs rustc with each target's flags (tests/linking.rs).
 # docs/linking.md.
 [target.x86_64-unknown-linux-gnu]
 rustflags = ["-Clinker-features=-lld", "-Clink-arg=-Bscripts/ld/"]

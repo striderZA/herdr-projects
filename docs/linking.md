@@ -15,7 +15,7 @@ library. mold halves the link time, about 0.4 s saved per build.
   repo: the check, the workspace setup, and your own `cargo build` or `cargo test`.
 - **x86_64 Linux** also gets `-Clinker-features=-lld`. There Rust asks the C compiler for its own lld by default, and
   this flag stops it.
-- **ARM Linux (aarch64) gets only the `-B` flag.** `-Clinker-features` is unstable there (as on macOS; it is stable on
+- **ARM Linux (aarch64) gets only the `-B` flag.** `-Clinker-features` is unstable there (it is stable on
   x86_64 Linux). With it, every build on stable Rust stops at once, saying the flag is unstable on the
   `aarch64-unknown-linux-gnu` target. It is not needed there: Rust does not ask for its lld on that target, so the C
   compiler runs `scripts/ld/` all the same and links with mold too.
@@ -30,13 +30,11 @@ library. mold halves the link time, about 0.4 s saved per build.
 - **Release builds link as before.** A link whose files go under a `release` folder (`cargo build --release`, also
   with `--target`) uses that same default linker. The release files are built for musl targets, which
   `.cargo/config.toml` does not name.
-- **macOS** keeps Apple's own linker (ld-prime, the default since Xcode 15). It is as fast as lld there, and mold has no
-  macOS build.
 
 ## A test guards every platform
 
 `tests/linking.rs` runs `rustc --print cfg` with the flags the config gives each platform: x86_64 and aarch64 Linux
-(gnu and musl), macOS, and every target the config names. It fails when rustc rejects them or one is a `-Z` flag.
+(gnu and musl), and every target the config names. It fails when rustc rejects them or one is a `-Z` flag.
 rustc complains before it needs that target's library, so the test catches a config that breaks ARM Linux on any
 machine, CI's included.
 
