@@ -203,7 +203,7 @@ pub fn parent_of(pid: i64) -> Option<i64> {
     s.process(sysinfo::Pid::from_u32(pid as u32))?.parent().map(|p| p.as_u32() as i64)
 }
 /// The folders each process runs from, by process number: its working folder and its program's (sysinfo reads them from
-/// the processes; Windows has no lsof). A process whose folders cannot be read (another user's) lists none.
+/// the processes). A process whose folders cannot be read (another user's) lists none.
 pub fn process_folders() -> Vec<(i64, Vec<PathBuf>)> {
     let Ok(mut s) = sysinfo::System::new() else { return vec![] };
     let kind = sysinfo::ProcessRefreshKind::nothing().with_cwd(sysinfo::UpdateKind::OnlyIfNotSet).with_exe(sysinfo::UpdateKind::OnlyIfNotSet);

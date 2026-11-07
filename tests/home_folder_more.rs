@@ -11,7 +11,7 @@ use util::*;
 
 fn hold(f: &Path) -> std::fs::File { let h = std::fs::File::open(f).unwrap(); assert!(sw::sys::lock_file(&h, false), "{} is taken", f.display()); h }
 /// Whether another program finds the file locked: a flock belongs to one opening of the file, so the file opened again
-/// here is asked as another program would ask (with no `flock` command, which macOS has not).
+/// here is asked as another program would ask (through the lock itself, not the `flock` command).
 fn taken(f: &Path) -> bool { let Ok(h) = std::fs::File::open(f) else { return false }; !sw::sys::lock_file(&h, false) }
 
 #[test]
