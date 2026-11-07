@@ -26,7 +26,7 @@ Restart and new are commands, not board keys. You can also just ask the Coordina
 only the next one: your default stays as it is.
 
 `coordinator tell` run where herdr cannot be found (cron, systemd: herdr is not on PATH, not in
-`~/.local/bin`, `~/.cargo/bin`, `~/bin`, `/usr/local/bin` or `/opt/homebrew/bin`, and not on a login shell's PATH)
+`~/.local/bin`, `~/.cargo/bin`, `~/bin` or `/usr/local/bin`, and not on a login shell's PATH)
 keeps the message in the queue but does not say `sent`: it says the message is queued, not delivered, and why, and exits
 1. The board and its keeper deliver it once they run in herdr; `HERDR_BIN_PATH` set to herdr's full path delivers from
 there. `herdr-projects doctor` names messages that wait in a queue for more than a minute.

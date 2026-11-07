@@ -6,7 +6,7 @@ use std::sync::OnceLock;
 
 /// Where installers put herdr, under the home folder or not: looked in after PATH, in this order.
 #[cfg(unix)]
-pub const SPOTS: [&str; 5] = ["~/.local/bin", "~/.cargo/bin", "~/bin", "/usr/local/bin", "/opt/homebrew/bin"];
+pub const SPOTS: [&str; 4] = ["~/.local/bin", "~/.cargo/bin", "~/bin", "/usr/local/bin"];
 #[cfg(windows)]
 pub const SPOTS: [&str; 4] = ["~/.cargo/bin", "~/bin", "~/.herdr/packages/standalone/releases", "%LOCALAPPDATA%/Programs/Herdr/bin"];
 /// The usual spots, `~` being `home`.
