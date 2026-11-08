@@ -175,7 +175,7 @@ On Linux, every command Herdr runs for the plugin goes through `bin/run.sh`, whi
 1. a program built in this checkout (`target/release/herdr-projects`) that no source file is newer than;
 2. the downloaded one in `bin/`, when it is this checkout's version (`Cargo.toml`) or newer;
 3. that file, downloaded now from the GitHub release of this checkout's version, in the repo the checkout was cloned from
-   (its git origin; the upstream repo when there is none): its checksum checked, put in place in one step, one download at a time;
+   (its git origin; the fork's repo when there is none): its checksum checked, put in place in one step, one download at a time;
 4. failing all that, an older build or an older download, with a line saying so. A download that failed is tried again
    ten minutes later, not on every command (each of Herdr's hooks would wait for it).
 
