@@ -42,9 +42,22 @@ pub fn remembered(env_out: &str, fallback: &str) -> Obj {
 pub fn login_shell() -> Option<String> { None } // Windows has no login shell: the process environment is what there is
 #[cfg(not(windows))]
 pub fn login_shell() -> Option<String> {
+    use std::io::Read;
     let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/sh".into());
-    let out = Command::new(shell).args(["-lc", "env"]).stdin(Stdio::null()).stderr(Stdio::null()).output().ok()?;
-    out.status.success().then(|| String::from_utf8_lossy(&out.stdout).into_owned())
+    let mut child = Command::new(shell).args(["-lc", "env"]).stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::null()).spawn().ok()?;
+    let mut stdout = child.stdout.take()?;
+    let reader = std::thread::spawn(move || { let mut b = vec![]; let _ = stdout.read_to_end(&mut b); b });
+    // A start-up file that waits (a password prompt, a network mount) is no reason to hang every job: five seconds, unless
+    // a test says otherwise.
+    let ms = crate::util::env_val("HERDR_PROJECTS_LOGIN_SHELL_MS").and_then(|v| v.parse::<i64>().ok()).unwrap_or(5000).max(1);
+    let until = std::time::Instant::now() + std::time::Duration::from_millis(ms as u64);
+    let ok = loop {
+        match child.try_wait() { Ok(Some(st)) => break st.success(), Ok(None) => {}, Err(_) => break false }
+        if std::time::Instant::now() >= until { let _ = child.kill(); let _ = child.wait(); break false; }
+        std::thread::sleep(std::time::Duration::from_millis(20));
+    };
+    if !ok { return None; }
+    Some(String::from_utf8_lossy(&reader.join().ok()?).into_owned())
 }
 
 /// A login shell is asked once and its PATH remembered for a while (`env.json`); the PATH of this process takes it in.
