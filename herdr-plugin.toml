@@ -1,6 +1,6 @@
 id = "herdr-projects"
 name = "Projects"
-version = "1.2.30"
+version = "1.2.31"
 # The oldest herdr this plugin runs on: herdr refuses the plugin on an older one, on every platform. Windows also needs
 # herdr 0.9.4, which the doctor checks on Windows alone. Verified: Linux on 0.9.3.
 min_herdr_version = "0.9.3"
