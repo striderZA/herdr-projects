@@ -41,19 +41,19 @@ pub fn linked_worktree(bin: &Path) -> bool {
     false
 }
 /// The command the old data folder's launcher names: `exec node '<path>' "$@"` (the old board) or `exec '<path>' "$@"`.
+/// The lines before it (a shebang, an export) are passed over.
 pub fn launcher_target(text: &str) -> Option<String> {
-    for line in text.lines() {
+    text.lines().find_map(|line| {
         let rest = line.strip_prefix("exec node ").or_else(|| line.strip_prefix("exec "))?;
         let rest = rest.strip_suffix(" \"$@\"")?;
         let inner = rest.strip_prefix('\'')?.strip_suffix('\'')?;
-        return Some(inner.replace("'\\''", "'"));
-    }
-    None
+        Some(inner.replace("'\\''", "'"))
+    })
 }
 fn others_board(p: &Plan, bin: &Path, linked: bool) -> bool {
     if linked { return true; }
     let Some(text) = read_text(&p.parts[0].from.join("bin").join(OLD_NAME)) else { return false };
-    let named = text.lines().find_map(|l| launcher_target(l)).unwrap_or_default();
+    let named = launcher_target(&text).unwrap_or_default();
     !named.is_empty() && Path::new(&named).exists() && real(Path::new(&named)) != real(bin) && !named.ends_with(".js")
 }
 fn free(file: &Path) -> PathBuf {

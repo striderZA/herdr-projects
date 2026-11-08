@@ -17,7 +17,7 @@ pub fn older_writer(data: &Path) -> Option<String> {
     let kept = read_obj(&data.join("keeper.json")).map(|o| o.t("version")).unwrap_or_default();
     if !kept.is_empty() && crate::util::newer(FIRST_NATIVE, &kept) { return Some(kept); }
     let launcher = ["herdr-projects", OLD_NAME].map(|n| data.join("bin").join(n)).into_iter().find(|f| f.exists())?;
-    let node = read_text(&launcher).and_then(|t| t.lines().find_map(launcher_target)).map(|p| p.ends_with(".js")).unwrap_or(false);
+    let node = read_text(&launcher).and_then(|t| launcher_target(&t)).map(|p| p.ends_with(".js")).unwrap_or(false);
     node.then(|| "node".to_string())
 }
 /// The copy's place: beside the data folder, named after the version that wrote it.

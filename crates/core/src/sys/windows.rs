@@ -66,7 +66,7 @@ pub fn private_mode(o: &mut OpenOptions) -> &mut OpenOptions { o }
 /// Windows creates no file through a link here: the callers check for a link first.
 pub fn no_follow(o: &mut OpenOptions) -> &mut OpenOptions { o }
 /// Opens a lock file for `lock_file`: read and write, since LockFileEx refuses a handle with neither.
-pub fn open_lock(path: &Path) -> io::Result<File> { OpenOptions::new().create(true).read(true).write(true).open(path) }
+pub fn open_lock(path: &Path) -> io::Result<File> { OpenOptions::new().create(true).truncate(false).read(true).write(true).open(path) }
 /// Takes an exclusive lock on an open file, waiting for it when `wait`. False when another process holds it.
 pub fn lock_file(f: &File, wait: bool) -> bool {
     let mut ov: OVERLAPPED = unsafe { std::mem::zeroed() };
