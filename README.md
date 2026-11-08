@@ -124,6 +124,16 @@ They are soft. By default nothing merges without your yes, work whose review fai
 
 Herdr Projects is free and [MIT licensed](LICENSE). Your agent CLI's usual usage charges still apply: every task is a full agent session plus a review, and the Coordinator spends tokens on each message.
 
+## Why this fork
+
+Herdr Projects is a fork of [Shepherdr](https://github.com/eliasstravik/shepherdr) by Elias Stravik, and like it is MIT licensed. In late October 2026 Shepherdr replaced herdr-projects, the project this fork starts from, and grew into a Herdr app with a web app, voice calls, Autopilot, add-ons and sync between machines. That suits the people it was made for. This fork keeps the task board, focused on one machine.
+
+- **One job, done well.** One list of tasks on one machine, each task an agent in its own worktree, a check and a review before anything merges, and your yes. The web board, voice calls and remote-machine support are removed.
+- **Linux and Windows.** The Shepherdr README names macOS and Linux as its platforms. This fork runs on Linux and Windows, and its checks run on both. macOS is not supported here because there is no Mac to build and test on.
+- **Your workflow, your settings.** The defaults keep the safe path: each task on its own branch, a check and a review before anything merges, and your yes. Most of the rest is a setting: how many attempts a task gets and who picks the winner, whether merges happen by themselves, how branches are named, and whether finished work is cleaned up. [Settings](docs/settings.md) lists them all.
+
+Thanks to Elias Stravik for the board this fork is built on.
+
 ## Start with one install
 
 <p align="center">Your board starts with an install, one key, and one sentence about what needs doing. Herdr Projects starts the agents, checks their work and keeps it in view. You choose what to answer and what to merge.</p>
