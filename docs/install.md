@@ -4,7 +4,7 @@
 has the details. Something not working: [troubleshooting](troubleshooting.md).
 
 ```sh
-herdr plugin install eliasstravik/herdr-projects
+herdr plugin install striderZA/herdr-projects
 ```
 
 ## What you need
@@ -25,7 +25,7 @@ build step there, which downloads the program. `--ref v1.2.31` takes a given rel
 To keep a checkout of your own instead:
 
 ```sh
-git clone https://github.com/eliasstravik/herdr-projects && cd herdr-projects
+git clone https://github.com/striderZA/herdr-projects && cd herdr-projects
 herdr plugin link "$PWD"          # hooks, the board's tab and the actions
 sh bin/run.sh install             # gets the program, writes its launcher, says how to put it on your PATH
 ```
@@ -161,7 +161,7 @@ Windows is supported: the plugin's manifest lists it, and every release since 1.
 
 Install with the same command as on Linux, in PowerShell:
 
-    herdr plugin install eliasstravik/herdr-projects
+    herdr plugin install striderZA/herdr-projects
 
 Herdr runs `bin/run.ps1` on Windows. It runs the program built from this checkout when there is one, and otherwise the release file `herdr-projects-windows-x86_64.exe`, downloaded and checked against its `.sha256`.
 
