@@ -195,3 +195,43 @@ fn a_task_keeps_every_review_it_had_which_one_the_score_the_advice_the_summary_a
     assert_eq!(hist(&o(json!({ "reviewRound": 1, "review": { "meets": false, "gate": "major", "pass": false, "text": "No.", "findings": [] } }))).iter().map(|e| json!([e.at("round"), e.at("pass"), e.at("text")])).collect::<Vec<_>>(), vec![json!([1, false, "No."])]);
     assert!(hist(&Obj::new()).is_empty());
 }
+
+#[test]
+fn a_cut_off_line_is_left_out_and_the_rest_of_the_file_is_kept() {
+    let _w = world();
+    let f = sw::store::files::data_dir().join("lines.jsonl");
+    sw::store::files::append_line(&f, &json!({ "n": 1 })).unwrap();
+    sw::store::files::append_line(&f, &json!({ "n": 2 })).unwrap();
+    // A write cut off in the middle of its line waits for the rest.
+    use std::io::Write;
+    let mut o = std::fs::OpenOptions::new().append(true).open(&f).unwrap();
+    o.write_all(b"{\"n\": 3").unwrap();
+    assert_eq!(sw::store::files::read_lines(&f), vec![json!({ "n": 1 }), json!({ "n": 2 })]);
+    // Its other half arrives: it is read then, and nothing written before it was lost.
+    o.write_all(b"}\n").unwrap();
+    drop(o);
+    assert_eq!(sw::store::files::read_lines(&f), vec![json!({ "n": 1 }), json!({ "n": 2 }), json!({ "n": 3 })]);
+}
+
+#[test]
+fn a_write_reads_back_as_written_and_leaves_no_temporary_file() {
+    let _w = world();
+    let f = sw::store::files::data_dir().join("written.json");
+    sw::store::files::write_json(&f, &json!({ "a": 1 })).unwrap();
+    assert_eq!(sw::store::files::read_json(&f), Some(json!({ "a": 1 })));
+    let left: Vec<String> = std::fs::read_dir(f.parent().unwrap()).unwrap().map(|e| e.unwrap().file_name().to_string_lossy().into_owned()).filter(|n| n.contains(".tmp")).collect();
+    assert!(left.is_empty(), "{left:?}");
+}
+
+#[test]
+fn an_id_that_walks_out_of_the_tasks_folder_is_no_task() {
+    let w = world();
+    let id = w.add("One");
+    let mut bad = vec!["../12".to_string(), "p/../../12".into(), format!("{id}/../../x"), r"p\12".into(), "/p/12".into(), "p/".into(), "/12".into(), "p/12/x".into()];
+    bad.push(format!("{}/../x", id));
+    for b in &bad {
+        assert!(sw::store::tasks::get(b).is_none(), "{b}");
+        assert!(sw::store::tasks::find(b).is_err(), "{b}");
+    }
+    assert_eq!(sw::store::tasks::get(&id).map(|t| t.s("id").to_string()), Some(id.clone()), "its own id still names it");
+}

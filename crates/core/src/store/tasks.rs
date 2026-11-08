@@ -34,6 +34,7 @@ pub fn one_line(text: &str, max: usize) -> String {
 fn task_file(id: &str) -> PathBuf { dir_of(id).join("task.json") }
 /// A task as it is on disk now, in the names of this version, or None.
 pub fn get(id: &str) -> Option<Task> {
+    if !id_ok(id) { return None; }
     let t = read_obj(&task_file(id))?;
     if !t.b("id") { return None; }
     Some(as_now(t))
@@ -107,7 +108,10 @@ pub fn patch(id: &str, f: impl FnOnce(&mut Task)) -> Res<Task> { update(id, |t| 
 /// Fields set on a task, as one change.
 pub fn set(id: &str, fields: Value) -> Res<Task> { patch(id, |t| { if let Value::Object(o) = fields { for (k, v) in o { t.insert(k, v); } } }) }
 /// Writes a task as it is, under its lock (an attempt made, a record carried from another machine).
-pub fn save(t: &Task) -> Res<()> { write_json(&task_file(t.s("id")), &Value::Object(t.clone())) }
+pub fn save(t: &Task) -> Res<()> {
+    if !id_ok(t.s("id")) { crate::fail!("{} is not a task id", t.s("id")); }
+    write_json(&task_file(t.s("id")), &Value::Object(t.clone()))
+}
 
 /// A new task in the repo of `folder`, as to do.
 pub fn create(folder: &Path, title: &str, description: &str, owner: Option<&str>) -> Res<Task> {
@@ -127,4 +131,4 @@ pub fn create(folder: &Path, title: &str, description: &str, owner: Option<&str>
         Ok(task)
     })
 }
-pub fn remove(id: &str) { let _ = fs::remove_dir_all(dir_of(id)); }
+pub fn remove(id: &str) { if id_ok(id) { let _ = fs::remove_dir_all(dir_of(id)); } }

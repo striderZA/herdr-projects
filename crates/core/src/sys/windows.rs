@@ -84,6 +84,8 @@ fn file_id(f: &File) -> Option<(u32, u32, u32)> {
 }
 /// Windows has no atomic swap of two paths: the caller takes the other way (false here).
 pub fn swap_paths(_a: &Path, _b: &Path) -> bool { false }
+/// Windows has no way to sync a folder through std, and a rename is not lost the way a Unix one can be.
+pub fn sync_dir(_dir: &Path) -> io::Result<()> { Ok(()) }
 /// A running program's file gets no " (deleted)" suffix on Windows.
 pub fn without_deleted(p: PathBuf) -> PathBuf { p }
 /// Strips the `\\?\` prefix a canonical path gets on Windows, which git and most tools refuse: `\\?\C:\x` is `C:\x`, and

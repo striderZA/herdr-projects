@@ -99,7 +99,7 @@ pub fn write_yours(name: &str, value: Option<&Value>, repo: &str) -> crate::err:
 /// The same at any place in your file: `[]` your own, `["repos", <repo>]`, `["coordinators", "main"]`. A place left
 /// with nothing in it goes, and so does each part above it that it leaves empty.
 pub fn write_at(name: &str, value: Option<&Value>, path: &[String]) -> crate::err::Res<()> {
-    let mut file = read_obj(&config_file()).unwrap_or_default();
+    let mut file = read_obj_or(&config_file())?;
     let parts: Vec<&str> = name.split('.').collect();
     {
         let mut at: &mut Obj = &mut file;

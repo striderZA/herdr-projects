@@ -57,6 +57,8 @@ pub fn swap_paths(a: &Path, b: &Path) -> bool {
 }
 /// Puts `from` at `to` in place of what is there, in one rename: a program running from `to` keeps its file.
 pub fn replace_file(from: &Path, to: &Path) -> io::Result<()> { std::fs::rename(from, to) }
+/// Makes a folder's own entry durable after a file in it was renamed into place (a folder is read, not written).
+pub fn sync_dir(dir: &Path) -> io::Result<()> { std::fs::File::open(dir)?.sync_all() }
 /// This program's path without the " (deleted)" a running program's file gets once an update put a new file in its place.
 pub fn without_deleted(p: PathBuf) -> PathBuf {
     use std::os::unix::ffi::OsStrExt;

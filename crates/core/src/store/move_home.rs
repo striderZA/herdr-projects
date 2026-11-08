@@ -66,7 +66,7 @@ fn grab_now(file: &Path) -> Option<Option<fs::File>> {
     if crate::sys::lock_file(&f, false) { Some(Some(f)) } else { None }
 }
 fn is_lock(file: &Path) -> bool { file.extension().map(|e| e == "lock").unwrap_or(false) && file.parent().and_then(|p| p.file_name()).map(|n| n == "locks").unwrap_or(false) }
-fn keep(file: &Path, spot: &Path) { if fs::hard_link(file, spot).is_err() { let _ = copy_all(file, spot); } }
+fn keep(file: &Path, spot: &Path) -> std::io::Result<()> { fs::hard_link(file, spot).or_else(|_| copy_all(file, spot)) }
 fn copy_all(from: &Path, to: &Path) -> std::io::Result<()> {
     if fs::symlink_metadata(from)?.is_dir() { fs::create_dir_all(to)?; for e in fs::read_dir(from)? { let e = e?; copy_all(&e.path(), &to.join(e.file_name()))?; } Ok(()) } else { fs::copy(from, to).map(|_| ()) }
 }
@@ -88,7 +88,7 @@ pub fn merge_into(from: &Path, to: &Path, aside: &Path) -> std::io::Result<usize
         fs::create_dir_all(aside)?;
         let spot = free(&aside.join(&name));
         if mtime(&sa) >= mtime(&sb) {
-            keep(&b, &spot);
+            keep(&b, &spot)?;
             if fs::rename(&a, &b).is_err() { let _ = fs::remove_dir_all(&b); let _ = fs::remove_file(&b); fs::rename(&a, &b)?; }
         } else if fs::rename(&a, &spot).is_err() { copy_all(&a, &spot)?; let _ = fs::remove_dir_all(&a); let _ = fs::remove_file(&a); }
         kept += 1;
@@ -190,17 +190,23 @@ pub fn move_home(home: &Path, env: &Env, bin: &Path, linked: Option<bool>, wait_
         }
     }
     let mut moved: Vec<(Part, String)> = vec![];
+    let mut failed: Vec<String> = vec![];
     rec = read_obj(&p.file).unwrap_or_default();
     for x in p.parts.iter().filter(|x| due(x, &rec)).cloned().collect::<Vec<_>>() {
-        if let Ok(Some(how)) = move_one(&x, &mut rec, &p.file, &p.aside, swap) { moved.push((x, how)); }
+        match move_one(&x, &mut rec, &p.file, &p.aside, swap) {
+            Ok(Some(how)) => moved.push((x, how)),
+            Ok(None) => {}
+            Err(e) => failed.push(format!("Could not move the {} folder ({}), so it stays where it is and the board uses it there.", x.what, e)),
+        }
     }
     let _ = fs::remove_file(&lock);
-    if moved.is_empty() { return out(Moved::default()); }
+    if moved.is_empty() && failed.is_empty() { return out(Moved::default()); }
     let said: Vec<String> = moved.iter().map(|(x, how)| if how == "linked" { format!("{} stays in {} and is linked from there", x.what, short(&x.from, home)) } else { format!("{} (from {})", x.what, short(&x.from, home)) }).collect();
     let kept: i64 = rec.values().map(|v| v.i("kept")).sum();
-    let line = format!("Moved the board's files into {}: {}.{}{}", short(&p.home, home), said.join(", "),
+    let mut line = if moved.is_empty() { String::new() } else { format!("Moved the board's files into {}: {}.{}{}", short(&p.home, home), said.join(", "),
         if moved.iter().any(|(_, h)| h != "linked") { " The old places are links to the new ones, so whatever is running carries on." } else { "" },
-        if kept > 0 { format!(" {kept} file{} in both places {} kept in {}.", if kept == 1 { " that was" } else { "s that were" }, if kept == 1 { "is" } else { "are" }, short(&p.aside, home)) } else { String::new() });
+        if kept > 0 { format!(" {kept} file{} in both places {} kept in {}.", if kept == 1 { " that was" } else { "s that were" }, if kept == 1 { "is" } else { "are" }, short(&p.aside, home)) } else { String::new() }) };
+    for f in &failed { if !line.is_empty() { line.push(' '); } line.push_str(f); }
     add_line(&mut rec, &line);
     let _ = write_json(&p.file, &Value::Object(rec));
     out(Moved { moved, line, ..Default::default() })

@@ -14,7 +14,7 @@ pub fn is_archived(repo: &str) -> bool { archived_repos().contains_key(repo) }
 /// The one way the list changes, under its lock: `f` changes it in place.
 pub fn change(f: impl FnOnce(&mut Obj)) -> Res<Obj> {
     with_lock_wait("archived-repos", 5000, || {
-        let mut all = archived_repos();
+        let mut all = read_obj_or(&file())?;
         f(&mut all);
         write_json(&file(), &Value::Object(all.clone()))?;
         Ok(all)
