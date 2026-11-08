@@ -54,7 +54,7 @@ fn it_starts_from_the_branch_lands_there_by_a_push_and_the_next_task_builds_on_i
     assert_eq!((t.s("mergeCommit"), t.s("msg")), (landed.as_str(), "Merged into develop at origin."));
     assert_eq!(git(&bare(&w), &["rev-parse", "develop^"]), d1, "squashed onto develop: one commit");
     assert_eq!(has(&w, "develop", "f.txt").as_deref(), Some("f.txt"));
-    assert!(git(&bare(&w), &["log", "-1", "--format=%B", "develop"]).starts_with("On develop\n\nTask: "));
+    assert!(git(&bare(&w), &["log", "-1", "--format=%B", "develop"]).starts_with("feat: on develop\n\nTask: "));
     assert_eq!(origin(&w, "main"), main, "main is untouched");
     // your checkout is as you left it
     assert_eq!((git(&w.root, &["symbolic-ref", "--short", "HEAD"]), git(&w.root, &["rev-parse", "HEAD"])), ("mine".into(), mine));

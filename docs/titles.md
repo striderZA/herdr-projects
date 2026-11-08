@@ -48,3 +48,15 @@ They stay as they are: nothing rewrites saved tasks. The list cuts a long title 
 applies the next time you rename one.
 
 The number is `TITLE_MAX` in `crates/core/src/store/titles.rs`, and nothing else knows it.
+
+## The pull request's title and the commits' subjects
+
+The pull request the board opens, and each commit it makes for the task, has the same subject in conventional commit style: `type: description`. The type is the kind of
+work the title says, the one the task's branch name takes: a conventional prefix such as `fix:`, else the first word
+that names one, else `feat`. A kind word that leads the title is not said twice.
+
+- `Fix the login page` is titled `fix: the login page`, and `Add dark mode` is `feat: add dark mode`.
+- The first word is lower-cased when it is a plain capitalised word. A name or an acronym stays (`GitHub`, `PR`).
+- The task's key is taken out: `PRJ-1 fix the login` is titled `fix: the login`. The key is in the body's `Task:` line
+  ([task numbers](task-numbers.md)).
+- A pull request already open keeps its title, and a commit already made keeps its subject: nothing is rewritten.

@@ -61,7 +61,7 @@ pub fn pipeline(id: &str, g: &mut Guard, text: &str, keep_intent: bool, reason: 
     t = kept_report(g)?;
     // Commit leftovers. A plain folder has nothing to commit.
     if !tree.is_empty() && !research && !flow::git::dirty(Path::new(&tree)).is_empty() {
-        let msg = format!("{}\n\nTask: {}", if t.b("title") { t.t("title") } else { id.into() }, task_ref(id, &repo_keys()));
+        let msg = format!("{}\n\nTask: {}", super::pr_title::of_task(id, t.s("repo"), t.s("title"), &repo_keys()), task_ref(id, &repo_keys()));
         if let Err(f) = commit_left(Path::new(&tree), &msg) { fail(g, f, FailHow::default())?; return Ok(()); }
     }
     t = g.check()?;
@@ -203,7 +203,8 @@ pub fn pipeline(id: &str, g: &mut Guard, text: &str, keep_intent: bool, reason: 
                     let (body, lines) = crate::land::closes::with_lines(&format!("{}\n\nTask: {}", if text.is_empty() { t.t("title") } else { text.to_string() }, task_ref(id, &repo_keys())), &crate::land::closes::issues(&t));
                     // Named, as the repo the branch is pushed to: gh's own default is the clone's `upstream` before `origin`.
                     let pr_repo = flow::git::origin_repo(&root);
-                    let mut args = vec!["pr", "create", "--draft", "--head", t.s("branch"), "--title", if t.b("title") { t.s("title") } else { id }, "--body", &body];
+                    let title = super::pr_title::of_task(id, t.s("repo"), t.s("title"), &repo_keys());
+                    let mut args = vec!["pr", "create", "--draft", "--head", t.s("branch"), "--title", title.as_str(), "--body", &body];
                     if let Some(b) = &onto { args.extend(["--base", b.as_str()]); }
                     if let Some(r) = &pr_repo { args.extend(["--repo", r.as_str()]); }
                     let r = flow::git::gh(&args, tp, 120000);

@@ -39,7 +39,7 @@ pub fn land(id: &str, g: &mut Guard, t: &Task, tree: &str, b: &str, how: &str) -
     };
     // It moved since the review: caught up with and checked again first, never pushed over.
     if !holds(tp, &parent, &head) { return reverify(id, g, t, &format!("Checking the work caught up with {b}"), None); }
-    let message = format!("{}\n\nTask: {}", if t.b("title") { t.t("title") } else { id.to_string() }, task_ref(id, &repo_keys()));
+    let message = format!("{}\n\nTask: {}", crate::finish::pr_title::of_task(id, t.s("repo"), t.s("title"), &repo_keys()), task_ref(id, &repo_keys()));
     let new = match build(tp, how, &parent, &head, &message) {
         Ok(c) => c,
         Err(e) => return fail(g, &format!("Could not make the commit for {b}"), &format!("Worktree: {tree}\nOnto: {parent} (origin/{b})\nReviewed: {head}\n\nWhat git said:\n{}\n\nNothing was merged.", e.msg), "Fix what git said (git config user.name and user.email, for one), then approve again.", Fail { agent_can_fix: false, ..Default::default() }),

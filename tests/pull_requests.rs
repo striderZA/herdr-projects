@@ -24,7 +24,7 @@ fn pull_requests_pushed_as_a_draft_merged_through_gh_on_approval_remembered_when
     let id = to_approval(&w, "With a PR");
     let t = task(&id);
     assert_eq!(t.s("pr"), "https://github.com/o/r/pull/7");
-    assert!(gh_log(&w).contains("pr create --draft --head feat/1-with-a-pr --title With a PR"), "{}", gh_log(&w));
+    assert!(gh_log(&w).contains("pr create --draft --head feat/1-with-a-pr --title feat: with a PR"), "{}", gh_log(&w));
     assert_eq!(git(&w.root, &["ls-remote", "--heads", "origin", t.s("branch")]).split('\t').next().unwrap(), git(Path::new(t.s("worktree")), &["rev-parse", "HEAD"]));
     assert!(t.s("msg").contains("Pull request: https://github.com/o/r/pull/7"), "{}", t.s("msg"));
     // checks still running: the approval is remembered

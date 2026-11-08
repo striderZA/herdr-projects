@@ -99,7 +99,7 @@ fn the_finish_line_checks_reviews_waits_for_approval_and_approve_merges_and_clea
     assert_eq!(t.s("stage"), "done", "{}", t.at("failure"));
     assert_eq!(t.s("msg"), "Merged into main.");
     assert_eq!(read(&w.root.join("hello.txt")), "hello\n");
-    assert!(git(&w.root, &["log", "-1", "--format=%B"]).contains("Add a greeting\n\nTask: PRJ-1 (proj/1)"));
+    assert!(git(&w.root, &["log", "-1", "--format=%B"]).contains("feat: add a greeting\n\nTask: PRJ-1 (proj/1)"));
     assert_eq!(git(&w.root, &["branch", "--list", "feat/*"]), "");
     assert_eq!(w.state().arr("workspaces").iter().filter(|x| x.at("worktree").b("is_linked_worktree")).count(), 0);
     assert_eq!(row(&id).s("state"), "done");
