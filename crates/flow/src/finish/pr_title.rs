@@ -1,11 +1,12 @@
-//! The title of a pull request the board opens: conventional commit style (`fix: the login page`), with the task's own key
-//! taken out, since the body's `Task:` line names it. The type is the kind the task's branch name takes (branch_kind.rs).
+//! The subject of a task's pull request and of the commits the board makes for it: conventional commit style
+//! (`fix: the login page`), with the task's own key taken out, since the body's `Task:` line names it. The type is the
+//! kind the branch name takes (branch_kind.rs).
 use crate::store::keys::Keys;
 use crate::store::settings::branch_kind::{of, KINDS};
 
-/// The title for a task: `type: description`. The description is the task's own title with its repo's key and its id
-/// taken out, and its first word lower-cased when that is a plain capitalised word. A title that is only a key gives
-/// the id, as the title always did.
+/// The subject of a task's pull request and its commits: `type: description`. The description is the task's own title
+/// with its repo's key and its id taken out, and its first word lower-cased when that is a plain capitalised word. A
+/// title that is only a key gives the id.
 pub fn of_task(id: &str, repo: &str, title: &str, keys: &Keys) -> String {
     let own = keys.get(repo).map(|k| k.to_uppercase());
     let text = title.split_whitespace().filter(|w| !is_key_or_id(w, own.as_deref(), id)).collect::<Vec<_>>().join(" ");

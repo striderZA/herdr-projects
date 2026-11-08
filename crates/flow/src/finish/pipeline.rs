@@ -61,7 +61,7 @@ pub fn pipeline(id: &str, g: &mut Guard, text: &str, keep_intent: bool, reason: 
     t = kept_report(g)?;
     // Commit leftovers. A plain folder has nothing to commit.
     if !tree.is_empty() && !research && !flow::git::dirty(Path::new(&tree)).is_empty() {
-        let msg = format!("{}\n\nTask: {}", if t.b("title") { t.t("title") } else { id.into() }, task_ref(id, &repo_keys()));
+        let msg = format!("{}\n\nTask: {}", super::pr_title::of_task(id, t.s("repo"), t.s("title"), &repo_keys()), task_ref(id, &repo_keys()));
         if let Err(f) = commit_left(Path::new(&tree), &msg) { fail(g, f, FailHow::default())?; return Ok(()); }
     }
     t = g.check()?;

@@ -159,7 +159,8 @@ fn several_tasks_may_merge_at_once_they_go_one_at_a_time_each_catches_up_once_an
     assert_eq!([task(&first).t("stage"), task(&second).t("stage")], ["done", "done"], "{} {} / {} {}", task(&b).s("msg"), task(&b).at("failure"), task(&c).s("msg"), task(&c).at("failure"));
     for f in ["b1.txt", "c1.txt", "other.txt"] { assert!(merged(&w, f), "{f}"); }
     let log: Vec<String> = git(&w.root, &["log", "--format=%s", "-2"]).lines().rev().map(String::from).collect();
-    assert_eq!(log, vec![task(&first).t("title"), task(&second).t("title")]);
+    let subject = |id: &str| format!("feat: {}", task(id).t("title")); // a title with no kind word is a feat
+    assert_eq!(log, vec![subject(&first), subject(&second)]);
     // each took main in once, behind the merge ahead of it, and was checked once: two checks, not a chase
     assert_eq!(checks(&w), ran + 2);
     for id in [&b, &c] { assert_eq!(prompts(&w, task(id).at("link").s("pane")).len(), 1); }
