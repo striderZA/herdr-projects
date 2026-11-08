@@ -13,6 +13,7 @@ pub mod model_refused;
 pub mod old_holds;
 pub mod pipeline;
 pub mod pipeline_end;
+pub mod pr_title;
 pub mod recover_job;
 pub mod research;
 pub mod restart;
