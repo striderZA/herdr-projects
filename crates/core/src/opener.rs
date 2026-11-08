@@ -18,7 +18,7 @@ pub fn pick(os: &str, set: impl Fn(&str) -> bool, found: impl Fn(&str) -> bool) 
     let display = set("DISPLAY") || set("WAYLAND_DISPLAY");
     match os {
         "windows" if ssh => Err("the board runs over ssh".into()),
-        "windows" => Ok("cmd-start"),
+        "windows" => Ok("rundll32"),
         _ if !display => Err(if ssh { "the board runs over ssh with no display" } else { "this machine has no display" }.into()),
         _ if found("xdg-open") => Ok("xdg-open"),
         _ => Err("this machine has no xdg-open".into()),
@@ -31,17 +31,12 @@ fn on_path(name: &str) -> bool {
 pub fn openable(link: &str) -> bool {
     (link.starts_with("http://") || link.starts_with("https://") || link.starts_with('/')) && !link.chars().any(|c| (c as u32) < 0x20 || c as u32 == 0x7f)
 }
-/// The command that opens a link with `program`. `cmd-start` (Windows) runs `cmd /C start "" "<link>"`: the link is
-/// quoted, since a web address holds `&`, which cmd would read as a separator.
+/// The command that opens a link with `program`. `rundll32` (Windows) hands it to Windows' own file-protocol handler as
+/// one argument: nothing of the link is read by `cmd`, so its `&`, `|` and `%VAR%` stay part of the address.
 fn opener_command(program: &str, link: &str) -> Result<Command, String> {
-    if program != "cmd-start" { let mut c = Command::new(program); c.arg(link); return Ok(c); }
-    if link.contains('"') { return Err("the link has a quote mark, which the Windows opener cannot take".into()); }
-    let mut c = Command::new("cmd");
-    c.args(["/C", "start", ""]);
-    #[cfg(windows)]
-    { use std::os::windows::process::CommandExt; c.raw_arg(format!("\"{link}\"")); }
-    #[cfg(not(windows))]
-    { c.arg(link); }
+    if program != "rundll32" { let mut c = Command::new(program); c.arg(link); return Ok(c); }
+    let mut c = Command::new("rundll32");
+    c.args(["url.dll,FileProtocolHandler", link]);
     Ok(c)
 }
 /// Open the link here, or say why it was not.
@@ -70,7 +65,7 @@ mod tests {
     fn which_opener() {
         let env = |v: &'static [&'static str]| move |k: &str| v.contains(&k);
         assert_eq!(pick("linux", env(&["DISPLAY"]), |_| true), Ok("xdg-open"));
-        assert_eq!(pick("windows", env(&[]), |_| false), Ok("cmd-start"));
+        assert_eq!(pick("windows", env(&[]), |_| false), Ok("rundll32"));
         assert!(pick("windows", env(&["SSH_TTY"]), |_| true).is_err());
         assert_eq!(pick("linux", env(&["WAYLAND_DISPLAY", "SSH_TTY"]), |_| true), Ok("xdg-open"));
         assert_eq!(pick("linux", env(&["SSH_CONNECTION"]), |_| true), Err("the board runs over ssh with no display".into()));

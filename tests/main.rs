@@ -157,6 +157,7 @@ mod home_folder_more;
 mod housekeeping_once;
 mod install;
 mod install_remotes;
+mod install_run_sh;
 mod keeper_update;
 mod keys_list;
 mod launcher;

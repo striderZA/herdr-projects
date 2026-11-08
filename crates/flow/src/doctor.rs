@@ -11,6 +11,7 @@ pub mod plugin;
 pub mod program;
 pub mod queue;
 pub mod settings;
+pub mod shell;
 pub mod stale;
 
 /// One thing the check found.
@@ -49,6 +50,7 @@ pub fn doctor_main() -> i32 {
         all.extend(plugin::check(&herdr));
         all.extend(agents::check(&progs.join().unwrap_or_default()));
         all.extend(codex::check());
+        all.extend(shell::check());
         all.extend(set.join().unwrap_or_default());
         all.extend(disk::check(&disks.join().unwrap_or_default()));
         all.extend(stale::check(&left.join().unwrap_or_default()));

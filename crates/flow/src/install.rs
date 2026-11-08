@@ -104,11 +104,19 @@ pub fn fetch(url: &str, to: &Path) -> Res<()> {
     if tried { crate::fail!("could not download {url}: no network, no such release, or a private repo (log in with gh auth login)") }
     crate::fail!("neither curl nor wget is installed here, to download {url}")
 }
-/// The SHA-256 of a file, from whichever tool is here.
+/// The 64 hex digits of a hash printed on a line of their own: what `certutil -hashfile <file> SHA256` writes (older
+/// Windows spaces the bytes out).
+pub fn hex_sum(text: &str) -> Option<String> {
+    text.lines().find_map(|l| { let h: String = l.chars().filter(|c| !c.is_whitespace()).collect::<String>().to_ascii_lowercase(); (h.len() == 64 && h.bytes().all(|b| b.is_ascii_hexdigit())).then_some(h) })
+}
+/// The SHA-256 of a file, from whichever tool is here: sha256sum or openssl (Linux, and Git's own on Windows), else
+/// certutil, which every Windows has in its system folder. None: no tool, or none that could hash it.
 pub fn sha256(file: &Path) -> Option<String> {
     let f = file.display().to_string();
-    for (tool, args) in [("sha256sum", vec![f.as_str()]), ("openssl", vec!["dgst", "-sha256", "-r", f.as_str()])] {
-        if let Ok(o) = std::process::Command::new(tool).args(&args).output() { if o.status.success() { if let Some(h) = sum_in(&String::from_utf8_lossy(&o.stdout)) { return Some(h); } } }
+    for (tool, args) in [("sha256sum", vec![f.as_str()]), ("openssl", vec!["dgst", "-sha256", "-r", f.as_str()]), ("certutil", vec!["-hashfile", f.as_str(), "SHA256"])] {
+        if let Ok(o) = std::process::Command::new(tool).args(&args).output() {
+            if o.status.success() { if let Some(h) = sum_in(&String::from_utf8_lossy(&o.stdout)).or_else(|| hex_sum(&String::from_utf8_lossy(&o.stdout))) { return Some(h); } }
+        }
     }
     None
 }
