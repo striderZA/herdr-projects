@@ -76,14 +76,18 @@ fn settings_the_built_in_values_your_own_one_tasks_own() {
 }
 
 #[test]
-fn the_inbox_never_drops_text_and_taken_text_can_be_put_back() {
+fn the_inbox_never_drops_text_until_a_send_is_marked_taken() {
     let w = world();
-    use sw::store::inbox::{pending_text, queue_text, take_text, untake_text};
+    use sw::store::inbox::{mark_taken, pending_text, queue_text, take_text};
     let id = w.add("T");
     queue_text(&id, "one", Obj::new()).unwrap(); queue_text(&id, "two", Obj::new()).unwrap();
     assert_eq!(pending_text(&id).iter().map(|m| m.t("text")).collect::<Vec<_>>(), vec!["one", "two"]);
-    assert_eq!(take_text(&id).unwrap().len(), 2); assert_eq!(pending_text(&id).len(), 0);
-    untake_text(&id, 2).unwrap(); assert_eq!(pending_text(&id).len(), 2);
+    // Reading it tells nothing taken: a crash before the send delivers it again rather than losing it.
+    assert_eq!(take_text(&id).len(), 2); assert_eq!(pending_text(&id).len(), 2);
+    mark_taken(&id, 2).unwrap(); assert_eq!(pending_text(&id).len(), 0);
+    // Text queued after the mark is the only text waiting.
+    queue_text(&id, "three", Obj::new()).unwrap();
+    assert_eq!(pending_text(&id).iter().map(|m| m.t("text")).collect::<Vec<_>>(), vec!["three"]);
 }
 
 #[test]
