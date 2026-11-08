@@ -19,8 +19,8 @@ No Node, no npm: the board is one program.
 
 ## What the install does
 
-Herdr clones the repo's main branch into its own plugins folder (`herdr plugin list` shows where) and runs the plugin's
-build step there, which downloads the program. `--ref v1.2.31` takes a given release.
+Herdr clones the repo's default branch (`master`) into its own plugins folder (`herdr plugin list` shows where) and runs the plugin's
+build step there, which downloads the program. `--ref v1.2.32` takes a given release.
 
 To keep a checkout of your own instead:
 
