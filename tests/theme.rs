@@ -97,3 +97,9 @@ fn light_and_dark_only_when_herdr_switches_by_appearance_or_the_boards_own_setti
     assert_eq!(res(&auto, Some(false), "herdr").name, "gruvbox"); assert_eq!(res(&auto, None, "herdr").pal.accent, RGB(0x010101));
     assert_eq!(res(&auto, Some(true), "herdr").name, "rose-pine-dawn"); assert_eq!(res(&auto, Some(true), "herdr").pal.accent, RGB(0x020202));
 }
+
+#[test]
+fn a_six_byte_colour_that_is_not_six_digits_is_no_rgb_and_panics_not() {
+    assert!(!matches!(parse_color("#aé€"), ratatui::style::Color::Rgb(..)), "six bytes, three characters");
+    assert_eq!(parse_color("#ff0000"), ratatui::style::Color::Rgb(255, 0, 0));
+}

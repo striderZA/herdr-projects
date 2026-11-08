@@ -59,7 +59,7 @@ pub fn parse_color(s: &str) -> ratatui::style::Color {
     }
 
     if let Some(hex) = s.strip_prefix('#') {
-        if hex.len() == 6 {
+        if hex.len() == 6 && hex.is_ascii() {
             if let (Ok(r), Ok(g), Ok(b)) = (
                 u8::from_str_radix(&hex[0..2], 16),
                 u8::from_str_radix(&hex[2..4], 16),
