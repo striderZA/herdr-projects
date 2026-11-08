@@ -20,7 +20,7 @@ pub fn pins() -> Pins { Pins::read(&Value::Object(read_obj(&file()).unwrap_or_de
 /// Pin one of this machine's projects, or unpin it: what is pinned after, under the file's lock.
 pub fn set(repo: &str, on: bool) -> Res<Pins> {
     with_lock_wait("pins", 5000, || {
-        let mut p = pins();
+        let mut p = Pins::read(&Value::Object(read_obj_or(&file())?));
         p.repos.retain(|x| x != repo);
         if on { p.repos.push(repo.to_string()); p.repos.sort(); }
         write_json(&file(), &p.json())?;

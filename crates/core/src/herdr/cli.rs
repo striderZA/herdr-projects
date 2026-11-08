@@ -42,7 +42,7 @@ pub fn current_socket() -> String {
     match std::env::var("HERDR_SESSION") { Ok(s) if !s.is_empty() => base.join("sessions").join(s).join("herdr.sock"), _ => base.join("herdr.sock") }.display().to_string()
 }
 pub fn session_name(socket: &str) -> String {
-    let parts: Vec<&str> = socket.split('/').collect();
+    let parts: Vec<&str> = socket.split(['/', '\\']).collect();
     let n = parts.len();
     if n >= 3 && parts[n - 1] == "herdr.sock" && parts[n - 3] == "sessions" { parts[n - 2].to_string() } else { "default".into() }
 }

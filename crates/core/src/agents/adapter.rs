@@ -131,7 +131,7 @@ pub fn latest_session(kind: &str, cwd: &Path, since: i64, was: Option<&Path>) ->
         "claude" => {
             // Only a chat of the interactive program itself: not a helper's side conversation and not a headless run.
             let own = |f: &Path| { let head = head_of(f, 65536); let entry = head.find("\"entrypoint\":\"").map(|i| head[i + 14..].split('"').next().unwrap_or("").to_string()); entry.map(|e| e == "cli").unwrap_or(true) && !first_line(&head).contains("\"isSidechain\":true") };
-            let is_id = |n: &str| n.len() == 42 && n.ends_with(".jsonl") && n[..36].chars().all(|c| c.is_ascii_hexdigit() || c == '-') && n.as_bytes()[8] == b'-';
+            let is_id = |n: &str| n.len() == 42 && n.ends_with(".jsonl") && n.get(..36).is_some_and(|h| h.chars().all(|c| c.is_ascii_hexdigit() || c == '-')) && n.as_bytes().get(8) == Some(&b'-');
             for dir in [Some(real.as_path()), was].into_iter().flatten() {
                 for f in find_file(&claude_home().join("projects").join(dashed(dir)), &is_id, 0) {
                     if mtime_ms(&f).map(|m| m < since).unwrap_or(true) { break; }

@@ -136,7 +136,7 @@ impl TextBox {
         self.push_undo(); self.typing = false;
         let from = self.word_left_at();
         let s: String = self.lines[self.line].drain(from..self.col).collect();
-        self.col = from; let was = self.killed_last; self.killed_last = was; self.killed(s, true);
+        self.col = from; self.killed(s, true);
     }
     pub fn delete_word_forward(&mut self) {
         if self.col == self.cur().len() { return self.delete(); }

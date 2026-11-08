@@ -30,9 +30,9 @@ pub fn attempt_count(by: &Value) -> usize { attempt_agents(by, "x").len().max(1)
 pub fn attempt_id(id: &str, letter: &str) -> String { format!("{id}{}", letter.to_lowercase()) }
 pub fn is_attempt_id(id: &str) -> bool {
     let Some((repo, n)) = id.split_once('/') else { return false };
-    if repo.is_empty() || n.contains('/') || n.len() < 2 { return false; }
-    let (digits, last) = n.split_at(n.len() - 1);
-    !digits.is_empty() && digits.bytes().all(|b| b.is_ascii_digit()) && "abcde".contains(last)
+    if repo.is_empty() || n.contains('/') || n.len() < 2 || !super::files::id_ok(id) { return false; }
+    let (_digits, last) = n.split_at(n.len() - 1);
+    "abcde".contains(last)
 }
 fn file_of(id: &str) -> std::path::PathBuf { dir_of(id).join("task.json") }
 /// The attempts of a task, in the order of their letters: the sub-tasks as they are on disk now.

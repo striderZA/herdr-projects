@@ -75,31 +75,63 @@ pub fn read_text(file: &Path) -> Option<String> { fs::read_to_string(file).ok() 
 /// A JSON file, or None when it is missing or not JSON.
 pub fn read_json(file: &Path) -> Option<Value> { read_text(file).and_then(|t| serde_json::from_str(&t).ok()) }
 pub fn read_obj(file: &Path) -> Option<Obj> { match read_json(file) { Some(Value::Object(o)) => Some(o), _ => None } }
-/// Written whole or not at all: a temporary file beside it, then renamed over it.
+/// A JSON object file read to be written again: one that is there but does not read is refused, never taken for empty
+/// (writing it back would drop everything it holds); one that is not there is a new one.
+pub fn read_obj_or(file: &Path) -> Res<Obj> {
+    let text = match fs::read_to_string(file) {
+        Ok(t) => t,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(Obj::new()),
+        Err(e) => return Err(Error::new(format!("{} cannot be read ({e}). Nothing was changed.", file.display()))),
+    };
+    match serde_json::from_str::<Value>(&text) {
+        Ok(Value::Object(o)) => Ok(o),
+        _ => Err(Error::new(format!("{} does not read as JSON. Nothing was changed: fix or remove it, then try again.", file.display()))),
+    }
+}
+/// Written whole or not at all, and durable before the caller is told it was: the bytes on the disk, then (on Unix)
+/// the folder's own entry, so a power cut cannot leave the new name pointing at nothing.
 pub fn write_json(file: &Path, value: &Value) -> Res<()> {
     write_atomic(file, serde_json::to_string_pretty(&tidy(value.clone()))?.as_bytes())
 }
-pub fn write_atomic(file: &Path, bytes: &[u8]) -> Res<()> {
+pub fn write_atomic(file: &Path, bytes: &[u8]) -> Res<()> { write_atomic_as(file, bytes, false) }
+/// As `write_atomic`, for a file only this user may read (a hook's token): made private when it is made.
+pub fn write_private(file: &Path, bytes: &[u8]) -> Res<()> { write_atomic_as(file, bytes, true) }
+fn write_atomic_as(file: &Path, bytes: &[u8], private: bool) -> Res<()> {
     if let Some(d) = file.parent() { fs::create_dir_all(d)?; }
-    let tmp = PathBuf::from(format!("{}.{}.tmp", file.display(), std::process::id()));
-    fs::write(&tmp, bytes)?;
-    crate::sys::replace_file(&tmp, file)?;
+    let tmp = PathBuf::from(format!("{}.{}.{}.tmp", file.display(), std::process::id(), crate::util::random_hex(4)));
+    let done = (|| -> std::io::Result<()> {
+        let mut o = OpenOptions::new();
+        o.write(true).create(true).truncate(true);
+        if private { crate::sys::private_mode(&mut o); }
+        let mut f = o.open(&tmp)?;
+        f.write_all(bytes)?;
+        f.sync_all()?;
+        drop(f);
+        crate::sys::replace_file(&tmp, file)
+    })();
+    if let Err(e) = done { let _ = fs::remove_file(&tmp); return Err(e.into()); }
+    if let Some(d) = file.parent() { let _ = crate::sys::sync_dir(d); }
     Ok(())
+}
+/// Whether an id names a task's own folder under tasks/: `<repo>/<number>`, an attempt's letter after the number too.
+/// Nothing that could walk out of that folder (an empty part, `..`, the other platform's separator).
+pub fn id_ok(id: &str) -> bool {
+    let mut parts = id.split('/');
+    let (Some(repo), Some(n), None) = (parts.next(), parts.next(), parts.next()) else { return false };
+    if repo.is_empty() || repo == "." || repo == ".." || repo.chars().any(|c| c == '\\' || c == ':' || c == '\0') { return false; }
+    let digits = n.strip_suffix(|c: char| "abcde".contains(c)).unwrap_or(n);
+    !digits.is_empty() && digits.bytes().all(|b| b.is_ascii_digit())
 }
 pub fn append_line(file: &Path, value: &Value) -> Res<()> {
     if let Some(d) = file.parent() { fs::create_dir_all(d)?; }
     let mut f = OpenOptions::new().create(true).append(true).open(file)?;
     f.write_all(format!("{}\n", serde_json::to_string(&tidy(value.clone()))?).as_bytes())?;
-    Ok(())
+    Ok(f.sync_data()?)
 }
-/// One JSON value a line; a file that cannot be read is no lines.
+/// One JSON value a line. A line that does not read as JSON is left out (a write cut off), never the whole file with it.
 pub fn read_lines(file: &Path) -> Vec<Value> {
     let Some(text) = read_text(file) else { return vec![] };
-    let mut out = vec![];
-    for l in text.split('\n').filter(|l| !l.is_empty()) {
-        match serde_json::from_str(l) { Ok(v) => out.push(v), Err(_) => return vec![] }
-    }
-    out
+    text.split('\n').filter(|l| !l.is_empty()).filter_map(|l| serde_json::from_str(l).ok()).collect()
 }
 
 pub fn pid_alive(pid: i64) -> bool { crate::sys::pid_alive(pid) }

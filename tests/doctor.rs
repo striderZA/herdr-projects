@@ -193,3 +193,14 @@ fn a_disk_low_on_space_is_a_problem() {
     let all = disk::ask();
     assert!(all.iter().any(|d| d.holds.iter().any(|h| h == "the board's data") && d.total > 0), "{all:?}");
 }
+
+#[test]
+fn the_shell_that_runs_a_repo_s_commands_is_named_or_its_absence_is_a_problem() {
+    let ok = sw::doctor::shell::found(Some(Path::new("/usr/bin/sh")));
+    assert!(!ok.problem);
+    assert!(ok.what.contains("/usr/bin/sh"), "{}", ok.what);
+    let bad = sw::doctor::shell::found(None);
+    assert!(bad.problem);
+    assert!(bad.fix.contains("Git for Windows"), "{}", bad.fix);
+    assert_eq!(sw::doctor::shell::check().len(), 1);
+}

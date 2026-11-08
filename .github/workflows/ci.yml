@@ -1,7 +1,7 @@
-# Runs the whole check (`npm run check -- --all`: build, made tables, the repo's rules, every test) on Linux and on
-# Windows, on every pull request and on every push to master, unless a change is only docs (the Markdown at the top,
-# docs/, LICENSE, assets/): the board runs this check before each pull request, so a docs change does not run it here.
-# The runner images come with Rust and Node.js.
+# Runs clippy, then the whole check (`npm run check -- --all`: build, made tables, the repo's rules, every test) on
+# Linux and on Windows, on every pull request and on every push to master, unless a change is only docs (the Markdown at
+# the top, docs/, LICENSE, assets/): the board runs this check before each pull request, so a docs change does not run it
+# here. A clippy error stops it (a warning does not). The runner images come with Rust and Node.js.
 name: Check
 
 on:
@@ -48,6 +48,11 @@ jobs:
             target
           key: check-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
           restore-keys: check-${{ runner.os }}-
+
+      - name: Clippy
+        run: |
+          rustup component add clippy
+          cargo clippy --workspace --all-targets
 
       - name: The check
         run: npm run check -- --all

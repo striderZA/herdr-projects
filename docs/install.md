@@ -157,6 +157,7 @@ Windows is supported: the plugin's manifest lists it, and every release since 1.
 - Windows on x86_64.
 - Herdr 0.9.4 or newer, running. The board checks herdr's version when it starts and refuses an older one on Windows, naming the version it needs.
 - PowerShell 7 (`pwsh.exe`) recommended as herdr's default shell, set by `default_shell` in herdr's `config.toml`. Without it herdr uses Windows PowerShell 5.1.
+- Git for Windows: the board makes a worktree and branch per task, and its `sh` runs a repo's setup and check commands. It is found in Git's usual folder too, so its `bin` need not be on the PATH; without it those commands run through `cmd` (`doctor` says which).
 
 Install with the same command as on Linux, in PowerShell:
 

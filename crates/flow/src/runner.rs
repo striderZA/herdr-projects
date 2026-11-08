@@ -81,12 +81,34 @@ pub fn drain_jobs(run: &dyn Fn(&str, &str, &[String])) {
 pub fn detached_sh(cmd: &str, env: &[(&str, String)]) -> u32 {
     if inline() { JOBS.with(|j| j.borrow_mut().push(("notify".into(), cmd.into(), env.iter().map(|(k, v)| format!("{k}={v}")).collect()))); return 0; }
     user_env();
-    let mut c = Command::new("sh");
-    c.args(["-c", cmd]).stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null());
+    let mut c = shell_with(cmd);
+    c.stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null());
     for (k, v) in env { c.env(k, v); }
     detach(&mut c);
     start_reaped(&mut c)
 }
+/// The shell a command of the user's or the repo's runs in: `sh -lc` here. On Windows Git's `sh` when it is found (its
+/// `bin` on the PATH, or Git in its usual folder), else `cmd /C`: a repo's command is written in its own platform's shell.
+#[cfg(not(windows))]
+fn shell_with(cmd: &str) -> Command { let mut c = Command::new("sh"); c.args(["-lc", cmd]); c }
+#[cfg(windows)]
+fn shell_with(cmd: &str) -> Command {
+    match sh_exe() { Some(sh) => { let mut c = Command::new(sh); c.args(["-lc", cmd]); c } None => { let mut c = Command::new("cmd"); c.args(["/C", cmd]); c } }
+}
+/// Git's `sh` on Windows: the one on the PATH, else the one in Git's usual install folders. None: no `sh` here, and a
+/// repo's command runs through `cmd`. `doctor` names which one (doctor/shell.rs).
+#[cfg(windows)]
+pub fn sh_exe() -> Option<std::path::PathBuf> {
+    let path = std::env::var("PATH").unwrap_or_default();
+    if let Some(p) = crate::herdr::find::in_dirs("sh", &path) { return Some(p); }
+    let mut spots: Vec<std::path::PathBuf> = vec![];
+    for k in ["ProgramFiles", "ProgramFiles(x86)"] { if let Ok(d) = std::env::var(k) { spots.push(std::path::PathBuf::from(d).join("Git").join("bin")); } }
+    if let Ok(d) = std::env::var("LOCALAPPDATA") { spots.push(std::path::PathBuf::from(d).join("Programs").join("Git").join("bin")); }
+    spots.into_iter().map(|d| d.join("sh.exe")).find(|p| crate::sys::is_program(p))
+}
+/// Here `sh` is the shell a repo's command runs in (`shell_with` above); the line `doctor` shows names it as it runs it.
+#[cfg(not(windows))]
+pub fn sh_exe() -> Option<std::path::PathBuf> { Some(std::path::PathBuf::from("sh")) }
 pub fn runner_alive(t: &Task) -> bool { marker_alive(t.at("runner")) }
 fn mine(m: &Value) -> bool { m.i("pid") == std::process::id() as i64 }
 fn others(t: &Task) -> bool { t.at("runner").is_object() && !mine(t.at("runner")) && marker_alive(t.at("runner")) }
@@ -175,8 +197,8 @@ pub struct ShOut { pub ok: bool, pub out: String, pub aborted: bool }
 pub fn sh(cmd: &str, cwd: &std::path::Path, env: &[(String, String)], timeout_min: f64, alive: Option<&dyn Fn() -> bool>, tick: Option<&mut dyn FnMut() -> Res<()>>) -> ShOut {
     use std::io::Read;
     user_env();
-    let mut c = Command::new("sh");
-    c.args(["-lc", cmd]).current_dir(cwd).stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::piped());
+    let mut c = shell_with(cmd);
+    c.current_dir(cwd).stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::piped());
     for (k, v) in env { c.env(k, v); }
     detach(&mut c);
     let mut child = match c.spawn() { Ok(ch) => ch, Err(e) => return ShOut { ok: false, out: e.to_string(), aborted: false } };

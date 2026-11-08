@@ -13,7 +13,7 @@ use crate::flow;
 use crate::json::*;
 use crate::runner::Guard;
 use crate::store::attempts::{attempt_agents, create_attempt, LETTERS};
-use crate::store::inbox::{take_text, untake_text};
+use crate::store::inbox::{mark_taken, take_text};
 use crate::store::repos::{cwd_of, is_repo};
 use crate::store::settings::lookup::{setting, setting_text};
 use crate::store::settings::values::agent_of;
@@ -64,7 +64,7 @@ pub fn start_build_by(id: &str, g: &mut Guard, by: &str) -> Res<()> {
         fan_out(g, &many)?;
         return Ok(());
     }
-    let waiting: Vec<String> = take_text(id)?.iter().map(|m| m.t("text")).collect();
+    let waiting: Vec<String> = take_text(id).iter().map(|m| m.t("text")).collect();
     let r = (|| -> Res<()> {
         let a = api.agent_get(t.at("link").s("pane"))?;
         let words = std::iter::once(go_words(&t)).chain(waiting.iter().cloned()).collect::<Vec<_>>().join("\n\n");
@@ -80,7 +80,8 @@ pub fn start_build_by(id: &str, g: &mut Guard, by: &str) -> Res<()> {
         }
         Ok(())
     })();
-    if let Err(e) = r { if !waiting.is_empty() { untake_text(id, waiting.len())?; } return Err(e); }
+    r?;
+    if !waiting.is_empty() { mark_taken(id, waiting.len())?; }
     let t = update_wait(id, 10000, |t| { let p = t.obj_mut("plan"); p.put("built", now()); p.put("locked", false); p.del("ignored"); t.del("kind"); Ok(Change::Write) })?;
     flow::sidebar::tell_sidebar(&t);
     Ok(())

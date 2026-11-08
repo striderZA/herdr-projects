@@ -29,7 +29,7 @@ pub fn automation(reference: &str) -> Option<Obj> {
 /// The one way the list changes: a short read-modify-write under its lock. `f` gets the list and changes it in place.
 pub fn change_automations<T>(f: impl FnOnce(&mut Vec<Obj>) -> Res<T>) -> Res<T> {
     with_lock_wait("automations", 5000, || {
-        let mut list = automations();
+        let mut list: Vec<Obj> = read_obj_or(&list_file())?.arr("list").into_iter().filter_map(|a| a.as_object().cloned()).map(research_moved_automation).collect();
         let out = f(&mut list)?;
         write_json(&list_file(), &json!({ "list": list }))?;
         Ok(out)

@@ -18,7 +18,7 @@ use crate::herdr::{cli::{current_socket, same_socket}, Herdr};
 use crate::json::*;
 use crate::limits::run::granted;
 use crate::runner::{runner_alive, spawn_runner};
-use crate::store::{failures::failure_patch, files::{data_dir, has_tasks}, inbox::{pending_text, take_text, untake_text}, repos::cwd_of, tasks::{get, list, update_wait, Change, ListOpts, Task}};
+use crate::store::{failures::failure_patch, files::{data_dir, has_tasks}, inbox::{mark_taken, pending_text, take_text}, repos::cwd_of, tasks::{get, list, update_wait, Change, ListOpts, Task}};
 use crate::submit::{hand, not_started, note_sent, rest, took, unconfirmed::taken};
 use std::path::Path;
 
@@ -254,7 +254,7 @@ pub fn human_turn_ended(t: &mut Task) {
 }
 fn deliver_inbox(t: &Task, api: &Herdr) {
     let id = t.s("id");
-    let items = take_text(id).unwrap_or_default();
+    let items = take_text(id);
     if items.is_empty() { return; }
     let wake = items.iter().filter_map(|m| m.at("wake").as_object().filter(|_| m.b("wake")).cloned()).last();
     // The send time arms the pipeline for the turn this starts, so it is written before the text goes out.
@@ -267,9 +267,8 @@ fn deliver_inbox(t: &Task, api: &Herdr) {
     });
     let text = items.iter().map(|m| m.t("text")).collect::<Vec<_>>().join("\n\n");
     match hand(api, t.at("link").s("pane"), &text) {
-        Ok(mark) => note_sent(id, mark, &text, items[0].b("first")),
+        Ok(mark) => { note_sent(id, mark, &text, items[0].b("first")); let _ = mark_taken(id, items.len()); }
         Err(e) => {
-            let _ = untake_text(id, items.len());
             let _ = update_wait(id, 10000, |t| { for (k, v) in &before { t.put(k, v.clone()); } Ok(Change::Write) });
             if e.code != "agent_blocked" && e.code != "agent_not_ready" { log(&e.message); }
         }

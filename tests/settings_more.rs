@@ -34,6 +34,10 @@ fn a_mistake_in_a_file_edited_by_hand_is_reported_with_its_setting_the_next_plac
     assert_ne!(delegate(&id, json!({})).unwrap().s("stage"), "todo"); // the board keeps running
     std::fs::write(config(), "{ broken").unwrap();
     assert_eq!(setting("board.agents", None), json!(4)); assert_eq!(problems(None), vec!["your settings: it is not valid JSON, so nothing in it counts"]);
+    // A file that does not read is never written over: the setting is refused and every other one it held stays.
+    let e = set_value("board.agents", &json!(2), &Scope::you()).unwrap_err();
+    assert!(e.msg.contains("does not read as JSON") && e.msg.contains("Nothing was changed"), "{}", e.msg);
+    assert_eq!(std::fs::read_to_string(config()).unwrap(), "{ broken");
 }
 
 #[test]

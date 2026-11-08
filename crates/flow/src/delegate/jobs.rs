@@ -17,7 +17,7 @@ use crate::research as r;
 use crate::runner::{claim, is_aborted, release, sh, Guard};
 use crate::store::failures::failure_patch;
 use crate::store::files::{board_env, dir_of, marker_alive};
-use crate::store::inbox::{take_text, untake_text};
+use crate::store::inbox::{mark_taken, take_text};
 use crate::store::repos::{can_worktree, cwd_of, folder_of, git_out, is_repo};
 use crate::store::settings::lookup::setting;
 use crate::store::settings::places::repo_file;
@@ -164,11 +164,12 @@ fn delegate_steps(id: &str, g: &mut Guard, mut t: Task) -> Res<()> {
     t = g.set(|t| { if let Err(e) = r::starts_as(t) { refusal = Some(e); } })?;
     if let Some(e) = refusal { return Err(e); }
     if !t.b("startedAgentAt") && !t.at("plan").is_object() { t = plan::build::begin(g, t)?; } // the work starts with a plan, where `plan.approve` says so
-    let waiting: Vec<String> = take_text(id)?.iter().map(|m| m.t("text")).collect();
+    let waiting: Vec<String> = take_text(id).iter().map(|m| m.t("text")).collect();
     let turned = if t.b("startedAgentAt") { turned_words(&t) } else { String::new() };
     let (resume, prompt) = if t.b("startedAgentAt") { again_prompt(&t, &[turned].into_iter().filter(|s| !s.is_empty()).chain(waiting.iter().cloned()).collect::<Vec<_>>()) }
         else { (None, std::iter::once(first_prompt(&t)).chain(waiting.iter().cloned()).collect::<Vec<_>>().join("\n\n")) };
-    if let Err(e) = start_agent(id, g, &prompt, resume.as_deref()) { if !waiting.is_empty() { untake_text(id, waiting.len())?; } return Err(e); }
+    start_agent(id, g, &prompt, resume.as_deref())?;
+    if !waiting.is_empty() { mark_taken(id, waiting.len())?; }
     if t.b("researchTurned") || t.b("chatTurned") { g.set(|t| { t.del("researchTurned"); t.del("chatTurned"); })?; }
     Ok(())
 }
@@ -192,8 +193,8 @@ fn restart_steps(id: &str, g: &mut Guard, mut t: Task) -> Res<()> {
         crate::fail!("The agent's program could not be ended to start it again. Go into the agent and press enter, or close its terminal and retry.");
     }
     if pane.is_some() && api.agent_get(t.at("link").s("pane"))?.is_some() { // it is back by itself: just deliver
-        let waiting: Vec<String> = take_text(id)?.iter().map(|m| m.t("text")).collect();
-        if !waiting.is_empty() { flow::send::deliver(&t, &waiting.join("\n\n"), None, false)?; }
+        let waiting: Vec<String> = take_text(id).iter().map(|m| m.t("text")).collect();
+        if !waiting.is_empty() { flow::send::deliver(&t, &waiting.join("\n\n"), None, false)?; mark_taken(id, waiting.len())?; }
         return Ok(());
     }
     if pane.is_none() {
@@ -211,9 +212,10 @@ fn restart_steps(id: &str, g: &mut Guard, mut t: Task) -> Res<()> {
     t = agent_now(g, t)?;
     // A start that was asked for and never got as far as its agent (its setup failed): this is that start.
     if t.b("researchOpen") { let mut refusal = None; t = g.set(|t| { if let Err(e) = r::starts_as(t) { refusal = Some(e); } })?; if let Some(e) = refusal { return Err(e); } }
-    let waiting: Vec<String> = take_text(id)?.iter().map(|m| m.t("text")).collect();
+    let waiting: Vec<String> = take_text(id).iter().map(|m| m.t("text")).collect();
     let (resume, prompt) = if t.b("unsent") { unsent_prompt(&t, &waiting) } else { again_prompt(&t, &waiting) };
-    if let Err(e) = start_agent(id, g, &prompt, resume.as_deref()) { if !waiting.is_empty() { untake_text(id, waiting.len())?; } return Err(e); }
+    start_agent(id, g, &prompt, resume.as_deref())?;
+    if !waiting.is_empty() { mark_taken(id, waiting.len())?; }
     Ok(())
 }
 /// Reopen a task's space when it was closed (archive closes it) and, with `restart`, start its exited agent again in

@@ -38,7 +38,9 @@ Windows is on master. The plugin's manifest lists it (`herdr-plugin.toml`), and 
   the console that started it is closed (a pane closed) has not been checked on a live Windows run.
 - **Launcher**: `bin/run.ps1` runs the same steps as `bin/run.sh`, with the same release file names plus `.exe`.
 - **Command on PATH**: the launcher is `herdr-projects.cmd` in the data folder (cmd and PowerShell run it by name; agents and hooks get its path), with a shell script `herdr-projects` beside it for Git Bash ([installing](install.md#the-command-on-your-path)).
-- **Opening a link** (`Ctrl+D`: a report or a pull request): `cmd /C start` opens it. Where nothing can open it (over ssh, with no display), the board copies the link instead.
+- **A repo's own commands** (`workspace.setup`, `check.command`, `workspace.teardown`) and `board.notify` run through Git's `sh -lc` when it is found — on the PATH, or in Git's usual install folder when it is not — else through `cmd /C`. A command written for a shell may need adjusting for `cmd`; `doctor` says which one runs them.
+- **Checking a download**: `herdr-projects update` hashes the file with `sha256sum` or `openssl` when one is there, else with Windows' own `certutil`, which every Windows has. `bin/run.ps1` does the same in PowerShell.
+- **Opening a link** (`Ctrl+D`: a report or a pull request): Windows' own file-protocol handler does (`rundll32 url.dll,FileProtocolHandler <link>`), with the link as one argument, so nothing of it is read by `cmd`. Where nothing can open it (over ssh, with no display), the board copies the link instead.
 
 ## Not on Windows yet
 

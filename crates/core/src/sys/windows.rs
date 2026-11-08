@@ -66,7 +66,7 @@ pub fn private_mode(o: &mut OpenOptions) -> &mut OpenOptions { o }
 /// Windows creates no file through a link here: the callers check for a link first.
 pub fn no_follow(o: &mut OpenOptions) -> &mut OpenOptions { o }
 /// Opens a lock file for `lock_file`: read and write, since LockFileEx refuses a handle with neither.
-pub fn open_lock(path: &Path) -> io::Result<File> { OpenOptions::new().create(true).read(true).write(true).open(path) }
+pub fn open_lock(path: &Path) -> io::Result<File> { OpenOptions::new().create(true).truncate(false).read(true).write(true).open(path) }
 /// Takes an exclusive lock on an open file, waiting for it when `wait`. False when another process holds it.
 pub fn lock_file(f: &File, wait: bool) -> bool {
     let mut ov: OVERLAPPED = unsafe { std::mem::zeroed() };
@@ -84,6 +84,8 @@ fn file_id(f: &File) -> Option<(u32, u32, u32)> {
 }
 /// Windows has no atomic swap of two paths: the caller takes the other way (false here).
 pub fn swap_paths(_a: &Path, _b: &Path) -> bool { false }
+/// Windows has no way to sync a folder through std, and a rename is not lost the way a Unix one can be.
+pub fn sync_dir(_dir: &Path) -> io::Result<()> { Ok(()) }
 /// A running program's file gets no " (deleted)" suffix on Windows.
 pub fn without_deleted(p: PathBuf) -> PathBuf { p }
 /// Strips the `\\?\` prefix a canonical path gets on Windows, which git and most tools refuse: `\\?\C:\x` is `C:\x`, and

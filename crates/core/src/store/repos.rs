@@ -94,7 +94,7 @@ fn real(p: &Path) -> PathBuf { crate::sys::plain_path(crate::sys::canonicalize(p
 pub fn repo_of(folder: &Path) -> Res<(String, PathBuf)> {
     let root = primary_root(folder);
     let found = with_lock("repos", || {
-        let mut map = known_repos();
+        let mut map = read_obj_or(&repos_file())?;
         let found = map.iter().find(|(_, v)| { let p = PathBuf::from(text(v)); p == root || real(&p) == real(&root) }).map(|(k, _)| k.clone());
         let name = match found {
             Some(n) => n,

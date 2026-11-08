@@ -3,7 +3,7 @@
 //! again from the cache too). A conversation file only grows, so it is read on from where the last count stopped:
 //! `state` is what the counter gave back the time before ({ at: the byte it read to, n: the tokens so far, … }).
 use crate::json::*;
-use std::io::{Read, Seek, SeekFrom};
+use std::io::{BufRead, Seek, SeekFrom};
 use std::path::Path;
 
 /// The whole lines written since byte `at`, and where they end. A last line still being written waits.
@@ -11,13 +11,18 @@ fn grown(file: &Path, at: u64) -> std::io::Result<(Vec<Value>, u64)> {
     let size = std::fs::metadata(file)?.len();
     let at = if size < at { 0 } else { at };
     if size == at { return Ok((vec![], at)); }
-    let mut f = std::fs::File::open(file)?;
+    let mut f = std::io::BufReader::with_capacity(64 << 10, std::fs::File::open(file)?);
     f.seek(SeekFrom::Start(at))?;
-    let mut buf = vec![0u8; (size - at) as usize];
-    f.read_exact(&mut buf)?;
-    let end = buf.iter().rposition(|b| *b == b'\n').map(|i| i + 1).unwrap_or(0);
-    let rows = String::from_utf8_lossy(&buf[..end]).split('\n').filter(|l| !l.is_empty()).filter_map(|l| serde_json::from_str(l).ok()).collect();
-    Ok((rows, at + end as u64))
+    // One line at a time: a long conversation is read in its own lines' size, not in one piece of the whole file.
+    let (mut rows, mut end, mut line) = (vec![], at, Vec::new());
+    loop {
+        line.clear();
+        let n = f.read_until(b'\n', &mut line)?;
+        if n == 0 || line.last() != Some(&b'\n') { break; } // a last line still being written waits
+        end += n as u64;
+        if let Ok(v) = serde_json::from_slice::<Value>(&line) { rows.push(v); }
+    }
+    Ok((rows, end))
 }
 fn from(file: &Path, state: &Value) -> Obj {
     let size = std::fs::metadata(file).map(|m| m.len()).unwrap_or(0) as f64;
