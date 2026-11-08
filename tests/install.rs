@@ -32,15 +32,15 @@ fn platform_names_urls_and_versions() {
     assert_eq!(platform_of("linux", "amd64"), Some(("linux", "x86_64")));
     assert_eq!(platform_of("FreeBSD", "x86_64"), None);
     assert_eq!(platform_of("Linux", "riscv64"), None);
-    let base = "https://github.com/eliasstravik/herdr-projects/releases";
+    let base = "https://github.com/striderZA/herdr-projects/releases";
     assert_eq!(asset_url(base, Some("0.3.1"), "herdr-projects-linux-x86_64"), format!("{base}/download/v0.3.1/herdr-projects-linux-x86_64"));
     assert_eq!(asset_url(base, Some("v0.3.1"), "a"), format!("{base}/download/v0.3.1/a"), "a version typed with its v");
     assert_eq!(asset_url(base, None, "a"), format!("{base}/latest/download/a"));
     // The repo is private: gh, logged in, fetches what curl is refused.
     let to = Path::new("/t/f");
     let gh = |u: &str| gh_args(u, to).map(|v| v.join(" "));
-    assert_eq!(gh(&format!("{base}/download/v0.3.1/a.sha256")).as_deref(), Some("release download v0.3.1 -R eliasstravik/herdr-projects -p a.sha256 -O /t/f --clobber"));
-    assert_eq!(gh(&format!("{base}/latest/download/a")).as_deref(), Some("release download -R eliasstravik/herdr-projects -p a -O /t/f --clobber"));
+    assert_eq!(gh(&format!("{base}/download/v0.3.1/a.sha256")).as_deref(), Some("release download v0.3.1 -R striderZA/herdr-projects -p a.sha256 -O /t/f --clobber"));
+    assert_eq!(gh(&format!("{base}/latest/download/a")).as_deref(), Some("release download -R striderZA/herdr-projects -p a -O /t/f --clobber"));
     assert_eq!(gh("file:///mirror/download/v0.3.1/a"), None, "a mirror is fetched as it is");
     for (a, b, yes) in [("0.3.0", "0.2.0", true), ("0.10.0", "0.9.1", true), ("0.3.0", "0.3.0", false), ("0.2.9", "0.3.0", false), ("1.0", "0.9.9", true), ("0.3.0.1", "0.3.0", true), ("v0.3.1", "0.3.0", true), ("0.3.0", "0.3", false)] {
         assert_eq!(newer(a, b), yes, "{a} newer than {b}");
@@ -77,7 +77,7 @@ fn releases_are_the_repo_the_plugin_was_cloned_from() {
     let (b, _one) = scratch();
     let exe = b.join("plugin/bin").join(asset_name(here()));
     std::fs::create_dir_all(exe.parent().unwrap()).unwrap();
-    assert_eq!(releases(&exe), "https://github.com/eliasstravik/herdr-projects/releases", "no checkout: the upstream repo");
+    assert_eq!(releases(&exe), "https://github.com/striderZA/herdr-projects/releases", "no checkout: the fork's repo");
     git(&b.join("plugin"), &["init", "-q"]);
     git(&b.join("plugin"), &["remote", "add", "origin", "https://github.com/striderZA/herdr-projects"]);
     assert_eq!(releases(&exe), "https://github.com/striderZA/herdr-projects/releases", "the checkout's origin");

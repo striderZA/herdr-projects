@@ -5,8 +5,8 @@ use crate::err::Res;
 use crate::store::files::{bin, write_atomic, VERSION};
 use std::path::{Path, PathBuf};
 
-/// The upstream project's repo: where a plugin that was not cloned from a GitHub repo of its own gets its releases.
-pub const UPSTREAM: &str = "eliasstravik/herdr-projects";
+/// This fork's repo: where a plugin that was not cloned from a GitHub repo of its own gets its releases.
+pub const RELEASES_REPO: &str = "striderZA/herdr-projects";
 
 /// The release files' name for a platform, from `uname -s`/`uname -m` or Rust's own names. None: no release is made.
 pub fn platform_of(os: &str, arch: &str) -> Option<(&'static str, &'static str)> {
@@ -25,10 +25,10 @@ pub fn releases(exe: &Path) -> String {
 }
 
 /// The repo the releases are of: the one the plugin checkout that holds this program was cloned from (its git origin;
-/// `herdr plugin install` clones it, and the program is in its bin/). The upstream repo when there is no such checkout,
+/// `herdr plugin install` clones it, and the program is in its bin/). The fork's repo when there is no such checkout,
 /// as for a program run from anywhere else.
 pub fn repo_of(exe: &Path) -> String {
-    exe.parent().filter(|d| d.file_name().is_some_and(|n| n == "bin")).and_then(Path::parent).and_then(checkout_origin).and_then(|u| repo_of_remote(&u)).unwrap_or_else(|| UPSTREAM.to_string())
+    exe.parent().filter(|d| d.file_name().is_some_and(|n| n == "bin")).and_then(Path::parent).and_then(checkout_origin).and_then(|u| repo_of_remote(&u)).unwrap_or_else(|| RELEASES_REPO.to_string())
 }
 /// The origin's URL as git's own `remote get-url` gives it (`insteadOf` applied), or None without one: the release lookup
 /// has always read it this way.

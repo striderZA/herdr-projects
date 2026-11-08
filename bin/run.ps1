@@ -11,7 +11,7 @@
 # When there is none it says on stderr what to do and exits 1: it never waits long, so it never holds herdr up.
 # `run.ps1 --fetch` only gets the program (the plugin's build step), building it from source when it cannot download.
 # HERDR_PROJECTS_RELEASES names another place for the releases (a mirror, a folder as file:///...). Without it they are the
-# releases of the repo this checkout was cloned from (its git origin; the upstream repo when there is none).
+# releases of the repo this checkout was cloned from (its git origin; the fork's repo when there is none).
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $root = Split-Path -Parent $here
 
@@ -55,7 +55,7 @@ $arch = switch ($env:PROCESSOR_ARCHITECTURE) { 'AMD64' { 'x86_64' } default { ''
 $name = "herdr-projects-$os-$arch"
 $prog = Join-Path $here "$name.exe"
 # The releases: HERDR_PROJECTS_RELEASES, else those of the repo this checkout was cloned from (its git origin).
-$repo = 'eliasstravik/herdr-projects'
+$repo = 'striderZA/herdr-projects'
 try { $origin = (& git -C $root remote get-url origin 2>$null | Out-String); if ($LASTEXITCODE -eq 0 -and $origin -match '[/@]github\.com[:/]([^/\s]+/[^/\s]+?)(\.git)?/?\s*$') { $repo = $Matches[1] } } catch { }
 $base = if ($env:HERDR_PROJECTS_RELEASES) { $env:HERDR_PROJECTS_RELEASES } else { "https://github.com/$repo/releases" }
 $base = $base.TrimEnd('/')

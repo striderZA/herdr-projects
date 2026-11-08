@@ -12,7 +12,7 @@
 # When there is none it says on stderr what to do and exits 1: it never waits long, so it never holds herdr up.
 # `run.sh --fetch` only gets the program (the plugin's build step), building it from source when it cannot download.
 # HERDR_PROJECTS_RELEASES names another place for the releases (a mirror, a folder as file:///…). Without it they are the
-# releases of the repo this checkout was cloned from (its git origin; the upstream repo when there is none).
+# releases of the repo this checkout was cloned from (its git origin; the fork's repo when there is none).
 here=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 root=$(dirname -- "$here")
 PATH="${PATH:+$PATH:}/usr/local/bin:/usr/bin:/bin:$HOME/.cargo/bin"; export PATH
@@ -31,7 +31,7 @@ name="herdr-projects-$os-$arch"
 prog="$here/$name"
 # The releases: HERDR_PROJECTS_RELEASES, else those of the repo this checkout was cloned from (its git origin).
 repo=$(git -C "$root" remote get-url origin 2>/dev/null | sed -n -E 's#^.*[/@]github\.com[:/]([^/]+/[^/]+)$#\1#p' | sed 's#\.git$##')
-[ -n "$repo" ] || repo=eliasstravik/herdr-projects
+[ -n "$repo" ] || repo=striderZA/herdr-projects
 base="${HERDR_PROJECTS_RELEASES:-https://github.com/$repo/releases}"; base="${base%/}"
 
 # at_least A B: A is B or newer, part by part as numbers (0.10.0 is newer than 0.9.1).
