@@ -205,6 +205,7 @@ mod research_start;
 mod retry;
 mod retry_agent;
 mod review_timeout;
+mod sessions;
 mod settings;
 mod settings_more;
 mod settings_move;
