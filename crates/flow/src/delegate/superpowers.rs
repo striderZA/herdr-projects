@@ -27,10 +27,11 @@ pub fn plan(t: &Obj) -> String {
     "The plan is written with superpowers:writing-plans: read that skill now and follow its method, its plan format (the header, Global Constraints, Review Focus, and tasks that each name exact files, interfaces, one-action steps and the test that proves them, with no placeholders) and its self-review before you save. Where the board differs: the plan is saved where the board says below, never in the repo or in docs/superpowers/; its **Spec:** line points at this same file, so copy the task's description into the plan under a `## Spec` heading, word for word, since the spec travels with the plan; and it asks you no question about a review or an execution method: the board's approval is the only one, so stop once the plan is saved. If your program cannot find that skill, say so as a wait.".into()
 }
 
-/// What the reviewer of a plan on this method is told beyond its usual brief.
+/// What the reviewer of a plan on this method is told beyond its usual brief: writing-plans' own self-review, which the
+/// reviewer runs too, since its program may not have that skill.
 pub fn plan_review(t: &Obj) -> String {
     if !on(t) { return String::new(); }
-    "This plan is in the Superpowers plan format: check that its tasks cover the task's description and that each has a test or verification step.".into()
+    "The plan is written with superpowers:writing-plans, so check it against that skill's self-review, and report each fault as a finding: spec coverage (every requirement of the task's description has a task that builds it); step scan (no step decides nothing, such as 'TBD', 'handle edge cases', 'add validation', 'write tests for the above' or 'similar to Task N', and no step pastes a whole program where a signature and a test would do); type and name consistency (a name, signature or property that a later task uses is the one an earlier task defines); Review Focus (each line there has a test in the task that owns it); proportion (a plan several times longer than the task's description is a transcript, not a plan). A plan with no `## Spec` section, or whose spec leaves out a requirement of the task, is a finding too.".into()
 }
 
 /// What the reviewer of finished work on this method is told beyond its usual brief.

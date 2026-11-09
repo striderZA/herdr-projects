@@ -203,8 +203,9 @@ fn a_superpowers_plan_step_is_written_with_writing_plans_and_the_board_keeps_the
     assert!(told.contains("asks you no question about a review or an execution method"), "{told}");
     assert!(told.contains("The board's plan approval replaces the writing-plans"), "{told}");
     assert!(told.contains(&format!("Save it as {}", sw::plan::plan_file(&t).display())), "{told}");
+    // the reviewer checks the plan with the same self-review
     let pb = sw::plan::review::plan_brief(&t, std::path::Path::new("/tmp/review"));
-    assert!(pb.contains("This plan is in the Superpowers plan format"), "{pb}");
+    for want in ["superpowers:writing-plans", "spec coverage", "step scan", "type and name consistency", "Review Focus", "proportion", "`## Spec`"] { assert!(pb.contains(want), "{want}\n{pb}"); }
 }
 
 #[test]
