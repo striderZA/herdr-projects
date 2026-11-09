@@ -21,8 +21,8 @@ The board adds one block to the worker's standing rules. It says:
 - every stop that needs the human is a wait: `report … --state blocked` and then stop, including every question from
   `superpowers:brainstorming`;
 - skip brainstorming when the task is already a complete spec; otherwise ask first;
-- write the plan where the board's plan step says, in the Superpowers plan format; do not put a spec or plan in the
-  repo unless the task asks for it;
+- write the plan with `superpowers:writing-plans`, where the board's plan step says, with its spec copied into it; do not
+  put a spec or plan in the repo unless the task asks for it;
 - after the plan, use `superpowers:subagent-driven-development` when the work has independent tasks, otherwise
   `superpowers:executing-plans`, with `test-driven-development` and `verification-before-completion`;
 - the board's reviewer is the final whole-branch review, so the worker does not run `requesting-code-review` or the SDD
@@ -48,11 +48,12 @@ The board cannot read a question out of a last message. An unmarked stop is fini
 The preset therefore turns every Superpowers question into a wait, and the human's answer arrives as the agent's next
 message. An interview, a design question and a choice of approach are all handled one answer at a time.
 
-With `plan.approve you` or `reviewer`, the board's plan step is the plan's approval. The plan is written to the board's
-`plan.md` in the task's own folder, in the Superpowers plan format; the board's plan approval replaces the
-`writing-plans` request to review the plan and choose an execution method. With `plan.approve none`, multi-step work
-gets a plan first with `writing-plans`, kept out of the repo unless the task asks for it, and is executed with SDD or
-inline; a small change is just done.
+With `plan.approve you` or `reviewer`, the board's plan step is the plan's approval. The plan is written with
+`superpowers:writing-plans` to the board's `plan.md` in the task's own folder, and its spec is copied into it under
+`## Spec`. The board's approval replaces the `writing-plans` request to review the plan and choose an execution method.
+The reviewer checks the plan with that skill's own self-review: spec coverage, step scan, type and name consistency,
+Review Focus and proportion. With `plan.approve none`, multi-step work gets a plan first with `writing-plans`, kept out of
+the repo unless the task asks for it, and is executed with SDD or inline; a small change is just done.
 
 There is no separate spec state. For work that needs a design discussion, use the Coordinator chat (or answer the
 worker's brainstorming questions) and put the result in the task description. The plan file can hold the spec and the
