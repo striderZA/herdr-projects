@@ -42,13 +42,10 @@ fn how(t: &Obj) -> String { format!("Save it as {} (the board's own folder for t
 const AFTER: &str = "The board looks at this folder when you stop, and puts back whatever changed in it. The plan is then read and approved, or it comes back to you with words on what to change: write it again then, whole, the same way.";
 /// The last line of the first prompt, while the step is open: the rules say the rest.
 pub const FIRST: &str = "This task starts with a plan (your rules say how): write the plan and stop. Change nothing yet.";
-/// The method's own plan shape, when `worker.preset` asks for it.
-fn with_method(t: &Obj, text: String) -> String {
-    let method = crate::delegate::superpowers::plan(t);
-    if method.is_empty() { text } else { format!("{text} {method}") }
-}
+/// What the plan says: the board's own words, or with `worker.preset` superpowers that method's plan (delegate/superpowers.rs).
+fn what(t: &Obj) -> String { let method = crate::delegate::superpowers::plan(t); if method.is_empty() { WHAT.into() } else { method } }
 /// The working agent that writes its own plan. The rule holds for the whole conversation, so it says when it ends.
-pub fn plan_rule(t: &Obj) -> String { with_method(t, format!("This task starts with a plan, and nothing is changed before the plan is approved. Until a message from the board says that your plan is approved: {NOTHING} {WHAT} {} Stopping with the plan written is right in this step: it is not taken for finished work, and nothing is checked or reviewed. {AFTER} Once a message says the plan is approved, build exactly that plan under the rules below; where you have to leave it, say where and why in your closing summary.", how(t))) }
+pub fn plan_rule(t: &Obj) -> String { format!("This task starts with a plan, and nothing is changed before the plan is approved. Until a message from the board says that your plan is approved: {NOTHING} {} {} Stopping with the plan written is right in this step: it is not taken for finished work, and nothing is checked or reviewed. {AFTER} Once a message says the plan is approved, build exactly that plan under the rules below; where you have to leave it, say where and why in your closing summary.", what(t), how(t)) }
 /// The yes, as the plan's own writer hears it.
 pub fn go_words(t: &Obj) -> String {
     if t.at("plan").s("approvedBy") == "nobody" && read_plan(t).is_empty() { return "The plan step is over: it was taken off for this task before a plan was written. Do the task now: from here on the task's rules for the work hold. Do the work, check it, and stop only when it is finished.".into(); }

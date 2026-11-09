@@ -187,15 +187,21 @@ fn the_superpowers_preset_tells_the_worker_the_board_owns_the_finish_line_and_qu
 }
 
 #[test]
-fn a_superpowers_plan_step_writes_the_plan_into_the_boards_own_plan_file() {
+fn a_superpowers_plan_step_is_written_with_writing_plans_and_the_board_keeps_the_file_and_the_approval() {
     let w = world();
     let id = w.add("Work");
     set_value("worker.preset", &json!("superpowers"), &Scope::task(&task(&id))).unwrap();
     let mut t = task(&id);
     t.put("plan", json!({ "asked": 1, "by": "you" }));
     let told = sw::delegate::rules::rules(&t);
+    // the method is writing-plans, in place of the board's own words for a plan
+    assert!(told.contains("The plan is written with superpowers:writing-plans"), "{told}");
+    assert!(!told.contains("The plan says, in plain words"), "{told}");
+    // the board's changes to it: where it is saved, the spec carried inside it, and no question about an execution method
+    assert!(told.contains("never in the repo or in docs/superpowers/"), "{told}");
+    assert!(told.contains("copy the task's description into the plan under a `## Spec` heading"), "{told}");
+    assert!(told.contains("asks you no question about a review or an execution method"), "{told}");
     assert!(told.contains("The board's plan approval replaces the writing-plans"), "{told}");
-    assert!(told.contains("Write it in the Superpowers plan format"), "{told}");
     assert!(told.contains(&format!("Save it as {}", sw::plan::plan_file(&t).display())), "{told}");
     let pb = sw::plan::review::plan_brief(&t, std::path::Path::new("/tmp/review"));
     assert!(pb.contains("This plan is in the Superpowers plan format"), "{pb}");
