@@ -75,8 +75,10 @@ The agent builds that plan.
 
 ## Who writes the plan
 
-The working agent. It is told to change nothing; to write what it understood, what it will change and where, in which
-order, how it will be checked and what it is unsure of; and to stop.
+The working agent. Without the Superpowers method it is told to change nothing; to write what it understood, what it will
+change and where, in which order, how it will be checked and what it is unsure of; and to stop. With
+[`worker.preset superpowers`](superpowers.md) it writes the plan with `superpowers:writing-plans` instead: that skill's
+plan format and self-review, with the spec in the plan.
 
 - **Every program plans in the task's worktree** (Claude Code, Codex, pi, Herdr's others: [agents](agents.md)) and
   saves the plan as a file in the task's own folder. The [read-only worktree](#nothing-in-the-repo-is-changed-before-the-yes)

@@ -82,6 +82,8 @@ fn what_the_plans_writer_the_builder_and_the_reviewer_are_told() {
     assert!(told.contains("Until a message from the board says that your plan is approved: change nothing in this folder: add, edit and delete no file, commit nothing"));
     assert!(told.contains(&format!("Save it as {} (the board's own folder for this task, not the folder you work in)", P::plan_file(&t).display())));
     assert!(told.contains("Stopping with the plan written is right in this step") && told.contains("puts back whatever changed"));
+    // without the preset the plan is written in the board's own words, never with the Superpowers method
+    assert!(told.contains("The plan says, in plain words") && !told.contains("superpowers:writing-plans"), "{told}");
     assert!(told.contains("Commit your work on this branch"), "the rules of the work still stand, for after the yes");
     assert!(first_prompt(&planning).contains("This task starts with a plan (your rules say how): write the plan and stop. Change nothing yet."));
     // Claude Code plans as every program does: it is told to save the file, never to use a plan mode of its own.
