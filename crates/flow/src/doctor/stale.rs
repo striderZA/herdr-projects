@@ -18,9 +18,9 @@ pub enum Why { Finished(String), NoTask(String), Gone, OldBuild }
 #[derive(Clone, Debug)]
 pub struct Left { pub path: PathBuf, pub repo: PathBuf, pub why: Why, pub bytes: u64, pub more: bool }
 
-/// The board's own caches (`${XDG_CACHE_HOME:-~/.cache}/herdr-wingman`).
+/// The board's own caches (`${XDG_CACHE_HOME:-~/.cache}/herdr-projects`).
 pub fn cache_dir() -> PathBuf {
-    std::env::var("XDG_CACHE_HOME").ok().filter(|v| !v.is_empty()).map(PathBuf::from).unwrap_or_else(|| crate::store::files::user_home().join(".cache")).join("herdr-wingman")
+    std::env::var("XDG_CACHE_HOME").ok().filter(|v| !v.is_empty()).map(PathBuf::from).unwrap_or_else(|| crate::store::files::user_home().join(".cache")).join("herdr-projects")
 }
 /// The starts of the branches a pattern names (`work/` of `work/{n}-{slug}`, each kind of `{type}/…`): a branch that
 /// starts so is the board's.

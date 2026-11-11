@@ -6,7 +6,7 @@
 # `sh scripts/linker.sh --install` installs mold (the workspace setup does); HERDR_PROJECTS_NO_MOLD=1 turns it off.
 # How and why: docs/linking.md.
 ln_version=2.42.1
-ln_dir="${XDG_CACHE_HOME:-$HOME/.cache}/herdr-wingman/mold-$ln_version"
+ln_dir="${XDG_CACHE_HOME:-$HOME/.cache}/herdr-projects/mold-$ln_version"
 ln_install() {
   [ -x "$ln_dir/bin/mold" ] && return 0
   case "$(uname -s)-$(uname -m)" in

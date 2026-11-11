@@ -42,7 +42,7 @@ command -v cargo >/dev/null 2>&1 || quit "The check needs Rust (cargo): https://
 . scripts/build-cache.sh
 . scripts/share-cores.sh
 # The code as it stands, new files and uncommitted changes too, and the compiler that builds it.
-cache="${XDG_CACHE_HOME:-$HOME/.cache}/herdr-wingman-check"
+cache="${XDG_CACHE_HOME:-$HOME/.cache}/herdr-projects-check"
 stamp=""
 if git rev-parse --git-dir >/dev/null 2>&1; then
   idx=$(mktemp); cp "$(git rev-parse --git-path index)" "$idx" 2>/dev/null || true
