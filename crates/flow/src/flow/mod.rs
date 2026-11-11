@@ -5,6 +5,7 @@ pub mod handled_turn;
 pub mod launcher;
 pub mod live;
 pub mod pane_owner;
+pub mod pr_cli;
 pub mod send;
 pub mod sidebar;
 pub mod sidebar_entry;

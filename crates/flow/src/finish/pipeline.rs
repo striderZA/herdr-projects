@@ -224,20 +224,22 @@ pub fn pipeline(id: &str, g: &mut Guard, text: &str, keep_intent: bool, reason: 
             }
             Ok(Some(url))
         })();
+        // The program its pull requests go through, named where a failure says what it said or what to run (flow/pr_cli.rs).
+        let (cli, forge) = match flow::pr_cli::name(&root) { "gh" => ("gh", "GitHub"), cli => (cli, cli) };
         match pushed {
             Ok(Some(url)) => note = format!(" Pull request: {url}"),
             Ok(None) => {}
             Err(e) if is_aborted(&e) => return Err(e),
             Err(e) if e.msg.starts_with("target:") => { fail(g, failure("push", "The branch would go to another repo", &format!("Branch: {}\nFolder: {tree}\n\n{}", t.s("branch"), &e.msg[7..]), "Point the clone's origin at the repo merge.repo names (git remote set-url origin <url>), or change merge.repo, then finish again."), FailHow::default())?; return Ok(()); }
             Err(_) if already::archived(Path::new(&tree)) => { fail(g, already::archived_failure(t.s("branch"), &tree), FailHow::default())?; return Ok(()); }
-            Err(e) if e.msg.starts_with("prbase:") => { fail(g, failure("pr", "The agent's pull request merges into another branch", &format!("Branch: {}\nFolder: {tree}\n\n{}", t.s("branch"), &e.msg[7..]), &format!("Change that pull request's base to {0} (gh pr edit <number> --base {0}), or close it, then finish again. The board goes on with it once it merges into {0}.", sync::main_branch(&root, &t))), FailHow::default())?; return Ok(()); }
+            Err(e) if e.msg.starts_with("prbase:") => { fail(g, failure("pr", "The agent's pull request merges into another branch", &format!("Branch: {}\nFolder: {tree}\n\n{}", t.s("branch"), &e.msg[7..]), &format!("Change that pull request's base to {0} ({cli} pr edit <number> --base {0}), or close it, then finish again. The board goes on with it once it merges into {0}.", sync::main_branch(&root, &t))), FailHow::default())?; return Ok(()); }
             // The remote cannot be reached (main could not be fetched either): it waits, and goes on by itself.
             Err(e) if offline(sync_r, &e.msg) => {
                 let (what, said) = if let Some(m) = e.msg.strip_prefix("pr:") { ("its pull request could not be opened", m) } else { ("the branch could not be pushed", e.msg.as_str()) };
                 let why = match sync_r.filter(|r| r.status == "error") { Some(r) => format!("{}, and {what}", sync::held_why(r)), None => format!("{what} ({})", fetch::plain(said, t.s("branch"))) };
                 return super::sync_job::unpushed(g, &why, &format!("Branch: {}\nFolder: {tree}\n\n{}\n\n{said}", t.s("branch"), sync_r.map(|r| r.detail.as_str()).unwrap_or("")));
             }
-            Err(e) if e.msg.starts_with("pr:") => { fail(g, failure("pr", "Could not open the pull request", &format!("Branch: {}\nFolder: {tree}\n\ngh pr create:\n{}", t.s("branch"), &e.msg[3..]), "Inspect the GitHub error, fix what you safely can, then finish again. The board retries opening the pull request; do not push or ship manually."), FailHow::default())?; return Ok(()); }
+            Err(e) if e.msg.starts_with("pr:") => { fail(g, failure("pr", "Could not open the pull request", &format!("Branch: {}\nFolder: {tree}\n\n{cli} pr create:\n{}", t.s("branch"), &e.msg[3..]), &format!("Inspect the {forge} error, fix what you safely can, then finish again. The board retries opening the pull request; do not push or ship manually.")), FailHow::default())?; return Ok(()); }
             Err(e) => { fail(g, failure("push", "Could not push the branch", &format!("Branch: {}\nFolder: {tree}\n\n{}", t.s("branch"), e.msg), "Inspect the Git error and fix what you safely can without altering the human's checkout. Finish again so the board retries the push."), FailHow::default())?; return Ok(()); }
         }
     }

@@ -63,7 +63,9 @@ fn list(ns: &[u64]) -> String { ns.iter().map(|n| format!("#{n}")).collect::<Vec
 pub fn after_landing(t: &Task, root: &Path, commit: &str) -> String {
     let want = issues(t);
     if want.is_empty() { return String::new(); }
-    let by_github: Vec<u64> = if t.b("pr") && crate::sync::named_base(root, t).is_none() { body_of(t.s("pr"), root).map(|b| closed_by(&b)).unwrap_or_default() } else { vec![] };
+    // What the body's own words close is GitHub's to say: a Bitbucket pull request closes nothing by them (pr_cli.rs).
+    let on_github = crate::flow::pr_cli::of(root) == crate::flow::pr_cli::Cli::Gh;
+    let by_github: Vec<u64> = if on_github && t.b("pr") && crate::sync::named_base(root, t).is_none() { body_of(t.s("pr"), root).map(|b| closed_by(&b)).unwrap_or_default() } else { vec![] };
     let (github, rest): (Vec<u64>, Vec<u64>) = want.iter().partition(|n| by_github.contains(n));
     let title = if t.b("title") { format!(" \"{}\"", t.s("title")) } else { String::new() };
     let landed = if commit.is_empty() { String::new() } else { format!(" in {}", &commit[..commit.len().min(12)]) };

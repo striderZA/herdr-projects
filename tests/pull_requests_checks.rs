@@ -96,7 +96,7 @@ fn failed_checks_of_an_older_commit_do_not_block_its_repair_that_passed_when_mai
     finish_line::approve(&id, None, false).unwrap();
     let t = settle(&id);
     assert_eq!(t.s("stage"), "merging", "{}", t.s("msg")); assert!(t.b("checksWait"));
-    let old = sw::land::checks::blocker(t.s("pr"), &head, &["build".into()], "build failed");
+    let old = sw::land::checks::blocker(&w.root, t.s("pr"), &head, &["build".into()], "build failed");
     update(&id, |t| { t.put("prFailure", old.clone()); Ok(Change::Write) }).unwrap();
     std::fs::write(w.root.join("other.txt"), "main\n").unwrap(); git(&w.root, &["add", "-A"]); git(&w.root, &["commit", "-qm", "main moves"]); git(&w.root, &["push", "-q", "origin", "main"]);
     let main = git(&w.root, &["rev-parse", "HEAD"]);

@@ -19,7 +19,7 @@ use sw::json::*;
 /// pull request's `headRefOid` is then what its head branch holds there (the one `pr create --head` named, or `headBranch`),
 /// and `newer` the checks of a commit pushed there after the one `view` names. The pull request's `body` is the one
 /// `pr create` or `pr edit` gave it last (or `view`'s own). `issueFail`: `issue close` fails with these words;
-/// `editFail`: `pr edit` does.
+/// `editFail`: `pr edit` does. `url`: the link `pr create` prints (a GitHub one of its `--repo` when not said).
 #[derive(Default)]
 pub struct FakeGh { pub cfg: RefCell<Value>, pub log: RefCell<Vec<String>>, pub merged: Cell<bool>, late: Cell<i64>, head_branch: RefCell<String>, body: RefCell<Option<String>> }
 fn ok(out: &str) -> GhOut { GhOut { status: 0, stdout: if out.is_empty() { String::new() } else { format!("{out}\n") }, stderr: String::new() } }
@@ -49,7 +49,7 @@ impl FakeGh {
                 *self.head_branch.borrow_mut() = a.iter().position(|s| s == "--head").and_then(|i| a.get(i + 1)).cloned().unwrap_or_default();
                 *self.body.borrow_mut() = a.iter().position(|s| s == "--body").and_then(|i| a.get(i + 1)).cloned();
                 let repo = a.iter().position(|s| s == "--repo").and_then(|i| a.get(i + 1)).map(String::as_str).unwrap_or("o/r");
-                ok(&format!("https://github.com/{repo}/pull/7"))
+                ok(&if c.b("url") { c.t("url") } else { format!("https://github.com/{repo}/pull/7") })
             },
             ("pr", "edit") if c.b("editFail") => fail(c.s("editFail")),
             ("pr", "edit") => { if let Some(b) = a.iter().position(|s| s == "--body").and_then(|i| a.get(i + 1)) { *self.body.borrow_mut() = Some(b.clone()); } ok("") }

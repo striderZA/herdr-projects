@@ -32,7 +32,8 @@ pub fn gh(args: &[&str], cwd: &Path, timeout_ms: u64) -> GhOut {
     if let Some(f) = FAKE_GH.with(|x| x.borrow().clone()) { return f(&a); }
     crate::runner::user_env();
     let child = cmd.spawn();
-    let late = |e: crate::herdr::cli::HerdrError| if e.code == "timeout" { stopped(&format!("gh {}", args.iter().take(2).copied().collect::<Vec<_>>().join(" ")), timeout_ms) } else { e.message };
+    let program = cmd.get_program().to_string_lossy().into_owned();
+    let late = |e: crate::herdr::cli::HerdrError| if e.code == "timeout" { stopped(&format!("{program} {}", args.iter().take(2).copied().collect::<Vec<_>>().join(" ")), timeout_ms) } else { e.message };
     match child.map_err(|e| e.to_string()).and_then(|c| crate::herdr::cli::wait_with_timeout(c, timeout_ms).map_err(late)) {
         Ok(r) => GhOut { status: r.status, stdout: r.stdout, stderr: r.stderr },
         Err(e) => GhOut { status: -1, stdout: String::new(), stderr: e },
@@ -43,7 +44,9 @@ pub fn gh(args: &[&str], cwd: &Path, timeout_ms: u64) -> GhOut {
 /// repo (GH_REPO: `owner/name`, with the host when it is not github.com), and makes no call at all in a clone whose origin
 /// names no repo on a host, as gh would take another one. A pull request URL the call names must be in that same repo. A
 /// clone with no origin keeps gh's own default, and names no pull request URL: it has no pull request of the board's to go to.
+/// A repo whose pull requests go through bb (`repo.cli`) gets bb's command instead (pr_cli.rs).
 pub fn gh_command(args: &[&str], cwd: &Path) -> Result<Command, String> {
+    if super::pr_cli::of(cwd) == super::pr_cli::Cli::Bb { return super::pr_cli::bb_command(args, cwd); }
     let mut cmd = Command::new("gh");
     cmd.args(args).current_dir(cwd).env("GH_PROMPT_DISABLED", "1").env("GIT_TERMINAL_PROMPT", "0").stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::piped());
     let urls: Vec<&str> = args.iter().copied().filter(|a| is_pull_request_url(a)).collect();
@@ -93,10 +96,12 @@ fn ssh_host(alias: &str) -> Option<String> {
 pub fn hostname_in(out: &str) -> Option<String> {
     out.lines().find_map(|l| l.strip_prefix("hostname ")).map(|h| h.trim().to_ascii_lowercase()).filter(|h| !h.is_empty())
 }
-/// The repo a task's branch is pushed to and its pull request is in, as gh names it, when the origin names one. None
-/// without an origin, or with one that names no repo on a host.
+/// The repo a task's branch is pushed to and its pull request is in, as its program names it (gh, or bb: pr_cli.rs),
+/// when the origin names one. None without an origin, or with one that names no repo on a host.
 pub fn origin_repo(cwd: &Path) -> Option<String> {
-    origin_url(cwd).ok().flatten().and_then(|u| target_of(&u)).map(|t| t.gh)
+    let url = origin_url(cwd).ok().flatten()?;
+    if super::pr_cli::of(cwd) == super::pr_cli::Cli::Bb { return super::pr_cli::target_of(&url).map(|t| t.repo); }
+    target_of(&url).map(|t| t.gh)
 }
 /// Refused before anything is pushed when `merge.repo` names another repo than the origin. Unset (`none`, or empty): no check.
 pub fn check_target(cwd: &Path, expected: &str) -> Result<(), String> {
