@@ -1,0 +1,116 @@
+# The bug report form: what went wrong, the steps that show it, and what should have happened instead. The answers become
+# the issue's body, one heading per field, in this order, so a person or an agent can read the issue field by field.
+name: Bug report
+description: Something is broken, crashes, or does not do what the docs or the board say it does.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        One bug per issue. Fill in every field marked required. If an agent wrote this report, name it under Details.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: The part of herdr-projects the bug is in. Pick the closest one.
+      options:
+        - "Board: the screen, keys and panels (crates/board)"
+        - "Task flow: plan, delegate, review, finish, merge (crates/flow)"
+        - "Core: store, settings, agents, herdr calls (crates/core)"
+        - "Command line and made pages (src/)"
+        - "Install, update or the herdr plugin (bin/run.sh, scripts/)"
+        - "Docs"
+        - "Not sure"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: herdr-projects version
+      description: "The release tag it was installed from (for example v0.2.0), or the commit: run git rev-parse --short HEAD in its checkout."
+      placeholder: "v0.2.0 or 4a351c7b"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows
+        - Linux
+        - "Other (say so under Details)"
+    validations:
+      required: true
+  - type: input
+    id: herdr
+    attributes:
+      label: Herdr version
+      description: "Herdr 0.9.3 or newer; 0.9.4 on Windows."
+      placeholder: "0.9.4"
+    validations:
+      required: true
+  - type: dropdown
+    id: agent
+    attributes:
+      label: Agent program the task ran with
+      description: "Choose Not applicable when the bug is in the board itself, not in an agent's work."
+      options:
+        - Claude Code
+        - Codex
+        - pi
+        - "oh-my-pi (omp)"
+        - "Other (say so under Details)"
+        - Not applicable
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Numbered, one action per step, from the start. Say what you typed, clicked or ran.
+      placeholder: |
+        1. Add a task called "Test"
+        2. Press ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+      description: What should happen after the last step.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual
+      description: What happens instead. Paste the exact text on the screen or the error message, not a description of it.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screen text
+      description: "Optional. Paste into a code block. Remove secrets, tokens and private repository names first."
+      render: shell
+  - type: input
+    id: task
+    attributes:
+      label: Task id
+      description: "Optional. If the bug is about one task on the board, its id (for example hsw/134)."
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: "Optional. What you tried, what you think causes it, and the agent that wrote this report, if one did."
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched the existing issues and this bug is not among them
+          required: true
+        - label: This issue describes one bug
+          required: true
+        - label: I removed secrets, tokens and private details from it
+          required: true
