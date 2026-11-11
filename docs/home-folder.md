@@ -9,7 +9,7 @@
     tasks/<repo>/<n>/        one folder per task: task.json, inbox.jsonl, closing-note.md, artifacts/
     coordinator/<session>/   the Coordinator's saved state, and chat/, the folder it starts in
     automations/             the automations, their firings, the board events counted already (docs/automations.md)
-    bin/herdr-projects      the command agents are handed, by its full path
+    bin/herdr-wingman      the command agents are handed, by its full path
     conflicts.jsonl          one line per conflict with main, once repaired (docs/how-work-gets-done.md)
     locks/ stamps/ *.json *.log   the board's own bookkeeping
   reports/      pages and reports an agent made for you that belong in no repo, one folder per task
@@ -67,9 +67,9 @@ a `closing-1.md` beside `data` and `settings` comes from. Now:
 
 ## What stays outside it
 
-- **The how-to file** in each agent program's own skills folder (`~/.claude/skills/herdr-projects` and the others), and
+- **The how-to file** in each agent program's own skills folder (`~/.claude/skills/herdr-wingman` and the others), and
   **the marked blocks** in Herdr's `config.toml`. They have to be where those programs read them.
-  `herdr-projects remove-extras` takes them out ([installing](install.md)).
+  `herdr-wingman remove-extras` takes them out ([installing](install.md)).
 - **The trust mark for a repo**, in the agent program's own settings (`~/.claude.json`, `~/.codex/config.toml`; pi's
   for each task's worktree in `~/.pi/agent/trust.json`).
 - **This repo's own test runner** keeps what already passed in `~/.cache/herdr-projects-check` ([testing](testing.md)).

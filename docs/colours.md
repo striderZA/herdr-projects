@@ -44,7 +44,7 @@ theme's dark or light one), or one of Herdr's themes by name: `catppuccin`, `cat
 - **Herdr opened from another machine (`herdr --remote`).** Herdr's screen is then painted by its client, with the config
   of the machine the client runs on, and Herdr passes neither that config nor its theme to the server the board runs on.
   If that machine's config names another theme, Herdr shows that theme around a board in this machine's. Set
-  `board.theme` to that theme's name (`herdr-projects set board.theme nord`), or give both machines the same `[theme]`.
+  `board.theme` to that theme's name (`herdr-wingman set board.theme nord`), or give both machines the same `[theme]`.
   A plain `ssh` to this machine with Herdr started here is not this case: client and server are on one machine, and the
   board matches.
 

@@ -13,7 +13,7 @@ body:
     id: area
     attributes:
       label: Area
-      description: The part of herdr-projects the change is in. Pick the closest one.
+      description: The part of herdr-wingman the change is in. Pick the closest one.
       options:
         - "Board: the screen, keys and panels (crates/board)"
         - "Task flow: plan, delegate, review, finish, merge (crates/flow)"

@@ -1,11 +1,11 @@
-# Working on herdr-projects
+# Working on herdr-wingman
 
 Several agents change this repo at once. Before you add or change anything, look at the map: it says which file
 holds what, so that two tasks do not edit the same file.
 
 - Build the program once: `cargo build --profile quick` (the workspace setup, `scripts/setup.sh`, does it for you,
-  through the build cache every worktree shares). It is then `./target/quick/herdr-projects`.
-- `./target/quick/herdr-projects docs --where` prints all of the map; `… docs --where crates/board/src/board/view` only
+  through the build cache every worktree shares). It is then `./target/quick/herdr-wingman`.
+- `./target/quick/herdr-wingman docs --where` prints all of the map; `… docs --where crates/board/src/board/view` only
   that folder.
 - It is also a page in your own folder, `docs/where-things-live.md`, written by the workspace setup and by
   `npm run check`. It is not in git: never commit it. The tests are one file per area (`ls tests`), all of them
@@ -45,7 +45,7 @@ command that runs the tests.
 - **In a list many tasks add to, one entry per line (or per block), placed beside the entries it belongs with**, never
   at the end: two additions at the end always conflict.
 - **Never edit a made table by hand**: what is between the `made:` lines in `docs/keys.md` and `docs/settings.md`.
-  Change the code; `npm run check` writes the table when it is out of date and says so (`herdr-projects docs` does
+  Change the code; `npm run check` writes the table when it is out of date and says so (`herdr-wingman docs` does
   the same): commit what it wrote. A merge conflict in a made table is settled the same way: run the command, do not
   pick lines.
 - **A task's words go in the `docs/` page of its own topic, and only there.** A new topic is a new page. A page that
@@ -60,7 +60,7 @@ command that runs the tests.
 
 One command runs tests, for everyone: `npm run check` (`npm test` is the same; both run `scripts/check.sh`). It builds
 the program with the `quick` profile, writes the made tables when they are out of date, checks the repo's own rules
-(`herdr-projects docs --guard`: file sizes, the comment at the top, chords only in the keys' table, no made table out
+(`herdr-wingman docs --guard`: file sizes, the comment at the top, chords only in the keys' table, no made table out
 of date) and runs the tests, in several processes at once (`scripts/run-tests.sh`). It remembers what passed for this
 exact code (every file of the folder, committed or not, and the compiler), and shares that with the reviewer and the
 board: asked again, it answers at once.

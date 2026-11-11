@@ -170,7 +170,7 @@ impl FakeHerdr {
                 let np = st.i("nextP"); st["nextP"] = json!(np + 1);
                 let q = json!({ "pane_id": format!("{wid}:board"), "workspace_id": wid, "tab_id": t.at("tab_id"), "terminal_id": format!("term_{np}"), "cwd": st["workspaces"][0].at("cwd"), "agent": Value::Null, "label": "Work board" });
                 arr(&mut st, "panes").push(q.clone());
-                return ok(json!({ "type": "plugin_pane_opened", "plugin_pane": { "entrypoint": "board", "plugin_id": "herdr-projects", "pane": Self::pane_out(&q) } }));
+                return ok(json!({ "type": "plugin_pane_opened", "plugin_pane": { "entrypoint": "board", "plugin_id": "herdr-wingman", "pane": Self::pane_out(&q) } }));
             }
             ("plugin", "list") => return ok(json!({ "type": "plugin_list", "plugins": [] })),
             ("integration", "status") => return out(&st.s("integrations").to_string()), // what a test says of herdr's integrations

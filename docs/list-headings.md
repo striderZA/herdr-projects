@@ -6,7 +6,7 @@ status.
 
 ```
 ▾ Jaco-Desktop  2 projects · 4 tasks
-  ▾ herdr-projects · HSW
+  ▾ herdr-wingman · HSW
     ◐ HSW-151 Rewrite the board in Rust on Ratatui       47%   3h
     ○ HSW-179 Remove the "To: Coordinator" label      1h ago
   ▾ open-crm · CRM
@@ -25,7 +25,7 @@ it holds, open or folded (`9 projects · 30 tasks`), and folds the whole list aw
 ## Repo headings
 
 - **A repo's heading** is its name in normal weight, in the base colour of the task titles under it, with its key beside
-  it, dimmed (`herdr-projects · HSW`). It is never quieter than its tasks, in any theme, so a list of several repos reads
+  it, dimmed (`herdr-wingman · HSW`). It is never quieter than its tasks, in any theme, so a list of several repos reads
   as several blocks. It has no rule.
 - **The repo the board is in comes first.**
 - A repo with nothing that matches has no heading while a filter is on, or in the archive.
@@ -33,7 +33,7 @@ it holds, open or folded (`9 projects · 30 tasks`), and folds the whole list aw
 ## Folding
 
 - **`←` on a heading folds it.** Its tasks hide, its caret turns to `▸`, and it says how many tasks it holds
-  (`▸ open-crm  4 tasks`), and how many automations where it holds some (`▸ herdr-projects  7 tasks, 1 automation`,
+  (`▸ open-crm  4 tasks`), and how many automations where it holds some (`▸ herdr-wingman  7 tasks, 1 automation`,
   [automations](automations.md)). `→` unfolds it. `←` on a task's row goes to its heading.
 - **`Enter` on a heading folds it and unfolds it too**; on a task's row it does nothing. `Alt+O` goes into a row's
   agent: on a project's row or the top row its coordinator, on a task its agent.

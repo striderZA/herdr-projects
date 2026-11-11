@@ -56,8 +56,8 @@ it.
 It is not under `ready to approve` but under `needs you`, as `Review failed · 1 critical, 1 major`. Its hints offer
 sending the review back first, then `merge this task anyway`.
 
-The guard is in the approve action itself, not only in the question: `herdr-projects approve <id>` (and so the
-Coordinator) refuses such work and says what the review found. `herdr-projects approve <id> --anyway` merges it all the
+The guard is in the approve action itself, not only in the question: `herdr-wingman approve <id>` (and so the
+Coordinator) refuses such work and says what the review found. `herdr-wingman approve <id> --anyway` merges it all the
 same.
 
 ## Closing the board
@@ -150,7 +150,7 @@ themselves, and the `Alt` keys are the ones you press all the time. Give a key y
 the error when you mistype one), then `=`, then the chord.
 
 ```
-herdr-projects set board.keys "chatMessage=ctrl+g, chatScrollUp=ctrl+up, chatScrollDown=ctrl+down"
+herdr-wingman set board.keys "chatMessage=ctrl+g, chatScrollUp=ctrl+up, chatScrollDown=ctrl+down"
 ```
 
 - **The key then answers to your chord only.** Its old chord does nothing. The `?` menu, the hint line and the board's
@@ -161,14 +161,14 @@ herdr-projects set board.keys "chatMessage=ctrl+g, chatScrollUp=ctrl+up, chatScr
 - **A plain character only for a key that is one already** (`talk`, `menu`, `sayYes`, `sayNo`): any other would be typed
   into the text box. The text box's own keys (`newline`) cannot be moved.
 - **It is yours only**: never for one repo, and never from a repo's own file.
-- `herdr-projects unset board.keys` gives every key its own chord back. A mistake made by hand in your settings file
-  counts for nothing: that key keeps its own chord, and `herdr-projects show` says why.
+- `herdr-wingman unset board.keys` gives every key its own chord back. A mistake made by hand in your settings file
+  counts for nothing: that key keeps its own chord, and `herdr-wingman show` says why.
 
 The tables below always show the chords the board comes with.
 
 ## All the keys
 
-<!-- made:keys Made by `herdr-projects docs` from crates/flow/src/board/keys.rs. Do not edit between these two lines. -->
+<!-- made:keys Made by `herdr-wingman docs` from crates/flow/src/board/keys.rs. Do not edit between these two lines. -->
 **Plain keys**
 
 | Key | Does |
@@ -195,7 +195,7 @@ The tables below always show the chords the board comes with.
 | `Ctrl+A` | archive the selected task, or restore it from the archive. Archiving closes its space (its agent ends) and frees its temporary files; its worktree, branch and history stay. Restoring starts nothing. On a project's row (a repo's heading, grouped by repo, `Alt+S`): archive the whole project with its tasks, after a yes when one of them works, waits or is to do; in the archive, on an archived project's heading: restore it with its tasks as they were |
 | `Ctrl+P` | pin the selected row, or unpin it: a task or a project's row. Nothing moves: the row gets a yellow pin mark `★` and shows under Pinned, the last filter on the filter row (`Tab`) ([pinned.md](pinned.md)) |
 | `Ctrl+D` | open the selected task's link in the browser: its report when it has one ([research.md](research.md#where-a-report-goes)), else its pull request. It opens with this machine's own opener (`xdg-open` on Linux with a display, `cmd start` on Windows). Where nothing can open it (no opener, ssh without a display) it copies the link instead (OSC 52, as the board's copy does, [mouse.md](mouse.md)) and says so. On a task with neither it does nothing |
-| `Ctrl+E` `Ctrl+U` | the selected task's settings, full screen: every work setting by its name and its value. `↑` `↓` move to a row; `Enter` changes it (a switch or a choice goes to its next value, anything else is typed and saved with `Enter`); rows set for this task only are marked `*` (where any other value comes from is `herdr-projects show <id>`'s). `Ctrl+U` puts the selected row back to what it would be without this task's own answer. `Esc` or `Ctrl+E` again goes back ([settings.md](settings.md)). On an automation's row: the automation's own settings, the same page. On a coordinator's row (a project's row or the top row stands for its coordinator): that coordinator's own settings first (`coordinator.*`), then your own settings, which every task starts from (on a repo's heading: your entry for that repo), changed as `herdr-projects set` changes them |
+| `Ctrl+E` `Ctrl+U` | the selected task's settings, full screen: every work setting by its name and its value. `↑` `↓` move to a row; `Enter` changes it (a switch or a choice goes to its next value, anything else is typed and saved with `Enter`); rows set for this task only are marked `*` (where any other value comes from is `herdr-wingman show <id>`'s). `Ctrl+U` puts the selected row back to what it would be without this task's own answer. `Esc` or `Ctrl+E` again goes back ([settings.md](settings.md)). On an automation's row: the automation's own settings, the same page. On a coordinator's row (a project's row or the top row stands for its coordinator): that coordinator's own settings first (`coordinator.*`), then your own settings, which every task starts from (on a repo's heading: your entry for that repo), changed as `herdr-wingman set` changes them |
 | `Ctrl+Z` | undo: bring back a draft that was put away, or take the last archiving back |
 | `Ctrl+F` | find: type, and the list shows only the tasks that match, archived ones too. `Enter` keeps the filter, `Esc` leaves find; `Esc` on the list clears a filter that is kept |
 | `Ctrl+K` | only while a remote view holds the board's terminal at another size than herdr shows it (the line at the top says so): end that view, so the board has its own size again ([board-size.md](board-size.md)) |

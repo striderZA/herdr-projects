@@ -1,5 +1,5 @@
 == the list
- herdr-projects  proj
+ herdr-wingman  proj
  All 18   Needs 5   Working 9   Ready 1   To do 2   Done 1
    ▾ working
    ◐ #2     Max length for task titles
@@ -20,7 +20,7 @@
 ────────────────────────────────────────────────────────────
   alt+o open this task's agent · ? all keys
 == the task beside it
- herdr-projects  proj
+ herdr-wingman  proj
  All 18   Needs 5   Working 9   Ready 1   To do 2   Done 1
    ▾ working
    ◐ #2     Max length for task titles
@@ -83,7 +83,7 @@
 ────────────────────────────────────────────────────────────
   ↑↓ pick a key · enter press it · esc close the menu
 == a draft
- herdr-projects  proj
+ herdr-wingman  proj
  All 18   Needs 5   Working 9   Ready 1   To do 2   Done 1
    ▾ working
    ◐ #2     Max length for task titles

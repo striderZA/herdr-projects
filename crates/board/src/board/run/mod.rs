@@ -30,7 +30,7 @@ impl Run {
 }
 fn spawn_job(tx: &Sender<Msg>, j: crate::board::job::Job) { let tx = tx.clone(); std::thread::spawn(move || { let d = crate::board::job::run(j); let _ = tx.send(Msg::Ev(Event::Done(d))); }); }
 pub fn open_board(folder: &std::path::Path) -> i32 {
-    if let Some(why) = crate::doctor::plugin::too_old_here() { eprintln!("herdr-projects: {why}. Update Herdr, then restart its server."); return 1; }
+    if let Some(why) = crate::doctor::plugin::too_old_here() { eprintln!("herdr-wingman: {why}. Update Herdr, then restart its server."); return 1; }
     let (mut s, theme, named) = start::prepare(folder);
     let (tx, rx) = channel::<Msg>();
     let wants = Arc::new(Mutex::new(Wants { ids: vec![s.sel.clone()], cwd: s.ctx.cwd.clone(), own_pane: place::own_name(), coord: String::new(), mine: None, looks: vec![], skills: String::new() }));
@@ -54,7 +54,7 @@ pub fn open_board(folder: &std::path::Path) -> i32 {
         let _ = terminal.draw(|f| {
             let area = f.area();
             let drawn = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| screen(&mut s, &theme, area.width as usize, area.height as usize)));
-            let lines = match drawn { Ok(sc) => { at = sc.cursor; sc.lines } Err(_) => vec![crate::shown::ink::Inked::plain(" herdr-projects view error"), crate::shown::ink::Inked::plain(format!(" press {} to close", crate::board::keys::key_name("back")))] };
+            let lines = match drawn { Ok(sc) => { at = sc.cursor; sc.lines } Err(_) => vec![crate::shown::ink::Inked::plain(" herdr-wingman view error"), crate::shown::ink::Inked::plain(format!(" press {} to close", crate::board::keys::key_name("back")))] };
             links = draw::draw(&theme, &lines, f.buffer_mut());
             sel.capture(f.buffer_mut());
             sel.paint(f.buffer_mut());

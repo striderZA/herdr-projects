@@ -185,7 +185,7 @@ pub fn pipeline(id: &str, g: &mut Guard, text: &str, keep_intent: bool, reason: 
             // As long as `merge.pushTimeout` allows: a repo's pre-push hook may run its tests.
             let limit = ch.s("merge.pushTimeout").to_string();
             let most = match ms(&limit) { 0 => u64::MAX, l => l as u64 };
-            git_slow(tp, &["push", "-u", "--force-with-lease", "origin", t.s("branch")], most).map_err(|e| if e.msg.contains(TIMED_OUT) { crate::err::Error::new(format!("{} (merge.pushTimeout): a slow pre-push hook? Raise it with herdr-projects set merge.pushTimeout 10m --repo {}", e.msg, t.s("repo"))) } else { e })?;
+            git_slow(tp, &["push", "-u", "--force-with-lease", "origin", t.s("branch")], most).map_err(|e| if e.msg.contains(TIMED_OUT) { crate::err::Error::new(format!("{} (merge.pushTimeout): a slow pre-push hook? Raise it with herdr-wingman set merge.pushTimeout 10m --repo {}", e.msg, t.s("repo"))) } else { e })?;
             let ph = git_out(tp, &["rev-parse", &format!("refs/remotes/origin/{}", t.s("branch"))])?;
             g.set(|t| t.put("prHead", ph.clone()))?;
             let mut url = t.t("pr");

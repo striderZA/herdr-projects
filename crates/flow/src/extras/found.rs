@@ -22,6 +22,6 @@ pub fn bound_key(text: &str) -> String {
 }
 /// A file that does not parse: the binding in its `[[keys.command]]` spelling.
 fn bound_key_by_eye(text: &str) -> String {
-    let Some(m) = crate::re!(r#"\[\[keys\.command\]\][^\[]*?command\s*=\s*"herdr-projects\.open(?:-windows)?""#).find(text) else { return String::new() };
+    let Some(m) = crate::re!(r#"\[\[keys\.command\]\][^\[]*?command\s*=\s*"herdr-wingman\.open(?:-windows)?""#).find(text) else { return String::new() };
     crate::re!(r#"(?m)^\s*key\s*=\s*"([^"]+)""#).captures(m.as_str()).map(|c| c[1].to_string()).unwrap_or_default()
 }

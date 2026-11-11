@@ -1,5 +1,5 @@
 //! A Claude Code that an older board started in its own plan mode presents its plan (kept for one release): the board
-//! takes it there, and the tool that would ask in the terminal is refused. `herdr-projects plan-written` is run by the
+//! takes it there, and the tool that would ask in the terminal is refused. `herdr-wingman plan-written` is run by the
 //! hook that board passed at launch (Claude Code's PermissionRequest on ExitPlanMode, the question that would be asked
 //! in the terminal), inside the agent's turn. It saves the plan as the task's plan file and answers the question with
 //! Claude Code's structured `deny` on stdout, whose message tells the agent to stop: Claude Code shows it as "Denied by

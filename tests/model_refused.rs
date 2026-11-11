@@ -95,7 +95,7 @@ fn a_refused_model_with_no_retry_left_waits_for_you_with_the_reason_and_the_next
     assert_eq!((f.s("title"), f.at("agentCanFix"), f.at("auth")), ("Model can't be used", &json!(false), &json!(false)));
     assert!(f.s("detail").starts_with("gpt-6.1 can't be used with your ChatGPT sign-in. The board gave codex no model: that one is codex's own default (`model` in "), "{}", f.s("detail"));
     assert!(f.s("detail").contains("Its error:\n{\"type\":\"error\",\"status\":400"), "{}", f.s("detail"));
-    assert!(f.s("next").contains(&format!("or choose one for this task: herdr-projects set worker.agent codex/gpt-6.1-sol --task {id}. Then press ")), "{}", f.s("next"));
+    assert!(f.s("next").contains(&format!("or choose one for this task: herdr-wingman set worker.agent codex/gpt-6.1-sol --task {id}. Then press ")), "{}", f.s("next"));
     let pane = w.state().arr("panes").iter().find(|p| p.s("pane_id") == t.at("link").s("pane")).cloned().unwrap();
     assert!(pane.at("agent").is_null(), "the program is ended, so that a retry starts it again: {pane}");
     // You choose one it can use, and retry: it starts again on that one.

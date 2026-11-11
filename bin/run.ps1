@@ -1,8 +1,8 @@
 # herdr runs every plugin command through this file on Windows, with its server's environment (which may lack the user's PATH).
 # It mirrors bin/run.sh step for step, with the same messages and exit codes. It runs the program, the first of:
-#   1. the one built from this checkout (target\release\herdr-projects.exe), when no source file is newer than it;
-#   2. the downloaded one for this platform, bin\herdr-projects-windows-x86_64.exe, when it is this checkout's version
-#      (Cargo.toml) or newer (`herdr-projects update` puts a newer one there); its version is in the .version file
+#   1. the one built from this checkout (target\release\herdr-wingman.exe), when no source file is newer than it;
+#   2. the downloaded one for this platform, bin\herdr-wingman-windows-x86_64.exe, when it is this checkout's version
+#      (Cargo.toml) or newer (`herdr-wingman update` puts a newer one there); its version is in the .version file
 #      beside it, read without running it;
 #   3. that file, downloaded now from the GitHub release of this checkout's version: its checksum checked, renamed into
 #      place in one step, one download at a time (a second start waits for the first);
@@ -15,7 +15,7 @@
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $root = Split-Path -Parent $here
 
-function Say([string]$msg) { [Console]::Error.WriteLine("herdr-projects: $msg") }
+function Say([string]$msg) { [Console]::Error.WriteLine("herdr-wingman: $msg") }
 
 $rest = @($args)
 $fetchOnly = $false
@@ -33,7 +33,7 @@ function Sha256Of([string]$file) {
   finally { $stream.Dispose(); $sha.Dispose() }
 }
 
-$built = Join-Path $root 'target\release\herdr-projects.exe'
+$built = Join-Path $root 'target\release\herdr-wingman.exe'
 function Fresh {
   if (-not (Test-Path -LiteralPath $built)) { return $false }
   $when = (Get-Item -LiteralPath $built).LastWriteTime
@@ -52,10 +52,10 @@ if (Test-Path -LiteralPath $cargo) {
 }
 $os = 'windows'
 $arch = switch ($env:PROCESSOR_ARCHITECTURE) { 'AMD64' { 'x86_64' } default { '' } }
-$name = "herdr-projects-$os-$arch"
+$name = "herdr-wingman-$os-$arch"
 $prog = Join-Path $here "$name.exe"
 # The releases: HERDR_PROJECTS_RELEASES, else those of the repo this checkout was cloned from (its git origin).
-$repo = 'striderZA/herdr-projects'
+$repo = 'striderZA/herdr-wingman'
 try { $origin = (& git -C $root remote get-url origin 2>$null | Out-String); if ($LASTEXITCODE -eq 0 -and $origin -match '[/@]github\.com[:/]([^/\s]+/[^/\s]+?)(\.git)?/?\s*$') { $repo = $Matches[1] } } catch { }
 $base = if ($env:HERDR_PROJECTS_RELEASES) { $env:HERDR_PROJECTS_RELEASES } else { "https://github.com/$repo/releases" }
 $base = $base.TrimEnd('/')
@@ -136,7 +136,7 @@ function Download {
   Set-Content -LiteralPath (Join-Path $lock 'pid') -Value $PID
   $tmp = Join-Path $here ".$name.$PID.download"
   $url = "$base/download/v$want/$name.exe"
-  Say "downloading herdr-projects $want for $os $arch (once)"
+  Say "downloading herdr-wingman $want for $os $arch (once)"
   $ok = $false
   try {
     if (-not (Fetch $url $tmp) -or -not (Fetch "$url.sha256" "$tmp.sha256")) {
@@ -185,7 +185,7 @@ if (Test-Path -LiteralPath $built) { Say "using $built, which is older than its 
 if (Test-Path -LiteralPath $prog) {
   $v = ''
   if (Test-Path -LiteralPath "$prog.version") { $v = (Get-Content -LiteralPath "$prog.version" -Raw).Trim() }
-  Say "using the downloaded herdr-projects $v, not $want"
+  Say "using the downloaded herdr-wingman $v, not $want"
   Run-Program $prog
 }
 exit 1

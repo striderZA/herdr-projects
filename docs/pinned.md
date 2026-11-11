@@ -5,13 +5,13 @@ nothing: the row stays where it always sorts and gets a small yellow star, `★`
 filter on the filter row, shows only what you pinned, as `Needs you` shows only what needs you.
 
 ```
- herdr-projects  proj · PRJ
+ herdr-wingman  proj · PRJ
  All 299   Coordinators 7   Needs you 1   Working 5   Ready 0   To do 11   Done 283   Automations 2   Pinned 2
  ○ ▾ Jaco-Desktop  2 projects · 4 tasks
    ○ ▾ gtm · GTM ★
      ? GTM-14  Pick the ICP                                       2m ago
      ○ GTM-15  Write the first sequence                            1h ago
-   ○ ▾ herdr-projects · HP
+   ○ ▾ herdr-wingman · HP
      ◐ HP-182  Pin projects ★                                     ██░░ 40%  5m
 ```
 
@@ -21,9 +21,9 @@ filter on the filter row, shows only what you pinned, as `Needs you` shows only 
   Coordinators). Its row says `Pinning…` while it goes ([under way](under-way.md)).
 - **Nothing moves.** The task stays in its group, the project in its place; the selection stays on the row. The mark is
   the same for both, dimmed as a tag is.
-- **From the shell:** `herdr-projects pin <id | project>` and `herdr-projects unpin …`. A task by its id or tag, a
+- **From the shell:** `herdr-wingman pin <id | project>` and `herdr-wingman unpin …`. A task by its id or tag, a
   project by its name or its key. `pin` pins whatever it was, `unpin` unpins.
-  `herdr-projects list --pinned` lists what is pinned: the projects and the tasks.
+  `herdr-wingman list --pinned` lists what is pinned: the projects and the tasks.
 - A pinned done task is never archived by `archive --done`. An archived task or project cannot be pinned; a pinned
   project that is archived leaves the Pinned filter until it is restored.
 

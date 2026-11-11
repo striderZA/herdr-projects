@@ -43,15 +43,15 @@ Merged into main. Ended what it started: node …/vite.js (pid 81234). Still run
 (pid 81240), in /home/me/wt/proj/feat-12-x, from another of its panes.
 ```
 
-`herdr-projects details <id>` lists what still runs under `stillRunning`. Removing a task (`clear`) says the same in
+`herdr-wingman details <id>` lists what still runs under `stillRunning`. Removing a task (`clear`) says the same in
 its answer. A worktree that is kept ends nothing. Archive keeps everything, so it ends nothing either: its line only
 names what still runs from the worktree it keeps (`Still running, end it yourself: node …/vite.js (pid 81234), in …`).
 
 ## The sweep
 
 The sweep removes what tasks that ended before left: it runs when the board opens (when the last sweep is over an hour
-old), once a day by itself, before a start on a nearly full disk, and when you run `herdr-projects sweep`, which says
-what it removed (`herdr-projects sweep --dry` only says what would go). What still runs from a folder it takes (a dev server left behind) is stopped first. It takes:
+old), once a day by itself, before a start on a nearly full disk, and when you run `herdr-wingman sweep`, which says
+what it removed (`herdr-wingman sweep --dry` only says what would go). What still runs from a folder it takes (a dev server left behind) is stopped first. It takes:
 
 - the temporary folders of done and archived tasks whose agent is gone (or open and quiet for an hour, as above);
 - the folders an agent's program kept for a worktree of the board's that is gone;
@@ -78,10 +78,10 @@ device":
 
 ```
 Disk nearly full on vm-str: 778 MB free on /; this task starts once 5.0 GB is free (board.diskFree). Free some space:
-herdr-projects sweep, and herdr-projects doctor lists more that can go.
+herdr-wingman sweep, and herdr-wingman doctor lists more that can go.
 ```
 
-It starts by itself once there is room. `herdr-projects doctor` lists each disk, how much is free, and the
+It starts by itself once there is room. `herdr-wingman doctor` lists each disk, how much is free, and the
 leftovers it could clean.
 
 ### A small disk
@@ -92,10 +92,10 @@ needs 1.7 GB free, and its line says why it is less than `board.diskFree`:
 
 ```
 Disk nearly full on vm-str: 1.2 GB free on /tmp; this task starts once 1.7 GB is free (/tmp is only 3.4 GB in all, so
-it needs 1.7 GB free, not the 5.0 GB of board.diskFree). Free some space: herdr-projects sweep, …
+it needs 1.7 GB free, not the 5.0 GB of board.diskFree). Free some space: herdr-wingman sweep, …
 ```
 
-`herdr-projects doctor` measures such a disk the same way, so the two never disagree.
+`herdr-wingman doctor` measures such a disk the same way, so the two never disagree.
 
 ### What a waiting task says
 
@@ -105,7 +105,7 @@ A task that waits for room keeps its place in the queue, and says that it waits 
   on the right;
 - the task panel's State line, `list`, `details` and the line when you start it: `waiting for disk space, Q#1`;
 - herdr's sidebar: `waiting for disk space`, with its place;
-- `herdr-projects doctor`, beside the disk: `Only 1.2 GB free on /tmp, which holds temporary files: HP-12 waits for
+- `herdr-wingman doctor`, beside the disk: `Only 1.2 GB free on /tmp, which holds temporary files: HP-12 waits for
   room on /tmp, and new tasks wait too`.
 
 A task that waits for a slot of `board.agents` still says `waiting for a free slot, Q#2`.

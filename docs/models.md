@@ -5,8 +5,8 @@ its own default. Effort (how hard the agent thinks) is a setting of its own. A w
 set it, with the ones that work.
 
 ```
-herdr-projects models            every program, a few names each, and its effort levels
-herdr-projects models codex      every name codex takes, written as a setting writes them, and its effort levels
+herdr-wingman models            every program, a few names each, and its effort levels
+herdr-wingman models codex      every name codex takes, written as a setting writes them, and its effort levels
 ```
 
 Every agent the board starts has a **program**, and if you want, a **model** and an **effort**. You choose them per role:
@@ -16,15 +16,15 @@ attempts (`attempts.by`).
 ## Examples
 
 ```
-herdr-projects set worker.agent codex/gpt-6.1-sol          you, for every task
-herdr-projects set worker.effort high
-herdr-projects set reviewer.agent claude/opus --repo my-app  one repo
-herdr-projects delegate 12 --worker.agent pi/anthropic/claude-opus-5-5 --worker.effort medium   one task
-herdr-projects coordinator new --agent claude/sonnet --effort low   the next Coordinator only
+herdr-wingman set worker.agent codex/gpt-6.1-sol          you, for every task
+herdr-wingman set worker.effort high
+herdr-wingman set reviewer.agent claude/opus --repo my-app  one repo
+herdr-wingman delegate 12 --worker.agent pi/anthropic/claude-opus-5-5 --worker.effort medium   one task
+herdr-wingman coordinator new --agent claude/sonnet --effort low   the next Coordinator only
 ```
 
 Or ask the Coordinator in your own words ("do this one with Opus on high effort", "let Codex review it"): it looks the
-names up with `herdr-projects models` and sets them the same way. It writes only a name from that list ("sol 6.1" is
+names up with `herdr-wingman models` and sets them the same way. It writes only a name from that list ("sol 6.1" is
 `gpt-6.1-sol`, or it asks you), and when you name no model it gives none: the program then uses its own default. Where a
 value comes from when several places set it: [settings](settings.md).
 
@@ -35,7 +35,7 @@ each program names its models its own way:
 
 | Program | Written as | Its names |
 |---|---|---|
-| `claude` | `claude/opus`, `claude/claude-opus-5-5`, `claude/claude-opus-5-5[1m]` | a short name (`default`, `fable`, `opus`, `sonnet`, `haiku`, `opusplan`: each the newest of its kind) or one of its full names (`herdr-projects models claude`) |
+| `claude` | `claude/opus`, `claude/claude-opus-5-5`, `claude/claude-opus-5-5[1m]` | a short name (`default`, `fable`, `opus`, `sonnet`, `haiku`, `opusplan`: each the newest of its kind) or one of its full names (`herdr-wingman models claude`) |
 | `codex` | `codex/gpt-6.1-sol` | what Codex lists for the account it is signed in with (its app-server's `model/list`; `codex debug models` when that cannot be asked) |
 | `pi` | `pi/anthropic/claude-opus-5-5` (its provider first), `pi/anthropic/claude-opus-5-5:high` | what `pi --list-models` lists |
 | `cursor` | `cursor/claude-opus-5-5-high`, `cursor/claude-opus-4-8[effort=high]` | what `cursor-agent models` lists; a listed model's name without its last part takes parameters in brackets |
@@ -52,7 +52,7 @@ A conversation it reopens keeps the model it has. OpenCode 1 is given `-m <model
 Not found out later, when the agent fails to start. The answer says what the program takes, and the nearest name:
 
 ```
-$ herdr-projects set worker.agent codex/sol-6.1
+$ herdr-wingman set worker.agent codex/sol-6.1
 worker.agent: codex has no model "sol-6.1" for your ChatGPT sign-in (pro plan). Did you mean gpt-6.1-sol? It takes
 gpt-6.1-sol, gpt-6-astra, gpt-6-sol, … (codex's own list for that sign-in). Write it after the program: codex/gpt-6.1-sol.
 ```
@@ -62,7 +62,7 @@ gpt-6.1-sol, gpt-6-astra, gpt-6-sol, … (codex's own list for that sign-in). Wr
 - **Codex's names depend on how you signed in.** A ChatGPT sign-in takes other names than an API key, and a name that is
   fine elsewhere is refused by Codex at the first turn ("The 'sol-6.1' model is not supported when using Codex with a
   ChatGPT account"). So the board asks Codex itself, through its app-server, which names this sign-in can use and which
-  sign-in it is (`herdr-projects models codex` says it). Where the app-server cannot be asked (an older Codex), it reads
+  sign-in it is (`herdr-wingman models codex` says it). Where the app-server cannot be asked (an older Codex), it reads
   `codex debug models`.
 - pi, cursor and opencode list only the models their own sign-ins and keys reach, so their lists are already yours.
 - **When the list cannot be read** (the program is installed but not logged in, offline, or its list command fails), the
@@ -83,7 +83,7 @@ that at the end of the turn and never leaves the task in the agent with only its
   codex's own default model`. The reviewer the same: the review starts again on its program's default model.
 - **The default model is refused too, or it gave none:** the task waits for you, with the reason and a name to try
   (`Agent stopped: gpt-6.1 can't be used with your ChatGPT sign-in; try gpt-6.1-sol`) and the next step in the panel:
-  choose one for the task (`herdr-projects set worker.agent codex/gpt-6.1-sol --task <id>`), or fix the program's own
+  choose one for the task (`herdr-wingman set worker.agent codex/gpt-6.1-sol --task <id>`), or fix the program's own
   default (Codex: `model` in `~/.codex/config.toml`), then `Ctrl+L` (retry). The program is ended, so the retry starts it
   again on the model as it is set then.
 
@@ -111,7 +111,7 @@ that at the end of the turn and never leaves the task in the agent with only its
 - A level the role's program (or its model) does not have is refused, with the ones it has:
 
   ```
-  $ herdr-projects set worker.effort minimal
+  $ herdr-wingman set worker.effort minimal
   worker.effort: codex has no effort "minimal": it takes low, medium, high, xhigh, max, ultra, as `codex debug models` lists them (or default, for its own).
   ```
 

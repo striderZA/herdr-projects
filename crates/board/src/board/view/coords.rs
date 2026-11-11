@@ -1,5 +1,5 @@
 //! The chat with a heading's coordinator (update/coords.rs), drawn as the Coordinator's is but under its own name
-//! ("herdr-projects coordinator") and in its own colour, as this machine reads it.
+//! ("herdr-wingman coordinator") and in its own colour, as this machine reads it.
 use super::chat::{coord_who, parts_text, Who};
 use super::talk::{with_mine, Part};
 use crate::board::state::State;

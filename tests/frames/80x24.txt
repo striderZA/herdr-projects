@@ -1,5 +1,5 @@
 == the list
- herdr-projects  proj
+ herdr-wingman  proj
  All 18   Needs 5   Working 9   Ready 1   To do 2   Done 1
    ! #12    Max length for task titles                        R#1 PR#123456   1m
             The pull request's checks fail
@@ -24,7 +24,7 @@
 ────────────────────────────────────────────────────────────────────────────────
   alt+o open this task's agent · space talk to the agent · ? all keys
 == the task beside it
- herdr-projects  proj
+ herdr-wingman  proj
  All 18   Needs 5   Working 9   Ready 1   To do 2   Done 1
    ✗ #13    Max length for task titles                                        1m
             Conflict with main
@@ -99,7 +99,7 @@
 ────────────────────────────────────────────────────────────────────────────────
   ↑↓ pick a key · enter press it · esc close the menu
 == a draft
- herdr-projects  proj
+ herdr-wingman  proj
  All 18   Needs 5   Working 9   Ready 1   To do 2   Done 1
    ! #12    Max length for task titles                        R#1 PR#123456   1m
             The pull request's checks fail

@@ -6,9 +6,9 @@ use std::collections::BTreeMap;
 pub const OFFERED: [&str; 5] = ["prefix+a", "prefix+y", "prefix+u", "prefix+i", "prefix+m"];
 /// The plugin action that opens the board, as the manifest names it on this platform: `open` runs on Linux,
 /// `open-windows` on Windows. herdr refuses an action on a platform the manifest does not list it for.
-pub fn board_action() -> &'static str { if cfg!(windows) { "herdr-projects.open-windows" } else { "herdr-projects.open" } }
+pub fn board_action() -> &'static str { if cfg!(windows) { "herdr-wingman.open-windows" } else { "herdr-wingman.open" } }
 /// Is this the board's own binding, whichever platform wrote it?
-pub fn is_board_action(command: &str) -> bool { command == "herdr-projects.open" || command == "herdr-projects.open-windows" }
+pub fn is_board_action(command: &str) -> bool { command == "herdr-wingman.open" || command == "herdr-wingman.open-windows" }
 /// The commented [[keys.command]] example's fields are no actions.
 const NOT_ACTIONS: [&str; 6] = ["key", "type", "command", "description", "width", "height"];
 pub type Defaults = BTreeMap<String, String>;

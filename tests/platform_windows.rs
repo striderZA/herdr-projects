@@ -23,7 +23,7 @@ fn within<T: Send + 'static>(secs: u64, what: &str, f: impl FnOnce() -> T + Send
 
 /// A pipe name only this test run uses.
 fn pipe_name(tag: &str) -> String {
-    format!("herdr-projects-test-{}-{tag}", std::process::id())
+    format!("herdr-wingman-test-{}-{tag}", std::process::id())
 }
 
 /// An empty folder only this test uses.

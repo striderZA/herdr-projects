@@ -30,7 +30,7 @@ fn here() -> (&'static str, &'static str) { platform().expect("the tests run on 
 fn plugin(b: &Path, version: &str) -> PathBuf {
     let p = b.join("plugin");
     write(&p.join("bin/run.sh"), &read(&Path::new(env!("CARGO_MANIFEST_DIR")).join("bin/run.sh")));
-    write(&p.join("Cargo.toml"), &format!("[package]\nname = \"herdr-projects\"\nversion = \"{version}\"\n"));
+    write(&p.join("Cargo.toml"), &format!("[package]\nname = \"herdr-wingman\"\nversion = \"{version}\"\n"));
     write(&p.join("src/main.rs"), "");
     p
 }
@@ -64,7 +64,7 @@ fn real_programs_run_sh_downloads_once_and_runs_it() {
     assert!(!run_sh(&b, &["hook"]).2.contains("downloading"));
     publish(&b, "0.3.0", "release 0.3.0");
     let (code, _, err) = run_sh(&b, &["--fetch"]);
-    assert!(code == 0 && err.contains("downloading herdr-projects 0.3.0") && !failed.exists(), "{err}");
+    assert!(code == 0 && err.contains("downloading herdr-wingman 0.3.0") && !failed.exists(), "{err}");
     let (code, out, err) = run_sh(&b, &["hook", "x y"]);
     assert_eq!((code, out.as_str()), (0, "release 0.3.0 hook x y\n"), "{err}");
     assert_eq!(read(&version_file(&prog)), "0.3.0\n");
@@ -79,13 +79,13 @@ fn real_programs_run_sh_downloads_once_and_runs_it() {
     publish(&b, "0.5.0", "release 0.5.0");
     write(&b.join(format!("rel/download/v0.5.0/{}.sha256", asset_name(here()))), &format!("{}  x\n", "0".repeat(64)));
     let (code, out, err) = run_sh(&b, &["board"]);
-    assert!(err.contains("does not match its checksum") && err.contains("using the downloaded herdr-projects 0.4.0, not 0.5.0"), "{err}");
+    assert!(err.contains("does not match its checksum") && err.contains("using the downloaded herdr-wingman 0.4.0, not 0.5.0"), "{err}");
     assert_eq!((code, out.as_str()), (0, "release 0.3.0 board\n"), "the older download still runs");
     publish(&b, "0.5.0", "release 0.5.0");
     std::fs::remove_file(&failed).unwrap(); // ten minutes later
     assert_eq!(run_sh(&b, &["board"]).1, "release 0.5.0 board\n");
     // A program built from this checkout, newer than its source, comes first; once the source changes it does not.
-    exec(&p.join("target/release/herdr-projects"), "#!/bin/sh\necho \"built $*\"\n");
+    exec(&p.join("target/release/herdr-wingman"), "#!/bin/sh\necho \"built $*\"\n");
     assert_eq!(run_sh(&b, &["board"]).1, "built board\n");
     let later = std::time::SystemTime::now() + std::time::Duration::from_secs(5);
     std::fs::File::options().write(true).open(p.join("src/main.rs")).unwrap().set_modified(later).unwrap();
@@ -103,9 +103,9 @@ fn run_sh_asks_the_repo_its_checkout_came_from() {
     let plugin = b.join("plugin");
     std::fs::create_dir_all(plugin.join("bin")).unwrap();
     std::fs::copy(Path::new(env!("CARGO_MANIFEST_DIR")).join("bin/run.sh"), plugin.join("bin/run.sh")).unwrap();
-    write(&plugin.join("Cargo.toml"), "[package]\nname = \"herdr-projects\"\nversion = \"1.2.28\"\n");
+    write(&plugin.join("Cargo.toml"), "[package]\nname = \"herdr-wingman\"\nversion = \"1.2.28\"\n");
     git(&plugin, &["init", "-q"]);
-    git(&plugin, &["remote", "add", "origin", "git@github.com:striderZA/herdr-projects.git"]);
+    git(&plugin, &["remote", "add", "origin", "git@github.com:striderZA/herdr-wingman.git"]);
     let log = b.join("calls.log");
     for tool in ["curl", "gh"] {
         exec(&b.join("shims").join(tool), &format!("#!/bin/sh\necho \"{tool} $*\" >> '{}'\nexit 22\n", log.display()));
@@ -115,6 +115,6 @@ fn run_sh_asks_the_repo_its_checkout_came_from() {
     let out = std::process::Command::new("sh").arg(plugin.join("bin/run.sh")).output().unwrap();
     set("PATH", &old);
     let calls = read(&log);
-    assert!(calls.contains("https://github.com/striderZA/herdr-projects/releases/download/v1.2.28/herdr-projects-"), "{calls}\n{}", String::from_utf8_lossy(&out.stderr));
+    assert!(calls.contains("https://github.com/striderZA/herdr-wingman/releases/download/v1.2.28/herdr-wingman-"), "{calls}\n{}", String::from_utf8_lossy(&out.stderr));
     assert!(!calls.contains("eliasstravik"), "{calls}");
 }

@@ -1,14 +1,14 @@
 //! The launcher: the command agents and hooks run, kept in the data folder with the board's environment written into it.
-//! On Unix a shell script. On Windows two files: `herdr-projects.cmd`, a batch file that cmd and PowerShell run by name
+//! On Unix a shell script. On Windows two files: `herdr-wingman.cmd`, a batch file that cmd and PowerShell run by name
 //! (they run no file without an extension, and PowerShell runs a `.exe` before a `.cmd` of the same name), and
-//! `herdr-projects`, a shell script beside it that Git Bash runs by name. Agents are given the batch file's path.
+//! `herdr-wingman`, a shell script beside it that Git Bash runs by name. Agents are given the batch file's path.
 use crate::store::files::{bin, board_env, data_dir};
 use crate::util::{shell_word, Shell};
 use std::path::{Path, PathBuf};
 
 /// Where the launcher is, without writing it (`doctor` looks at it as it is).
 pub fn launcher_file() -> PathBuf {
-    data_dir().join("bin").join(if cfg!(windows) { "herdr-projects.cmd" } else { "herdr-projects" })
+    data_dir().join("bin").join(if cfg!(windows) { "herdr-wingman.cmd" } else { "herdr-wingman" })
 }
 
 /// The launcher's files as (name, text): one shell script on Unix; on Windows the batch file and the shell script. `exe`
@@ -16,9 +16,9 @@ pub fn launcher_file() -> PathBuf {
 pub fn launcher_files(windows: bool, env: &[(String, String)], exe: &Path) -> Vec<(&'static str, String)> {
     let exe = exe.display().to_string();
     if windows {
-        vec![("herdr-projects.cmd", batch_text(env, &exe)), ("herdr-projects", sh_text(env, &exe.replace('\\', "/")))]
+        vec![("herdr-wingman.cmd", batch_text(env, &exe)), ("herdr-wingman", sh_text(env, &exe.replace('\\', "/")))]
     } else {
-        vec![("herdr-projects", sh_text(env, &exe))]
+        vec![("herdr-wingman", sh_text(env, &exe))]
     }
 }
 
@@ -66,17 +66,17 @@ fn write_if_changed(file: &Path, text: &str) {
     if have.as_deref() == Some(text) { return; }
     let dir = file.parent().unwrap_or(Path::new("."));
     let _ = std::fs::create_dir_all(dir);
-    let tmp = dir.join(format!("herdr-projects.{}.tmp", std::process::id()));
+    let tmp = dir.join(format!("herdr-wingman.{}.tmp", std::process::id()));
     let mut o = std::fs::OpenOptions::new();
     let written = crate::sys::executable_mode(o.write(true).create(true).truncate(true)).open(&tmp)
         .and_then(|mut f| std::io::Write::write_all(&mut f, text.as_bytes())).is_ok();
     if written { let _ = crate::sys::replace_file(&tmp, file); } else { let _ = std::fs::remove_file(&tmp); }
 }
 
-/// The copies of the program that an older install left beside the launcher (`herdr-projects.exe`): PowerShell runs a
+/// The copies of the program that an older install left beside the launcher (`herdr-wingman.exe`): PowerShell runs a
 /// `.exe` before the batch file, so one left there takes the command.
 pub fn stale_copies(dir: &Path) -> Vec<PathBuf> {
-    ["herdr-projects.exe"].iter().map(|n| dir.join(n)).filter(|p| std::fs::symlink_metadata(p).is_ok()).collect()
+    ["herdr-wingman.exe"].iter().map(|n| dir.join(n)).filter(|p| std::fs::symlink_metadata(p).is_ok()).collect()
 }
 
 /// Removes them. Best effort: a copy still running stays, and `doctor` names it.

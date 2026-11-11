@@ -94,7 +94,7 @@ fn a_hand_written_chord_of_the_key_that_opens_the_board_does_not_count_on_the_bo
     let w = world_with(Opts { repo: true, settings: json!({ "board.keys": "menu=alt+w, side=alt+y" }), ..Default::default() });
     let conf = sw::extras::herdr_config();
     std::fs::create_dir_all(conf.parent().unwrap()).unwrap();
-    let bind = |key: &str| std::fs::write(&conf, format!("[[keys.command]]\nkey = \"{key}\"\ntype = \"plugin_action\"\ncommand = \"herdr-projects.open\"\n")).unwrap();
+    let bind = |key: &str| std::fs::write(&conf, format!("[[keys.command]]\nkey = \"{key}\"\ntype = \"plugin_action\"\ncommand = \"herdr-wingman.open\"\n")).unwrap();
     bind("alt+w");
     assert_eq!((key_name("menu"), key_name("side")), ("?".to_string(), "alt+y".to_string()));
     assert!(!is(&Press::chord("alt+w"), K::Menu) && is(&Press::char('?'), K::Menu));

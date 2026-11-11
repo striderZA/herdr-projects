@@ -13,7 +13,7 @@ This holds for every task, [research-only](research.md) ones too:
 
 A [chat-only task](chat.md) is a conversation: **every** stop of its agent waits for you, with or without the command
 below. Nothing is ever checked, reviewed, pushed or merged for it, and it is done only when you end it (yes on the board,
-`herdr-projects finish <id>`).
+`herdr-wingman finish <id>`).
 
 ## How an agent says it waits
 
@@ -21,7 +21,7 @@ There are two ways for an agent to stop. The board tells them apart by one thing
 
 | It means | The agent | What follows |
 |---|---|---|
-| **I am waiting for you** | runs `herdr-projects report <id> --state blocked --kind <question\|permission\|auth> --msg "<why>"`, then stops | nothing: the task waits for your answer |
+| **I am waiting for you** | runs `herdr-wingman report <id> --state blocked --kind <question\|permission\|auth> --msg "<why>"`, then stops | nothing: the task waits for your answer |
 | **I am finished** | stops, with a short summary | the finish line: check, review, your approval ([how work gets done](how-work-gets-done.md)) |
 
 The board cannot read a question out of a last message, a report or a closing note. An agent that asks in plain words

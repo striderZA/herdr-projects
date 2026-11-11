@@ -35,7 +35,7 @@ pub fn low(t: &Task) -> Option<Low> {
     places(t).into_iter().filter_map(|at| { let free = free_at(&at)?; let total = total_at(&at); Some(Low { free, need: need_on(total), total, at }) })
         .filter(|l| l.free < l.need).min_by_key(|l| l.free)
 }
-/// This machine's least free space among the disks the board writes to, for `herdr-projects machines`.
+/// This machine's least free space among the disks the board writes to, for `herdr-wingman machines`.
 pub fn free_here() -> Option<u64> {
     let mut v = vec![crate::store::files::data_dir(), crate::temp::root()];
     v.extend(super::orphans::kept_roots());
@@ -46,7 +46,7 @@ pub fn free_here() -> Option<u64> {
 fn waiting_line(l: &Low) -> String {
     let on = crate::store::marks::tilde(&l.mount().display().to_string());
     let why = match l.total { Some(total) if l.need < needed() => format!("{on} is only {} in all, so it needs {} free, not the {} of board.diskFree", gb(total), gb(l.need), gb(needed())), _ => "board.diskFree".into() };
-    format!("Disk nearly full on {}: {} free on {on}; this task starts once {} is free ({why}). Free some space: herdr-projects sweep, and herdr-projects doctor lists more that can go.",
+    format!("Disk nearly full on {}: {} free on {on}; this task starts once {} is free ({why}). Free some space: herdr-wingman sweep, and herdr-wingman doctor lists more that can go.",
         crate::util::hostname(), gb(l.free), gb(l.need))
 }
 /// Before a start: room, or the sweep first (at most once in ten minutes), or the disk the task waits for.
@@ -57,6 +57,6 @@ pub fn make_room(t: &Task) -> Result<(), Low> {
 }
 /// A task that waits for room: still none (the queue leaves it where it is, and starts no runner for it).
 pub fn still_waiting(t: &Task) -> bool { t.b("diskWait") && low(t).is_some() }
-/// Put back in the queue to wait for room, with its line, and since when and for which disk (`herdr-projects doctor`
+/// Put back in the queue to wait for room, with its line, and since when and for which disk (`herdr-wingman doctor`
 /// names it beside that disk).
 pub fn wait(t: &mut Obj, l: &Low) { t.put("stage", "queued"); t.put("msg", l.line()); t.put("diskWait", json!({ "at": crate::clock::now(), "on": l.mount().display().to_string() })); }

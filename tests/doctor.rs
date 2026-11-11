@@ -1,4 +1,4 @@
-//! `herdr-projects doctor` (HP-32), on what each area found: the program and its launcher, herdr's plugin, the agent
+//! `herdr-wingman doctor` (HP-32), on what each area found: the program and its launcher, herdr's plugin, the agent
 //! programs and the disks; each problem one line with what to do, and the count at the end.
 use crate::common;
 use common::*;
@@ -14,8 +14,8 @@ fn setup(w: &World) -> Setup {
     let root = w.base.join("plugin");
     let prog = root.join("bin").join(sw::install::asset_name(sw::install::platform().unwrap()));
     program_file(&prog);
-    std::fs::write(root.join("Cargo.toml"), "[package]\nname = \"herdr-projects\"\nversion = \"1.1.0\"\n").unwrap();
-    let launcher = w.base.join("data/bin/herdr-projects");
+    std::fs::write(root.join("Cargo.toml"), "[package]\nname = \"herdr-wingman\"\nversion = \"1.1.0\"\n").unwrap();
+    let launcher = w.base.join("data/bin/herdr-wingman");
     let path = w.base.join("path");
     std::fs::create_dir_all(&path).unwrap();
     Setup { root, prog, launcher, path }
@@ -37,23 +37,23 @@ fn each_problem_is_one_line_with_what_to_do_and_the_count_ends_it() {
 fn the_launcher_must_name_the_plugin_s_own_program() {
     let w = world();
     let s = setup(&w);
-    assert_eq!(program::launcher_target(&launcher_for(Path::new("/a/it's/herdr-projects"))), Some(PathBuf::from("/a/it's/herdr-projects")));
+    assert_eq!(program::launcher_target(&launcher_for(Path::new("/a/it's/herdr-wingman"))), Some(PathBuf::from("/a/it's/herdr-wingman")));
     // Missing: what to run names the plugin's own run.sh.
     let f = program::check(&here(&s, None, true));
-    assert!(f[0].what.starts_with("herdr-projects 1.1.0, downloaded: "), "{:?}", f[0]);
+    assert!(f[0].what.starts_with("herdr-wingman 1.1.0, downloaded: "), "{:?}", f[0]);
     assert!(bad(&f)[0].contains("is missing") && bad(&f)[0].contains(&format!("{} install", s.root.join("bin").join("run.sh").display())), "{:?}", bad(&f));
     // A program that is not there.
-    let gone = s.root.join("old/herdr-projects");
+    let gone = s.root.join("old/herdr-wingman");
     assert!(bad(&program::check(&here(&s, Some(launcher_for(&gone)), true)))[0].contains("which is not there"));
     // Another program than the plugin's.
-    let other = w.base.join(format!("elsewhere/herdr-projects{}", std::env::consts::EXE_SUFFIX));
+    let other = w.base.join(format!("elsewhere/herdr-wingman{}", std::env::consts::EXE_SUFFIX));
     program_file(&other);
     let f = bad(&program::check(&here(&s, Some(launcher_for(&other)), true)));
     assert!(f[0].contains("not the plugin's program in"), "{f:?}");
     // Without herdr's word on the plugin, any program that is there will do.
     assert!(!bad(&program::check(&here(&s, Some(launcher_for(&other)), false)))[0].contains("plugin's program"));
     // The plugin's own program, built in its folder, is right too.
-    let built = s.root.join(format!("target/release/herdr-projects{}", std::env::consts::EXE_SUFFIX));
+    let built = s.root.join(format!("target/release/herdr-wingman{}", std::env::consts::EXE_SUFFIX));
     program_file(&built);
     assert!(!bad(&program::check(&here(&s, Some(launcher_for(&built)), true))).iter().any(|l| l.contains("launcher")));
 }
@@ -67,12 +67,12 @@ fn a_shell_must_find_the_launcher_on_the_path() {
     std::fs::write(&s.launcher, launcher_for(&s.prog)).unwrap();
     let f = bad(&program::check(&here(&s, Some(launcher_for(&s.prog)), true)));
     assert_eq!(f.len(), 1, "{f:?}");
-    assert!(f[0].starts_with("herdr-projects is not on your PATH → To type herdr-projects in any shell"), "{f:?}");
-    // A link to the launcher (~/.local/bin/herdr-projects) is the launcher. Unix only: on Windows a link needs
+    assert!(f[0].starts_with("herdr-wingman is not on your PATH → To type herdr-wingman in any shell"), "{f:?}");
+    // A link to the launcher (~/.local/bin/herdr-wingman) is the launcher. Unix only: on Windows a link needs
     // Developer Mode or an administrator (error 1314), so this part is gated there.
     #[cfg(unix)]
     {
-        sw::sys::symlink(&s.launcher, &s.path.join("herdr-projects")).unwrap();
+        sw::sys::symlink(&s.launcher, &s.path.join("herdr-wingman")).unwrap();
         let f = program::check(&here(&s, Some(launcher_for(&s.prog)), true));
         assert_eq!(bad(&f), Vec::<String>::new());
         assert!(f[1].what.ends_with("and a shell finds it on the PATH"), "{:?}", f[1]);
@@ -91,8 +91,8 @@ fn a_shell_must_find_the_launcher_on_the_path() {
     // without Developer Mode or an administrator (error 1314).
     #[cfg(unix)]
     {
-        std::fs::remove_file(s.path.join("herdr-projects")).unwrap();
-        program_file(&s.path.join("herdr-projects"));
+        std::fs::remove_file(s.path.join("herdr-wingman")).unwrap();
+        program_file(&s.path.join("herdr-wingman"));
         assert!(bad(&program::check(&here(&s, Some(launcher_for(&s.prog)), true)))[0].contains("comes first on your PATH"));
     }
 }
@@ -103,17 +103,17 @@ fn a_program_older_than_its_plugin_is_to_be_updated() {
     let s = setup(&w);
     std::fs::write(s.root.join("Cargo.toml"), "[package]\nversion = \"1.2.0\"\n").unwrap();
     let f = bad(&program::check(&here(&s, Some(launcher_for(&s.prog)), true)));
-    assert!(f.iter().any(|l| l == "This program is 1.1.0, older than the plugin's 1.2.0 → Run: herdr-projects update 1.2.0"), "{f:?}");
+    assert!(f.iter().any(|l| l == "This program is 1.1.0, older than the plugin's 1.2.0 → Run: herdr-wingman update 1.2.0"), "{f:?}");
 }
 
 fn ours(enabled: bool, root: &Path, local: bool) -> serde_json::Value {
-    json!({ "plugin_id": "herdr-projects", "enabled": enabled, "plugin_root": root.display().to_string(), "version": "1.1.0", "min_herdr_version": "0.9.3", "source": { "kind": if local { "local" } else { "github" } } })
+    json!({ "plugin_id": "herdr-wingman", "enabled": enabled, "plugin_root": root.display().to_string(), "version": "1.1.0", "min_herdr_version": "0.9.3", "source": { "kind": if local { "local" } else { "github" } } })
 }
 #[test]
 fn herdr_must_run_the_plugin_enabled_from_a_folder_that_is_there() {
     let w = world();
     let s = setup(&w);
-    std::fs::write(s.root.join("herdr-plugin.toml"), "id = \"herdr-projects\"\n").unwrap();
+    std::fs::write(s.root.join("herdr-plugin.toml"), "id = \"herdr-wingman\"\n").unwrap();
     let h = |v: Option<&str>, list: Vec<serde_json::Value>| plugin::Herdr { version: v.map(String::from), plugins: Ok(list) };
     assert!(bad(&plugin::check_on(&h(None, vec![]), false))[0].starts_with("herdr does not run here"));
     // The manifest's minimum (0.9.3) is what herdr enforces everywhere; Windows also needs 0.9.4, which only the doctor checks.
@@ -121,8 +121,8 @@ fn herdr_must_run_the_plugin_enabled_from_a_folder_that_is_there() {
     assert!(bad(&plugin::check_on(&h(Some("0.9.3"), vec![]), false)).iter().all(|f| !f.contains("older")));
     assert!(bad(&plugin::check_on(&h(Some("0.9.3"), vec![]), true))[0].starts_with("herdr 0.9.3 is older than 0.9.4, what the plugin needs on Windows"));
     assert!(bad(&plugin::check_on(&h(Some("0.9.4"), vec![]), true)).iter().all(|f| !f.contains("older")));
-    assert!(bad(&plugin::check(&h(Some("0.9.4"), vec![])))[0].ends_with("→ Run: herdr plugin install striderZA/herdr-projects"));
-    assert!(bad(&plugin::check(&h(Some("0.9.4"), vec![ours(false, &s.root, true)])))[0].ends_with("but turned off → Run: herdr plugin enable herdr-projects"));
+    assert!(bad(&plugin::check(&h(Some("0.9.4"), vec![])))[0].ends_with("→ Run: herdr plugin install striderZA/herdr-wingman"));
+    assert!(bad(&plugin::check(&h(Some("0.9.4"), vec![ours(false, &s.root, true)])))[0].ends_with("but turned off → Run: herdr plugin enable herdr-wingman"));
     assert!(bad(&plugin::check(&h(Some("0.9.4"), vec![ours(true, &w.base.join("gone"), true)])))[0].contains("which is gone"));
     assert!(bad(&plugin::check_on(&h(Some("0.9.1"), vec![ours(true, &s.root, true)]), false))[0].starts_with("herdr 0.9.1 is older than 0.9.3"));
     let f = plugin::check(&h(Some("0.9.4"), vec![ours(true, &s.root, true)]));
@@ -150,7 +150,7 @@ fn each_program_must_be_installed_new_enough_and_signed_in() {
     let p = |k: &str, found: bool, v: &str, sign: Sign| agents::Prog { kind: k.into(), named_by: vec!["worker.agent".into()], found, version: v.into(), sign, ..Default::default() };
     let f = agents::check(&[p("claude", true, "2.1.301", Sign::In), p("pi", true, "1.1.0", Sign::Unknown)]);
     assert_eq!(f.iter().map(|f| f.what.as_str()).collect::<Vec<_>>(), ["claude 2.1.301, signed in (worker.agent)", "pi 1.1.0 (worker.agent)"]);
-    assert_eq!(bad(&agents::check(&[p("codex", false, "", Sign::Unknown)])), ["codex is not installed here (worker.agent) → Install codex, or choose another program: herdr-projects set worker.agent <program>"]);
+    assert_eq!(bad(&agents::check(&[p("codex", false, "", Sign::Unknown)])), ["codex is not installed here (worker.agent) → Install codex, or choose another program: herdr-wingman set worker.agent <program>"]);
     assert_eq!(bad(&agents::check(&[p("codex", true, "0.162.1", Sign::Out)])), ["codex is not signed in (worker.agent) → Run `codex login` in a terminal here."]);
     assert!(bad(&agents::check(&[p("claude", true, "2.1.100", Sign::In)]))[0].starts_with("claude 2.1.100 is older than 2.1.296"));
     let mut m = p("mastracode", true, "1.0.0", Sign::Unknown);
@@ -161,7 +161,7 @@ fn each_program_must_be_installed_new_enough_and_signed_in() {
     // A program not installed for a repo's or a task's setting is set there.
     let mut q = p("codex", false, "", Sign::Unknown);
     q.named_by = vec!["reviewer.agent for proj".into()];
-    assert!(bad(&agents::check(&[q]))[0].ends_with("herdr-projects set reviewer.agent <program> --repo proj"));
+    assert!(bad(&agents::check(&[q]))[0].ends_with("herdr-wingman set reviewer.agent <program> --repo proj"));
     // What a status command says: it failed, or it says it is signed out (cursor-agent exits 0 either way).
     assert!(agents::signed_out(1, "{\"loggedIn\": false}"));
     assert!(agents::signed_out(0, "Not logged in"));

@@ -1,12 +1,12 @@
-<p align="center"><img src="https://img.shields.io/badge/Herdr%20Projects-Mission%20control%20for%20Herdr-2ea44f?style=flat-square&labelColor=24292f" alt="Herdr Projects | Mission control for Herdr" /></p>
+<p align="center"><img src="https://img.shields.io/badge/Herdr%20Wingman-Mission%20control%20for%20Herdr-2ea44f?style=flat-square&labelColor=24292f" alt="Herdr Wingman | Mission control for Herdr" /></p>
 
 <h3 align="center">Run dozens of coding agents through one Coordinator without micromanaging each one or losing sight of what needs you</h3>
 
-<p align="center">Herdr Projects is mission control for <a href="https://herdr.dev">Herdr</a>: one list of tasks, yours and the ones you delegate. You type what needs doing and the board's own agent, the Coordinator, turns it into tasks. Every delegated task runs as an ordinary Herdr agent in its own space and worktree, gets checked and reviewed by a second agent when it finishes, and waits for your yes before it merges. The board shows which tasks need you, which are ready to approve and which are still working.</p>
+<p align="center">Herdr Wingman is mission control for <a href="https://herdr.dev">Herdr</a>: one list of tasks, yours and the ones you delegate. You type what needs doing and the board's own agent, the Coordinator, turns it into tasks. Every delegated task runs as an ordinary Herdr agent in its own space and worktree, gets checked and reviewed by a second agent when it finishes, and waits for your yes before it merges. The board shows which tasks need you, which are ready to approve and which are still working.</p>
 
-<p align="center"><a href="https://github.com/striderZA/herdr-projects/blob/master/assets/herdr-projects-launch.mp4"><img src="assets/herdr-projects-launch.webp" width="88%" alt="Animation: you tell the Coordinator what you want, it adds tasks that each get an agent on their own branch, and the board groups them as needs you, ready to approve, and working" /></a></p>
+<p align="center"><a href="https://github.com/striderZA/herdr-wingman/blob/master/assets/herdr-wingman-launch.mp4"><img src="assets/herdr-wingman-launch.webp" width="88%" alt="Animation: you tell the Coordinator what you want, it adds tasks that each get an agent on their own branch, and the board groups them as needs you, ready to approve, and working" /></a></p>
 
-<p align="center"><a href="https://github.com/striderZA/herdr-projects/blob/master/docs/get-started.md"><img src="assets/buttons/install-herdr-projects.svg" alt="Install herdr-projects" /></a></p>
+<p align="center"><a href="https://github.com/striderZA/herdr-wingman/blob/master/docs/get-started.md"><img src="assets/buttons/install-herdr-wingman.svg" alt="Install herdr-wingman" /></a></p>
 
 <p align="center"><sub>✓&nbsp;Free,&nbsp;MIT&nbsp;licensed &nbsp; ✓&nbsp;Runs&nbsp;on&nbsp;your&nbsp;machine,&nbsp;no&nbsp;hosted&nbsp;service &nbsp; ✓&nbsp;Linux&nbsp;and&nbsp;Windows,&nbsp;Herdr&nbsp;0.9.3+&nbsp;(0.9.4+&nbsp;on&nbsp;Windows)</sub></p>
 
@@ -18,7 +18,7 @@ The board is an overview and a remote control; Herdr is the engine. Each delegat
 
 ## Choose between briefing each agent by hand, one long agent session, a cloud projects product, or a work board in Herdr
 
-| | **Herdr Projects** | Briefing agents by hand | One long agent session | Cloud projects products |
+| | **Herdr Wingman** | Briefing agents by hand | One long agent session | Cloud projects products |
 |---|:---:|:---:|:---:|:---:|
 | **No extra software fee** | ✅ | ✅ | ✅ | ❌ |
 | **Parallel tasks on separate branches** | ✅ | ✅ | ❌ | ✅ |
@@ -30,7 +30,7 @@ The board is an overview and a remote control; Herdr is the engine. Each delegat
 | **Works with the agent CLI you already use** | ✅ | ✅ | ✅ | ❌ |
 | **Runs with no machine of yours switched on** | ❌ | ❌ | ❌ | ✅ |
 
-Keep your attention on decisions. Herdr Projects starts, checks and tracks the tasks, your agents do the work, and you choose what to answer, approve, or merge.
+Keep your attention on decisions. Herdr Wingman starts, checks and tracks the tasks, your agents do the work, and you choose what to answer, approve, or merge.
 
 ## Tell the Coordinator what you want. See which task needs you on the board.
 
@@ -50,8 +50,8 @@ An agent that asks you something, wants a permission or a sign-in says so to the
 
 <table>
 <tr>
-<td align="center" valign="top" width="33%"><h3>1️⃣</h3><b>Install the plugin</b><br /><sub>Run <code>herdr plugin install striderZA/herdr-projects</code>. It downloads the one program for your platform: no Node, no npm.</sub></td>
-<td align="center" valign="top" width="33%"><h3>2️⃣</h3><b>Open the board</b><br /><sub>Run the plugin's action "Open the work board", or <code>herdr plugin action invoke open --plugin herdr-projects</code> (<code>open-windows</code> on Windows) in a Herdr pane. Its first screen offers a key that opens it from anywhere in Herdr.</sub></td>
+<td align="center" valign="top" width="33%"><h3>1️⃣</h3><b>Install the plugin</b><br /><sub>Run <code>herdr plugin install striderZA/herdr-wingman</code>. It downloads the one program for your platform: no Node, no npm.</sub></td>
+<td align="center" valign="top" width="33%"><h3>2️⃣</h3><b>Open the board</b><br /><sub>Run the plugin's action "Open the work board", or <code>herdr plugin action invoke open --plugin herdr-wingman</code> (<code>open-windows</code> on Windows) in a Herdr pane. Its first screen offers a key that opens it from anywhere in Herdr.</sub></td>
 <td align="center" valign="top" width="33%"><h3>3️⃣</h3><b>Type what needs doing</b><br /><sub>Press <code>Enter</code> and the Coordinator makes it a task. <code>Ctrl+S</code> puts an agent on the task you select. <code>?</code> shows everything else you can do.</sub></td>
 </tr>
 </table>
@@ -63,15 +63,15 @@ An agent that asks you something, wants a permission or a sign-in says so to the
 <td align="center" valign="top"><sub>For developers who run coding agents in Herdr on Linux or Windows</sub><br /><h2>Free</h2><div align="left">&nbsp;&nbsp;&nbsp;✓&nbsp; A Coordinator that turns what you type into tasks<br />&nbsp;&nbsp;&nbsp;✓&nbsp; Every task on its own worktree and branch, in its own Herdr space<br />&nbsp;&nbsp;&nbsp;✓&nbsp; A check and a second agent's review before anything merges<br />&nbsp;&nbsp;&nbsp;✓&nbsp; What needs you, on the board, in Herdr's sidebar and on your phone<br />&nbsp;&nbsp;&nbsp;✓&nbsp; Branches kept up to date with main, cleanup after a merge<br />&nbsp;&nbsp;&nbsp;✓&nbsp; Plans, attempts, limits, fallback agents and automations</div></td>
 </tr>
 <tr>
-<td align="center"><a href="https://github.com/striderZA/herdr-projects/blob/master/docs/get-started.md"><img src="assets/buttons/install-herdr-projects.svg" alt="Install herdr-projects" /></a></td>
+<td align="center"><a href="https://github.com/striderZA/herdr-wingman/blob/master/docs/get-started.md"><img src="assets/buttons/install-herdr-wingman.svg" alt="Install herdr-wingman" /></a></td>
 </tr>
 </table>
 
 ## Updating
 
 ```bash
-herdr-projects update           # put the newest release in place of the program
-herdr-projects update 1.2.0     # a given version
+herdr-wingman update           # put the newest release in place of the program
+herdr-wingman update 1.2.0     # a given version
 ```
 
 An open board and the keeper see the new program and load it by themselves, once nothing is half typed and no agent is held up. Pulling a newer plugin with `git pull` does the same at the next command Herdr runs. A program you built yourself is updated with `git pull` and `cargo build --release`, never by a download. [Installing](docs/install.md) has the details.
@@ -82,12 +82,12 @@ An open board and the keeper see the new program and load it by themselves, once
 
 You need to be comfortable in a terminal. The plugin downloads one prebuilt program for your platform, and you never have to edit its files: everything changes by asking the Coordinator or from the board's settings page (`Ctrl+E`). You'll need Linux or Windows, Herdr 0.9.3 or newer (0.9.4 on Windows), Git, `curl` or `wget`, and an agent CLI the board can start: Claude Code, Codex, pi or another agent herdr supports. `gh` (pull requests) is optional. Rust/Cargo is needed only when you build it yourself. [Installing](docs/install.md) covers the prerequisites.
 
-### How do I check that Herdr Projects is running?
+### How do I check that Herdr Wingman is running?
 
 Run:
 
 ```bash
-herdr-projects doctor
+herdr-wingman doctor
 ```
 
 It checks the program and its launcher, the plugin in Herdr, your agent programs (installed, and signed in where the program can say) and their model and effort settings, free disk space, and leftover worktrees it could clean. Each problem comes with what to do, and it exits non-zero when there is one. [Troubleshooting](docs/troubleshooting.md#the-health-check) lists every check. [Installing](docs/install.md) walks through the first run, the blocks the board can add to Herdr's config, and taking the plugin out again.
@@ -114,7 +114,7 @@ You don't need to: one board holds every repo, each task tagged with its repo, a
 
 ### Do I have to start every task through the Coordinator?
 
-No. Select a task on the board and press `Ctrl+S` to put an agent on it, or run `herdr-projects add "<title>" --delegate` and `herdr-projects delegate <id>` yourself. An [automation](docs/automations.md) adds tasks on a schedule or when something happens on the board, such as a merge.
+No. Select a task on the board and press `Ctrl+S` to put an agent on it, or run `herdr-wingman add "<title>" --delegate` and `herdr-wingman delegate <id>` yourself. An [automation](docs/automations.md) adds tasks on a schedule or when something happens on the board, such as a merge.
 
 ### What if the safety settings aren't enough?
 
@@ -122,11 +122,11 @@ They are soft. By default nothing merges without your yes, work whose review fai
 
 ### What does it cost?
 
-Herdr Projects is free and [MIT licensed](LICENSE). Your agent CLI's usual usage charges still apply: every task is a full agent session plus a review, and the Coordinator spends tokens on each message.
+Herdr Wingman is free and [MIT licensed](LICENSE). Your agent CLI's usual usage charges still apply: every task is a full agent session plus a review, and the Coordinator spends tokens on each message.
 
 ## Why this fork
 
-Herdr Projects is a fork of [Shepherdr](https://github.com/eliasstravik/shepherdr) by Elias Stravik, and like it is MIT licensed. In late October 2026 Shepherdr replaced herdr-projects, the project this fork starts from, and grew into a Herdr app with a web app, voice calls, Autopilot, add-ons and sync between machines. That suits the people it was made for. This fork keeps the task board, focused on one machine.
+Herdr Wingman is a fork of [Shepherdr](https://github.com/eliasstravik/shepherdr) by Elias Stravik, and like it is MIT licensed. In late October 2026 Shepherdr replaced herdr-projects, the project this fork starts from, and grew into a Herdr app with a web app, voice calls, Autopilot, add-ons and sync between machines. That suits the people it was made for. This fork keeps the task board, focused on one machine.
 
 - **One job, done well.** One list of tasks on one machine, each task an agent in its own worktree, a check and a review before anything merges, and your yes. The web board, voice calls and remote-machine support are removed.
 - **Linux and Windows.** The Shepherdr README names macOS and Linux as its platforms. This fork runs on Linux and Windows, and its checks run on both. macOS is not supported here because there is no Mac to build and test on.
@@ -136,8 +136,8 @@ Thanks to Elias Stravik for the board this fork is built on.
 
 ## Start with one install
 
-<p align="center">Your board starts with an install, one key, and one sentence about what needs doing. Herdr Projects starts the agents, checks their work and keeps it in view. You choose what to answer and what to merge.</p>
+<p align="center">Your board starts with an install, one key, and one sentence about what needs doing. Herdr Wingman starts the agents, checks their work and keeps it in view. You choose what to answer and what to merge.</p>
 
-<p align="center"><a href="https://github.com/striderZA/herdr-projects/blob/master/docs/get-started.md"><img src="assets/buttons/install-herdr-projects.svg" alt="Install herdr-projects" /></a></p>
+<p align="center"><a href="https://github.com/striderZA/herdr-wingman/blob/master/docs/get-started.md"><img src="assets/buttons/install-herdr-wingman.svg" alt="Install herdr-wingman" /></a></p>
 
 <p align="center"><sub>✓&nbsp;Free,&nbsp;MIT&nbsp;licensed &nbsp; ✓&nbsp;Runs&nbsp;on&nbsp;your&nbsp;machine,&nbsp;no&nbsp;hosted&nbsp;service &nbsp; ✓&nbsp;Linux&nbsp;and&nbsp;Windows,&nbsp;Herdr&nbsp;0.9.3+&nbsp;(0.9.4+&nbsp;on&nbsp;Windows)</sub></p>

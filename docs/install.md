@@ -4,7 +4,7 @@
 has the details. Something not working: [troubleshooting](troubleshooting.md).
 
 ```sh
-herdr plugin install striderZA/herdr-projects
+herdr plugin install striderZA/herdr-wingman
 ```
 
 ## What you need
@@ -19,13 +19,13 @@ No Node, no npm: the board is one program.
 
 ## What the install does
 
-`herdr plugin install striderZA/herdr-projects` installs the plugin from GitHub and runs its build step, which downloads
-the program. `herdr plugin list` shows its source as `github:striderZA/herdr-projects@<ref>`. `--ref v1.2.32` takes a given release.
+`herdr plugin install striderZA/herdr-wingman` installs the plugin from GitHub and runs its build step, which downloads
+the program. `herdr plugin list` shows its source as `github:striderZA/herdr-wingman@<ref>`. `--ref v1.2.32` takes a given release.
 
 To keep a checkout of your own instead:
 
 ```sh
-git clone https://github.com/striderZA/herdr-projects && cd herdr-projects
+git clone https://github.com/striderZA/herdr-wingman && cd herdr-wingman
 herdr plugin link "$PWD"          # hooks, the board's tab and the actions
 sh bin/run.sh install             # gets the program, writes its launcher, says how to put it on your PATH
 ```
@@ -34,7 +34,7 @@ On Windows, run `powershell -File bin\run.ps1 install` in the checkout instead.
 
 ## The first run
 
-Open the board: the plugin's action "Open the work board", or type `herdr-projects` in any pane. The first time it
+Open the board: the plugin's action "Open the work board", or type `herdr-wingman` in any pane. The first time it
 opens inside Herdr, it shows one screen with two things it can add to your Herdr `config.toml`. Each is your choice:
 
 | Key | Does |
@@ -56,7 +56,7 @@ The file is backed up first, each block sits between two marker lines, and a cha
 - A key already set up for the board is left as it is, however your config writes it (`[[keys.command]]`, or
   `command = [{…}]` under `[keys]`).
 - The key opens the board in a tab of its own. To open it as a popup over Herdr's window instead (and close it again
-  with the same key): `herdr-projects set board.open popup` ([the board](board.md)). The key itself stays.
+  with the same key): `herdr-wingman set board.open popup` ([the board](board.md)). The key itself stays.
 
 **2. Sidebar rows**, so an agent's entry in Herdr's sidebar is a small copy of its task's row on the board
 ([Herdr's sidebar](sidebar.md)):
@@ -80,7 +80,7 @@ Nothing else is needed: no Herdr integration, no hooks in your own agent setting
 [[keys.command]]
 key = "prefix+a"
 type = "plugin_action"
-command = "herdr-projects.open"
+command = "herdr-wingman.open"
 
 [ui.sidebar.agents]
 rows = [["state_icon", "machine", "workspace", { token = "tab", rules = [{ equals = "Agent", hide = true }, { starts_with = "Reviewer #", hide = true }] }], ["agent"], [{ token = "$summary", dim = true }, "$progress"]]
@@ -89,7 +89,7 @@ rows = [["state_icon", "machine", "workspace", { token = "tab", rules = [{ equal
 rows = [["state_icon", "workspace"], ["branch", "git_status"], [{ token = "$summary", dim = true }, "$progress"]]
 ```
 
-On Windows, use `command = "herdr-projects.open-windows"` instead. `herdr-projects.open` runs on Linux only, and
+On Windows, use `command = "herdr-wingman.open-windows"` instead. `herdr-wingman.open` runs on Linux only, and
 Herdr refuses it on Windows.
 
 **Careful with the key.** A `[[keys.command]]` beats Herdr's own binding of the same key, with no warning. Written by
@@ -98,25 +98,25 @@ took away Herdr's workspace picker.) `herdr --default-config` lists most of the 
 `prefix+[`, nor swapping panes, `prefix+shift+h` `j` `k` `l`). To move the board's key, change the `key` line and run
 `herdr server reload-config`.
 
-Optionally bind `herdr-projects.approve-current` too (`herdr-projects.approve-current-windows` on Windows). For the task that owns the focused pane, it opens the board on
+Optionally bind `herdr-wingman.approve-current` too (`herdr-wingman.approve-current-windows` on Windows). For the task that owns the focused pane, it opens the board on
 that task with the merge question up (`y` = yes, `n` or `esc` = no). Anywhere else it does nothing.
 
 ## The command on your PATH
 
-Agents and hooks are handed the launcher `~/.herdr-projects/data/bin/herdr-projects`, which runs the program.
+Agents and hooks are handed the launcher `~/.herdr-projects/data/bin/herdr-wingman`, which runs the program.
 
 - The board writes it when it opens. With `herdr plugin install`, open the board first, with the plugin's action "Open
   the work board".
-- `herdr-projects install` writes it again, and says if something else named `herdr-projects` comes first on your PATH.
-- **On Windows** the folder holds `herdr-projects.cmd`, which cmd and PowerShell type by name and agents and hooks run, and a shell script `herdr-projects` that Git Bash types by name. Put the folder on your PATH. A `herdr-projects.exe` an older install left there is removed, since PowerShell would run it first.
-- To type `herdr-projects` in a shell, put that folder on your PATH (in `~/.profile` or your shell's start-up file).
+- `herdr-wingman install` writes it again, and says if something else named `herdr-wingman` comes first on your PATH.
+- **On Windows** the folder holds `herdr-wingman.cmd`, which cmd and PowerShell type by name and agents and hooks run, and a shell script `herdr-wingman` that Git Bash types by name. Put the folder on your PATH. A `herdr-wingman.exe` an older install left there is removed, since PowerShell would run it first.
+- To type `herdr-wingman` in a shell, put that folder on your PATH (in `~/.profile` or your shell's start-up file).
 
 
 ## Updating
 
 ```sh
-herdr-projects update           # the newest release
-herdr-projects update 0.3.1     # a given version
+herdr-wingman update           # the newest release
+herdr-wingman update 0.3.1     # a given version
 ```
 
 - It puts the release in place of the downloaded program, in one step.
@@ -136,6 +136,10 @@ are picked up the same way.
 
 ## Coming from an older version
 
+- **From herdr-projects, the name before this version:** the plugin is now `herdr-wingman`: its id, its command and its
+  repo. Run the old version's `herdr-projects remove-extras` before you unlink the old plugin. It takes out the blocks it
+  wrote into `config.toml`, which this version does not know. Then install `striderZA/herdr-wingman`. Your data folder
+  `~/.herdr-projects/` and each repo's `.herdr-projects.json` keep their names and are read as before.
 - **From the older Node version:** `npm unlink -g herdr-projects` takes the Node program off your PATH. The first run of
   this version keeps a copy of the data folder as it was (`~/.herdr-projects/data-0.2.0`) before it changes anything.
   The data's form is the same, so nothing is converted.
@@ -146,7 +150,7 @@ Everything the board keeps for you is in one folder, `~/.herdr-projects/`: [the 
 
 ## Taking it out again
 
-**Before unlinking the plugin, run `herdr-projects remove-extras`.** Herdr gives a plugin no uninstall hook, so this is
+**Before unlinking the plugin, run `herdr-wingman remove-extras`.** Herdr gives a plugin no uninstall hook, so this is
 what takes the marked blocks out of `config.toml` and removes the how-to files ([roles and commands](roles-and-commands.md)).
 
 
@@ -161,18 +165,18 @@ Windows is supported: the plugin's manifest lists it, and every release since 1.
 
 Install with the same command as on Linux, in PowerShell:
 
-    herdr plugin install striderZA/herdr-projects
+    herdr plugin install striderZA/herdr-wingman
 
-Herdr runs `bin/run.ps1` on Windows. It runs the program built from this checkout when there is one, and otherwise the release file `herdr-projects-windows-x86_64.exe`, downloaded and checked against its `.sha256`.
+Herdr runs `bin/run.ps1` on Windows. It runs the program built from this checkout when there is one, and otherwise the release file `herdr-wingman-windows-x86_64.exe`, downloaded and checked against its `.sha256`.
 
 ## Details: which program runs
 
-The program is one file per platform: `herdr-projects-linux-x86_64`, `-linux-aarch64`, `herdr-projects-windows-x86_64.exe`.
+The program is one file per platform: `herdr-wingman-linux-x86_64`, `-linux-aarch64`, `herdr-wingman-windows-x86_64.exe`.
 The Linux ones run on any Linux.
 
 On Linux, every command Herdr runs for the plugin goes through `bin/run.sh`, which runs the first of these it finds (on Windows, `bin/run.ps1` runs the same steps):
 
-1. a program built in this checkout (`target/release/herdr-projects`) that no source file is newer than;
+1. a program built in this checkout (`target/release/herdr-wingman`) that no source file is newer than;
 2. the downloaded one in `bin/`, when it is this checkout's version (`Cargo.toml`) or newer;
 3. that file, downloaded now from the GitHub release of this checkout's version, in the repo the checkout was cloned from
    (its git origin; the fork's repo when there is none): its checksum checked, put in place in one step, one download at a time;

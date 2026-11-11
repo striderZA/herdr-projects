@@ -22,6 +22,6 @@ pub fn change(f: impl FnOnce(&mut Obj)) -> Res<Obj> {
 }
 /// A new task in an archived repo is refused: it would stand alone on the board, its project put away.
 pub fn refuse_archived(repo: &str) -> Res<()> {
-    if is_archived(repo) { crate::fail!("{repo} is archived. herdr-projects restore --repo {repo} brings it back, with its tasks."); }
+    if is_archived(repo) { crate::fail!("{repo} is archived. herdr-wingman restore --repo {repo} brings it back, with its tasks."); }
     Ok(())
 }

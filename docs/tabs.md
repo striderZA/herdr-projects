@@ -9,7 +9,7 @@ Every task with an agent gets its own Herdr space. Inside it, each helper has it
 | `Plan review` | the reviewer checking that plan |
 | `Agent A`, `Agent B`, … and `Picker` | [several attempts](attempts.md) at one task, and the reviewer who compares them |
 
-Two tabs live outside the task spaces: `Coordinator` in the home space ([the Coordinator](coordinator.md)) and the board's own tab, `board` when the board key opens it, or `herdr-projects` for a board you start yourself in a pane ([the board](board.md)).
+Two tabs live outside the task spaces: `Coordinator` in the home space ([the Coordinator](coordinator.md)) and the board's own tab, `board` when the board key opens it, or `herdr-wingman` for a board you start yourself in a pane ([the board](board.md)).
 
 ## When tabs open and close
 

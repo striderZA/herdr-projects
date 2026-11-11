@@ -1,4 +1,4 @@
-//! `herdr-projects docs`: the pages made from the code, and the repo's own rules checked. It writes what is out of
+//! `herdr-wingman docs`: the pages made from the code, and the repo's own rules checked. It writes what is out of
 //! date (`--check` only says which), prints the map (`--where [folder]`), or lists what breaks a rule (`--guard`).
 //!   docs/keys.md              the table of keys, from crates/flow/src/board/keys.rs
 //!   docs/settings.md          the table of settings, from crates/core/src/store/settings_list.rs
@@ -18,7 +18,7 @@ use std::path::{Path, PathBuf};
 /// another's build (scripts/warm-start.sh), which would then read and write the other worktree's pages.
 pub fn root() -> PathBuf {
     if let Ok(r) = std::env::var("HERDR_PROJECTS_REPO") { return PathBuf::from(r); }
-    let ours = |d: &Path| std::fs::read_to_string(d.join("Cargo.toml")).is_ok_and(|t| t.contains("name = \"herdr-projects\""));
+    let ours = |d: &Path| std::fs::read_to_string(d.join("Cargo.toml")).is_ok_and(|t| t.contains("name = \"herdr-wingman\""));
     let exe = std::env::current_exe().ok().and_then(|e| e.canonicalize().ok());
     exe.as_deref().and_then(|e| e.ancestors().skip(1).find(|d| ours(d))).map(Path::to_path_buf).unwrap_or_else(|| PathBuf::from("."))
 }
@@ -41,7 +41,7 @@ pub fn docs_main(a: &[String]) -> i32 {
     }
     if has("--check") {
         let old = tables::stale();
-        if !old.is_empty() { eprintln!("Out of date: {}. Run: herdr-projects docs", old.join(", ")); return 1; }
+        if !old.is_empty() { eprintln!("Out of date: {}. Run: herdr-wingman docs", old.join(", ")); return 1; }
         println!("The made pages are up to date.");
         return 0;
     }

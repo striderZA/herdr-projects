@@ -151,5 +151,5 @@ pub fn reload() {
     let reloads: i64 = env("HERDR_PROJECTS_RELOADS").parse().unwrap_or(0);
     let exe = crate::store::files::bin();
     let err = crate::sys::exec_replace(std::process::Command::new(exe).args(std::env::args_os().skip(1)).env(term::KEPT, "1").env("HERDR_PROJECTS_RELOADS", (reloads + 1).to_string()));
-    eprintln!("herdr-projects could not start its new version: {err}");
+    eprintln!("herdr-wingman could not start its new version: {err}");
 }

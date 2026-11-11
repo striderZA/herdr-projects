@@ -1,5 +1,5 @@
 == the list
- herdr-projects  proj
+ herdr-wingman  proj
  All 18  tab next
   ◇ #4     Max length for task titles
            Starting                   1m
@@ -16,7 +16,7 @@
 ────────────────────────────────────────
   alt+o open this task's agent
 == the task beside it
- herdr-projects  proj
+ herdr-wingman  proj
  All 18  tab next
   ◇ #4     Max length for task titles
            Starting                   1m
@@ -67,7 +67,7 @@
 ────────────────────────────────────────
   ↑↓ pick a key · esc close the menu
 == a draft
- herdr-projects  proj
+ herdr-wingman  proj
  All 18  tab next
   ◇ #4     Max length for task titles
            Starting                   1m

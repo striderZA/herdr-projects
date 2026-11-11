@@ -143,7 +143,7 @@ fn on_a_nearly_full_disk_a_start_sweeps_then_waits_in_the_queue_with_a_plain_lin
     assert_eq!(t.s("stage"), "queued");
     let host = sw::util::hostname();
     assert!(t.s("msg").starts_with(&format!("Disk nearly full on {host}: 3.1 GB free on ")), "{}", t.s("msg"));
-    assert!(t.s("msg").contains("this task starts once 5.0 GB is free (board.diskFree). Free some space: herdr-projects sweep"), "{}", t.s("msg"));
+    assert!(t.s("msg").contains("this task starts once 5.0 GB is free (board.diskFree). Free some space: herdr-wingman sweep"), "{}", t.s("msg"));
     assert!(!t.b("worktree") && !calls(&w).iter().any(|c| c.starts_with("agent start")), "nothing was started");
     assert!(sw::store::files::data_dir().join("sweep.json").exists(), "the sweep ran first");
     // still no room: the queue starts no runner for it
@@ -200,7 +200,7 @@ fn a_disk_smaller_than_twice_board_disk_free_needs_half_of_itself_free_and_its_l
     assert_eq!(t.s("stage"), "queued");
     let host = sw::util::hostname();
     assert!(t.s("msg").starts_with(&format!("Disk nearly full on {host}: 1.2 GB free on ")), "{}", t.s("msg"));
-    assert!(regex::Regex::new(r"; this task starts once 1\.7 GB is free \(\S+ is only 3\.4 GB in all, so it needs 1\.7 GB free, not the 5\.0 GB of board\.diskFree\)\. Free some space: herdr-projects sweep").unwrap().is_match(t.s("msg")), "{}", t.s("msg"));
+    assert!(regex::Regex::new(r"; this task starts once 1\.7 GB is free \(\S+ is only 3\.4 GB in all, so it needs 1\.7 GB free, not the 5\.0 GB of board\.diskFree\)\. Free some space: herdr-wingman sweep").unwrap().is_match(t.s("msg")), "{}", t.s("msg"));
     assert!(std::path::Path::new(&t.at("diskWait").s("on")).is_absolute(), "the disk it waits for: {}", t.at("diskWait"));
     // A big disk still needs all of board.diskFree, and says nothing more.
     disk_is(3_100_000_000, 100 * GB);

@@ -64,7 +64,7 @@ pub fn check(progs: &[Prog]) -> Vec<Found> {
         if !p.found {
             let first = p.named_by.first().map(String::as_str).unwrap_or("worker.agent");
             let set = match first.split_once(' ') { Some((n, r)) => format!("{n} <program> {}", r.replacen("for ", "--repo ", 1).replacen("of ", "--task ", 1)), None => format!("{first} <program>") };
-            out.push(Found::bad(format!("{k} is not installed here ({by})"), format!("Install {k}, or choose another program: herdr-projects set {set}")));
+            out.push(Found::bad(format!("{k} is not installed here ({by})"), format!("Install {k}, or choose another program: herdr-wingman set {set}")));
             continue;
         }
         if p.late {

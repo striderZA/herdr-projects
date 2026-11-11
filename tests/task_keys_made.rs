@@ -75,12 +75,12 @@ fn a_key_you_or_the_repos_file_gave_is_kept_and_unset_goes_back_to_the_made_one(
     // Taken away: back to the repo's file's, or to the made one; never none.
     unset_value("repo.key", &Scope::repo("proj")).unwrap(); assert_eq!(entry("proj"), json!("PRJ")); assert_eq!(find("mine-1").unwrap().s("id"), id);
     let said = sw::actions::settings::settings_command("unset", &["unset".into(), "repo.key".into()], &sw::actions::settings::Where { task: None, repo: Some("proj".into()), automation: None, coord: None }, None).unwrap().1;
-    assert_eq!(said, "repo.key for proj: PRJ  (your entry for proj)\nA repo always has a key: proj is back to the one the board made from its name. Another: herdr-projects set repo.key <KEY> --repo proj");
+    assert_eq!(said, "repo.key for proj: PRJ  (your entry for proj)\nA repo always has a key: proj is back to the one the board made from its name. Another: herdr-wingman set repo.key <KEY> --repo proj");
     set_value("repo.key", &json!("XY"), &Scope::repo("open-crm")).unwrap();
     let said = sw::actions::settings::settings_command("unset", &["unset".into(), "repo.key".into()], &sw::actions::settings::Where { task: None, repo: Some("open-crm".into()), automation: None, coord: None }, None).unwrap().1;
     assert_eq!(said, "repo.key for open-crm: OC  (the repo's file)\nA repo always has a key: open-crm is back to the one its own file says.");
     let e = set_value("repo.key", &json!("none"), &Scope::repo("proj")).unwrap_err().msg;
-    assert_eq!(e, "repo.key cannot be none: every repo has a short key. To go back to the one the board made from its name: herdr-projects unset repo.key --repo proj");
+    assert_eq!(e, "repo.key cannot be none: every repo has a short key. To go back to the one the board made from its name: herdr-wingman unset repo.key --repo proj");
 }
 
 #[test]
@@ -99,7 +99,7 @@ fn repos_an_older_version_knew_get_a_key_once_on_upgrade_and_the_board_says_whic
     std::fs::write(sw::store::files::config_dir().join("config.json"), c.to_string()).unwrap();
     keys_at_start(); assert!(entry("notes").is_null());
     // The board says which it gave, once: on its opening, never again after.
-    assert_eq!(sw::store::keys_given::keys_note(), "Every repo and folder has a short key now: PRJ for proj, NTS for notes, HOME for me. Change one: herdr-projects set repo.key <KEY> --repo <name>");
+    assert_eq!(sw::store::keys_given::keys_note(), "Every repo and folder has a short key now: PRJ for proj, NTS for notes, HOME for me. Change one: herdr-wingman set repo.key <KEY> --repo <name>");
     assert_eq!(entry("notes"), json!("NTS"));
     assert_eq!(keys_note(), ""); assert!(give_keys(None).is_empty());
 }
@@ -134,13 +134,13 @@ fn upgrade_never_changes_a_key_you_saved_even_one_two_repos_share_and_the_top_li
     // Your file is as you wrote it; the repo the board knew first keeps the key, the other goes by a stand-in.
     assert_eq!(read(&sw::store::files::config_dir().join("config.json")), before);
     assert_eq!(keys(), json!({ "proj": "KEEP", "beta": "BETA" }));
-    assert_eq!(keys_note(), "Every repo and folder has a short key now: BETA for beta (its own KEEP is proj's too). Change one: herdr-projects set repo.key <KEY> --repo <name>");
+    assert_eq!(keys_note(), "Every repo and folder has a short key now: BETA for beta (its own KEEP is proj's too). Change one: herdr-wingman set repo.key <KEY> --repo <name>");
     // Changed by you, the stand-in goes; your key counts.
     set_value("repo.key", &json!("BB"), &Scope::repo("beta")).unwrap(); give_keys(None);
     assert_eq!(keys(), json!({ "proj": "KEEP", "beta": "BB" })); assert!(sw::store::keys_given::stand_ins().is_empty());
     // The top line: where new tasks go, with the key beside the name, in the header's quiet ink.
     let id = w.add("Mine"); let mut b = common::board::open(&w.root, 30); b.s.sel = id; b.load();
-    assert!(b.screen(100)[0].starts_with(" herdr-projects  proj · KEEP") && b.screen(100)[1].starts_with(" All 1 "), "{:?}", b.screen(100));
+    assert!(b.screen(100)[0].starts_with(" herdr-wingman  proj · KEEP") && b.screen(100)[1].starts_with(" All 1 "), "{:?}", b.screen(100));
 }
 
 #[test]

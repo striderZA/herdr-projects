@@ -8,7 +8,7 @@ above it.
 | sw-core | `crates/core/` | the data (`store/`), Herdr and the agents, and small tools every part uses |
 | sw-flow | `crates/flow/` | the flow of a task: delegating, the finish line, landing, the keeper, automations |
 | sw-board | `crates/board/` | the board's screen (`board/`): its state, what a key does, what it draws |
-| herdr-projects | `Cargo.toml`, `src/` | the command line (`cli/`) and the made pages (`docs.rs`); the library is `sw` |
+| herdr-wingman | `Cargo.toml`, `src/` | the command line (`cli/`) and the made pages (`docs.rs`); the library is `sw` |
 
 Why: the compiler reads a whole crate again after any edit (and once more for its tests). When it was one crate of
 27,000 lines, every edit, even one line of the board's screen, paid for all of it.

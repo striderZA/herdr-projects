@@ -25,7 +25,7 @@ pub fn all(dir: &Path) -> BTreeMap<String, String> {
 }
 pub fn env(pairs: &[(&str, &str)]) -> Env { pairs.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect() }
 /// The copy of the program that runs the move (the old launcher names it, so it is this board's own).
-pub fn bin_of(home: &Path) -> PathBuf { home.join("copy").join("herdr-projects") }
+pub fn bin_of(home: &Path) -> PathBuf { home.join("copy").join("herdr-wingman") }
 pub fn run_with(home: &Path, env: &Env, swap: &dyn Fn(&Path, &Path) -> bool) -> Moved { move_home(home, env, &bin_of(home), Some(false), 3000, swap) }
 pub fn hows(r: &Moved) -> Vec<(&'static str, &str)> { r.moved.iter().map(|(p, how)| (p.what, how.as_str())).collect() }
 pub fn nothing(r: &Moved) -> bool { r.moved.is_empty() && r.line.is_empty() && r.stay.is_empty() && !r.busy && !r.other }

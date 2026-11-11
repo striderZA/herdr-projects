@@ -1,4 +1,4 @@
-//! `herdr-projects doctor`: the health check. One file in doctor/ per area (the program and its launcher, herdr's
+//! `herdr-wingman doctor`: the health check. One file in doctor/ per area (the program and its launcher, herdr's
 //! plugin, the agent programs and Codex's config.toml, the model and effort settings, free disk space, leftovers it
 //! could clean, messages that wait undelivered for a coordinator). Each area
 //! hands back what it found: a fact that is fine, or a problem in one plain line with what to do. The areas are asked

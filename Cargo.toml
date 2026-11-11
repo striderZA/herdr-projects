@@ -1,5 +1,5 @@
 [package]
-name = "herdr-projects"
+name = "herdr-wingman"
 version.workspace = true
 edition.workspace = true
 description = "A work board for herdr: one list of tasks, each delegated one running as an ordinary herdr agent."
@@ -13,7 +13,7 @@ name = "sw"
 path = "src/lib.rs"
 
 [[bin]]
-name = "herdr-projects"
+name = "herdr-wingman"
 path = "src/main.rs"
 
 [[test]]
@@ -30,7 +30,7 @@ members = ["crates/core", "crates/flow", "crates/board"]
 default-members = [".", "crates/core", "crates/flow", "crates/board"]
 
 [workspace.package]
-version = "1.2.32"
+version = "2.0.0"
 edition = "2024"
 license = "MIT"
 publish = false

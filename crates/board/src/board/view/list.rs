@@ -34,7 +34,7 @@ pub fn head_lines(s: &mut State, t: &Theme, w: usize, h: usize) -> Vec<Inked> {
     rest.extend(tally);
     if !s.data.session.is_empty() && s.data.session != "default" { rest.push(format!("session {}", s.data.session)); }
     let rest = rest.join(" · ");
-    let first = Inked::plain(" ").add(Inked::plain("herdr-projects").bold()).add(Inked::plain("  "));
+    let first = Inked::plain(" ").add(Inked::plain("herdr-wingman").bold()).add(Inked::plain("  "));
     let left = w as i64 - first.width() as i64;
     let tail = if !rest.is_empty() && left >= 4 { Inked::of(crate::text::cut(&rest, left.saturating_sub(2) as usize), Ink::Muted) } else { Inked::new() };
     let mut head = vec![first.add(tail)];

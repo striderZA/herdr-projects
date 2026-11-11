@@ -8,7 +8,7 @@ its link.
 short **Also noticed** list in that report: nothing adds a task for it.
 
 ```
-herdr-projects add "Why is the build slow?" --research
+herdr-wingman add "Why is the build slow?" --research
 ```
 
 ## Where a report goes
@@ -26,7 +26,7 @@ Every agent the board starts is told the same, in every repo:
   `index.html` when there is one, else `report.html`, `report.md`, `README.md`, else the folder's first file.
 
 The task panel shows the link under **Report**, beside the list and full screen (full screen also shows the file's name
-and the full link). `herdr-projects details <id>` has it as `report`. To open it:
+and the full link). `herdr-wingman details <id>` has it as `report`. To open it:
 
 - **`Ctrl+D`** on the task opens its report in the browser of the machine the board runs on (`xdg-open` on Linux
   with a display, `cmd start` on Windows); on a task with no report it opens the pull request. A done task's hint line names
@@ -45,15 +45,15 @@ every setting is, nearest answer first: **the task → your entry for that repo 
 
 | For | How |
 |---|---|
-| one task, when it is added | `herdr-projects add "<title>" --research` (short for `--research.only true`) |
-| one task, later | `herdr-projects delegate <id> --research` (`--no-research` turns it off), `herdr-projects set research.only true --task <id>`, or its row on the task's settings page (`Research only`): on the terminal board. All write the same one setting on the task |
-| a whole repo, or everything of yours | `herdr-projects set research.only true --repo <name>`, or without `--repo`. Every new task there is research only unless the task says otherwise (`--no-research`, or `set research.only false --task <id>`). The repo's own `.herdr-projects.json` may say it too: `{ "research": { "only": true } }` |
+| one task, when it is added | `herdr-wingman add "<title>" --research` (short for `--research.only true`) |
+| one task, later | `herdr-wingman delegate <id> --research` (`--no-research` turns it off), `herdr-wingman set research.only true --task <id>`, or its row on the task's settings page (`Research only`): on the terminal board. All write the same one setting on the task |
+| a whole repo, or everything of yours | `herdr-wingman set research.only true --repo <name>`, or without `--repo`. Every new task there is research only unless the task says otherwise (`--no-research`, or `set research.only false --task <id>`). The repo's own `.herdr-projects.json` may say it too: `{ "research": { "only": true } }` |
 | an [automation](automations.md) | `--research` when it is made, or `set research.only true --automation <name>`. Each task it makes has it as its own |
 
 - **The Coordinator does it by itself** when you plainly ask for research, a review or a report with nothing to change
   ("look into why the build is slow and tell me", "write me a report on …"). It does not when a change is wanted, or
   when it cannot tell.
-- `herdr-projects show <id>` lists it with where the value came from (`this task`, `your entry for <repo>`, `you`,
+- `herdr-wingman show <id>` lists it with where the value came from (`this task`, `your entry for <repo>`, `you`,
   `the repo's file`, `built in`). `unset research.only` takes an answer away again.
 - The name reads as what the board calls it everywhere, "research only", in the dotted style of `merge.by` and
   `review.when`.
@@ -103,7 +103,7 @@ than its own counts as a change.
 - That is one round of the review loop. After `review.rounds` of them (3 by default), the task stops and waits for you.
   Its row says why: `Research only, but its agent changed the repo again after 3 rounds (2 changes in the repo): nothing was pushed, opened or merged`.
 - From there, send it back once more (`ctrl+r`). Or, if you want the change after all, delegate it again as an ordinary
-  task: `herdr-projects delegate <id> --no-research`, which is `set research.only false --task <id>` and a start in one.
+  task: `herdr-wingman delegate <id> --no-research`, which is `set research.only false --task <id>` and a start in one.
 
 **A research-only task can never be merged.** Approving one is refused, and `merge.by: itself` passes it by. To merge its
 change after all, turn the setting off for the task and delegate it again.

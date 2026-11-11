@@ -75,12 +75,12 @@ fn ready_to_approve_the_merge_asks_first_the_menu_acts_remove_asks_and_messages_
     assert!(!s.text().contains("Archived PRJ-2") && !s.text().contains("Other"), "{}", s.text());
     s.rows = 34;
     s.press(&["alt+a"]);
-    assert!(s.text().starts_with(" herdr-projects  archive · 1 archived") && has(&s.text(), r"\n ▾ archived [^\n]*\n[ ▌]. PRJ-2 +Other ") && !s.text().contains("[archived]"), "{}", s.text());
+    assert!(s.text().starts_with(" herdr-wingman  archive · 1 archived") && has(&s.text(), r"\n ▾ archived [^\n]*\n[ ▌]. PRJ-2 +Other ") && !s.text().contains("[archived]"), "{}", s.text());
     s.press(&["ctrl+a"]); assert!(!task("proj/2").b("archivedAt"));
     s.press(&["alt+a"]);
     s.s.sel = "proj/2".into(); s.load(); s.press(&["ctrl+p"]); assert_eq!(task("proj/2").at("pinned"), &json!(true));
     s.press(&["ctrl+f"]); assert!(s.text().contains("\nfind ❯ ")); s.typed("make"); s.press(&["enter"]);
-    assert!(has(&s.text(), r#"^ herdr-projects  proj · [^\n]*\n +All [^\n]*\n filter "make" · 1 of 2 · esc clears "#), "{}", s.text());
+    assert!(has(&s.text(), r#"^ herdr-wingman  proj · [^\n]*\n +All [^\n]*\n filter "make" · 1 of 2 · esc clears "#), "{}", s.text());
     // the error from the merge asked about earlier stays (no confirmation took its place): the first esc dismisses it
     if s.s.msg_kind == sw::shown::ink::Ink::Red && !s.s.msg.is_empty() { s.press(&["esc"]); }
     s.press(&["esc"]); assert_eq!(s.s.filter, "");

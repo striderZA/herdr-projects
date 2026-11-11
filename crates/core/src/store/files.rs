@@ -58,7 +58,7 @@ pub fn artifacts_dir(id: &str) -> PathBuf { dir_of(id).join("artifacts") }
 /// Once an update put a new file at that path, Linux names the running one "… (deleted)", a file nothing can be started
 /// from: the path is the one without it, where the new program is.
 pub fn bin() -> PathBuf {
-    let Ok(p) = std::env::current_exe() else { return PathBuf::from("herdr-projects") };
+    let Ok(p) = std::env::current_exe() else { return PathBuf::from("herdr-wingman") };
     crate::sys::without_deleted(p)
 }
 pub fn absolute(p: &Path) -> PathBuf { if p.is_absolute() { p.to_path_buf() } else { std::env::current_dir().map(|d| d.join(p)).unwrap_or_else(|_| p.to_path_buf()) } }

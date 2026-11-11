@@ -1,7 +1,7 @@
 //! The settings page, drawn: each row the setting's plain label, its value, what a reader must know of it (that it
 //! does nothing here, or counts later) and its name as a command takes it, greyed. The line on top says what the
 //! selected row may be. Rows set for this task only are marked `*`; where any other comes from is not said here
-//! (`herdr-projects show` says it). Your own settings (or your entry for a repo) are the same page, full screen, each
+//! (`herdr-wingman show` says it). Your own settings (or your entry for a repo) are the same page, full screen, each
 //! row not your own saying where it comes from (built in, you, the repo's file). A coordinator's row: its own rows
 //! first, under `This coordinator`, then those of the place under it under their own headline.
 use crate::board::view::list::hl;

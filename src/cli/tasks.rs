@@ -32,7 +32,7 @@ fn shown_of(id: &str) -> Value { board(true).into_iter().find(|t| t.s("id") == i
 
 pub fn command(cmd: &str, a: &Args) -> Res<(Value, String)> {
     let (pos, flags) = (&a.pos, &a.flags);
-    let need = |n: usize, what: &str| -> Res<String> { match pos.get(n).filter(|s| !s.is_empty()) { Some(s) => Ok(s.clone()), None => crate::fail!("{cmd} needs {what}. Try: herdr-projects help") } };
+    let need = |n: usize, what: &str| -> Res<String> { match pos.get(n).filter(|s| !s.is_empty()) { Some(s) => Ok(s.clone()), None => crate::fail!("{cmd} needs {what}. Try: herdr-wingman help") } };
     let rest = |n: usize| pos.iter().skip(n).cloned().collect::<Vec<_>>().join(" ");
     let flag = |k: &str| flags.get(k).filter(|v| !matches!(v, Value::Bool(_))).map(text);
     let here = context_folder();
@@ -120,15 +120,15 @@ pub fn command(cmd: &str, a: &Args) -> Res<(Value, String)> {
         "pin" | "unpin" => super::pins::command(cmd, pos, flags, &shown_of)?,
         // A round of work is over: every done task of a repo (or of every repo) in one go.
         "archive" if flags.b("done") => {
-            if pos.len() > 1 { crate::fail!("archive --done takes no id: it archives every done task (of --repo NAME). Try: herdr-projects help"); }
-            if flags.has("repo") && flag("repo").is_none() { crate::fail!("--repo needs a repo's name: herdr-projects archive --done --repo NAME"); }
+            if pos.len() > 1 { crate::fail!("archive --done takes no id: it archives every done task (of --repo NAME). Try: herdr-wingman help"); }
+            if flags.has("repo") && flag("repo").is_none() { crate::fail!("--repo needs a repo's name: herdr-wingman archive --done --repo NAME"); }
             let r = archive_done::archive_done(flag("repo").as_deref())?;
             (r.json(), r.said)
         }
         // A whole project, with its tasks: put away, and brought back as it was.
         "archive" | "restore" | "unarchive" if flags.has("repo") => {
-            if pos.len() > 1 { crate::fail!("{cmd} --repo NAME takes no id: it {cmd}s the whole project. Try: herdr-projects help"); }
-            let Some(repo) = flag("repo") else { crate::fail!("--repo needs a repo's name: herdr-projects {cmd} --repo NAME") };
+            if pos.len() > 1 { crate::fail!("{cmd} --repo NAME takes no id: it {cmd}s the whole project. Try: herdr-wingman help"); }
+            let Some(repo) = flag("repo") else { crate::fail!("--repo needs a repo's name: herdr-wingman {cmd} --repo NAME") };
             let (said, ids) = if cmd == "archive" { archive_project::archive_project(&repo)? } else { archive_project::restore_project(&repo)? };
             let mut out = obj(json!({ "repo": repo })); out.put(if cmd == "archive" { "archived" } else { "restored" }, ids);
             (Value::Object(out), said)
@@ -142,7 +142,7 @@ pub fn command(cmd: &str, a: &Args) -> Res<(Value, String)> {
         }
         "set" | "unset" | "show" => {
             let coord = if flags.b("main-coordinator") { Some("main".to_string()) } else { flag("project-coordinator").map(|r| format!("project:{r}")) };
-            if flags.has("project-coordinator") && coord.is_none() { crate::fail!("--project-coordinator needs a repo's name: herdr-projects {cmd} <name> --project-coordinator <repo>"); }
+            if flags.has("project-coordinator") && coord.is_none() { crate::fail!("--project-coordinator needs a repo's name: herdr-wingman {cmd} <name> --project-coordinator <repo>"); }
             let w = Where { task: flag("task"), repo: flag("repo"), automation: flag("automation"), coord };
             settings_command(cmd, pos, &w, if pos.len() > 2 { Some(json!(rest(2))) } else { None })?
         }
@@ -157,7 +157,7 @@ pub fn command(cmd: &str, a: &Args) -> Res<(Value, String)> {
         }
         "reopen" => { let (pane, has, t) = crate::delegate::jobs::reopen(&need(1, "an id")?, true)?; (json!({ "pane": pane.at("pane_id"), "hasAgent": has }), format!("{}: its space is open{}", t.s("id"), if has { "" } else { ", no agent in it" })) }
         "housekeep" => { crate::housekeeping::housekeeping(&current_socket(), if flags.b("pr") { crate::housekeeping::Force::Pr } else { crate::housekeeping::Force::Yes }); (json!({ "ok": true }), "ok".into()) }
-        _ => crate::fail!("Unknown command \"{cmd}\". Try: herdr-projects help"),
+        _ => crate::fail!("Unknown command \"{cmd}\". Try: herdr-wingman help"),
     };
     Ok(out)
 }
@@ -173,12 +173,12 @@ fn coordinator(a: &Args, here: &std::path::Path, me: Option<&(Obj, &str)>) -> Re
     match what {
         "where" => return Ok((json!({ "where": state::get(&socket).map(|c| c.at("where").clone()).unwrap_or(json!([])) }), r::where_text(&socket))),
         // From a task's agent or reviewer: the turn it starts is marked with who sent it.
-        "tell" => { if rest.is_empty() { crate::fail!("coordinator needs the text. Try: herdr-projects help"); } r::send_as(here, &rest, a.flags.b("delegate"), "", &socket, me.map(|(t, role)| json!({ "task": t.s("id"), "role": role })).unwrap_or(Value::Null))?; }
+        "tell" => { if rest.is_empty() { crate::fail!("coordinator needs the text. Try: herdr-wingman help"); } r::send_as(here, &rest, a.flags.b("delegate"), "", &socket, me.map(|(t, role)| json!({ "task": t.s("id"), "role": role })).unwrap_or(Value::Null))?; }
         "restart" => { r::restart(&socket)?; }
         "new" | "fresh" => { r::fresh(who::pick_of(&flag("agent"), &flag("effort"))?, &socket)?; }
         "stop" => { r::stop(&socket)?; }
         "status" => {}
-        _ => crate::fail!("coordinator takes: tell <text>, where, restart, new, stop. Try: herdr-projects help"),
+        _ => crate::fail!("coordinator takes: tell <text>, where, restart, new, stop. Try: herdr-wingman help"),
     }
     let s = look::summary(&socket);
     let text = match what {

@@ -19,7 +19,7 @@ pub struct Cut { pub passing: bool, pub reason: String, pub error: String }
 fn refused_words(by: &str, error: &str) -> String {
     let a = crate::store::settings::values::agent_of(by);
     match crate::agents::model_refused::read(&a.kind, error) {
-        Some(r) => format!("{}. Choose a model it can use in reviewer.agent (`herdr-projects models {}` lists them), or leave the model out. Its error: {}", crate::agents::model_refused::say(&a.kind, &r), a.kind, error.trim_end_matches(|c: char| c == '.' || c.is_whitespace())),
+        Some(r) => format!("{}. Choose a model it can use in reviewer.agent (`herdr-wingman models {}` lists them), or leave the model out. Its error: {}", crate::agents::model_refused::say(&a.kind, &r), a.kind, error.trim_end_matches(|c: char| c == '.' || c.is_whitespace())),
         None => format!("the reviewer stopped: {error}"),
     }
 }

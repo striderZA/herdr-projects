@@ -15,8 +15,8 @@ pub fn herdr_config() -> PathBuf {
     let base = std::env::var("XDG_CONFIG_HOME").map(PathBuf::from).unwrap_or_else(|_| crate::store::files::user_home().join(".config"));
     base.join("herdr").join("config.toml")
 }
-fn begin(what: &str) -> String { format!("# >>> herdr-projects {what} (added by the herdr-projects plugin; `herdr-projects remove-extras` removes it)") }
-fn end(what: &str) -> String { format!("# <<< herdr-projects {what}") }
+fn begin(what: &str) -> String { format!("# >>> herdr-wingman {what} (added by the herdr-wingman plugin; `herdr-wingman remove-extras` removes it)") }
+fn end(what: &str) -> String { format!("# <<< herdr-wingman {what}") }
 fn block(what: &str, arg: &str) -> String {
     match what {
         "key" => format!("[[keys.command]]\nkey = \"{arg}\"\ntype = \"plugin_action\"\ncommand = \"{}\"\ndescription = \"work board\"", keys::board_action()),
@@ -42,7 +42,7 @@ fn herdr_out(a: &[&str], env: Option<(&str, String)>) -> Option<(i32, String)> {
 pub fn offers() -> Value {
     let text = read();
     let x = extras();
-    let bound = regex::Regex::new(r#"command\s*=\s*["']herdr-projects\.open(?:-windows)?["']"#).unwrap().is_match(&text);
+    let bound = regex::Regex::new(r#"command\s*=\s*["']herdr-wingman\.open(?:-windows)?["']"#).unwrap().is_match(&text);
     let offer_key = !bound && x.s("key") != "no"; // an existing binding is left as it is
     let (key, note) = if offer_key && !x.b("asked") { keys::suggest(&text, &keys::defaults()) } else { (String::new(), String::new()) };
     // Rows of the user's own, in any spelling, are kept: ours added beside them would make herdr reject the file.
@@ -89,7 +89,7 @@ pub fn add_block(what: &str, arg: &str) -> Result<String, (String, Option<String
     let next = format!("{text}{}\n{b}\n", if !text.is_empty() && !text.ends_with('\n') { "\n" } else { "" });
     let paste = format!("Could not change {}. Add this to it yourself, then run: herdr server reload-config\n\n{b}", tilde(&file.display().to_string()));
     accepted(&next).map_err(|why| (format!("herdr would reject that: {why}"), None))?;
-    let backup = PathBuf::from(format!("{}.bak-herdr-projects", file.display()));
+    let backup = PathBuf::from(format!("{}.bak-herdr-wingman", file.display()));
     let existed = file.exists();
     if existed && is_link() { return Err((paste, Some(b))); } // a managed link: not ours to rewrite
     let wrote = (|| -> std::io::Result<()> { if let Some(d) = file.parent() { std::fs::create_dir_all(d)?; } if existed { std::fs::copy(&file, &backup)?; } std::fs::write(&file, &next) })();
@@ -116,7 +116,7 @@ pub fn refresh_sidebar() -> bool {
     with_lock_wait("extras", 15000, || {
         let next = format!("{}{want}{}", &text[..at], &text[e..]);
         if accepted(&next).is_err() { return Ok(false); }
-        if std::fs::copy(&file, format!("{}.bak-herdr-projects", file.display())).is_err() || std::fs::write(&file, &next).is_err() { return Ok(false); }
+        if std::fs::copy(&file, format!("{}.bak-herdr-wingman", file.display())).is_err() || std::fs::write(&file, &next).is_err() { return Ok(false); }
         let r = launch(None, &["server".into(), "reload-config".into()], "", 15000).map(|r| r.stdout).unwrap_or_default();
         if regex::Regex::new(r#""status":\s*"failed""#).unwrap().is_match(&r) { let _ = std::fs::write(&file, &text); let _ = launch(None, &["server".into(), "reload-config".into()], "", 15000); return Ok(false); }
         Ok(true)
@@ -134,11 +134,11 @@ pub fn remove_blocks(what: Option<&str>) -> bool {
     let file = herdr_config();
     let text = read();
     let w = what.map(regex::escape).unwrap_or_else(|| "[^\\n]*".into());
-    if !regex::Regex::new(&format!("(?m)^# >>> herdr-projects {w}")).unwrap().is_match(&text) { return false; }
-    let blocks = regex::Regex::new(&format!(r"\n?# >>> herdr-projects {w}[^\n]*\n(?s:.*?)# <<< herdr-projects {w}[^\n]*\n?")).unwrap();
+    if !regex::Regex::new(&format!("(?m)^# >>> herdr-wingman {w}")).unwrap().is_match(&text) { return false; }
+    let blocks = regex::Regex::new(&format!(r"\n?# >>> herdr-wingman {w}[^\n]*\n(?s:.*?)# <<< herdr-wingman {w}[^\n]*\n?")).unwrap();
     let next = blocks.replace_all(&text, "\n").to_string();
     let next = crate::re!(r"\n{3,}").replace_all(&next, "\n\n").to_string();
-    if std::fs::copy(&file, format!("{}.bak-herdr-projects", file.display())).is_err() || std::fs::write(&file, next).is_err() { return false; }
+    if std::fs::copy(&file, format!("{}.bak-herdr-wingman", file.display())).is_err() || std::fs::write(&file, next).is_err() { return false; }
     reload();
     true
 }

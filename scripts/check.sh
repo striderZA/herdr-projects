@@ -69,9 +69,9 @@ sc_cargo build --profile quick --quiet
 say "1/3 steps"
 # The made tables, written when out of date; then the rules (tests/guard.rs runs them too).
 step="writing the made tables"
-./target/quick/herdr-projects docs
+./target/quick/herdr-wingman docs
 step="checking the repo's rules"
-./target/quick/herdr-projects docs --guard
+./target/quick/herdr-wingman docs --guard
 say "2/3 steps"
 # The tests, split over several processes at once (scripts/run-tests.sh): every test, or those of the names given.
 step="running the tests"

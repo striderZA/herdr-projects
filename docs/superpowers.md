@@ -5,8 +5,8 @@
 the check, the final review and the merge; Superpowers plans and executes the work inside the task.
 
 ```bash
-herdr-projects set worker.preset superpowers --repo my-app
-herdr-projects add "Add CSV export" --repo my-app --delegate --plan.approve you
+herdr-wingman set worker.preset superpowers --repo my-app
+herdr-wingman add "Add CSV export" --repo my-app --delegate --plan.approve you
 ```
 
 It is a work setting: a task, your entry for a repo, or you. It is read when the agent starts, and it is never in the

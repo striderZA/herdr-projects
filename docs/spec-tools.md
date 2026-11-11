@@ -7,8 +7,8 @@ set up the same way.
 ## The settings
 
 ```sh
-herdr-projects set worker.instructions "Use OpenSpec. Write the change's proposal and specs first, under openspec/changes/. Then build it. When it is built, run openspec archive for that change." --repo my-app
-herdr-projects set check.command "openspec validate --all --strict --no-interactive" --repo my-app
+herdr-wingman set worker.instructions "Use OpenSpec. Write the change's proposal and specs first, under openspec/changes/. Then build it. When it is built, run openspec archive for that change." --repo my-app
+herdr-wingman set check.command "openspec validate --all --strict --no-interactive" --repo my-app
 ```
 
 - **`worker.instructions`** tells every task's agent in that repo the order of work ([settings](settings.md)).

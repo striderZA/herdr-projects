@@ -59,7 +59,7 @@ The panel and the full screen have the same parts, in the same order:
 
 - **The title**, on top, by itself. The task is named as its row names it (`HSW-84`), in the title and in the heading of
   the whole-task page (`Task details  HSW-84 "Max length for task titles"`). Its id, as a command takes it, stands once,
-  on the whole task, with the session and its repo's key (`Task id  herdr-projects/84 · HSW`).
+  on the whole task, with the session and its repo's key (`Task id  herdr-wingman/84 · HSW`).
 - **Status**: where it stands, one fact a row, always in this order:
 
   | Row | Says |
@@ -115,7 +115,7 @@ usual ones.
 
 - **Only a value set for this task alone is marked**: a `*` after it, in the accent colour, and one dim line under the
   rows, `* this task only` (the first line to go where room is short). Every other value looks the same, whether it is
-  your settings, the repo's or built in. The panel never says where a value comes from: `herdr-projects show <id>` does
+  your settings, the repo's or built in. The panel never says where a value comes from: `herdr-wingman show <id>` does
   ([settings](settings.md)).
 - Every setting somebody chose is shown, also one that says `none`, or one that does nothing now.
 - A task in no repo has no `Check` and no `Workspace` row.
@@ -128,7 +128,7 @@ usual ones.
 
 `Ctrl+E` on a task opens its settings full screen: every work [setting](settings.md) by its plain label, its value, and
 its name as a command takes it, with `*` on the ones set for this task only. Where any other value comes from is not said
-here either: `herdr-projects show <id>` says it.
+here either: `herdr-wingman show <id>` says it.
 
 ```
  Settings  HSW-12 "Tidy the first-run questions"
@@ -170,7 +170,7 @@ here either: `herdr-projects show <id>` says it.
 
 `Ctrl+E` on the top row (or a status group's), or `your own settings` in the `?` menu, opens the same page
 for your settings: what every task starts from, board settings too (`Settings  yours: what every task starts from`).
-On a repo's heading it is your entry for that repo. The keys are the page's; `Enter` saves as `herdr-projects set` does
+On a repo's heading it is your entry for that repo. The keys are the page's; `Enter` saves as `herdr-wingman set` does
 and `Ctrl+U` as `unset`. `*` marks what you set, and every other row says where its value comes from (`built in`, or on
 a repo's entry `you`). `Esc` goes back to the list ([settings](settings.md)).
 
@@ -207,7 +207,7 @@ then your own settings, then on a project's row your entry for that repo.
 - A review from before the gate keeps its score and advice as they were (`4/5, says merge`), and its `Problems`.
 - A review that still stood after main was merged in says so under its result.
 
-`herdr-projects details <id>` prints the same list as `reviews`.
+`herdr-wingman details <id>` prints the same list as `reviews`.
 
 ## A narrow panel
 

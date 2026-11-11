@@ -1,4 +1,4 @@
-//! `herdr-projects doctor` on what it could clean (HP-32): the worktree of a task that is done, a worktree on a task
+//! `herdr-wingman doctor` on what it could clean (HP-32): the worktree of a task that is done, a worktree on a task
 //! branch no task has, one git lists whose folder is gone, and an old warm build; never a clean-up still to come, one
 //! you turned off, your own branches or the warm build in use. Each with the command that removes it.
 use crate::common;
