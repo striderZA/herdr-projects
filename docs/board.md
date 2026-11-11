@@ -203,6 +203,8 @@ terminal program-status spec ([OSC 7501](https://mitchellh.com/writing/program-s
   waits from one that went wrong.
 - Finished work that passed and waits for your yes is none of these: its mark is `◆`, in green, under `ready to approve`
   (an exclamation mark there would read as "something is wrong", and nothing is).
+- A task whose finish line stopped at a step, but whose agent herdr sees working again in its own terminal, shows as
+  working (`◐`): the failure is in the panel and the details, not on the row that says what the agent is doing.
 - The words for where a task stands are one list (`crates/core/src/status_words.rs`), which the rows, the State line and Herdr's sidebar all read.
 - The records the board writes to the terminal carry no mark: they name the state and the kind
   (`state=blocked:kind=question`), and the terminal draws its own.

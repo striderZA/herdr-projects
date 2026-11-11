@@ -6,7 +6,7 @@
 //! pull requests (housekeeping/prs.rs). One pass per herdr session at a time (housekeeping/once.rs).
 mod once;
 mod prs;
-pub use prs::poll_prs;
+pub use prs::{poll_prs, waiting_link};
 
 use crate::actions::start::start_queued;
 use crate::clock::now;
@@ -75,7 +75,7 @@ fn pass(socket: &str, force: Force) {
         }
     }
     crate::leftovers::sweep::daily(); // what ended tasks left behind, once a day
-    let watch = tasks.iter().any(|t| (t.b("pr") && !t.b("prMerged")) || (resyncable(t) && t.b("worktree")));
+    let watch = tasks.iter().any(|t| (t.b("pr") && !t.b("prMerged")) || (resyncable(t) && t.b("worktree")) || waiting_link(t));
     if watch && (force == Force::Pr || due("prpoll", 120000)) {
         if inline() { JOBS.with(|j| j.borrow_mut().push(("prpoll".into(), "-".into(), vec![]))); } else { spawn_loose(&["run", "prpoll", "-"]); }
     }

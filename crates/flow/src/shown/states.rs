@@ -16,7 +16,15 @@ pub fn is_agent(r: &Obj) -> bool { r.b("agent") && !["todo", "progress"].contain
 /// Its agent is at rest and the board missed the end of its turn: the row says "Finishing" and stays so. The finish key
 /// takes it on with what the agent said last (actions/finish_stuck.rs).
 pub fn stuck_finishing(r: &Obj) -> bool { is_agent(r) && !r.b("archivedAt") && r.s("stage") == "working" && r.s("state") == "working" && r.s("note") == "Finishing" }
-pub fn failure_for(r: &Obj) -> Option<Obj> { if r.s("stage") == "nosummary" { None } else { crate::actions::finish_line::failure_of(r) } }
+pub fn failure_for(r: &Obj) -> Option<Obj> {
+    if r.s("stage") == "nosummary" { return None; }
+    let f = crate::actions::finish_line::failure_of(r)?;
+    // A failure belongs to the step that stopped. While something works on the task it no longer stops it: only what
+    // the board itself sent to the agent stays, for the hint line that says those details are with it. The board's own
+    // retry wait is not the task working again: its row says when it tries, and the panel says what it tries for.
+    if r.s("state") == "working" && waiting_of(r).is_none() { return f.b("sentAt").then_some(f); }
+    Some(f)
+}
 pub fn can_send_error(r: &Obj) -> bool {
     if !r.b("host") { return crate::actions::finish_line::can_send_error(r); }
     r.s("stage") == "nosummary" || (r.s("stage") == "failed" && !r.at("failure").b("auth"))

@@ -129,6 +129,10 @@ When the agent's turn ends, the board:
      acted on either.
    - A pull request the agent already opened for the task's branch is taken on instead, and goes through the review and
      the merge as usual.
+   - A pull request those `gh` calls could not confirm (a GraphQL error after `pr create` had made it) is looked for
+     again by the task's branch on the next pull-request poll, at most two minutes later: once it is there the board
+     links it and the finish goes on by itself, through its review and approval, without the agent finishing another
+     turn. That failed step no longer marks the task once its agent works on it again.
    - The push may run for `merge.pushTimeout` (2 minutes unless set), the repo's pre-push hook included. A repo whose
      hook runs its tests needs more: `herdr-projects set merge.pushTimeout 10m --repo <name>`, or `none`. A push that
      runs out of time is stopped and the finish fails, saying so (`git push did not end within 2m

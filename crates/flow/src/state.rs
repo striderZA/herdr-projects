@@ -48,7 +48,13 @@ pub fn show(t: &Obj, live: &Value, now: i64) -> Show {
         // your own task: the progress and the minutes left you reported
         "progress" => return out("working", &|s| { s.app = t.t("owner"); s.progress = t.at("watch").at("progress").is_number().then(|| t.at("watch").f("progress")); s.eta = t.at("watch").at("eta").is_number().then(|| t.at("watch").i("eta")); }),
         "done" => return out("done", &|_| {}),
-        "failed" => return if t.at("failure").b("auth") { out("blocked", &|s| s.kind = Some("auth".into())) } else { out("error", &|_| {}) },
+        "failed" => {
+            // The finish line stopped at a step, and its agent may have been taken on again in its own terminal before
+            // the hook re-armed the task: what herdr sees now is where it stands. The failure stays in the panel and
+            // the details, where it is read, not on the row that says what the agent is doing.
+            if live.at("status").as_str() == Some("working") { return out("working", &|s| { s.msg = quiet_line(t, "agent"); s.plain = quiet_plain(t, "agent"); }); }
+            return if t.at("failure").b("auth") { out("blocked", &|s| s.kind = Some("auth".into())) } else { out("error", &|_| {}) };
+        }
         "approval" => return out("blocked", &|s| { s.kind = Some("permission".into()); s.review = !t.b("mergeFailed") && !t.b("syncBlocked"); }),
         "asks" => return out("blocked", &|s| s.kind = Some(if t.b("kind") { t.t("kind") } else { "question".into() })),
         "plan" => return out("blocked", &|s| { s.kind = Some("permission".into()); s.plan = true; }),
