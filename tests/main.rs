@@ -191,6 +191,7 @@ mod pull_requests_already;
 mod pull_requests_bb;
 mod pull_requests_checks;
 mod pull_requests_expected;
+mod pull_requests_link;
 mod pull_requests_merge;
 mod pull_requests_no_checks_permission;
 mod pull_requests_repo;

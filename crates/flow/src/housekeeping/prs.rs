@@ -1,5 +1,6 @@
 //! Pull requests are watched: failed checks, a requested change or new feedback wake the agent; a merge made
-//! elsewhere marks the task done. Conflicts with main are found by the board's own sync (sync.rs), not here.
+//! elsewhere marks the task done. A pull request gh could not confirm when the board opened it is looked for again by
+//! its branch, linked, and the task goes on. Conflicts with main are found by the board's own sync (sync.rs), not here.
 //! A task waiting on a login is the human's: pull-request feedback does not wake its agent until that is cleared.
 use crate::actions::finish_line::send_failure;
 use crate::clock::now;
@@ -9,11 +10,48 @@ use crate::json::*;
 use crate::land::{checks, readable};
 use crate::runner::{runner_alive, spawn_runner};
 use crate::store::{failures::failure_patch, repos::{folder_of, git_out}, settings::lookup::setting, tasks::{get, list, update_wait, Change, ListOpts, Task}};
+use std::path::Path;
 
 fn needs_login(t: &Task) -> bool { t.at("failure").b("auth") || (t.s("stage") == "asks" && t.s("kind") == "auth") }
 
+/// A task whose branch should have a pull request but has none linked: the step that opened it failed before gh's
+/// answer could be read (a GraphQL 404 after `pr create` had already made it). It is looked for again on every poll,
+/// not only when its agent finishes another turn.
+pub fn waiting_link(t: &Task) -> bool {
+    !t.b("pr") && !t.b("prMerged") && !t.b("archivedAt") && t.b("branch") && t.b("worktree")
+        && t.at("failure").s("stage") == "pr" && setting("merge.pr", Some(t)) == json!(true)
+}
+
+/// The pull requests gh could not confirm when the board opened them: each is looked for again by its branch and
+/// linked when it is there. A task that stopped on that step goes on by itself (the pipeline runs again with the link),
+/// so its review and approval do not wait for its agent to finish another turn.
+fn link_missing() {
+    for t in list(ListOpts::default()) {
+        if !waiting_link(&t) || runner_alive(&t) { continue; }
+        let wt = t.s("worktree");
+        let tree = Path::new(&wt);
+        let Some(p) = crate::finish::already::open_pr(t.s("branch"), tree) else { continue; };
+        let root = folder_of(t.s("id"));
+        let onto = t.s("from").starts_with("origin/").then(|| crate::sync::main_branch(&root, &t));
+        if onto.as_deref().and_then(|b| crate::finish::already::wrong_base(&p, b)).is_some() { continue; }
+        let head = git_out(tree, &["rev-parse", &format!("refs/remotes/origin/{}", t.s("branch"))]).unwrap_or_default();
+        let retry = t.s("stage") == "failed";
+        let id = t.s("id");
+        let _ = update_wait(&id, 10000, |c| {
+            if c.b("pr") || c.b("archivedAt") || runner_alive(c) || c.at("failure").s("stage") != "pr" { return Ok(Change::Keep); }
+            c.put("pr", p.url.clone()); c.put("prSeen", ""); c.put("prState", "waiting");
+            if !head.is_empty() { c.put("prHead", head.clone()); }
+            c.put("failure", Value::Null); c.put("prFailure", Value::Null);
+            if c.s("stage") == "failed" { c.put("stage", "checking"); c.put("msg", ""); c.put("since", now()); }
+            Ok(Change::Write)
+        });
+        if retry { spawn_runner("pipeline", &id, &[]); }
+    }
+}
+
 pub fn poll_prs() {
     super::fetch_mains();
+    link_missing();
     for first in list(ListOpts::default()) {
         if !first.b("pr") || first.b("prMerged") || runner_alive(&first) || (first.s("stage") == "working" && !first.b("autoMerge")) || needs_login(&first) { continue; }
         // Its checks as the token can read them (land/readable.rs): a fine-grained token cannot read GitHub's list.
