@@ -86,7 +86,7 @@ pub fn send_as(cwd: &Path, text: &str, delegate: bool, about: &str, co: impl Int
 }
 /// What `tell` says when herdr cannot be found from here: the message is queued, not delivered, and why.
 pub fn not_delivered(name: &str) -> String {
-    format!("Queued for the {name}, but not delivered: the herdr program was not found here (not on PATH, not in {}, not on a login shell's PATH). The message waits in the queue and goes in once herdr-projects runs where herdr is found (the board and its keeper, in herdr). To deliver from here, set HERDR_BIN_PATH to herdr's full path.", crate::herdr::find::SPOTS.join(", "))
+    format!("Queued for the {name}, but not delivered: the herdr program was not found here (not on PATH, not in {}, not on a login shell's PATH). The message waits in the queue and goes in once herdr-wingman runs where herdr is found (the board and its keeper, in herdr). To deliver from here, set HERDR_BIN_PATH to herdr's full path.", crate::herdr::find::SPOTS.join(", "))
 }
 /// A project coordinator's repo, which must be one this machine knows: it works in its folder.
 fn known(co: &Co) -> Res<Option<std::path::PathBuf>> {

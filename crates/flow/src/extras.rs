@@ -23,7 +23,7 @@ pub fn answer(patch: Value) -> Obj { let mut p = obj(patch); p.put("asked", true
 pub fn note(patch: Value) -> Obj { save(patch) }
 
 // ---- 1. the how-to ---------------------------------------------------------------------------------------------------
-const NAME: &str = "herdr-projects";
+const NAME: &str = "herdr-wingman";
 /// Each installed agent program's own user-level skills folder (a folder per skill holding SKILL.md). The plugin owns
 /// one folder there, named for itself, and records every path it wrote.
 fn skill_targets() -> Vec<PathBuf> {

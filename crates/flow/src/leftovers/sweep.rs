@@ -3,7 +3,7 @@
 //! the board's task folders no task has, old build output in kept worktrees (builds.rs) and old warm builds nothing
 //! uses. A task at work, its worktree and its folders are never touched. It runs when the board starts (when the last
 //! sweep is over an hour old), once a day from the housekeeping pass, before a start on a nearly full disk (room.rs),
-//! and as `herdr-projects sweep`; one at a time, and what it freed is kept in `sweep.json`.
+//! and as `herdr-wingman sweep`; one at a time, and what it freed is kept in `sweep.json`.
 use super::{builds, orphans, remove};
 use crate::disk::gb;
 use crate::herdr::{cli::socket_exists, Herdr};

@@ -12,8 +12,8 @@ use sw::flow::git::{check_target, gh_command, hostname_in};
 use sw::json::*;
 use sw::store::tasks::{update, Change};
 
-const FORK: &str = "striderZA/herdr-projects";
-const FORK_URL: &str = "git@github.com:striderZA/herdr-projects.git";
+const FORK: &str = "striderZA/herdr-wingman";
+const FORK_URL: &str = "git@github.com:striderZA/herdr-wingman.git";
 const ORIGINAL_URL: &str = "git@github.com:eliasstravik/shepherdr.git";
 const ORIGINAL_PR: &str = "https://github.com/eliasstravik/shepherdr/pull/7";
 
@@ -49,7 +49,7 @@ fn the_pull_request_is_opened_in_the_fork_its_branch_is_pushed_to_never_in_the_o
     let w = pr_world();
     name_fork(&w);
     let id = to_approval(&w, "In the fork");
-    assert_eq!(task(&id).s("pr"), "https://github.com/striderZA/herdr-projects/pull/7");
+    assert_eq!(task(&id).s("pr"), "https://github.com/striderZA/herdr-wingman/pull/7");
     let create = first_call(&w, "pr create");
     assert!(create.contains(&format!("--repo {FORK}")), "{create}");
     assert!(!create.contains("eliasstravik"), "{create}");
@@ -117,18 +117,18 @@ fn a_clone_whose_origin_is_ssh_with_a_port_is_asked_by_its_repo_name() {
 #[test]
 fn a_clone_whose_origin_is_on_another_host_is_asked_by_host_and_name() {
     let w = pr_world();
-    git(&w.root, &["remote", "set-url", "origin", "https://ghe.example.com/striderZA/herdr-projects.git"]);
-    assert_eq!(gh_repo_of(&gh_command(&["pr", "view", "7"], &w.root).unwrap()).as_deref(), Some("ghe.example.com/striderZA/herdr-projects"));
-    assert!(gh_command(&["pr", "merge", "https://ghe.example.com/striderZA/herdr-projects/pull/7", "--squash"], &w.root).is_ok());
-    assert!(refused(&["pr", "merge", "https://github.com/striderZA/herdr-projects/pull/7"], &w.root).contains("is not a pull request of ghe.example.com/striderZA/herdr-projects"));
+    git(&w.root, &["remote", "set-url", "origin", "https://ghe.example.com/striderZA/herdr-wingman.git"]);
+    assert_eq!(gh_repo_of(&gh_command(&["pr", "view", "7"], &w.root).unwrap()).as_deref(), Some("ghe.example.com/striderZA/herdr-wingman"));
+    assert!(gh_command(&["pr", "merge", "https://ghe.example.com/striderZA/herdr-wingman/pull/7", "--squash"], &w.root).is_ok());
+    assert!(refused(&["pr", "merge", "https://github.com/striderZA/herdr-wingman/pull/7"], &w.root).contains("is not a pull request of ghe.example.com/striderZA/herdr-wingman"));
 }
 
 #[test]
 fn an_ssh_alias_is_asked_by_the_host_it_resolves_to_and_the_repo_by_name() {
     let w = pr_world();
     // ssh -G answers an alias it does not know with the alias itself, so the host is kept; an alias its config maps is asked by that host.
-    git(&w.root, &["remote", "set-url", "origin", "git@no-such-host.herdr-projects.invalid:striderZA/herdr-projects.git"]);
-    assert_eq!(gh_repo_of(&gh_command(&["pr", "view", "7"], &w.root).unwrap()).as_deref(), Some("no-such-host.herdr-projects.invalid/striderZA/herdr-projects"));
+    git(&w.root, &["remote", "set-url", "origin", "git@no-such-host.herdr-projects.invalid:striderZA/herdr-wingman.git"]);
+    assert_eq!(gh_repo_of(&gh_command(&["pr", "view", "7"], &w.root).unwrap()).as_deref(), Some("no-such-host.herdr-projects.invalid/striderZA/herdr-wingman"));
 }
 
 #[test]
@@ -185,6 +185,6 @@ fn a_clone_whose_origin_is_the_repo_merge_repo_names_opens_its_pull_request_ther
     commit_merge_repo(&w, FORK);
     name_fork(&w);
     let id = to_approval(&w, "In the fork, checked");
-    assert_eq!(task(&id).s("pr"), "https://github.com/striderZA/herdr-projects/pull/7");
+    assert_eq!(task(&id).s("pr"), "https://github.com/striderZA/herdr-wingman/pull/7");
     assert!(first_call(&w, "pr create").contains(&format!("--repo {FORK}")));
 }

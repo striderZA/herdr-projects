@@ -53,7 +53,7 @@ fn talk(child: &mut std::process::Child, cmd: &str) -> Result<Names, String> {
     let (Some(mut input), Some(out)) = (child.stdin.take(), child.stdout.take()) else { return Err(format!("`{cmd}` could not be talked to")) };
     let (tx, rx) = mpsc::channel::<String>();
     std::thread::spawn(move || { for l in BufReader::new(out).lines() { let Ok(l) = l else { break }; if tx.send(l).is_err() { break; } } });
-    let first = request(0, "initialize", json!({ "clientInfo": { "name": "herdr-projects", "version": env!("CARGO_PKG_VERSION") } }))
+    let first = request(0, "initialize", json!({ "clientInfo": { "name": "herdr-wingman", "version": env!("CARGO_PKG_VERSION") } }))
         + "{\"jsonrpc\":\"2.0\",\"method\":\"initialized\"}\n" + &request(1, "model/list", json!({ "includeHidden": true })) + &request(2, "account/read", json!({}));
     input.write_all(first.as_bytes()).map_err(|e| format!("`{cmd}` could not be asked: {e}"))?;
     let _ = input.flush();

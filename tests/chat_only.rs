@@ -55,7 +55,7 @@ fn every_turn_end_of_a_chat_waits_for_you_and_nothing_is_checked_reviewed_or_pus
     assert_eq!(git(&w.root, &["ls-remote", "origin"]).lines().filter(|l| l.contains(t.s("branch"))).count(), 0, "nothing pushed");
     // It never merges: an approval is refused, and says how to end it.
     let e = sw::actions::finish_line::approve(&id, None, false).unwrap_err().msg;
-    assert!(e.contains("is chat only: nothing of it is merged") && e.contains("herdr-projects finish"), "{e}");
+    assert!(e.contains("is chat only: nothing of it is merged") && e.contains("herdr-wingman finish"), "{e}");
 }
 
 #[test]

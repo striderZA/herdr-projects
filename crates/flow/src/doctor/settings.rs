@@ -69,15 +69,15 @@ pub fn check() -> Vec<Found> {
             let why = if kind(&n.kind).is_none() { Some(format!("no agent program \"{}\"", n.kind)) }
                 else { refusal(&name, &n.kind, !n.model.is_empty()).map(|w| w.trim_start_matches(&format!("{name}: ")).to_string()).or_else(|| crate::agents::models::why_not(&n.kind, &n.model)) };
             let Some(why) = why else { continue };
-            let fix = format!("Set it again: herdr-projects set {name} <program/model>{}  (or herdr-projects unset {name}{})", at.flag, at.flag);
+            let fix = format!("Set it again: herdr-wingman set {name} <program/model>{}  (or herdr-wingman unset {name}{})", at.flag, at.flag);
             add(format!("{from}: {name}: {why}"), Found::bad(format!("{name}{}: {}", at.label, why.trim_end_matches('.')), fix), &mut out);
         }
         for (name, why, from) in auto_refused(&at) {
-            let fix = format!("{}set it again: herdr-projects set {name} full{} (or ask)", if why.contains("has no auto mode: it came in") { "Update the program, or " } else { "Choose a program that has one, or " }, at.flag);
+            let fix = format!("{}set it again: herdr-wingman set {name} full{} (or ask)", if why.contains("has no auto mode: it came in") { "Update the program, or " } else { "Choose a program that has one, or " }, at.flag);
             add(format!("{from}: {name}: {why}"), Found::bad(format!("{name}{}: {why}", at.label), fix), &mut out);
         }
         for p in problems_in(&at.scope()) {
-            let fix = format!("Set it again with herdr-projects set …{}, or take it out of that file: until then the value below it counts.", at.flag);
+            let fix = format!("Set it again with herdr-wingman set …{}, or take it out of that file: until then the value below it counts.", at.flag);
             let what = p.replacen("this task:", &format!("the settings{}:", at.label), 1);
             add(what.clone(), Found::bad(what.trim_end_matches('.').to_string(), fix), &mut out);
         }

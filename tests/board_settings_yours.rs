@@ -1,6 +1,6 @@
 //! Your own settings on the board: the settings key on this machine's heading opens the settings page for yours (what
 //! every task starts from), on a repo's heading for your entry for that repo (each under the heading's coordinator's
-//! own rows, as a heading stands for its coordinator), and on a task still for that task; the ? menu has them too. A change there is the one `herdr-projects set` makes, put back the one `unset` makes.
+//! own rows, as a heading stands for its coordinator), and on a task still for that task; the ? menu has them too. A change there is the one `herdr-wingman set` makes, put back the one `unset` makes.
 use crate::common;
 use common::board::{open, Board};
 use common::*;

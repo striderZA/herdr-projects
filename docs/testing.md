@@ -22,7 +22,7 @@ Everything that runs tests uses the same command: you, an agent at work, the rev
 in [`.herdr-projects.json`](../.herdr-projects.json)).
 
 - `npm test` is the same command. Both run `scripts/check.sh`; nothing of Node is used but the name.
-- `.herdr-superwork.json` says the same, for the board that works on this repo until its machines run herdr-projects (this
+- `.herdr-superwork.json` says the same, for the board that works on this repo until its machines run herdr-wingman (this
   program's name before): it reads only that name.
 
 **Picking tests by name.** A name is first an area: `board-panel` (or `board_panel`) runs `tests/board_panel.rs` and every
@@ -38,9 +38,9 @@ passes.
    debug data, quick to build again after a small change, and the libraries it uses a little optimised (they are built
    once, [below](#one-build-cache-for-every-worktree)). The release build, for the files people install, is another
    profile ([installing](install.md)).
-2. **Writes the made tables** when they are out of date (`herdr-projects docs`): the keys in `docs/keys.md`, the settings
+2. **Writes the made tables** when they are out of date (`herdr-wingman docs`): the keys in `docs/keys.md`, the settings
    in `docs/settings.md`, and the map in your own folder. It says which it wrote: commit the tables.
-3. **Checks the repo's own rules** (`herdr-projects docs --guard`, which `tests/guard.rs` runs too): no source file past
+3. **Checks the repo's own rules** (`herdr-wingman docs --guard`, which `tests/guard.rs` runs too): no source file past
    300 lines, every source file starts with a comment that says what it holds, a key's chord written only in
    `crates/flow/src/board/keys.rs`, and no made table out of date.
 4. **Runs the tests**, with the names you gave, in several processes at once (`scripts/run-tests.sh`,

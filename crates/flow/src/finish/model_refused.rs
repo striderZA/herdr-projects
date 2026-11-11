@@ -37,13 +37,13 @@ pub fn fail_refused(g: &mut Guard, t: &Task, r: &Refused, error: &str) -> Res<()
     let setting = "worker.agent";
     let x = try_instead(&k, &r.model);
     let try_it = if x.is_empty() { "<model>".to_string() } else { x.clone() };
-    let list = format!("`herdr-projects models {k}` lists the ones {} can use", if r.signin.is_empty() { "it".to_string() } else { format!("your {}", r.signin) });
+    let list = format!("`herdr-wingman models {k}` lists the ones {} can use", if r.signin.is_empty() { "it".to_string() } else { format!("your {}", r.signin) });
     let whence = if given { format!("The board gave {k} the model {}.", agent_of(&on).model) } else { format!("The board gave {k} no model: that one is {}.", own_default(&k)) };
     let retry = key_name("yes");
     let next = if given {
-        format!("Choose one it can use for this task: herdr-projects set {setting} {k}/{try_it} --task {id} ({list}), or leave the model out (herdr-projects set {setting} {k} --task {id}). Then press {retry} (retry): the agent starts again on it.")
+        format!("Choose one it can use for this task: herdr-wingman set {setting} {k}/{try_it} --task {id} ({list}), or leave the model out (herdr-wingman set {setting} {k} --task {id}). Then press {retry} (retry): the agent starts again on it.")
     } else {
-        format!("Change {} to one it can use (try {try_it}; {list}), or choose one for this task: herdr-projects set {setting} {k}/{try_it} --task {id}. Then press {retry} (retry): the agent starts again on it.", own_default(&k))
+        format!("Change {} to one it can use (try {try_it}; {list}), or choose one for this task: herdr-wingman set {setting} {k}/{try_it} --task {id}. Then press {retry} (retry): the agent starts again on it.", own_default(&k))
     };
     let mut f = failure("agent", "Model can't be used", &format!("{}. {whence}\n\nIts error:\n{error}", r.plain), &next);
     f.put("auth", false); f.put("agentCanFix", false); f.put("msg", format!("Agent stopped: {}", one_line(&say(&k, r), 200)));

@@ -7,7 +7,7 @@ use std::path::Path;
 
 /// The folder the board takes from this plugin context, as herdr hands it to the plugin's pane.
 fn folder(c: serde_json::Value) -> String {
-    for (k, v) in [("HERDR_PLUGIN_ID", "herdr-projects".to_string()), ("HERDR_PLUGIN_CONTEXT_JSON", c.to_string())] { unsafe { std::env::set_var(k, v) } }
+    for (k, v) in [("HERDR_PLUGIN_ID", "herdr-wingman".to_string()), ("HERDR_PLUGIN_CONTEXT_JSON", c.to_string())] { unsafe { std::env::set_var(k, v) } }
     let f = sw::cli::context_folder();
     for k in ["HERDR_PLUGIN_ID", "HERDR_PLUGIN_CONTEXT_JSON"] { unsafe { std::env::remove_var(k) } }
     f.display().to_string()

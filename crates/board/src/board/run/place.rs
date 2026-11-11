@@ -1,7 +1,7 @@
 //! Where the board runs in herdr. The board key opens it in a tab of its own (an ordinary pane that stays when you go
 //! into an agent) or, for whoever chose it (`board.open: popup`), in herdr's popup. Where it is, is written down while
 //! it runs, so opening the board from anywhere goes back to that one instead of starting a second one. Pressed on the
-//! board itself, the key goes back to where you came from. The board's own tab is named `herdr-projects` while it
+//! board itself, the key goes back to where you came from. The board's own tab is named `herdr-wingman` while it
 //! runs, and gets its old name back when it closes.
 use super::say::say;
 use crate::herdr::cli::{current_socket, session_name};
@@ -115,7 +115,7 @@ pub fn task_at(pane: &str) -> Option<Obj> {
     crate::flow::pane_owner::whose(crate::store::tasks::list(Default::default()), &socket, pane).map(|(t, _)| t)
 }
 // ---- the board's own tab -------------------------------------------------------------------------------------------
-pub const BOARD_TAB: &str = "herdr-projects";
+pub const BOARD_TAB: &str = "herdr-wingman";
 fn tabs_file() -> std::path::PathBuf { data_dir().join("board-tabs.json") }
 /// The herdr pane of a board you started yourself in a terminal, "" when there is none to name.
 pub fn board_pane() -> String { if env("HERDR_ENV") == "1" && env("HERDR_PLUGIN_ID").is_empty() && env("TMUX").is_empty() { env("HERDR_PANE_ID") } else { String::new() } }

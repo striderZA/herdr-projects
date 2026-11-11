@@ -129,6 +129,6 @@ entry: its space, its tab, its name.
 - **Nothing stale is left.** What was written is replaced, never left to expire. A task that is stopped, done or moved
   on gets its new words at once, or within the second. An entry goes with its pane (Herdr drops what was written about a
   closed pane). A task archived or removed while its pane lives on has the board's words taken off it.
-- **As what.** It is written as Herdr's display metadata (`herdr pane report-metadata`, `herdr workspace report-metadata` and the space's name), from the source `plugin:herdr-projects`. Row 2 is the agent's shown name, row
+- **As what.** It is written as Herdr's display metadata (`herdr pane report-metadata`, `herdr workspace report-metadata` and the space's name), from the source `plugin:herdr-wingman`. Row 2 is the agent's shown name, row
   3 the token `progress`. The token `summary` is only the Coordinator's: on a task's pane and space it is cleared, so a
   line an older version wrote goes away by itself.

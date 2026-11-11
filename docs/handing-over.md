@@ -20,7 +20,7 @@ While it waits, the row never says `working` or `finishing`.
 
 - **Look at its pane in the error.** The error's detail ends with the last lines of the agent's terminal, read when the
   board gave up: the text still in the box, an empty box, or whatever the program shows instead.
-- **Retry**: the "yes" key on the board, or `herdr-projects retry <id>`. It ends the agent's program, starts it again in
+- **Retry**: the "yes" key on the board, or `herdr-wingman retry <id>`. It ends the agent's program, starts it again in
   the same pane and hands it the same text, word for word. The program is ended first because its box may still hold
   the old text, and typing on top would send it twice.
 - **Or go into the agent and press enter yourself.** The board sees it start, and the error goes away.

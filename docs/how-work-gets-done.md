@@ -81,7 +81,7 @@ Nothing is written to your own agent settings, and your own hooks keep running. 
 its idle compaction off (`"idleCompaction": false`): it would shrink the session of a finished task left waiting about
 an hour, which Herdr counts as a turn. A compaction in the saved conversation is never read as a new prompt either.
 
-At each turn's end, the hook runs `herdr-projects turn-ended` (silent, at most two seconds, protected by a per-launch
+At each turn's end, the hook runs `herdr-wingman turn-ended` (silent, at most two seconds, protected by a per-launch
 secret). The finish line then reads the end of that agent's saved conversation: its last message, an API or login error,
 its token use.
 
@@ -105,7 +105,7 @@ as it is. Its message is the agent's last words on its screen: what stands above
 status line or mode line drawn under it.
 
 A task whose finish the board missed (its agent at rest, the row still "Finishing") is finished with `Ctrl+L` or
-`herdr-projects finish <id>`. What the agent said last is the summary.
+`herdr-wingman finish <id>`. What the agent said last is the summary.
 
 ## The finish line
 
@@ -134,7 +134,7 @@ When the agent's turn ends, the board:
      links it and the finish goes on by itself, through its review and approval, without the agent finishing another
      turn. That failed step no longer marks the task once its agent works on it again.
    - The push may run for `merge.pushTimeout` (2 minutes unless set), the repo's pre-push hook included. A repo whose
-     hook runs its tests needs more: `herdr-projects set merge.pushTimeout 10m --repo <name>`, or `none`. A push that
+     hook runs its tests needs more: `herdr-wingman set merge.pushTimeout 10m --repo <name>`, or `none`. A push that
      runs out of time is stopped and the finish fails, saying so (`git push did not end within 2m
      (merge.pushTimeout)`); finish again once it is raised.
    - A branch that brings main nothing gets no pull request: no change was needed, or the work is on main already (the
@@ -175,7 +175,7 @@ checkout with unsaved files is never forced. Merging without your yes: [merging 
 
 ### Closing GitHub issues
 
-A task added for GitHub issues says which ones its work closes: `herdr-projects add "Fix the login" --merge.closes 2203,2204`
+A task added for GitHub issues says which ones its work closes: `herdr-wingman add "Fix the login" --merge.closes 2203,2204`
 (or later, `set merge.closes 2203 --task <id>`). Only issues of the task's own repo, by number, and only on the task
 itself: never for you or a repo. `show <id>` lists it with the rest.
 
@@ -270,7 +270,7 @@ own worktree:
 
 **Fewer merges while it waits: `merge.sync approve`.** In a busy repo, merging main on every move gives a waiting
 pull request a merge commit, a CI run and a round of bot reviews each time, and only the last merge before landing
-matters. With `herdr-projects set merge.sync approve` (for a task, a repo or all), main is merged in before review and
+matters. With `herdr-wingman set merge.sync approve` (for a task, a repo or all), main is merged in before review and
 after your yes only. While the task waits, the board makes a test merge in memory (`git merge-tree`), which changes
 nothing in its worktree, branch or pull request: a conflict is handled as a real one (below), so you know before you
 approve; a clean one changes nothing. After your yes, main is merged, checked again and the work lands, as always.
@@ -403,7 +403,7 @@ looking at it).
 
 ## With the board closed: the keeper
 
-A small background process, the keeper (`herdr-projects keeper`), does what the open board's tick does: it polls pull
+A small background process, the keeper (`herdr-wingman keeper`), does what the open board's tick does: it polls pull
 requests, starts queued tasks, and keeps Herdr's sidebar current.
 
 - **The sidebar.** An agent's entry there is a small copy of its task's row on the board ([Herdr's sidebar](sidebar.md)):

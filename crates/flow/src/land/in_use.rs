@@ -17,7 +17,7 @@ impl InUse {
     /// The words after a kept checkout: `(its space is in use beside its agent: node …/server.js (pid 812) streams to the terminal)`.
     pub fn line(&self, id: &str) -> String {
         let first = self.what.first().cloned().unwrap_or_else(|| "something runs in it".into());
-        let more = if self.what.len() > 1 { format!("; and {} more (herdr-projects details {id})", self.what.len() - 1) } else { String::new() };
+        let more = if self.what.len() > 1 { format!("; and {} more (herdr-wingman details {id})", self.what.len() - 1) } else { String::new() };
         let ctx = if self.ctx.is_empty() { String::new() } else { format!(" {}", self.ctx) };
         format!("its space is in use{ctx}: {first}{more}")
     }

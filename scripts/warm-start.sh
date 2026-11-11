@@ -13,7 +13,7 @@
 ws_old=200001010000
 ws_dir() {
   ws_git=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || return 1
-  ws_root="${XDG_CACHE_HOME:-$HOME/.cache}/herdr-projects/warm/$(printf '%s' "$ws_git" | cksum | cut -d' ' -f1)"
+  ws_root="${XDG_CACHE_HOME:-$HOME/.cache}/herdr-wingman/warm/$(printf '%s' "$ws_git" | cksum | cut -d' ' -f1)"
 }
 ws_rustc() { rustc -vV 2>/dev/null | tr -d '\r'; }
 # A copy of a folder that keeps every file's time: a clone where it can be, else a plain copy.

@@ -59,10 +59,10 @@ By default, finished work waits for your yes (`merge.by: you`). With `merge.by: 
 it is green.
 
 ```
-herdr-projects set merge.by itself                  every task
-herdr-projects set merge.by itself --repo <name>    one repo's tasks
-herdr-projects set merge.by itself --task <id>      one task (or: delegate <id> --merge.by itself)
-herdr-projects unset merge.by                       take the choice back
+herdr-wingman set merge.by itself                  every task
+herdr-wingman set merge.by itself --repo <name>    one repo's tasks
+herdr-wingman set merge.by itself --task <id>      one task (or: delegate <id> --merge.by itself)
+herdr-wingman unset merge.by                       take the choice back
 ```
 
 Or tell the Coordinator "auto-merge this one" or "always auto-merge". The task panel shows it as `Merge`.

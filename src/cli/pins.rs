@@ -8,8 +8,8 @@ use crate::json::*;
 pub fn command(cmd: &str, pos: &[String], _flags: &Obj, shown: &dyn Fn(&str) -> Value) -> Res<(Value, String)> {
     let on = cmd == "pin";
     let word = if on { "pinned" } else { "unpinned" };
-    let Some(want) = pos.get(1).filter(|s| !s.trim().is_empty()).map(|s| s.trim().to_string()) else { crate::fail!("{cmd} needs a task's id or a project's name. Try: herdr-projects help") };
-    if pos.len() > 2 { crate::fail!("{cmd} takes one task or project: herdr-projects {cmd} <id | project>"); }
+    let Some(want) = pos.get(1).filter(|s| !s.trim().is_empty()).map(|s| s.trim().to_string()) else { crate::fail!("{cmd} needs a task's id or a project's name. Try: herdr-wingman help") };
+    if pos.len() > 2 { crate::fail!("{cmd} takes one task or project: herdr-wingman {cmd} <id | project>"); }
     // A task here.
     if let Ok(t) = crate::store::tasks::find(&want) { let t = filing::set_pin(t.s("id"), on)?; return Ok((shown(t.s("id")), format!("{}: {word}", t.s("id")))); }
     // A project here: a name the board does not know says which it does.

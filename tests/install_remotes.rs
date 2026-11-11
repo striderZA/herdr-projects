@@ -7,7 +7,7 @@ fn a_remote_names_its_host_its_repo_and_whether_it_is_ssh() {
     for (url, want) in [
         ("https://ghe.example.com:8443/a/b.git", Some(("ghe.example.com", "a/b", false))),
         ("ssh://git@ghe.example.com:22/a/b", Some(("ghe.example.com", "a/b", true))),
-        ("git@github-work:striderZA/herdr-projects.git", Some(("github-work", "striderZA/herdr-projects", true))),
+        ("git@github-work:striderZA/herdr-wingman.git", Some(("github-work", "striderZA/herdr-wingman", true))),
         ("https://user:x@GHE.example.com/a/b/", Some(("ghe.example.com", "a/b", false))),
         ("C:/a/b", None),
         ("/local/path/origin.git", None),

@@ -47,9 +47,9 @@ impl Term {
 fn plain(s: &str) -> String { regex::Regex::new(r"\x1b\[[0-9;?<>=]*[A-Za-z]|\x1b\][^\x07\x1b]*(\x07|\x1b\\)").unwrap().replace_all(s, "").into_owned() }
 /// A copy of the program in a folder of the world's own: the one the test changes under the open board.
 fn copy(w: &World) -> std::path::PathBuf {
-    let exe = w.base.join("bin").join("herdr-projects");
+    let exe = w.base.join("bin").join("herdr-wingman");
     std::fs::create_dir_all(exe.parent().unwrap()).unwrap();
-    std::fs::copy(env!("CARGO_BIN_EXE_herdr-projects"), &exe).unwrap();
+    std::fs::copy(env!("CARGO_BIN_EXE_herdr-wingman"), &exe).unwrap();
     exe
 }
 /// The program's file changed (a merge into the checkout it runs from): its time moves on.

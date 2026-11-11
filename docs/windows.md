@@ -1,6 +1,6 @@
 # Windows
 
-herdr-projects runs natively on Windows, without WSL, as a herdr plugin. It has the same board and the same checks as
+herdr-wingman runs natively on Windows, without WSL, as a herdr plugin. It has the same board and the same checks as
 Linux. The Unix and Windows code sits in one platform layer, `crates/core/src/sys/`: `sys/unix.rs` keeps the
 Unix bodies as they were, and `sys/windows.rs` gives each function its Windows body. The rest of the program calls the
 same functions on both.
@@ -23,7 +23,7 @@ Windows is on master. The plugin's manifest lists it (`herdr-plugin.toml`), and 
   the process table shows, so it is not stopped with it; on Unix the process group reaches it.
 - **Folders in use**: a folder that a stopped process still holds is removed once the process lets go. The board retries
   for up to 5 seconds, then leaves the folder for a later pass.
-- **Replacing a program**: Windows will not write over a program that is running. An update (`herdr-projects update`, and
+- **Replacing a program**: Windows will not write over a program that is running. An update (`herdr-wingman update`, and
   the launcher's download) moves the running copy aside, `<name>.<pid>.old`, and puts the new one in its place. A copy
   moved aside is removed by a later replacement, once no program runs from it.
 - **Replacing a file another program has open** without delete sharing (an editor or a scanner may; Rust's own reads do not
@@ -37,13 +37,13 @@ Windows is on master. The plugin's manifest lists it (`herdr-plugin.toml`), and 
 - **Background jobs**: a job starts in its own process group, not in a console of its own. Whether it keeps running when
   the console that started it is closed (a pane closed) has not been checked on a live Windows run.
 - **Launcher**: `bin/run.ps1` runs the same steps as `bin/run.sh`, with the same release file names plus `.exe`.
-- **Command on PATH**: the launcher is `herdr-projects.cmd` in the data folder (cmd and PowerShell run it by name; agents and hooks get its path), with a shell script `herdr-projects` beside it for Git Bash ([installing](install.md#the-command-on-your-path)).
+- **Command on PATH**: the launcher is `herdr-wingman.cmd` in the data folder (cmd and PowerShell run it by name; agents and hooks get its path), with a shell script `herdr-wingman` beside it for Git Bash ([installing](install.md#the-command-on-your-path)).
 - **A repo's own commands** (`workspace.setup`, `check.command`, `workspace.teardown`) and `board.notify` run through Git's `sh -lc` when it is found — on the PATH, or in Git's usual install folder when it is not — else through `cmd /C`. A command written for a shell may need adjusting for `cmd`; `doctor` says which one runs them.
-- **Checking a download**: `herdr-projects update` hashes the file with `sha256sum` or `openssl` when one is there, else with Windows' own `certutil`, which every Windows has. `bin/run.ps1` does the same in PowerShell.
+- **Checking a download**: `herdr-wingman update` hashes the file with `sha256sum` or `openssl` when one is there, else with Windows' own `certutil`, which every Windows has. `bin/run.ps1` does the same in PowerShell.
 - **Opening a link** (`Ctrl+D`: a report or a pull request): Windows' own file-protocol handler does (`rundll32 url.dll,FileProtocolHandler <link>`), with the link as one argument, so nothing of it is read by `cmd`. Where nothing can open it (over ssh, with no display), the board copies the link instead.
 
 ## Not on Windows yet
 
 - **Remote machines** and **the web board** are not part of this program on any platform.
 - **WSL** is not a target. The Windows build is native.
-- **ARM Windows** is not built. The release file is `herdr-projects-windows-x86_64.exe`.
+- **ARM Windows** is not built. The release file is `herdr-wingman-windows-x86_64.exe`.

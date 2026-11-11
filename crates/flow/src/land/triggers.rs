@@ -133,7 +133,7 @@ mod tests {
         let ci = parse(".github/workflows/ci.yml", include_str!("../../../../.github/workflows/ci.yml"));
         let on = |base: &str, branch: &str, files: &[&str]| runs_for(&ci, &Pr { base, branch, files: Some(files.iter().map(|s| s.to_string()).collect()) });
         assert_eq!(on("master", "work/1-x", &["docs/keys.md", "README.md"]), Runs::Never, "a pull request of docs only");
-        assert_eq!(on("master", "work/1-x", &["LICENSE", "assets/herdr-projects-launch.webp"]), Runs::Never, "and of the license and pictures");
+        assert_eq!(on("master", "work/1-x", &["LICENSE", "assets/herdr-wingman-launch.webp"]), Runs::Never, "and of the license and pictures");
         assert_eq!(on("master", "master", &["docs/windows.md"]), Runs::Never, "a push of docs only");
         assert_eq!(on("master", "work/1-x", &["docs/keys.md", "crates/flow/src/board/keys.rs"]), Runs::Always, "a code change runs it");
         assert_eq!(on("master", "work/1-x", &[".github/workflows/ci.yml"]), Runs::Never, "and nor does a change to the workflow alone");

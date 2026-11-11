@@ -14,7 +14,7 @@
 # every time. CARGO_BUILD_JOBS or RUST_TEST_THREADS set by you wins over the share.
 sc_cores=$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 1)
 case "$sc_cores" in ''|0*|*[!0-9]*) sc_cores=1 ;; esac
-sc_dir="${XDG_CACHE_HOME:-$HOME/.cache}/herdr-projects/running"
+sc_dir="${XDG_CACHE_HOME:-$HOME/.cache}/herdr-wingman/running"
 sc_mine=""
 sc_started() { LC_ALL=C ps -o lstart= -p "$1" 2>/dev/null || true; }
 # One already counted for the check that started this script (HERDR_PROJECTS_RUNNING, its file) is not counted again.

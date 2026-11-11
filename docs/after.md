@@ -4,9 +4,9 @@
 into `gtm-agent`, then into the copies downstream. Each is its own task, with its own review and merge.
 
 ```sh
-herdr-projects add "Take the new skill in" --repo gtm-agent --after gtm-skills/12             # only the condition
-herdr-projects add "Take the new skill in" --repo gtm-agent --after gtm-skills/12 --delegate  # queued after it
-herdr-projects delegate gtm-agent/4 --after gtm-skills/12,gtm-skills/13
+herdr-wingman add "Take the new skill in" --repo gtm-agent --after gtm-skills/12             # only the condition
+herdr-wingman add "Take the new skill in" --repo gtm-agent --after gtm-skills/12 --delegate  # queued after it
+herdr-wingman delegate gtm-agent/4 --after gtm-skills/12,gtm-skills/13
 ```
 
 Or tell the Coordinator: "then", "once that is merged", "after HSW-12" become an `--after` on
@@ -76,7 +76,7 @@ Nothing of that is final: get the other task going again, and once it is done th
 
 ## Changing it, and starting early
 
-- `herdr-projects after <id> <id>[,<id>…]` sets what a task waits for. On a waiting task, the new list counts from now
+- `herdr-wingman after <id> <id>[,<id>…]` sets what a task waits for. On a waiting task, the new list counts from now
   (all done already: it starts). On one not delegated yet, it is kept for when it is.
 - `after <id>` says what it waits for.
 - `after <id> --clear` drops the wait; a task that was waiting starts at once. `delegate <id> --after none` does the same

@@ -7,7 +7,7 @@ use std::process::{Command, Output, Stdio};
 use std::time::Duration;
 
 const LAUNCHER: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/bin/run.ps1");
-const ASSET: &str = "herdr-projects-windows-x86_64.exe";
+const ASSET: &str = "herdr-wingman-windows-x86_64.exe";
 
 /// This test's plugin folder (its bin holds run.ps1; its Cargo.toml is version 1.2.27) and the fake release's folder.
 fn folders(name: &str) -> (PathBuf, PathBuf) {
@@ -16,7 +16,7 @@ fn folders(name: &str) -> (PathBuf, PathBuf) {
     let plugin = base.join("plugin");
     std::fs::create_dir_all(plugin.join("bin")).unwrap();
     std::fs::copy(LAUNCHER, plugin.join("bin").join("run.ps1")).unwrap();
-    std::fs::write(plugin.join("Cargo.toml"), "[package]\nname = \"herdr-projects\"\nversion = \"1.2.27\"\n").unwrap();
+    std::fs::write(plugin.join("Cargo.toml"), "[package]\nname = \"herdr-wingman\"\nversion = \"1.2.27\"\n").unwrap();
     let release = base.join("rel").join("download").join("v1.2.27");
     std::fs::create_dir_all(&release).unwrap();
     (plugin, release)

@@ -87,7 +87,7 @@ pub fn delegate_with(id: &str, asked: Vec<(String, Value)>, w: Wait) -> Res<Task
         assert_unarchived(t)?;
         let id = t.t("id");
         if t.s("stage") == "attempts" { crate::fail!("{id} already has its attempts working on it."); }
-        if t.s("stage") == "pick" { crate::fail!("{id} waits for you to pick one of its attempts: herdr-projects pick {id} <letter>."); }
+        if t.s("stage") == "pick" { crate::fail!("{id} waits for you to pick one of its attempts: herdr-wingman pick {id} <letter>."); }
         if is_agent_stage(t.s("stage")) || runner_alive(t) { crate::fail!("{id} already has an agent working on it."); }
         if t.b("autoMerge") { crate::fail!("{id} is waiting for an automatic merge. Reply to its agent to cancel that first."); }
         if t.at("link").b("socket") && !same_socket(t.at("link").s("socket"), &socket) { crate::fail!("{id} lives in another herdr session. Open the board there."); }
@@ -109,7 +109,7 @@ pub fn delegate_with(id: &str, asked: Vec<(String, Value)>, w: Wait) -> Res<Task
         }
         // Research only or not is decided when the agent starts, not here: until then the task follows the setting.
         let why = turn_refusal(t, setting(RESEARCH, Some(t)) == json!(true));
-        if !why.is_empty() { crate::fail!("{why} To start it as it was: herdr-projects set {RESEARCH} false --task {id}"); }
+        if !why.is_empty() { crate::fail!("{why} To start it as it was: herdr-wingman set {RESEARCH} false --task {id}"); }
         t.put("researchOpen", true);
         let agent = agent_of(&setting_text("worker.agent", Some(t))).kind;
         t.put("agent", agent.clone()); t.put("app", agent);

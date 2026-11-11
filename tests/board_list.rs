@@ -33,7 +33,7 @@ fn one_header_line_five_groups_a_mark_for_each_state_and_the_task_panel_from_90_
     let mut s = open(&w.root, 34);
     s.s.sel = b.clone(); s.load(); // it opens on the top row: the task is selected for its panel
     let text = s.screen(120).join("\n");
-    assert!(has(&text, r"^ herdr-projects  proj · PRJ +│ *\n All 2   (Coords \d+   )?Working 1   To do 1 +│[^\n]*\n ▾ [^\n]*│"), "the top row right under the filter row: {text}");
+    assert!(has(&text, r"^ herdr-wingman  proj · PRJ +│ *\n All 2   (Coords \d+   )?Working 1   To do 1 +│[^\n]*\n ▾ [^\n]*│"), "the top row right under the filter row: {text}");
     let inks = s.inked(120);
     assert_eq!(ink_of(&inks, "◐"), Some((Ink::Yellow, false)), "a working task's mark is the working colour");
     assert_eq!(ink_of(&inks, "My own task"), Some((Ink::Plain, true)), "its title plain, and bold while it lives");
@@ -118,7 +118,7 @@ fn work_whose_review_failed_stands_under_needs_you_and_its_yes_is_merge_anyway()
     let t = s.text();
     assert!(has(&t, r"\n   ▾ needs you *\n[ ▌]  ! PRJ-1 +Add an undo for clear +R#1 +\d+s ago *\n[ ▌] {10}Review failed · 1 critical, 1 major *\n"), "{t}");
     assert!(has(&t, r"\n   ▾ ready to approve *\n[ ▌]  ◆ PRJ-2 +Max length for titles +R#1 +\d+s ago *\n[ ▌] {10}Pass *\n"), "{t}");
-    assert!(t.starts_with(" herdr-projects  proj · PRJ") && has(&t, r"\n All 2   Coordinators \d+   Needs you 1   Working 0   Ready 1   "), "{t}");
+    assert!(t.starts_with(" herdr-wingman  proj · PRJ") && has(&t, r"\n All 2   Coordinators \d+   Needs you 1   Working 0   Ready 1   "), "{t}");
     s.s.sel = bad.clone(); s.load();
     assert!(s.text().contains(&format!("  {} send the review to this task's agent · {} merge this task anyway · ", key_name("sendBack"), key_name("yes"))), "{}", s.text());
     s.press(&["ctrl+l"]);
@@ -128,7 +128,7 @@ fn work_whose_review_failed_stands_under_needs_you_and_its_yes_is_merge_anyway()
     assert!(has(&s.text(), r"\n   press y or n: y = merge anyway · n = do not merge *\n")); assert_eq!(s.s.value(), "");
     s.press(&["n"]); assert!(s.s.ask.is_none()); assert_eq!(task(&bad).s("stage"), "approval");
     let refused = sw::actions::finish_line::approve(&bad, None, false).unwrap_err().msg;
-    assert!(has(&refused, r"proj/1 was not merged: its last review failed \(1 critical, 1 major\)\..*herdr-projects approve proj/1 --anyway"), "{refused}");
+    assert!(has(&refused, r"proj/1 was not merged: its last review failed \(1 critical, 1 major\)\..*herdr-wingman approve proj/1 --anyway"), "{refused}");
     let said = |t: &Obj| { let e = sw::flow::sidebar::entry_now(t, sw::clock::now()); (e.place, e.line) };
     assert_eq!(said(&task(&bad)), ("review failed".to_string(), String::new()));
     assert_eq!(said(&task(&good)), ("ready to approve".to_string(), String::new()));
@@ -172,7 +172,7 @@ fn the_list_says_what_it_hides_the_header_where_you_are_and_an_action_what_it_di
     let mut s = open(&w.root, 24); s.s.side = false;
     s.s.sel = s.s.steps.iter().find(|x| !x.starts_with("head:")).cloned().unwrap(); s.load(); // it opens on the top row: the first task
     let lines = s.screen(100);
-    assert!(has(&lines[0], r"^ herdr-projects  proj · PRJ *$")); assert!(has(&lines[1], r"^ All 40   Coords \d+   Needs 0   Working 0   Ready 0   To do 40   Done 0   Autos 0   Pinned 0 *$"), "{}", lines[1]);
+    assert!(has(&lines[0], r"^ herdr-wingman  proj · PRJ *$")); assert!(has(&lines[1], r"^ All 40   Coords \d+   Needs 0   Working 0   Ready 0   To do 40   Done 0   Autos 0   Pinned 0 *$"), "{}", lines[1]);
     let end = lines.iter().position(|l| l.starts_with('─')).unwrap(); // the box's top edge
     let list = &lines[2..end];
     let shown = list.iter().filter(|l| l.contains("Task number")).count();
@@ -195,7 +195,7 @@ fn the_list_says_what_it_hides_the_header_where_you_are_and_an_action_what_it_di
     assert_eq!(s.s.sel, id); assert!(has(&s.screen(100).join("\n"), r"\n▌ [^\n]* ★ "), "{}", s.text());
     s.press(&["ctrl+p"]); assert!(!s.s.msg.contains("Unpinned"), "{}", s.s.msg); assert_eq!(s.s.sel, id);
     s.s.flash("proj/7: started, an agent is on it", Ink::Muted); assert_eq!(s.s.msg, "PRJ-7: started, an agent is on it");
-    s.s.flash("Run: herdr-projects approve proj/7 --anyway", Ink::Muted); assert!(s.s.msg.contains("approve proj/7 --anyway"), "a command keeps the id it takes");
+    s.s.flash("Run: herdr-wingman approve proj/7 --anyway", Ink::Muted); assert!(s.s.msg.contains("approve proj/7 --anyway"), "a command keeps the id it takes");
     s.press(&["ctrl+r"]); assert_eq!(s.s.msg, "Nothing to send back here."); assert_ne!(s.s.msg_kind, Ink::Red);
     assert_eq!(sw::board::run::place::size_for(Some(&json!({ "width": 150, "height": 45 }))), ("90%", "90%"));
     assert_eq!(sw::board::run::place::size_for(Some(&json!({ "width": 80, "height": 45 }))), ("100%", "100%"));

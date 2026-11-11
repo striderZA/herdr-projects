@@ -1,4 +1,4 @@
-//! `herdr-projects doctor` on your settings (HP-32): the programs they name, each once with the settings that name it;
+//! `herdr-wingman doctor` on your settings (HP-32): the programs they name, each once with the settings that name it;
 //! a model its program does not take, written in the file by hand (a value read from a file is not checked when it is
 //! read), and an effort the program does not have, each a problem with what to do.
 use crate::common;
@@ -48,7 +48,7 @@ fn a_model_or_an_effort_the_program_does_not_take_is_a_problem() {
     let f = settings::check();
     assert_eq!(f.len(), 1, "{f:?}");
     assert!(f[0].problem && f[0].what.starts_with("worker.agent: codex has no model \"gpt-5.5\""), "{:?}", f[0]);
-    assert_eq!(f[0].fix, "Set it again: herdr-projects set worker.agent <program/model>  (or herdr-projects unset worker.agent)");
+    assert_eq!(f[0].fix, "Set it again: herdr-wingman set worker.agent <program/model>  (or herdr-wingman unset worker.agent)");
     // An effort the program has not: it does not count, and the value below it is used.
     hand_written(json!({ "worker.agent": "claude", "worker.effort": "minimal" }));
     let f = settings::check();
@@ -70,7 +70,7 @@ fn a_repo_s_entry_and_a_task_s_own_settings_are_checked_too() {
     let what: Vec<&str> = f.iter().filter(|f| f.problem).map(|f| f.what.as_str()).collect();
     assert!(what.iter().any(|w| w.starts_with("worker.agent for proj: codex has no model \"this-model-does-not-exist\"")), "{f:?}");
     assert!(what.iter().any(|w| w.starts_with("your entry for proj: worker.effort:") && w.contains("banana")), "{f:?}");
-    assert!(f.iter().any(|f| f.fix.ends_with("--repo proj  (or herdr-projects unset worker.agent --repo proj)")), "{f:?}");
+    assert!(f.iter().any(|f| f.fix.ends_with("--repo proj  (or herdr-wingman unset worker.agent --repo proj)")), "{f:?}");
     // Said once, not again for the task in that repo that only inherits it.
     assert_eq!(what.iter().filter(|w| w.contains("this-model-does-not-exist")).count(), 1, "{f:?}");
     let named = agents::named();

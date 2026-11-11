@@ -1,4 +1,4 @@
-//! `herdr-projects models [program]`: the model names each program takes, as a setting writes them (program/model),
+//! `herdr-wingman models [program]`: the model names each program takes, as a setting writes them (program/model),
 //! and the effort levels it takes.
 use super::super::efforts::{levels, levels_by, Ask};
 use super::super::kinds::{all, kind, kind_named, KIND_NAMES};
@@ -60,7 +60,7 @@ pub fn models_command(only: &str) -> Res<(Value, String)> {
         let shown = shown_of(names);
         let line = match &shown {
             _ if failed.is_some() => format!("its list could not be read: {}", failed.clone().unwrap_or_default()),
-            Some(s) if s.len() > IN_LINE => format!("{} names, such as {}: herdr-projects models {k} lists them all", s.len(), s.iter().take(IN_LINE).map(|m| format!("{k}/{m}")).collect::<Vec<_>>().join(", ")),
+            Some(s) if s.len() > IN_LINE => format!("{} names, such as {}: herdr-wingman models {k} lists them all", s.len(), s.iter().take(IN_LINE).map(|m| format!("{k}/{m}")).collect::<Vec<_>>().join(", ")),
             Some(s) => s.iter().map(|m| format!("{k}/{m}")).collect::<Vec<_>>().join(", "),
             None => how(k),
         };

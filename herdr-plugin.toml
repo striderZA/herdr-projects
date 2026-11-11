@@ -1,5 +1,5 @@
-id = "herdr-projects"
-name = "Projects"
+id = "herdr-wingman"
+name = "Wingman"
 version = "1.2.32"
 # The oldest herdr this plugin runs on: herdr refuses the plugin on an older one, on every platform. Windows also needs
 # herdr 0.9.4, which the doctor checks on Windows alone. Verified: Linux on 0.9.3.

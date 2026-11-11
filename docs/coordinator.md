@@ -13,13 +13,13 @@ Each repo has a project coordinator of its own too, beside this one: `Space` on 
 From a shell:
 
 ```
-herdr-projects coordinator                     how it stands
-herdr-projects coordinator tell <text>         send it a message
-herdr-projects coordinator tell <text> --delegate   and start every task it adds
-herdr-projects coordinator restart             start it again, same conversation
-herdr-projects coordinator new                 a fresh conversation
-herdr-projects coordinator new [--agent KIND[/MODEL]] [--effort E]    a different one, this once
-herdr-projects coordinator stop
+herdr-wingman coordinator                     how it stands
+herdr-wingman coordinator tell <text>         send it a message
+herdr-wingman coordinator tell <text> --delegate   and start every task it adds
+herdr-wingman coordinator restart             start it again, same conversation
+herdr-wingman coordinator new                 a fresh conversation
+herdr-wingman coordinator new [--agent KIND[/MODEL]] [--effort E]    a different one, this once
+herdr-wingman coordinator stop
 ```
 
 Restart and new are commands, not board keys. You can also just ask the Coordinator to do them. `new --agent …` changes
@@ -29,7 +29,7 @@ only the next one: your default stays as it is.
 `~/.local/bin`, `~/.cargo/bin`, `~/bin` or `/usr/local/bin`, and not on a login shell's PATH)
 keeps the message in the queue but does not say `sent`: it says the message is queued, not delivered, and why, and exits
 1. The board and its keeper deliver it once they run in herdr; `HERDR_BIN_PATH` set to herdr's full path delivers from
-there. `herdr-projects doctor` names messages that wait in a queue for more than a minute.
+there. `herdr-wingman doctor` names messages that wait in a queue for more than a minute.
 
 ## Its row, and its settings
 
@@ -46,7 +46,7 @@ you), its time on the right, what it does under it ([project coordinators](proje
 ## Your message, and where you were
 
 Your words reach it exactly as typed. Which repo you were in and which task you had open are kept beside each message,
-and the Coordinator looks them up itself (`herdr-projects coordinator where` lists the last few messages, each with its
+and the Coordinator looks them up itself (`herdr-wingman coordinator where` lists the last few messages, each with its
 own).
 
 A board opened from the Coordinator's own pane stays in the repo it was last in: that pane's folder is nobody's repo.
@@ -74,9 +74,9 @@ On the board you see only what it said and what you said, never its program's sc
 whole conversation, its dialogs, slash commands and menus, **go into it** in Herdr:
 
 - It is an ordinary agent in the `Coordinator` tab of your home space.
-- The plugin action `herdr-projects.coordinator` (on Windows, `herdr-projects.coordinator-windows`; bind a key to it) goes straight to its pane from anywhere in Herdr,
+- The plugin action `herdr-wingman.coordinator` (on Windows, `herdr-wingman.coordinator-windows`; bind a key to it) goes straight to its pane from anywhere in Herdr,
   and starts it first if it is not running.
-- Get back the way you do from any agent: your board key, or `herdr-projects`.
+- Get back the way you do from any agent: your board key, or `herdr-wingman`.
 
 ## What it is
 
@@ -88,7 +88,7 @@ whole conversation, its dialogs, slash commands and menus, **go into it** in Her
   again in the same conversation.
 - **Closing the board does not stop it**, and the board says so as you close it. One Coordinator serves every board of
   the herdr session (a tab, the popup) and `coordinator tell`, and a turn of it may still be at work.
-  `herdr-projects coordinator stop` closes its tab; your next message starts it again, in the same conversation.
+  `herdr-wingman coordinator stop` closes its tab; your next message starts it again, in the same conversation.
 - The agent's own new-chat command (`/clear`, `/new`) is followed: the chat and a restart go with the conversation it
   is in now.
 - Its program, model and effort are settings (`coordinator.agent`, …): [roles and commands](roles-and-commands.md).

@@ -31,9 +31,9 @@ An agent knows only its own task. So each task's description names the place tha
   it as it now is;
 - **or a pull request or issue on GitHub** that holds the plan, named by its link.
 
-`herdr-projects describe <id> <text>` writes a description; the coordinator writes one on every task it adds. For words
+`herdr-wingman describe <id> <text>` writes a description; the coordinator writes one on every task it adds. For words
 every task of the repo should get ("this repo is mid-migration: read `docs/migration.md`"), use
-`herdr-projects set worker.instructions "…" --repo <repo>` ([settings](settings.md)).
+`herdr-wingman set worker.instructions "…" --repo <repo>` ([settings](settings.md)).
 
 ## Batches as tasks, chained with `--after`
 
@@ -41,12 +41,12 @@ Each batch is its own task, with its own check, review and merge. A small batch 
 one pull request is not.
 
 ```sh
-herdr-projects add "Migration batch 1: the models" --repo my-app --desc "Read docs/migration.md first."  # my-app/41
-herdr-projects add "Migration batch 2: the API" --repo my-app --after my-app/41 --delegate             # my-app/42
-herdr-projects add "Migration batch 3: the screens" --repo my-app --after my-app/42 --delegate
+herdr-wingman add "Migration batch 1: the models" --repo my-app --desc "Read docs/migration.md first."  # my-app/41
+herdr-wingman add "Migration batch 2: the API" --repo my-app --after my-app/41 --delegate             # my-app/42
+herdr-wingman add "Migration batch 3: the screens" --repo my-app --after my-app/42 --delegate
 ```
 
-Start the first with `Ctrl+S` (or `herdr-projects delegate my-app/41`). Each of the others starts by itself once the one
+Start the first with `Ctrl+S` (or `herdr-wingman delegate my-app/41`). Each of the others starts by itself once the one
 before it is done, and its agent's first prompt says what came before: that task's closing note and the pull request it
 merged in ([one task after another](after.md)). Or tell the coordinator "then", "once that is merged".
 
@@ -55,7 +55,7 @@ merged in ([one task after another](after.md)). Or tell the coordinator "then", 
 **A fresh task, with a fresh agent, is the default.** It starts from the merged work, with a clean context, and its own
 review. The tracking doc and the handed-on closing note tell it what came before.
 
-**Telling the same task's agent** (`Space` on the task, or `herdr-projects tell <id> <text>`) is for little things that
+**Telling the same task's agent** (`Space` on the task, or `herdr-wingman tell <id> <text>`) is for little things that
 belong to that task:
 
 - **While the task is open** (working, in review, waiting for your yes), your words go into its conversation and its

@@ -22,13 +22,13 @@ fn allowed(name: &str, scope: &Scope) -> Res<&'static Entry> {
     let (task, repo) = (scope.task, scope.repo.as_str());
     if let Some(why) = super::coord::refusal(e, scope) { return refuse(why); }
     if e.kind == Kind::Board && (task.is_some() || !repo.is_empty() || scope.coord.is_some()) {
-        return refuse(format!("{name} is a board setting: it is yours only and cannot be set {}. Set it for yourself: herdr-projects set {name} <value>", if task.is_some() { "on a task" } else { "for a repo" }));
+        return refuse(format!("{name} is a board setting: it is yours only and cannot be set {}. Set it for yourself: herdr-wingman set {name} <value>", if task.is_some() { "on a task" } else { "for a repo" }));
     }
     if e.kind == Kind::Repo && repo.is_empty() {
-        return refuse(format!("{name} is one repo's own: it cannot be set {}. Set it for the repo: herdr-projects set {name} <value> --repo <name>, or in the repo's own .herdr-projects.json.", if task.is_some() { "on a task" } else { "for every repo at once" }));
+        return refuse(format!("{name} is one repo's own: it cannot be set {}. Set it for the repo: herdr-wingman set {name} <value> --repo <name>, or in the repo's own .herdr-projects.json.", if task.is_some() { "on a task" } else { "for every repo at once" }));
     }
     if e.task && task.is_none() {
-        return refuse(format!("{name} is one task's own: it cannot be set {}. Set it on the task: herdr-projects set {name} <value> --task <id>, or when it is added: herdr-projects add \"<title>\" --{name} <value>", if repo.is_empty() { "for every task" } else { "for a repo" }));
+        return refuse(format!("{name} is one task's own: it cannot be set {}. Set it on the task: herdr-wingman set {name} <value> --task <id>, or when it is added: herdr-wingman add \"<title>\" --{name} <value>", if repo.is_empty() { "for every task" } else { "for a repo" }));
     }
     let repos = known_repos();
     if !repo.is_empty() && !repos.contains_key(repo) {
@@ -47,7 +47,7 @@ pub fn checked(pairs: &[(String, Value)], scope: &Scope) -> Res<Obj> {
     for (name, value) in pairs { allowed(name, scope)?; let v = check(name, value, "")?; models_fit(name, &v)?; out.insert(name.clone(), v); }
     // Every repo has a key: none is refused, with the way back to the one made from its name.
     if out.get("repo.key").map(text).as_deref() == Some(NONE) {
-        return refuse(format!("repo.key cannot be none: every repo has a short key. To go back to the one the board made from its name: herdr-projects unset repo.key --repo {}", scope.repo));
+        return refuse(format!("repo.key cannot be none: every repo has a short key. To go back to the one the board made from its name: herdr-wingman unset repo.key --repo {}", scope.repo));
     }
     // Two repos with one key would make `HSW-134` two tasks: the second is refused, and told who has it.
     if let Some(k) = out.get("repo.key").map(text) {

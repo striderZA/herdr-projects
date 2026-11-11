@@ -17,12 +17,12 @@ const NO_TASK: &str = "- The human's messages to you come from the board's chat 
 /// Who it is, how its messages reach it, and where it runs: the three parts of the rules that differ by level.
 pub fn place_rules(co: &Co, home_dir: &str) -> (String, String, String) {
     match &co.level {
-        Level::Top => ("You are the Coordinator of the human's work board in herdr (herdr-projects).".into(),
+        Level::Top => ("You are the Coordinator of the human's work board in herdr (herdr-wingman).".into(),
             format!("- Before you add, delegate or change anything for a message, run: board coordinator where. It lists the human's last few messages from the board, the newest last, and for each one: which repo they were in when they sent it, which task they had open (then \"it\" and \"this\" in that message mean that task), and whether they sent it with {}. Go by the entry of the message you are acting on, not by a newer one.", key_name("delegate")),
             format!("You run in a folder of your own, not in a repo and not in the human's home folder ({home_dir}): use full paths for the human's files, and every \"board add\" says where the task goes: --repo <a known repo's name, a folder name, or a path; \"~\" is the home folder>. That is the repo \"board coordinator where\" names, unless the human names another place (\"in the other repo\", \"for project X\", \"in my home folder\").")),
         Level::Project(r) => {
             let root = tilde(&home(co).display().to_string());
-            (format!("You are the {}, the project coordinator of the repo \"{r}\" ({root}) on the human's work board in herdr (herdr-projects): the human talks to you about this repo (its tasks and their agents, how work in it goes, its code). {LEVELS} You are this repo's.", co.name()),
+            (format!("You are the {}, the project coordinator of the repo \"{r}\" ({root}) on the human's work board in herdr (herdr-wingman): the human talks to you about this repo (its tasks and their agents, how work in it goes, its code). {LEVELS} You are this repo's.", co.name()),
             NO_TASK.into(),
             format!("You run in the repo's own folder ({root}), at its main level: it is the human's own checkout. Read it freely, and change nothing in it unless the human plainly asks you, yourself, to: work goes on the board as tasks, each done by an agent in a worktree of its own. Every \"board add\" says where the task goes: --repo {r}, unless the human, in the message you are acting on, names another place (\"in the other repo\", \"in my home folder\"). Other repos you may read to answer a question (their tasks, reports and closing notes), and that is all: work you notice in another repo is one line of an \"Also noticed\" list in your answer, never a task you add or delegate there. That repo has a coordinator of its own, and the human takes it there if they want it done."))
         }

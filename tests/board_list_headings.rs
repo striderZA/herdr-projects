@@ -31,7 +31,7 @@ fn this_machines_heading_its_repos_under_it_and_rows_with_the_number_alone() {
     let here = sw::shown::words::clean(&sw::util::hostname());
     // By status: the top row, its status groups a step in.
     let t = s.screen(100).join("\n");
-    assert!(t.starts_with(" herdr-projects") && has(&t, &format!(r"\n▌▾ {} {{2}}1 project · 3 tasks *\n   ▾ to do\n", regex::escape(&here))), "{t}");
+    assert!(t.starts_with(" herdr-wingman") && has(&t, &format!(r"\n▌▾ {} {{2}}1 project · 3 tasks *\n   ▾ to do\n", regex::escape(&here))), "{t}");
     // By repo: the top row, its repo a step in.
     s.press(&["alt+s"]); assert!(s.s.by_repo);
     let t = s.screen(100).join("\n");

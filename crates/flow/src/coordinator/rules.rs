@@ -53,8 +53,8 @@ When you acted on the board, end with one short line saying what you did, naming
     if !words.is_empty() && words != "none" { format!("{body}\n\n{}", own_words(&words)) } else { body }
 }
 pub const RULES_FILE: &str = "AGENTS.md";
-const OPEN: &str = "<!-- herdr-projects: the Coordinator's standing rules. The board writes what is between this line and the closing one, at every start: your own notes go outside them. -->";
-const CLOSE: &str = "<!-- /herdr-projects -->";
+const OPEN: &str = "<!-- herdr-wingman: the Coordinator's standing rules. The board writes what is between this line and the closing one, at every start: your own notes go outside them. -->";
+const CLOSE: &str = "<!-- /herdr-wingman -->";
 /// Only the marked block is the board's: whatever else the file holds is kept as it is.
 fn put(file: &Path, text: &str) -> Res<()> {
     let have = std::fs::read_to_string(file).unwrap_or_default();

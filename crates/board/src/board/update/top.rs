@@ -6,7 +6,7 @@ use crate::board::state::State;
 
 /// The top row's id.
 pub fn top_id() -> String { machine_id() }
-/// `herdr-projects coordinator`.
+/// `herdr-wingman coordinator`.
 pub fn coordinator_of(name: &str) -> String { format!("{} coordinator", possessive(name)) }
 /// A name at the start of a sentence: `The Coordinator`, `gtm's coordinator` (a name keeps its case).
 pub fn sentence(name: &str) -> String { match name.strip_prefix("the ") { Some(r) => format!("The {r}"), None => name.to_string() } }

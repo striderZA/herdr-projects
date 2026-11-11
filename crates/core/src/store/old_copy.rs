@@ -16,7 +16,7 @@ pub const FIRST_NATIVE: &str = "0.3.0";
 pub fn older_writer(data: &Path) -> Option<String> {
     let kept = read_obj(&data.join("keeper.json")).map(|o| o.t("version")).unwrap_or_default();
     if !kept.is_empty() && crate::util::newer(FIRST_NATIVE, &kept) { return Some(kept); }
-    let launcher = ["herdr-projects", OLD_NAME].map(|n| data.join("bin").join(n)).into_iter().find(|f| f.exists())?;
+    let launcher = ["herdr-wingman", OLD_NAME].map(|n| data.join("bin").join(n)).into_iter().find(|f| f.exists())?;
     let node = read_text(&launcher).and_then(|t| launcher_target(&t)).map(|p| p.ends_with(".js")).unwrap_or(false);
     node.then(|| "node".to_string())
 }
@@ -55,7 +55,7 @@ pub fn keep_old_copy(data: &Path) -> Result<Option<String>, String> {
         return Err(format!("Could not keep a copy of {} before this version uses it: {e}", data.display()));
     }
     let older = if v == "node" { "the older (Node) version".to_string() } else { format!("version {v}") };
-    Ok(Some(format!("herdr-projects {VERSION} uses the data {older} kept, unchanged; a copy of it as it was is in {}.", short(&to))))
+    Ok(Some(format!("herdr-wingman {VERSION} uses the data {older} kept, unchanged; a copy of it as it was is in {}.", short(&to))))
 }
 fn short(p: &Path) -> String {
     let home = user_home();

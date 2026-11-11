@@ -50,7 +50,7 @@ pub fn land(id: &str, g: &mut Guard, t: &Task, tree: &str, b: &str, how: &str) -
     let most = match ms(&setting_text("merge.pushTimeout", Some(t))) { 0 => u64::MAX, l => l as u64 };
     let said = match git_slow(tp, &["push", "origin", &format!("{new}:refs/heads/{b}")], most) {
         Ok(_) => return landed(id, g, t, &format!("Merged into {b} at origin."), &head, &new),
-        Err(e) if e.msg.contains(TIMED_OUT) => format!("{} (merge.pushTimeout): a slow pre-push hook? Raise it with herdr-projects set merge.pushTimeout 10m --repo {}", e.msg, t.s("repo")),
+        Err(e) if e.msg.contains(TIMED_OUT) => format!("{} (merge.pushTimeout): a slow pre-push hook? Raise it with herdr-wingman set merge.pushTimeout 10m --repo {}", e.msg, t.s("repo")),
         Err(e) => e.msg,
     };
     let auth = is_auth_failure(&said);
@@ -59,6 +59,6 @@ pub fn land(id: &str, g: &mut Guard, t: &Task, tree: &str, b: &str, how: &str) -
         return reverify(id, g, t, &format!("{b} moved at origin: catching up with it and checking again"), None);
     }
     let next = if auth { format!("Make sure git can push to origin without asking for a password (git push origin {b}), then approve again.") }
-        else { format!("Origin refused the push (a protected branch, or a hook there): see what git said. Once origin takes pushes to {b} from you, approve again; or turn merge.pr on for this task (herdr-projects set merge.pr true --task {}) and finish again, to land through a pull request.", task_ref(id, &repo_keys())) };
+        else { format!("Origin refused the push (a protected branch, or a hook there): see what git said. Once origin takes pushes to {b} from you, approve again; or turn merge.pr on for this task (herdr-wingman set merge.pr true --task {}) and finish again, to land through a pull request.", task_ref(id, &repo_keys())) };
     fail(g, &format!("Could not push to {b} at origin"), &format!("Branch at origin: {b}\nCommit: {new}\nReviewed: {head}\n\ngit push:\n{said}\n\nNothing was merged."), &next, Fail { agent_can_fix: false, auth: Some(auth), keep_intent: false })
 }

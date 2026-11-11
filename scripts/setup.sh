@@ -16,4 +16,4 @@ trap 'sc_leave' EXIT
 ws_seed
 sc_cargo build --profile quick
 ws_keep
-./target/quick/herdr-projects docs
+./target/quick/herdr-wingman docs

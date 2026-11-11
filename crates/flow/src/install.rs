@@ -6,7 +6,7 @@ use crate::store::files::{bin, write_atomic, VERSION};
 use std::path::{Path, PathBuf};
 
 /// This fork's repo: where a plugin that was not cloned from a GitHub repo of its own gets its releases.
-pub const RELEASES_REPO: &str = "striderZA/herdr-projects";
+pub const RELEASES_REPO: &str = "striderZA/herdr-wingman";
 
 /// The release files' name for a platform, from `uname -s`/`uname -m` or Rust's own names. None: no release is made.
 pub fn platform_of(os: &str, arch: &str) -> Option<(&'static str, &'static str)> {
@@ -15,9 +15,9 @@ pub fn platform_of(os: &str, arch: &str) -> Option<(&'static str, &'static str)>
     Some((os, arch))
 }
 pub fn platform() -> Option<(&'static str, &'static str)> { platform_of(std::env::consts::OS, std::env::consts::ARCH) }
-/// `herdr-projects-linux-x86_64`: the release file, and the downloaded program's name in the plugin's bin/ folder.
-/// Windows programs end in `.exe`: `herdr-projects-windows-x86_64.exe`.
-pub fn asset_name((os, arch): (&str, &str)) -> String { let ext = if os == "windows" { ".exe" } else { "" }; format!("herdr-projects-{os}-{arch}{ext}") }
+/// `herdr-wingman-linux-x86_64`: the release file, and the downloaded program's name in the plugin's bin/ folder.
+/// Windows programs end in `.exe`: `herdr-wingman-windows-x86_64.exe`.
+pub fn asset_name((os, arch): (&str, &str)) -> String { let ext = if os == "windows" { ".exe" } else { "" }; format!("herdr-wingman-{os}-{arch}{ext}") }
 /// Where the releases are: HERDR_PROJECTS_RELEASES (a fork, a mirror, a folder as file:///…), else GitHub's releases of
 /// the repo the plugin was cloned from (see repo_of).
 pub fn releases(exe: &Path) -> String {
@@ -67,9 +67,9 @@ pub fn sum_in(text: &str) -> Option<String> {
     let h = text.split_whitespace().next()?.to_ascii_lowercase();
     (h.len() == 64 && h.chars().all(|c| c.is_ascii_hexdigit())).then_some(h)
 }
-/// The version a program says it is: `herdr-projects 0.3.0 (/its/path)`.
+/// The version a program says it is: `herdr-wingman 0.3.0 (/its/path)`.
 pub fn version_said(out: &str) -> Option<String> {
-    let v = out.strip_prefix("herdr-projects ")?.split_whitespace().next()?;
+    let v = out.strip_prefix("herdr-wingman ")?.split_whitespace().next()?;
     v.chars().next().filter(|c| c.is_ascii_digit()).map(|_| v.to_string())
 }
 /// A program cargo built (it is in a `target` folder): updated with git pull and cargo build, never by a download.
@@ -153,11 +153,11 @@ pub fn download(exe: &Path, version: Option<&str>, fetch: &dyn Fn(&str, &Path) -
 /// `update [VERSION]`: the newest release (or that one) in place of the program that runs, in one step. An open board
 /// and the keeper see the file change and load it by themselves. Never goes back to an older one unless named.
 pub fn update(exe: &Path, version: Option<&str>, fetch: &dyn Fn(&str, &Path) -> Res<()>) -> Res<String> {
-    if built_from_source(exe) { crate::fail!("This herdr-projects was built from source ({}): update it with git pull and cargo build --release.", exe.display()) }
+    if built_from_source(exe) { crate::fail!("This herdr-wingman was built from source ({}): update it with git pull and cargo build --release.", exe.display()) }
     let got = download(exe, version, fetch)?;
     if version.is_none() && !newer(&got.version, VERSION) {
         let _ = std::fs::remove_file(&got.file);
-        return Ok(format!("herdr-projects {VERSION} is the newest release."));
+        return Ok(format!("herdr-wingman {VERSION} is the newest release."));
     }
     // Put in place over it, never written into: a running program keeps its old file.
     // On Windows, which will not replace a running program, replace_file moves that file aside first.
@@ -165,24 +165,24 @@ pub fn update(exe: &Path, version: Option<&str>, fetch: &dyn Fn(&str, &Path) -> 
     let named = platform().map(|p| exe.file_name().map(|n| n == asset_name(p).as_str()).unwrap_or(false)).unwrap_or(false);
     if named || version_file(exe).exists() { write_atomic(&version_file(exe), format!("{}\n", got.version).as_bytes())?; }
     crate::flow::send::shim();
-    Ok(format!("Updated herdr-projects {VERSION} → {} ({}). An open board and the keeper load it by themselves.", got.version, exe.display()))
+    Ok(format!("Updated herdr-wingman {VERSION} → {} ({}). An open board and the keeper load it by themselves.", got.version, exe.display()))
 }
 
-/// What is in the way of typing `herdr-projects` in a shell, as (what, what to do); None when the first one on the
+/// What is in the way of typing `herdr-wingman` in a shell, as (what, what to do); None when the first one on the
 /// PATH is the launcher `at` (or the shell script beside it, Git Bash's name for the same launcher, or a link to it) or this program.
 pub fn path_problem(at: &Path, exe: &Path, path: &str) -> Option<(String, String)> {
     let dir = at.parent().map(Path::to_path_buf).unwrap_or_default();
     let real = |p: &Path| crate::sys::canonicalize(p).ok().map(crate::sys::plain_path);
     // As a shell looks: the first file of that name it may run.
     let runs = |f: &Path| crate::sys::is_program(f);
-    match std::env::split_paths(path).flat_map(|d| crate::herdr::find::names("herdr-projects").into_iter().map(move |n| d.join(n))).find(|f| runs(f)) {
+    match std::env::split_paths(path).flat_map(|d| crate::herdr::find::names("herdr-wingman").into_iter().map(move |n| d.join(n))).find(|f| runs(f)) {
         Some(f) if f == at || (f.parent() == at.parent() && f.extension().is_none()) || real(&f).is_some() && (real(&f) == real(at) || real(&f) == real(exe)) => None,
         Some(f) => Some((format!("{} comes first on your PATH (an older install? `npm unlink -g herdr-projects` takes out the Node one)", f.display()), format!("Remove it, or put {} before it.", dir.display()))),
-        None => Some(("herdr-projects is not on your PATH".into(), format!("To type herdr-projects in any shell, put its folder on your PATH (in ~/.profile or your shell's start-up file): export PATH=\"{}:$PATH\"", dir.display()))),
+        None => Some(("herdr-wingman is not on your PATH".into(), format!("To type herdr-wingman in any shell, put its folder on your PATH (in ~/.profile or your shell's start-up file): export PATH=\"{}:$PATH\"", dir.display()))),
     }
 }
 /// `install`: the launcher in the data folder names this program (flow/launcher.rs writes it, the only writer), and what
-/// is in the way of typing `herdr-projects` in a shell is said.
+/// is in the way of typing `herdr-wingman` in a shell is said.
 pub fn install(exe: &Path) -> String {
     let at = crate::flow::send::shim();
     let mut said = vec![format!("{} runs {}: agents and hooks use it.", at.display(), exe.display())];

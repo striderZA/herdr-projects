@@ -56,7 +56,7 @@ pub fn explain(s: &Start, said: &str, screen: &str) -> Why {
     if LOGIN.is_match(&all) || is_auth_failure(&all) { return Why { short: format!("{k} is not logged in"), next: format!("Run `{k}` in a terminal here and log in, then {again}."), auth: true }; }
     if MODEL.is_match(&all) {
         let short = super::model_refused::read(s.kind, &all).filter(|r| !r.model.is_empty() || !r.signin.is_empty()).map(|r| super::model_refused::say(s.kind, &r)).unwrap_or_else(|| format!("{k} does not know the model it was given"));
-        return why(short, format!("Choose a model it has in {} (written as {k}/<model>; `herdr-projects models {k}` lists the ones it can use), or leave the model out, then {again}.", s.setting));
+        return why(short, format!("Choose a model it has in {} (written as {k}/<model>; `herdr-wingman models {k}` lists the ones it can use), or leave the model out, then {again}.", s.setting));
     }
     if ARG.is_match(&all) {
         let v = version_of(s.kind);

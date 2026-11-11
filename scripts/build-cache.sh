@@ -6,7 +6,7 @@
 # nothing when it is not (CI, offline, another platform); `sh scripts/build-cache.sh --stats` shows how often it was hit
 # since its server started. How and why: docs/testing.md.
 bc_version=0.18.0
-bc_dir="${XDG_CACHE_HOME:-$HOME/.cache}/herdr-projects"
+bc_dir="${XDG_CACHE_HOME:-$HOME/.cache}/herdr-wingman"
 bc_bin="$bc_dir/sccache-$bc_version/sccache"
 bc_install() {
   [ -x "$bc_bin" ] && return 0

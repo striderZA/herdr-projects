@@ -7,7 +7,7 @@ use std::io::{BufRead, BufReader, Write};
 use crate::sys::connect_local;
 use std::time::Duration;
 
-fn request(method: &str, params: &Value) -> String { format!("{}\n", json!({ "id": "herdr-projects", "method": method, "params": params })) }
+fn request(method: &str, params: &Value) -> String { format!("{}\n", json!({ "id": "herdr-wingman", "method": method, "params": params })) }
 /// One request: its result, or what herdr refused it with (`code`: "popup_not_open").
 pub fn ask(method: &str, params: &Value, socket: Option<&str>) -> HRes<Value> {
     if let Some(f) = fake() { return f.ask(method, params); }

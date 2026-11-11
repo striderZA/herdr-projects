@@ -69,7 +69,7 @@ fn restart_keeps_the_conversation_new_starts_a_fresh_one_and_one_coordinator_can
     assert_eq!(choice().map(Value::Object), Some(json!({ "kind": "codex", "model": "", "effort": "" })));
     let mut s = open(&w.root, 34);
     assert!(look(&w.socket).stale);
-    assert!(s.text().contains("your default is now codex · default model · default effort: herdr-projects coordinator new starts a new one on it"), "{}", s.text());
+    assert!(s.text().contains("your default is now codex · default model · default effort: herdr-wingman coordinator new starts a new one on it"), "{}", s.text());
     // The board itself neither restarts it nor starts a new one: the old keys do nothing, and the menu has no line for either.
     s.press(&["alt+r", "alt+n"]); assert!(s.s.ask.is_none()); assert!(!get(&w).b("want"));
     s.press(&["?"]); assert!(!has(&s.text(), "(?i)restart the Coordinator|new Coordinator")); s.press(&["esc"]);

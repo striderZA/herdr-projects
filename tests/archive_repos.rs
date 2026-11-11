@@ -102,7 +102,7 @@ fn a_whole_project_goes_to_the_archive_from_the_shell_and_comes_back_with_its_ta
     assert!(!sw::store::automations::automations()[0].b("on"), "its automation is off while it is archived");
     // Nothing new goes into it, and it is not archived twice.
     let e = sw::actions::filing::add(&w.root, "Another", Default::default()).unwrap_err().msg;
-    assert_eq!(e, "proj is archived. herdr-projects restore --repo proj brings it back, with its tasks.");
+    assert_eq!(e, "proj is archived. herdr-wingman restore --repo proj brings it back, with its tasks.");
     assert_eq!(run(&w, &["archive", "--repo", "proj"]).unwrap_err(), "proj is archived already.");
     let co = sw::coordinator::co::Co::project(&w.socket, "proj");
     assert!(sw::coordinator::requests::restart(co).unwrap_err().msg.contains("proj is archived."), "its coordinator stays stopped");

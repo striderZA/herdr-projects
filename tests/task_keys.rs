@@ -126,7 +126,7 @@ fn a_repos_short_key_set_for_the_repo_or_in_its_own_file_kept_in_capitals_checke
     assert_eq!(run(&w, &["set", "repo.key", "Ab1", "--repo", "proj"]), "repo.key for proj: AB1  (your entry for proj)\n");
     // Checked when set: a bad one is refused with the reason, and changes nothing.
     for (bad, why) in [("x", "2 to 5 letters or digits"), ("toolong", "2 to 5 letters or digits"), ("1ab", "the first a letter"), ("a-b", "2 to 5"), ("pr", "already means a pull request"), ("none", "every repo has a short key")] { refused(set_value("repo.key", &json!(bad), &Scope::repo("proj")), why); }
-    refused(set_value("repo.key", &json!("HSW"), &Scope::you()), r"one repo's own: it cannot be set for every repo at once\. Set it for the repo: herdr-projects set repo\.key <value> --repo <name>");
+    refused(set_value("repo.key", &json!("HSW"), &Scope::you()), r"one repo's own: it cannot be set for every repo at once\. Set it for the repo: herdr-wingman set repo\.key <value> --repo <name>");
     refused(set_value("repo.key", &json!("HSW"), &Scope::task(&task("proj/1"))), "one repo's own: it cannot be set on a task");
     refused(set_value("repo.key", &json!("HSW"), &Scope::repo("nope")), r#"No repo "nope" on the board"#);
     assert_eq!(keys(), json!({ "proj": "AB1", "other": "OTH" }));

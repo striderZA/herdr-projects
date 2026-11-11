@@ -10,7 +10,7 @@ use super::kinds::{kind, Kind};
 use crate::store::settings::values::distance;
 pub use listed::{list_command, listed, Listing, Names};
 
-/// At most this many names in a refusal; `herdr-projects models <program>` lists them all.
+/// At most this many names in a refusal; `herdr-wingman models <program>` lists them all.
 const SHOWN: usize = 12;
 
 /// The name with what follows its first mark cut off (cursor's `[effort=high]`, pi's `:high`), with the mark. A longer
@@ -80,11 +80,11 @@ pub fn why_not(k: &str, m: &str) -> Option<String> {
     // The nearest ones, in the program's own order (newest first, where it has one).
     let close = nearest(m, shown, SHOWN);
     let some: Vec<String> = shown.iter().filter(|x| close.contains(x)).cloned().collect();
-    let more = if shown.len() > SHOWN { format!(", and {} more: `herdr-projects models {k}` lists them all", shown.len() - SHOWN) } else { String::new() };
+    let more = if shown.len() > SHOWN { format!(", and {} more: `herdr-wingman models {k}` lists them all", shown.len() - SHOWN) } else { String::new() };
     Some(format!("{k} has no model \"{m}\"{}.{} It takes {}{more} ({}). Write it after the program: {k}/{}.", for_signin(&names),
         near.as_ref().map(|n| format!(" Did you mean {n}?")).unwrap_or_default(), some.join(", "), source(a, &names), near.or_else(|| some.first().cloned()).unwrap_or_default()))
 }
-/// In a few words, how a model is given to this program and where its names come from (`herdr-projects models`).
+/// In a few words, how a model is given to this program and where its names come from (`herdr-wingman models`).
 pub fn how(k: &str) -> String {
     let Some(a) = kind(k) else { return String::new() };
     if a.model.is_empty() { return format!("{k} takes no model when the board starts it: choose it in {k}'s own settings."); }

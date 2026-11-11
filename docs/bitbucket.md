@@ -5,7 +5,7 @@ commands, instead of `gh`. Every other repo stays on gh, as before. The choice i
 `bb`.
 
 ```sh
-herdr-projects set repo.cli bb --repo <name>      # your entry for the repo
+herdr-wingman set repo.cli bb --repo <name>      # your entry for the repo
 ```
 
 or in the repo's own `.herdr-projects.json`, so that everyone who works on it gets the same:
@@ -14,7 +14,7 @@ or in the repo's own `.herdr-projects.json`, so that everyone who works on it ge
 { "repo": { "cli": "bb" } }
 ```
 
-Your entry for the repo wins over its file. `herdr-projects show --repo <name>` says which one counts.
+Your entry for the repo wins over its file. `herdr-wingman show --repo <name>` says which one counts.
 
 ## What the board asks of bb
 

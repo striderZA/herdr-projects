@@ -60,7 +60,7 @@ fn who_wrote_the_data() {
     assert_eq!(older_writer(&data), None, "this version's keeper");
     write(&data.join("bin").join(OLD_NAME), NODE_LAUNCHER);
     assert_eq!(older_writer(&data), Some("node".into()), "only its launcher says it was Node");
-    write(&data.join("bin/herdr-projects"), "#!/bin/sh\nexec '/p/bin/herdr-projects-linux-x86_64' \"$@\"\n");
+    write(&data.join("bin/herdr-wingman"), "#!/bin/sh\nexec '/p/bin/herdr-wingman-linux-x86_64' \"$@\"\n");
     assert_eq!(older_writer(&data), None, "this version's launcher");
     assert_eq!(copy_place(&data, "0.2.0"), data.parent().unwrap().join("data-0.2.0"));
 }
@@ -73,7 +73,7 @@ fn the_copy_is_the_data_as_it_was_and_made_once() {
     node_data(&data, Some("0.2.0"));
     let before = tree(&data);
     let line = keep_old_copy(&data).unwrap().expect("a copy is made");
-    assert_eq!(line, format!("herdr-projects {} uses the data version 0.2.0 kept, unchanged; a copy of it as it was is in ~/.herdr-projects/data-0.2.0.", sw::store::files::VERSION));
+    assert_eq!(line, format!("herdr-wingman {} uses the data version 0.2.0 kept, unchanged; a copy of it as it was is in ~/.herdr-projects/data-0.2.0.", sw::store::files::VERSION));
     let copy = data.parent().unwrap().join("data-0.2.0");
     assert_eq!(tree(&copy), before, "every file, folder and link as it was");
     assert_eq!(tree(&data), before, "the data itself is not changed");

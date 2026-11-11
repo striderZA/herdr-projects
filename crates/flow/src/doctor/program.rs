@@ -16,7 +16,7 @@ fn real(p: &Path) -> PathBuf { crate::sys::plain_path(crate::sys::canonicalize(p
 pub use crate::flow::launcher::launcher_target;
 /// The programs the plugin runs (bin/run.sh): the one built in its folder, or the one downloaded for this platform.
 pub fn plugin_programs(root: &Path) -> Vec<PathBuf> {
-    let mut v = vec![root.join("target/release").join(format!("herdr-projects{}", std::env::consts::EXE_SUFFIX))];
+    let mut v = vec![root.join("target/release").join(format!("herdr-wingman{}", std::env::consts::EXE_SUFFIX))];
     v.extend(platform().map(|p| root.join("bin").join(asset_name(p))));
     v
 }
@@ -31,22 +31,22 @@ fn how(h: &Here) -> &'static str {
 fn is_program(p: &Path) -> bool { crate::sys::is_program(p) }
 
 pub fn check(h: &Here) -> Vec<Found> {
-    let mut out = vec![Found::ok(format!("herdr-projects {}, {}: {}", h.version, how(h), t(&h.exe)))];
+    let mut out = vec![Found::ok(format!("herdr-wingman {}, {}: {}", h.version, how(h), t(&h.exe)))];
     let root = h.plugin_root.as_deref();
     // The plugin's own folder is a newer version than the program it runs.
     if let (Some(r), Some(pv)) = (root, root.and_then(plugin_version)) {
         if h.exe.starts_with(real(r)) && newer(&pv, &h.version) {
-            let fix = if built_from_source(&h.exe) { format!("Build it again: cd {} && cargo build --release", t(r)) } else { format!("Run: herdr-projects update {pv}") };
+            let fix = if built_from_source(&h.exe) { format!("Build it again: cd {} && cargo build --release", t(r)) } else { format!("Run: herdr-wingman update {pv}") };
             out.push(Found::bad(format!("This program is {}, older than the plugin's {pv}", h.version), fix));
         }
     }
-    let fix = match root { Some(r) => format!("Run: sh {} install  (or open the board once from Herdr)", t(&r.join("bin").join("run.sh"))), None => "Open the board once from Herdr, or run: herdr-projects install".into() };
+    let fix = match root { Some(r) => format!("Run: sh {} install  (or open the board once from Herdr)", t(&r.join("bin").join("run.sh"))), None => "Open the board once from Herdr, or run: herdr-wingman install".into() };
     for p in crate::flow::launcher::stale_copies(h.launcher.parent().unwrap_or(Path::new(""))) {
-        out.push(Found::bad(format!("{} is an older copy of the program: PowerShell runs it before the launcher", t(&p)), "Remove it: herdr-projects install does, once no program runs from it"));
+        out.push(Found::bad(format!("{} is an older copy of the program: PowerShell runs it before the launcher", t(&p)), "Remove it: herdr-wingman install does, once no program runs from it"));
     }
     let l = t(&h.launcher);
     let target = match &h.launcher_text {
-        None => { out.push(Found::bad(format!("The launcher {l} is missing: agents and hooks run herdr-projects through it"), fix)); return out; }
+        None => { out.push(Found::bad(format!("The launcher {l} is missing: agents and hooks run herdr-wingman through it"), fix)); return out; }
         Some(text) => launcher_target(text),
     };
     if h.launcher.exists() && !is_program(&h.launcher) { out.push(Found::bad(format!("The launcher {l} cannot be run: it is not executable"), fix)); return out; }

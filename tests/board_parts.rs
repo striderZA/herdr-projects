@@ -18,16 +18,16 @@ fn set_env(pairs: &[(&str, &str)]) { for k in ["HERDR_ENV", "HERDR_PANE_ID", "HE
 fn the_boards_own_tab_is_named_while_it_is_open_and_has_its_old_name_again_when_it_closes() {
     let w = world();
     set_env(&[("HERDR_ENV", "1"), ("HERDR_PANE_ID", "w1:p1")]); assert_eq!(board_pane(), "w1:p1");
-    set_env(&[("HERDR_ENV", "1"), ("HERDR_PANE_ID", "w1:p1"), ("HERDR_PLUGIN_ID", "herdr-projects")]); assert_eq!(board_pane(), "", "the plugin's own tab");
+    set_env(&[("HERDR_ENV", "1"), ("HERDR_PANE_ID", "w1:p1"), ("HERDR_PLUGIN_ID", "herdr-wingman")]); assert_eq!(board_pane(), "", "the plugin's own tab");
     set_env(&[("HERDR_PANE_ID", "w1:p1")]); assert_eq!(board_pane(), "", "outside herdr");
     set_env(&[("HERDR_ENV", "1"), ("HERDR_PANE_ID", "w1:p1"), ("TMUX", "/tmp/tmux")]); assert_eq!(board_pane(), "");
     set_env(&[]);
     let api = sw::herdr::Herdr::new(None);
     let a = api.workspace_create(&w.root_str(), "", &[]).unwrap().at("root_pane").clone();
     let b = api.tab_create(a.s("workspace_id"), "", "notes", &[]).unwrap().at("root_pane").clone();
-    assert_eq!(BOARD_TAB, "herdr-projects");
+    assert_eq!(BOARD_TAB, "herdr-wingman");
     let named = name_board_tab(b.s("pane_id"));
-    assert_eq!(labels(&w), vec!["1", "herdr-projects"]);
+    assert_eq!(labels(&w), vec!["1", "herdr-wingman"]);
     assert_eq!(named.as_ref().map(|n| n.1.clone()), Some(b.t("tab_id")));
     assert!(w.state().arr("focus").is_empty(), "nothing is focused");
     restore_board_tab(named);

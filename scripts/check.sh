@@ -42,7 +42,7 @@ command -v cargo >/dev/null 2>&1 || quit "The check needs Rust (cargo): https://
 . scripts/build-cache.sh
 . scripts/share-cores.sh
 # The code as it stands, new files and uncommitted changes too, and the compiler that builds it.
-cache="${XDG_CACHE_HOME:-$HOME/.cache}/herdr-projects-check"
+cache="${XDG_CACHE_HOME:-$HOME/.cache}/herdr-wingman-check"
 stamp=""
 if git rev-parse --git-dir >/dev/null 2>&1; then
   idx=$(mktemp); cp "$(git rev-parse --git-path index)" "$idx" 2>/dev/null || true
@@ -69,9 +69,9 @@ sc_cargo build --profile quick --quiet
 say "1/3 steps"
 # The made tables, written when out of date; then the rules (tests/guard.rs runs them too).
 step="writing the made tables"
-./target/quick/herdr-projects docs
+./target/quick/herdr-wingman docs
 step="checking the repo's rules"
-./target/quick/herdr-projects docs --guard
+./target/quick/herdr-wingman docs --guard
 say "2/3 steps"
 # The tests, split over several processes at once (scripts/run-tests.sh): every test, or those of the names given.
 step="running the tests"

@@ -4,8 +4,8 @@
 has its yes.** A misunderstanding caught in two minutes saves a wrong build caught in forty.
 
 ```
-herdr-projects delegate 12 --plan.approve you             # show me the plan first
-herdr-projects set plan.approve reviewer --repo my-app    # in this repo the reviewer checks every plan
+herdr-wingman delegate 12 --plan.approve you             # show me the plan first
+herdr-wingman set plan.approve reviewer --repo my-app    # in this repo the reviewer checks every plan
 ```
 
 Or tell the [Coordinator](coordinator.md): "show me the plan first".
@@ -40,9 +40,9 @@ fires as for anything that needs you.
 The task panel shows the plan under **Plan**: where it stands, who wrote it, the plan's own words (its first lines beside
 the list, all of it full screen), and **`Open plan`**, the plan's file in the task's folder. You do one of two things:
 
-- **Yes**: the approve key (`ctrl+l`), or `herdr-projects approve <id>`. The plan is approved as it stands and the build
+- **Yes**: the approve key (`ctrl+l`), or `herdr-wingman approve <id>`. The plan is approved as it stands and the build
   starts.
-- **A reply**: `space`, then your words, or `herdr-projects tell <id> <text>`. The plan goes back to its writer with
+- **A reply**: `space`, then your words, or `herdr-wingman tell <id> <text>`. The plan goes back to its writer with
   your words and is written again. The task is plan ready again when the new plan is there.
 
 ## The reviewer's look
@@ -56,7 +56,7 @@ severity. [The gate](gate.md) decides by the same rule (`review.mustFix`):
 - still failing then: the task is plan ready, with what the reviewer found in the plan's part, and the yes is yours;
 - **the review cannot run** (its reviewer cannot start, or stops without a verdict): the task is plan ready all the same,
   its row saying why (`The plan's review could not run (…): yours to judge`). Your yes (`ctrl+l`) builds the plan as
-  it stands; `herdr-projects retry <id>` has the reviewer look at it again.
+  it stands; `herdr-wingman retry <id>` has the reviewer look at it again.
 
 The reviewer runs in the task's worktree, with the same read-only files the writer had. It is told not to change
 anything, and whatever it alters is put back.

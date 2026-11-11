@@ -9,7 +9,7 @@ use crate::json::*;
 use crate::shown::ink::Ink;
 
 /// A heading's coordinator: its level as the coordinator code names it ("project:<repo>"), and its name
-/// ("herdr-projects coordinator"). The top-level one has an empty level.
+/// ("herdr-wingman coordinator"). The top-level one has an empty level.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Target { pub to: String, pub name: String }
 impl Target {

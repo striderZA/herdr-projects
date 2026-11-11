@@ -10,13 +10,13 @@
 
 ## Every chat knows the board
 
-The plugin puts a small how-to in each installed agent program's own skills folder: a folder named `herdr-projects`
+The plugin puts a small how-to in each installed agent program's own skills folder: a folder named `herdr-wingman`
 holding `SKILL.md`, in `~/.claude/skills`, `~/.codex/skills` and `~/.pi/agent/skills`. So any ordinary chat can "add
 this to the board" without being told how.
 
-- It gives the command by its full path, so it works without `herdr-projects` on your PATH.
+- It gives the command by its full path, so it works without `herdr-wingman` on your PATH.
 - Herdr's other programs do not get it: the board does not know their skills folders.
-- `herdr-projects remove-extras` removes exactly what was written, and it is not written back. A folder of that name
+- `herdr-wingman remove-extras` removes exactly what was written, and it is not written back. A folder of that name
   the plugin did not write is left alone.
 
 ## Commands
@@ -25,7 +25,7 @@ this to the board" without being told how.
 `approve`, `review`, `retry`, `fix`, `finish`, `details`, `pin`, `unpin` ([pins](pinned.md)), `archive`, `restore`, `clear`, `set`, `unset`, `show`,
 `automations` ([automations](automations.md)), `install`, `update` ([installing](install.md)), `remove-extras`, `models` ([models](models.md)), `pick` ([several attempts](attempts.md)), `coordinator`, `sweep`, `doctor` and `version`.
 
-`herdr-projects help` lists them.
+`herdr-wingman help` lists them.
 
 ### What a command answers
 
@@ -61,7 +61,7 @@ Each command takes only its own flags, plus `--json` and `--help`. `add`, `deleg
 work setting by its name. Anything else stops the command before it does anything, and names the nearest right flag:
 
 ```
-$ herdr-projects list --archvied
+$ herdr-wingman list --archvied
 list does not know --archvied. Did you mean --archived?
 ```
 

@@ -8,7 +8,7 @@ The limit is the same everywhere a title is made or changed: a task you type in 
 ## A title that is too long
 
 ```
-$ herdr-projects add "After the startup dialog handoff, finish jobs wrongly mark the task as failed"
+$ herdr-wingman add "After the startup dialog handoff, finish jobs wrongly mark the task as failed"
 proj/12: added The title was over 60 characters, so it was shortened to "After the startup dialog handoff, finish
 jobs wrongly mark…" and the full text was kept in the description. Rename it if a better short title exists.
 ```

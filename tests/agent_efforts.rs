@@ -1,6 +1,6 @@
 //! Effort levels (HP-31): the levels a program takes are read from the program itself (Codex's catalog, for each
 //! model; the others' `--help`), not from a list written in the board that goes out of date; a level it does not take
-//! is refused with the ones it does; where they cannot be read, the table's are used; `herdr-projects models` says them.
+//! is refused with the ones it does; where they cannot be read, the table's are used; `herdr-wingman models` says them.
 use crate::common;
 use common::*;
 use serde_json::json;
@@ -136,7 +136,7 @@ fn real_programs_the_levels_are_asked_of_the_program_and_kept() {
     let count = w.base.join("asked");
     std::fs::write(bin.join("codex"), format!("#!/bin/sh\necho x >> {}\nprintf '%s' '{}'\n", count.display(), codex_catalog())).unwrap();
         sw::sys::set_mode(&bin.join("codex"), 0o755).unwrap();
-    let run = |args: &[&str]| { let o = std::process::Command::new(env!("CARGO_BIN_EXE_herdr-projects")).args(args).current_dir(&w.root)
+    let run = |args: &[&str]| { let o = std::process::Command::new(env!("CARGO_BIN_EXE_herdr-wingman")).args(args).current_dir(&w.root)
         .env("PATH", format!("{}:/usr/bin:/bin", bin.display())).env_remove("HERDR_PROJECTS_NO_MODEL_LIST").env("HERDR_SOCKET_PATH", "/nonexistent").env("HERDR_BIN_PATH", "/bin/false").output().unwrap();
         (o.status.code().unwrap_or(-1), String::from_utf8_lossy(&o.stdout).into_owned(), String::from_utf8_lossy(&o.stderr).into_owned()) };
     let asked = || std::fs::read_to_string(&count).unwrap_or_default().lines().count();

@@ -26,7 +26,7 @@ impl Co {
     /// Its own entry in config.json's `coordinators` (store/settings/coord.rs): "main", "project:<repo>".
     pub fn settings_key(&self) -> String { match &self.level { Level::Top => "main".into(), Level::Project(r) => format!("project:{r}") } }
     pub fn repo(&self) -> Option<&str> { match &self.level { Level::Project(r) => Some(r), _ => None } }
-    /// What the human reads, on the board, its tab and herdr's sidebar: "Coordinator", "herdr-projects coordinator"
+    /// What the human reads, on the board, its tab and herdr's sidebar: "Coordinator", "herdr-wingman coordinator"
     /// ("~ coordinator" for the home folder's).
     pub fn name(&self) -> String {
         match &self.level { Level::Top => crate::status_words::COORDINATOR.into(), Level::Project(r) => named(&crate::shown::words::repo_label(r)) }

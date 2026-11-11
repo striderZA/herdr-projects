@@ -43,7 +43,7 @@ fn a_push_past_its_time_is_stopped_and_says_so_in_gits_words_naming_the_setting(
     let t = settle(&id);
     let f = t.at("failure");
     assert_eq!((f.s("stage"), f.s("title")), ("push", "Could not push the branch"), "{f}");
-    assert!(f.s("detail").contains("git push did not end within 1s (merge.pushTimeout): a slow pre-push hook? Raise it with herdr-projects set merge.pushTimeout 10m --repo proj"), "{}", f.s("detail"));
+    assert!(f.s("detail").contains("git push did not end within 1s (merge.pushTimeout): a slow pre-push hook? Raise it with herdr-wingman set merge.pushTimeout 10m --repo proj"), "{}", f.s("detail"));
     assert!(!f.s("detail").contains("herdr did not answer"), "{}", f.s("detail"));
     assert!(!pushed(&w, t.s("branch")));
 }

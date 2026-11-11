@@ -5,7 +5,7 @@ how many stand in each status. The list sorts the tasks by what they need from y
 agent.
 
 ```
- herdr-projects  proj · PRJ
+ herdr-wingman  proj · PRJ
  All 48   Coordinators 4   Needs you 3   Working 2   Ready 1   To do 12   Done 30   Automations 0
  ○ ▾ Jaco-Desktop  1 project · 48 tasks                                                       5m ago
    ▾ needs you
@@ -35,7 +35,7 @@ agent.
 
 ## The header
 
-One line: the board's name and the repo new tasks go to (`herdr-projects  proj · PRJ`), with no folder path. Whose
+One line: the board's name and the repo new tasks go to (`herdr-wingman  proj · PRJ`), with no folder path. Whose
 board shows and how many tasks stand in each group are on the filter row under it.
 
 - In the archive it says how many tasks are archived (`archive · 7 archived`), and there is no filter row.
@@ -105,7 +105,7 @@ Tasks stand in five groups, in the order they need you:
   its worktree, branch and history stay. Restoring starts nothing.
   - **A whole project:** [archiving a project](#archiving-a-project), below.
   - **A repo's done tasks in one go**, from the shell: when a round of work is over, its done tasks are clutter.
-    `herdr-projects archive --done --repo mstars` (`Archived 50 done tasks of mstars. Left out: 1 done but pinned, 2
+    `herdr-wingman archive --done --repo mstars` (`Archived 50 done tasks of mstars. Left out: 1 done but pinned, 2
     working.`) archives every done task of that repo; without `--repo`, every repo's. A task that works, waits, is to
     do or is pinned stays. Each goes as one archive does: its space closes, its worktree stays. Nothing archives them
     by itself.
@@ -123,7 +123,7 @@ A project you are done with for now leaves the board whole, and comes back as it
 - **What goes:** its row and its tasks leave the board (each archived as one task is: its space closes, its worktree
   stays), an agent at work or waiting for you is stopped first, its project coordinator stops, and its automations are
   turned off. An empty repo used lately no longer keeps a row for it. A new task in it
-  is refused (`mstars is archived. herdr-projects restore --repo mstars brings it back, with its tasks.`), and so is
+  is refused (`mstars is archived. herdr-wingman restore --repo mstars brings it back, with its tasks.`), and so is
   a message to its coordinator.
 - **Nothing is deleted:** not its folder, its worktrees, its branches, its pull requests, its settings or its tasks.
 - **In the archive** (`Alt+A`) it has its own heading, with the tasks archived with it under it, whatever the
@@ -131,8 +131,8 @@ A project you are done with for now leaves the board whole, and comes back as it
   every task archived with it comes back as it was (to do is to do again, done is done; one that was stopped stays
   stopped until you start it), and its automations are on again. Its coordinator starts with your next message to it,
   as a stopped one does. A task you had archived on its own before stays in the archive.
-- **From the shell:** `herdr-projects archive --repo mstars` (`Archived mstars and its 6 tasks. Stopped first:
-  MST-4.`) and `herdr-projects restore --repo mstars` (`Restored mstars and its 6 tasks.`). They do not ask.
+- **From the shell:** `herdr-wingman archive --repo mstars` (`Archived mstars and its 6 tasks. Stopped first:
+  MST-4.`) and `herdr-wingman restore --repo mstars` (`Restored mstars and its 6 tasks.`). They do not ask.
 
 ### The list says what it hides
 
@@ -462,7 +462,7 @@ not say which task it is. So under 80 columns:
    █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   3%   34s
 
  to do
- ○ Check herdr-projects /autoproject for ideas w…
+ ○ Check herdr-wingman /autoproject for ideas w…
  ○ Bring the board's list to a narrow window
  ○ Rethink how the Coordinator works, restarts
    and remembers what it was told before
@@ -778,16 +778,16 @@ from the row, with the chat hidden, or while the chat talks to that agent. The b
 **The key opens the board in a Herdr tab of its own, named `board`**, in the space you are in. From then on it goes to
 that running board from anywhere, instead of opening a second one.
 
-- A board you started yourself in a pane (`herdr-projects` typed there) is found the same way. The key puts the keyboard
+- A board you started yourself in a pane (`herdr-wingman` typed there) is found the same way. The key puts the keyboard
   on it, also when an agent's pane is split beside it in the same tab.
 - **Pressed on the board itself, the key takes you back** to the pane you came from: a way there and a way back. When that
   pane is closed, or you started the board by hand, the board says on its message line that it is the board already.
 - Closing the board (`Ctrl+C` twice) closes its tab. **The Coordinator keeps running**, and the line that asks for the
   second `Ctrl+C` says so while it runs: it is not this board's but the machine's, the same one the popup and
-  `coordinator tell` talk to, and it may be at work on what you asked. `herdr-projects coordinator stop` ends it
+  `coordinator tell` talk to, and it may be at work on what you asked. `herdr-wingman coordinator stop` ends it
   ([the Coordinator](coordinator.md)).
 
-**A board you start with `herdr-projects` names its tab `herdr-projects`**, for as long as the board is open, so you can
+**A board you start with `herdr-wingman` names its tab `herdr-wingman`**, for as long as the board is open, so you can
 tell it from your other tabs.
 
 - Only that one tab is renamed. When the board closes (also when it closes to take you into an agent), the tab gets back
@@ -799,7 +799,7 @@ tell it from your other tabs.
 
 ## The board as a popup
 
-`herdr-projects set board.open popup` makes the same key open the board as a popup, and close it again
+`herdr-wingman set board.open popup` makes the same key open the board as a popup, and close it again
 ([settings](settings.md)). `unset board.open` brings the tab back.
 
 It is Herdr's own popup: a framed window with the board's name, in the middle of Herdr's screen, nine tenths of its width

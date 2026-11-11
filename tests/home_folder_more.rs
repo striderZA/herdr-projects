@@ -60,7 +60,7 @@ fn what_is_not_the_boards_to_move_stays_a_folder_you_named_another_copys_board_o
     let r = move_home(&h.home, &env(&[]), &bin_of(&h.home), Some(true), 3000, &swap_now);
     assert!(r.other && !is_link(&h.data)); assert_eq!(h.run().moved.len(), 3);
     // A copy that is gone (the plugin was moved) holds nothing back.
-    let h = old_home(&w.base, Some("/no/such/copy/bin/herdr-projects"));
+    let h = old_home(&w.base, Some("/no/such/copy/bin/herdr-wingman"));
     assert_eq!(h.run().moved.len(), 3);
     // The old version followed XDG_*: that is where its folders are looked for.
     let h = old_home(&w.base, None);

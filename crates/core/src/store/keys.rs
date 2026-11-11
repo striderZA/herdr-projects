@@ -67,7 +67,7 @@ pub fn repo_keys() -> Keys {
     out
 }
 fn number_of(id: &str) -> &str { let n = id.rsplit('/').next().unwrap_or(""); if !n.is_empty() && n.bytes().all(|b| b.is_ascii_digit()) { n } else { "" } }
-/// `hsw-134` -> `herdr-projects/134`, in any letter case; "" when it is not a key and a number, or no repo has it. With
+/// `hsw-134` -> `herdr-wingman/134`, in any letter case; "" when it is not a key and a number, or no repo has it. With
 /// no keys given, every key a repo ever went by counts too, after the ones they go by now.
 pub fn id_of_key(reference: &str, keys: Option<&Keys>) -> String {
     let s = reference.trim();
