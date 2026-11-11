@@ -148,6 +148,7 @@ mod gate;
 mod gate_more;
 mod gate_rest;
 mod gate_rounds;
+mod github_templates;
 mod guard;
 mod guard_rest;
 mod helpers;

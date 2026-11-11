@@ -1,0 +1,2 @@
+# The issue forms' settings: no blank issue, so every issue is one of the forms (bug report, feature request).
+blank_issues_enabled: false

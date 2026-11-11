@@ -1,0 +1,79 @@
+# The feature request form: the problem a change solves, what the program should do after it, and how to tell it works. The
+# answers become the issue's body, one heading per field, in this order, so an agent can plan the change from the issue alone.
+name: Feature request
+description: Something new the board, the task flow, the command line or the docs should do.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Say what you need and why. How it gets built is decided later, with the maintainers or an agent. One feature per issue.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: The part of herdr-projects the change is in. Pick the closest one.
+      options:
+        - "Board: the screen, keys and panels (crates/board)"
+        - "Task flow: plan, delegate, review, finish, merge (crates/flow)"
+        - "Core: store, settings, agents, herdr calls (crates/core)"
+        - "Command line and made pages (src/)"
+        - "Install, update or the herdr plugin (bin/run.sh, scripts/)"
+        - "Docs"
+        - "Not sure"
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What you try to do today, and what gets in the way. Name the task, screen, command or setting if you can.
+    validations:
+      required: true
+  - type: textarea
+    id: behaviour
+    attributes:
+      label: Proposed behaviour
+      description: What the program should do once this exists. Name the key, command or setting it touches, if you know them.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: "Testable statements, one per line, each a checkbox, for example - [ ] a row shows its pull request number. An agent turns each one into a test."
+      value: "- [ ] "
+    validations:
+      required: true
+  - type: dropdown
+    id: size
+    attributes:
+      label: Size (your guess)
+      description: One screen or one file is small; several areas is large. The maintainers decide.
+      options:
+        - Small
+        - Medium
+        - Large
+        - Not sure
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of scope
+      description: What this does not change. Leave empty if nothing.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other ways to solve the problem, and why not those. Leave empty if none.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched the existing issues and this feature is not among them
+          required: true
+        - label: This issue asks for one feature
+          required: true
+        - label: I removed secrets, tokens and private details from it
+          required: true
