@@ -17,9 +17,11 @@ use std::path::{Path, PathBuf};
 pub struct Flows { pub waiting: Vec<String>, pub failed: Vec<Value> }
 fn tree_of(t: &Obj) -> PathBuf { if t.b("worktree") { PathBuf::from(t.s("worktree")) } else { crate::store::repos::folder_of(t.s("id")) } }
 /// The workflows in the task's worktree that run for this pull request, each with its file (`.github/workflows/…`) and
-/// whether it runs on every head of it or only maybe.
+/// whether it runs on every head of it or only maybe. None where the repo's pull requests go through bb (`repo.cli`):
+/// GitHub Actions does not run for a Bitbucket pull request.
 pub fn flows_for(t: &Obj, base: &str) -> Vec<(String, Flow, Runs)> {
     let tree = tree_of(t);
+    if crate::flow::pr_cli::of(&tree) == crate::flow::pr_cli::Cli::Bb { return vec![]; }
     let Ok(dir) = std::fs::read_dir(tree.join(".github").join("workflows")) else { return vec![] };
     let files = git_out(&tree, &["diff", "--name-only", &format!("origin/{base}...HEAD")]).ok().map(|o| o.lines().map(String::from).collect());
     let pr = Pr { base, branch: t.s("branch"), files };
@@ -79,8 +81,10 @@ pub fn required(root: &Path, base: &str) -> Vec<String> {
 /// With nothing listed: an outside CI (one not of GitHub Actions, which flows_state decides exactly) that reports on
 /// the newest commit of the branch it merges into, or on one of the repo's last pull requests. A question GitHub cannot
 /// answer counts as yes, so nothing merges unchecked for it; one the token may not ask (check runs, for a fine-grained
-/// token: readable.rs) counts as no, as it would never be answered.
+/// token: readable.rs) counts as no, as it would never be answered. Through bb (`repo.cli`) none of it can be asked: only
+/// the checks bb lists count, and the pull request's own earlier ones (`prChecksSeen`, checks.rs).
 pub fn outside_ci(root: &Path, base: &str) -> bool {
+    if crate::flow::pr_cli::of(root) == crate::flow::pr_cli::Cli::Bb { return false; }
     if base.is_empty() { return true; }
     let asks = [
         vec!["api".to_string(), format!("repos/{{owner}}/{{repo}}/commits/{base}/check-runs"), "--jq".into(), "[.check_runs[] | select(.app.slug != \"github-actions\")] | length".into()],

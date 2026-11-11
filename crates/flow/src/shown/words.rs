@@ -26,7 +26,13 @@ pub fn age(ms: i64) -> String {
 }
 /// The minutes left on a row, never wider than four cells ("999m"): from a thousand on they are hours ("17h").
 pub fn left(min: i64) -> String { if min < 1000 { format!("{min}m") } else { format!("{}h", ((min as f64 / 60.0).round() as i64).min(999)) } }
-pub fn pr_number(r: &Obj) -> String { if r.b("pr") { format!("PR#{}", r.t("pr").rsplit('/').next().unwrap_or("")) } else { String::new() } }
+/// "PR#16": the last part of its link that is a number (GitHub's `…/pull/16`, Bitbucket's `…/pull-requests/16/overview`).
+pub fn pr_number(r: &Obj) -> String {
+    if !r.b("pr") { return String::new(); }
+    let link = r.t("pr");
+    let n = link.rsplit('/').find(|p| !p.is_empty() && p.bytes().all(|b| b.is_ascii_digit())).or_else(|| link.rsplit('/').next()).unwrap_or("");
+    format!("PR#{n}")
+}
 pub fn merged(r: &Obj) -> bool { r.b("prMerged") || r.s("prState") == "merged" }
 /// The work landed: its pull request is merged, or the task finished.
 pub fn landed(r: &Obj) -> bool { merged(r) || r.s("stage") == "done" }

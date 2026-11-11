@@ -22,6 +22,8 @@ fn heading(lines: &[Inked], word: &str) -> Option<Ink> { lines.iter().find(|l| l
 #[test]
 fn one_header_line_five_groups_a_mark_for_each_state_and_the_task_panel_from_90_columns() {
     let w = world();
+    // A frozen clock: "19s ago" would depend on how long the drawing takes on a busy machine (as board_needs.rs does).
+    sw::clock::set(Some(sw::clock::now()));
     sw::actions::filing::add(&w.root, "Write the docs", sw::actions::filing::AddOpts { description: "All of them.".into(), ..Default::default() }).unwrap();
     let b = w.add("My own task");
     report(&b, "half way", Some(50), Some(12));

@@ -29,6 +29,8 @@ fn set(name: &str, v: &str, id: &str) { set_value(name, &json!(v), &Scope::task(
 #[test]
 fn the_panel_beside_the_list_cuts_a_long_description_short_and_the_whole_panel_shows_all_of_it() {
     let w = world();
+    // A frozen clock: "10s ago" would depend on how long the drawing takes on a busy machine (as board_needs.rs does).
+    sw::clock::set(Some(sw::clock::now()));
     let long: Vec<String> = (1..=80).map(|i| format!("Line {i} of a very long description.")).collect();
     add(&w, "Short one", "Brief.");
     let big = add(&w, "Long one", &long.join("\n"));

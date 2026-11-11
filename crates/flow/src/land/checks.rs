@@ -110,14 +110,15 @@ pub fn unread_note(unread: &[String], required: &[String]) -> String {
 }
 /// Are GitHub's checks looked at for this task?
 pub fn looked_at(t: &Obj) -> bool { setting_text("merge.checks", Some(t)) != "none" }
-/// The short reason, the same from the land step and from the pull requests' watch (housekeeping/prs.rs).
-pub fn failed_why(pr: &str, names: &[String]) -> String { format!("Checks failed on the pull request {pr}: {}. Look at them (gh pr checks) and fix them on your branch.", names.join(", ")) }
+/// The short reason, the same from the land step and from the pull requests' watch (housekeeping/prs.rs), naming the
+/// program the repo's pull requests go through (gh, or bb: flow/pr_cli.rs).
+pub fn failed_why(root: &Path, pr: &str, names: &[String]) -> String { format!("Checks failed on the pull request {pr}: {}. Look at them ({} pr checks) and fix them on your branch.", names.join(", "), flow::pr_cli::name(root)) }
 const LOG_LINES: usize = 40;
 /// The end of a failing check's log, where GitHub Actions ran it (`gh run view --job <id> --log-failed`).
 fn log_of(root: &Path, c: &Value) -> String {
     let url = [c.s("detailsUrl"), c.s("targetUrl")].into_iter().find(|s| !s.is_empty()).unwrap_or("").to_string();
     let job: String = url.split("/job/").nth(1).map(|r| r.chars().take_while(|c| c.is_ascii_digit()).collect()).unwrap_or_default();
-    if job.is_empty() || !url.contains("/actions/runs/") { return if url.is_empty() { "GitHub gave no link to its log.".into() } else { format!("Its log is not one gh can read: {url}") }; }
+    if job.is_empty() || !url.contains("/actions/runs/") { let cli = flow::pr_cli::name(root); return if url.is_empty() { format!("{} gave no link to its log.", if cli == "gh" { "GitHub" } else { cli }) } else { format!("Its log is not one {cli} can read: {url}") }; }
     let r = gh(&["run", "view", "--job", &job, "--log-failed"], root, 60000);
     // A line reads `<job>\t<step>\t<time> <text>`: only the text is kept.
     let lines: Vec<String> = r.stdout.lines().map(|l| {
@@ -131,15 +132,15 @@ fn log_of(root: &Path, c: &Value) -> String {
 /// What failed, each check with the end of its log: what the agent is sent, and what the task shows.
 pub fn failed_detail(root: &Path, pr: &str, failed: &[Value]) -> String {
     let names: Vec<String> = failed.iter().map(name).collect();
-    let mut s = format!("{}\n\nPull request: {pr}", failed_why(pr, &names));
+    let mut s = format!("{}\n\nPull request: {pr}", failed_why(root, pr, &names));
     // A run read as itself (readable.rs) that failed with a failed job listed: the job's log says it.
     let told = |c: &Value| c.b("run") && failed.iter().any(|o| !o.b("run") && o.s("workflowName") == c.s("name"));
     for c in failed.iter().filter(|c| !told(c)) { s.push_str(&format!("\n\n{} ({}):\n{}", name(c), word(c).to_lowercase(), log_of(root, c))); }
     s
 }
 /// The pull request blocker GitHub's failed checks make: the same from the land step and the watch.
-pub fn blocker(pr: &str, head: &str, names: &[String], detail: &str) -> Value {
-    json!({ "stage": "pr", "remote": true, "remoteKind": "checks", "head": head, "checks": names, "why": failed_why(pr, names), "title": "Pull request checks failed", "detail": detail,
+pub fn blocker(root: &Path, pr: &str, head: &str, names: &[String], detail: &str) -> Value {
+    json!({ "stage": "pr", "remote": true, "remoteKind": "checks", "head": head, "checks": names, "why": failed_why(root, pr, names), "title": "Pull request checks failed", "detail": detail,
         "next": "Address this on your own branch and finish again. Local checks do not prove remote CI passed; wait for a fresh remote result.", "agentCanFix": true, "at": now(), "sentAt": null })
 }
 /// Failed checks recorded on another commit than `head`: they say nothing of it (#309).
@@ -211,7 +212,7 @@ pub fn before_merge(id: &str, g: &mut Guard, t: &Task, root: &Path) -> Res<bool>
         Look::Failed(list) => {
             let names: Vec<String> = list.iter().map(name).collect();
             let detail = failed_detail(root, &pr, &list);
-            let pf = blocker(&pr, &head, &names, &detail);
+            let pf = blocker(root, &pr, &head, &names, &detail);
             let seen = format!("{head}|{}|{}", names.join(","), v.s("reviewDecision"));
             let went = t.i("prRounds");
             let off = json!({ "checksWait": null, "autoMerge": false, "autoMergeLocal": false, "prState": "failing", "prSeen": seen });

@@ -115,6 +115,11 @@ pub fn repo_of(folder: &Path) -> Res<(String, PathBuf)> {
     super::keys_given::give_keys(Some(&found.0)); // at once, and again where it was taken away
     Ok(found)
 }
+/// The name on the board of the repo a folder belongs to, when the board knows it: nothing is named or written here.
+pub fn name_of(folder: &Path) -> Option<String> {
+    let root = primary_root(folder);
+    known_repos().iter().find(|(_, v)| { let p = PathBuf::from(text(v)); p == root || real(&p) == real(&root) }).map(|(k, _)| k.clone())
+}
 /// The folder of a task's repo (its primary checkout); the home folder for a task in none.
 pub fn folder_of(id: &str) -> PathBuf {
     let repo = id.split('/').next().unwrap_or("");

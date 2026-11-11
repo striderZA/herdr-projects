@@ -41,6 +41,8 @@ enum Then { Nothing, Merged, Closed, Unreviewed, Land, Wake }
 
 fn poll_one(id: &str, pr: &str, j: &Value, via: &str) {
     let root = folder_of(id);
+    // The program the agent is told to run to read the pull request: gh, or bb (flow/pr_cli.rs).
+    let cli = crate::flow::pr_cli::name(&root);
     let mut then = Then::Nothing;
     // What was merged is the pull request's head, not whatever the local branch holds by now: a commit made here since
     // (never pushed, or pushed after the merge) landed nowhere, so its branch and worktree are not thrown away.
@@ -79,7 +81,7 @@ fn poll_one(id: &str, pr: &str, j: &Value, via: &str) {
             t.put("autoMerge", false); t.put("autoMergeLocal", false); t.put("stage", "approval"); t.put("mergeFailed", true); t.put("mergeIntent", Value::Null); t.put("requireApproval", true); t.put("prState", "closed");
             t.put("msg", "Pull request was closed without merging");
             let detail = format!("Pull request: {pr}\nBranch: {}\n\nGitHub reports it as closed, not merged. The approved merge did not happen.", t.so("branch").unwrap_or("unknown"));
-            for (k, v) in failure_patch(&obj(json!({ "stage": "merge", "title": "Pull request was closed without merging", "detail": detail, "next": "Reopen the pull request (gh pr reopen) and approve again, or open a new one from the task's branch. Nothing was cleaned up; the work is still on its branch.", "agentCanFix": false, "auth": false }))) { t.insert(k, v); }
+            for (k, v) in failure_patch(&obj(json!({ "stage": "merge", "title": "Pull request was closed without merging", "detail": detail, "next": format!("Reopen the pull request ({cli} pr reopen) and approve again, or open a new one from the task's branch. Nothing was cleaned up; the work is still on its branch."), "agentCanFix": false, "auth": false }))) { t.insert(k, v); }
             then = Then::Closed;
             return Ok(Change::Write);
         }
@@ -116,10 +118,10 @@ fn poll_one(id: &str, pr: &str, j: &Value, via: &str) {
         let new_feedback = !others.is_empty() && feedback != (if t.has("prFeedbackSeen") { t.t("prFeedbackSeen") } else { "[]".into() });
         t.put("prFeedbackSeen", feedback);
         let decision = j.s("reviewDecision");
-        let reason = if !failed.is_empty() { checks::failed_why(pr, &failed) }
-            else if decision == "CHANGES_REQUESTED" { format!("A reviewer asked for changes on the pull request {pr}. Read the review (gh pr view --comments) and address it on your branch.") } else { String::new() };
-        let why = if !reason.is_empty() { format!("{reason}{}", if others.is_empty() { "" } else { " Comments are also available for context (gh pr view --comments)." }) }
-            else if new_feedback { format!("New feedback on the pull request {pr}. Read the comments (gh pr view --comments) and address what they ask for on your branch; if nothing needs changing, say so and finish.") } else { String::new() };
+        let reason = if !failed.is_empty() { checks::failed_why(&root, pr, &failed) }
+            else if decision == "CHANGES_REQUESTED" { format!("A reviewer asked for changes on the pull request {pr}. Read the review ({cli} pr view --comments) and address it on your branch.") } else { String::new() };
+        let why = if !reason.is_empty() { format!("{reason}{}", if others.is_empty() { String::new() } else { format!(" Comments are also available for context ({cli} pr view --comments).") }) }
+            else if new_feedback { format!("New feedback on the pull request {pr}. Read the comments ({cli} pr view --comments) and address what they ask for on your branch; if nothing needs changing, say so and finish.") } else { String::new() };
         let blocking = !failed.is_empty() || decision == "CHANGES_REQUESTED";
         let all_good = checks.iter().all(|c| CHECK_GOOD.contains(&checks::word(c).as_str()));
         // The board's own wait for GitHub's checks (land/checks.rs): none is still running, one failed, or it waited
@@ -156,7 +158,7 @@ fn poll_one(id: &str, pr: &str, j: &Value, via: &str) {
             let prev = t.at("prFailure");
             let known = if kind == "checks" { same(prev) } else { prev.s("detail") == why && prev.s("remoteKind") == kind && prev.s("head") == head };
             if !known {
-                let f = if kind == "checks" { checks::blocker(pr, &head, &failed, &format!("{detail}{}", if why.len() > reason.len() { format!("\n\n{}", why[reason.len()..].trim()) } else { String::new() })) }
+                let f = if kind == "checks" { checks::blocker(&root, pr, &head, &failed, &format!("{detail}{}", if why.len() > reason.len() { format!("\n\n{}", why[reason.len()..].trim()) } else { String::new() })) }
                     else { json!({ "stage": "pr", "remote": true, "remoteKind": kind, "head": head, "title": "Pull request changes requested", "detail": why,
                     "next": "Address this on your own branch and finish again. Local checks do not prove remote CI passed; wait for a fresh remote result.", "agentCanFix": true, "at": now(), "sentAt": null }) };
                 t.put("prFailure", f);

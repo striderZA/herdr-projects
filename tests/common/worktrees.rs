@@ -6,7 +6,7 @@ use sw::json::*;
 
 pub fn git(cwd: &Path, a: &[&str]) -> Result<String, String> {
     let o = std::process::Command::new("git").args(a).current_dir(cwd).output().map_err(|e| e.to_string())?;
-    if o.status.success() { Ok(String::from_utf8_lossy(&o.stdout).trim().to_string()) } else { Err(String::from_utf8_lossy(&o.stderr).into_owned()) }
+    if o.status.success() { Ok(String::from_utf8_lossy(&o.stdout).trim().to_string()) } else { let err = String::from_utf8_lossy(&o.stderr).trim().to_string(); Err(if err.is_empty() { format!("exit {} with nothing on stderr", o.status) } else { err }) }
 }
 /// The repo a folder belongs to: a checkout's own folder (its `.git` a folder or a file pointing elsewhere), or the
 /// main checkout of a worktree.
