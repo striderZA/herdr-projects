@@ -1,7 +1,7 @@
 # Runs clippy, then the whole check (`npm run check -- --all`: build, made tables, the repo's rules, every test) on
-# Linux and on Windows, on every pull request and on every push to master, unless a change is only docs (the Markdown at
-# the top, docs/, LICENSE, assets/): the board runs this check before each pull request, so a docs change does not run it
-# here. A clippy error stops it (a warning does not). The runner images come with Rust and Node.js.
+# Linux and on Windows, on every pull request and on every push to master, unless a change is only docs or CI (the Markdown at
+# the top, docs/, LICENSE, assets/, .github/): the board runs this check before each pull request, so such a change does not
+# run it here. A clippy error stops it (a warning does not). The runner images come with Rust and Node.js.
 name: Check
 
 on:
@@ -12,12 +12,14 @@ on:
       - '*.md'
       - 'LICENSE'
       - 'assets/**'
+      - '.github/**'
   pull_request:
     paths-ignore:
       - 'docs/**'
       - '*.md'
       - 'LICENSE'
       - 'assets/**'
+      - '.github/**'
 
 # The git identity for the commits the check makes.
 env:
