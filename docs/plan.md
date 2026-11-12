@@ -90,7 +90,7 @@ plan format and self-review, with the spec in the plan.
 ### The plan file
 
 One file, `plan.md`, in the task's own folder on the board
-(`~/.herdr-projects/data/tasks/<repo>/<n>/artifacts/plan/`), never in the repo.
+(`~/.herdr-wingman/data/tasks/<repo>/<n>/artifacts/plan/`), never in the repo.
 
 - An agent that stopped without saving one: its last message is the plan.
 - Nothing said either: `No plan was written`, which goes back to the agent like any failure.

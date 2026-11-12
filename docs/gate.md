@@ -133,7 +133,7 @@ Also for tasks under way.
 
 ### A repo cannot switch it on for itself
 
-A repo's own committed file cannot turn this on. `"land": "auto"` in `.herdr-projects.json` used to; that file now holds
+A repo's own committed file cannot turn this on. `"land": "auto"` in `.herdr-wingman.json` used to; that file now holds
 only these facts: `research.only`, `chat.only`, `workspace.setup`, `workspace.include`, `workspace.teardown`, `check.command`, `check.again`, `check.timeout`, `merge.pushTimeout`, `merge.repo` and `repo.key` ([settings](settings.md)). So code an agent writes can never make its own work merge unasked. To merge
 by itself in one repo, say so yourself: `set merge.by itself --repo <name>`. `show <id>` says what a task really runs
 on, and where each value comes from.

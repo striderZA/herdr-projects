@@ -124,7 +124,7 @@ When the agent's turn ends, the board:
      another host: GitHub Enterprise, or an ssh alias that `ssh -G` resolves to its host). The board's `gh` calls for the
      clone are for that repo too, so a clone whose `upstream` is the original does not send them there. A clone whose
      `origin` is not a repo on a host (a local folder) gets no `gh` call at all: the finish fails and says so. With
-     `merge.repo` set (in the repo's `.herdr-projects.json`, under `merge`), no branch is pushed to any other repo: the
+     `merge.repo` set (in the repo's `.herdr-wingman.json`, under `merge`), no branch is pushed to any other repo: the
      finish fails before the push and names both repos. A pull request link of another repo, stored on a task, is not
      acted on either.
    - A pull request the agent already opened for the task's branch is taken on instead, and goes through the review and

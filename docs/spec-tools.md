@@ -13,7 +13,7 @@ herdr-wingman set check.command "openspec validate --all --strict --no-interacti
 
 - **`worker.instructions`** tells every task's agent in that repo the order of work ([settings](settings.md)).
 - **`check.command`** makes a task's work count as done only when its specs are valid. Put your tests after it with
-  `&&`. It can also go in the repo's own `.herdr-projects.json` (`check.command`).
+  `&&`. It can also go in the repo's own `.herdr-wingman.json` (`check.command`).
 - **Give `validate` a target.** With none, OpenSpec asks which one, on the terminal. The board runs the check with no
   terminal to ask on, so it fails every time. `--all`, `--changes` or a change's name each work.
 - **Worktrees are fine**: `openspec/` is in the repo, so every task's branch has it.

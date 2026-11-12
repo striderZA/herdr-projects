@@ -26,7 +26,7 @@ They are settings like every other ([settings](settings.md)):
 - listed by `show` and `show <id>` with where the value came from, and on the settings page of a task and of an
   automation;
 - a refused value changes nothing and names the nearest right one (`2 hours`: "Did you mean 2h?");
-- **a repo's own `.herdr-projects.json` cannot hold them**, so code an agent writes can neither set a limit nor lift one.
+- **a repo's own `.herdr-wingman.json` cannot hold them**, so code an agent writes can neither set a limit nor lift one.
 
 ## What happens at a limit
 

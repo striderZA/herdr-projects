@@ -23,14 +23,14 @@ with `✗` is a problem, with what to do under it. It exits 1 when there is a pr
 | It checks | A problem it reports | What to do |
 |---|---|---|
 | this program | its version and how it was installed (downloaded, built from source); older than the plugin's own version | `herdr-wingman update`, or build it again |
-| the launcher | `~/.herdr-projects/data/bin/herdr-wingman` (what agents and hooks run) is missing, names a program that is gone, or not the plugin's | `sh <plugin folder>/bin/run.sh install` (on Windows, `bin/run.ps1 install`), or open the board once from Herdr |
+| the launcher | `~/.herdr-wingman/data/bin/herdr-wingman` (what agents and hooks run) is missing, names a program that is gone, or not the plugin's | `sh <plugin folder>/bin/run.sh install` (on Windows, `bin/run.ps1 install`), or open the board once from Herdr |
 | your PATH | `herdr-wingman` is not on it, or something else of that name comes first | put the launcher's folder first ([installing](install.md#the-command-on-your-path)) |
 | Herdr and the plugin | Herdr not found, older than the plugin needs, the plugin not installed, turned off, or linked to a folder that is gone | install or update Herdr; `herdr plugin enable herdr-wingman`; link or install the plugin again |
 | each agent program your settings name | not installed, older than the board was checked on, not signed in (Claude Code, Codex and Cursor can say), missing Herdr's integration | install it or choose another; `claude auth login`, `codex login`, `cursor-agent login`; `herdr integration install <name>` |
 | model and effort settings | a model the program does not take, an effort it does not have, a program that cannot do its role, a value written by hand that does not count | `herdr-wingman set <setting> …` ([models](models.md)) |
 | the shell for a repo's own commands | on Windows, no `sh` (Git for Windows) is found, so `workspace.setup` and `check.command` run through `cmd`, where a command written for a shell may fail | install Git for Windows, or put its `bin` folder on your PATH |
 | disk space | under 10 GB free on a disk that holds the board's data, your repos, worktrees, build caches or temporary files: a task's setup may fail there | free some space, starting with the leftovers below |
-| leftovers | the worktree of a done or archived task (a clean-up keeps one with unsaved work), a worktree on a task branch no task has, one git still lists whose folder is gone, an old warm build in `~/.cache/herdr-projects` | the `git worktree remove`, `git worktree prune` or `rm -rf` it names. It never removes anything itself; `herdr-wingman sweep` removes what is provably an ended task's ([disk space](disk-space.md)) |
+| leftovers | the worktree of a done or archived task (a clean-up keeps one with unsaved work), a worktree on a task branch no task has, one git still lists whose folder is gone, an old warm build in `~/.cache/herdr-wingman` | the `git worktree remove`, `git worktree prune` or `rm -rf` it names. It never removes anything itself; `herdr-wingman sweep` removes what is provably an ended task's ([disk space](disk-space.md)) |
 | coordinators' queues | a message waits undelivered for more than a minute, as when `coordinator tell` ran where herdr could not be found | open the board in Herdr, which delivers it; in that shell, set `HERDR_BIN_PATH` to herdr's full path ([the Coordinator](coordinator.md)) |
 
 A done task's worktree is no leftover while its clean-up is still to come, or when `workspace.cleanup` is `false`.
@@ -176,7 +176,7 @@ fetched counts. A remote whose main is not called `main` and was never named in 
 
 ## Where the logs are
 
-All in the board's data folder, `~/.herdr-projects/data/` ([the home folder](home-folder.md)):
+All in the board's data folder, `~/.herdr-wingman/data/` ([the home folder](home-folder.md)):
 
 | File | Holds |
 |---|---|
@@ -192,7 +192,7 @@ The task panel shows most of this already. `herdr-wingman details <id>` prints t
 ## The board itself
 
 - **`herdr-wingman` is not found**: open the board once from Herdr (the plugin's action "Open the work board"), then add
-  `~/.herdr-projects/data/bin` to your PATH ([installing](install.md#the-command-on-your-path)).
+  `~/.herdr-wingman/data/bin` to your PATH ([installing](install.md#the-command-on-your-path)).
 - **`herdr` is not found although it is installed**: a command run over plain SSH (`ssh host herdr-wingman …`) gets
   no login shell, so its PATH often lacks `~/.local/bin`. When PATH has no `herdr`, the board looks in
   `~/.local/bin`, `~/.cargo/bin`, `~/bin` and `/usr/local/bin` (on Windows: `~/.cargo/bin`, `~/bin`, `~/.herdr/packages/standalone/releases` and `%LOCALAPPDATA%\Programs\Herdr\bin`), then in a login shell's PATH. Herdr

@@ -10,7 +10,7 @@ herdr-wingman add "Add CSV export" --repo my-app --delegate --plan.approve you
 ```
 
 It is a work setting: a task, your entry for a repo, or you. It is read when the agent starts, and it is never in the
-repo's own `.herdr-projects.json`, so code an agent writes cannot switch its own method. The default is `none`: the
+repo's own `.herdr-wingman.json`, so code an agent writes cannot switch its own method. The default is `none`: the
 board's rules as they were.
 
 ## What it changes

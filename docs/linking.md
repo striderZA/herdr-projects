@@ -6,7 +6,7 @@ mold is not installed, they link the way Rust does by itself. You do not need to
 Why it matters: every build after an edit links the program and the test program again, and both hold the whole
 library. mold halves the link time, about 0.4 s saved per build.
 
-`HERDR_PROJECTS_NO_MOLD=1` turns mold off. Switching it on or off rebuilds nothing.
+`HERDR_WINGMAN_NO_MOLD=1` turns mold off. Switching it on or off rebuilds nothing.
 
 ## How it works
 
@@ -20,7 +20,7 @@ library. mold halves the link time, about 0.4 s saved per build.
   `aarch64-unknown-linux-gnu` target. It is not needed there: Rust does not ask for its lld on that target, so the C
   compiler runs `scripts/ld/` all the same and links with mold too.
 - **The script.** `scripts/linker.sh` runs mold: one pinned version, checked against its published sha256, kept in
-  `~/.cache/herdr-projects` beside the shared build cache. The workspace setup installs it
+  `~/.cache/herdr-wingman` beside the shared build cache. The workspace setup installs it
   (`sh scripts/linker.sh --install`, in `scripts/setup.sh`).
 - **mold uses all the cores**, like Rust's lld. A link takes a fraction of a second. On this task's share of the cores
   ([testing](testing.md)), mold kept little of its gain.

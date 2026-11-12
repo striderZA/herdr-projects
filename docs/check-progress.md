@@ -53,7 +53,7 @@ than the greyed words beside it, and has no hue.
 
 ## How a check reports its progress
 
-The board gives the check command one more variable, `HERDR_PROJECTS_PROGRESS`: the name of a file. The check writes
+The board gives the check command one more variable, `HERDR_WINGMAN_PROGRESS`: the name of a file. The check writes
 where it is to that file, as often as it likes, each time replacing the whole file. The board reads it once a second.
 
 Write one line, as JSON or plain words:
@@ -70,7 +70,7 @@ A shell check, for example:
 
 ```sh
 n=0; total=$(ls tests/*.sh | wc -l)
-for t in tests/*.sh; do sh "$t" || exit 1; n=$((n+1)); [ -n "$HERDR_PROJECTS_PROGRESS" ] && echo "$n/$total tests" > "$HERDR_PROJECTS_PROGRESS"; done
+for t in tests/*.sh; do sh "$t" || exit 1; n=$((n+1)); [ -n "$HERDR_WINGMAN_PROGRESS" ] && echo "$n/$total tests" > "$HERDR_WINGMAN_PROGRESS"; done
 ```
 
 Good to know:

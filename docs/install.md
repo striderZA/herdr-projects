@@ -103,7 +103,7 @@ that task with the merge question up (`y` = yes, `n` or `esc` = no). Anywhere el
 
 ## The command on your PATH
 
-Agents and hooks are handed the launcher `~/.herdr-projects/data/bin/herdr-wingman`, which runs the program.
+Agents and hooks are handed the launcher `~/.herdr-wingman/data/bin/herdr-wingman`, which runs the program.
 
 - The board writes it when it opens. With `herdr plugin install`, open the board first, with the plugin's action "Open
   the work board".
@@ -136,21 +136,21 @@ are picked up the same way.
 
 ## Coming from an older version
 
-- **From herdr-projects, the name before this version:** the plugin is now `herdr-wingman`: its id, its command and its
-  repo. Run the old version's `herdr-projects remove-extras` before you unlink the old plugin. It takes out the blocks it
-  wrote into `config.toml`, which this version does not know. Then install `striderZA/herdr-wingman`. Your data folder
-  `~/.herdr-projects/` and each repo's `.herdr-projects.json` keep their names and are read as before.
+- **From herdr-projects, the name before this version:** the plugin is now `herdr-wingman`: its id, its command, its repo and its home folder. Do this before the first run of this version, which renames `~/.herdr-projects/` to `~/.herdr-wingman/`. Run the old version's `herdr-projects remove-extras`: it takes out the blocks it
+  wrote into `config.toml`, which this version does not know. Then `herdr plugin uninstall herdr-projects` and install `striderZA/herdr-wingman`. The old launchers `herdr-projects` and `herdr-projects.cmd` in `data/bin` are
+  not removed: delete them. Your repos' `.herdr-projects.json` files are still read. Environment variables `HERDR_PROJECTS_*` are now `HERDR_WINGMAN_*`: a `board.notify` command or a check that reads one needs the new name. The build cache moved to `~/.cache/herdr-wingman`; the old `~/.cache/herdr-projects` can be deleted.
+  The first run renames the data folder as [the home folder](home-folder.md#coming-from-an-older-version-the-one-time-move) describes.
 - **From the older Node version:** `npm unlink -g herdr-projects` takes the Node program off your PATH. The first run of
-  this version keeps a copy of the data folder as it was (`~/.herdr-projects/data-0.2.0`) before it changes anything.
+  this version keeps a copy of the data folder as it was (`~/.herdr-wingman/data-0.2.0`) before it changes anything.
   The data's form is the same, so nothing is converted.
 - **From a version that kept its files in `~/.local/state`, `~/.config` and `~/.local/share`:** nothing to do. The first
   run moves them and says so in one line.
 
-Everything the board keeps for you is in one folder, `~/.herdr-projects/`: [the home folder](home-folder.md).
+Everything the board keeps for you is in one folder, `~/.herdr-wingman/`: [the home folder](home-folder.md).
 
 ## Taking it out again
 
-**Before unlinking the plugin, run `herdr-wingman remove-extras`.** Herdr gives a plugin no uninstall hook, so this is
+**Before uninstalling or unlinking the plugin, run `herdr-wingman remove-extras`.** Herdr gives a plugin no uninstall hook, so this is
 what takes the marked blocks out of `config.toml` and removes the how-to files ([roles and commands](roles-and-commands.md)).
 
 
@@ -187,5 +187,5 @@ With none, it says what to do and stops at once, so Herdr is never held up.
 
 - The plugin's build step (`sh bin/run.sh --fetch`, on Windows `bin/run.ps1 --fetch`) only gets the program, and builds it from source when it cannot
   download it.
-- `HERDR_PROJECTS_RELEASES` names another place for the releases (a mirror, a folder as `file:///…`). Without it, the releases of the checkout's git origin are used, so a fork's installs get the fork's files.
+- `HERDR_WINGMAN_RELEASES` names another place for the releases (a mirror, a folder as `file:///…`). Without it, the releases of the checkout's git origin are used, so a fork's installs get the fork's files.
 - The release files are built for every version tag by `.github/workflows/release.yml`.

@@ -81,7 +81,7 @@ But their rules name none of these commands, and say plainly: **do nothing to th
 
 - An explicit instruction in the task's own description, or in a message from you, counts. So a task that says "add a
   task for each failing page and delegate it" has its agent do that.
-- It never writes into the board's own folder (`~/.herdr-projects`) itself, by hand or with a program of its own,
+- It never writes into the board's own folder (`~/.herdr-wingman`) itself, by hand or with a program of its own,
   beyond the files its rules name (its closing note, a reviewer's verdict and evidence): the board changes only
   through its commands.
 - Work it merely comes across is never made a task. It goes in a short **Also noticed** list at the end of its closing

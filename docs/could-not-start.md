@@ -24,7 +24,7 @@ again (or reply, for an agent that is started again).
   to look further.
 - **The terminal stays open**: `Alt+O` on the task goes into it.
 - **The task's own log** gets the same account at its end: `runner.log` in the task's folder on the board
-  (`~/.herdr-projects/data/tasks/<repo>/<number>/`).
+  (`~/.herdr-wingman/data/tasks/<repo>/<number>/`).
 - **A reviewer** that could not start says the same in its review.
 - **The Coordinator** says it above the box, and keeps its terminal's last lines in `start.log` in its own folder, since
   its tab is closed.

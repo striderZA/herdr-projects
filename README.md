@@ -106,7 +106,7 @@ Only the ones it made. Every task works in its own worktree, on its own branch, 
 
 ### Where do my tasks live?
 
-In `~/.herdr-projects/` by default: `settings/config.json` for your settings, `data/tasks/<repo>/<n>/` for each task with its closing note and review evidence, `data/coordinator/` for the Coordinator's chat, `data/automations/` for your automations, and `reports/` for reports an agent made for you that belong in no repo. A repo can hold its own `.herdr-projects.json` with its setup, its check command and a few other facts, but never a setting that loosens a guard. [The home folder](docs/home-folder.md) lists every file.
+In `~/.herdr-wingman/` by default: `settings/config.json` for your settings, `data/tasks/<repo>/<n>/` for each task with its closing note and review evidence, `data/coordinator/` for the Coordinator's chat, `data/automations/` for your automations, and `reports/` for reports an agent made for you that belong in no repo. A repo can hold its own `.herdr-wingman.json` with its setup, its check command and a few other facts, but never a setting that loosens a guard. [The home folder](docs/home-folder.md) lists every file.
 
 ### Can I have several boards at once?
 
@@ -126,7 +126,7 @@ Herdr Wingman is free and [MIT licensed](LICENSE). Your agent CLI's usual usage 
 
 ## Why this fork
 
-Herdr Wingman is a fork of [Shepherdr](https://github.com/eliasstravik/shepherdr) by Elias Stravik, and like it is MIT licensed. In late October 2026 Shepherdr replaced herdr-projects, the project this fork starts from, and grew into a Herdr app with a web app, voice calls, Autopilot, add-ons and sync between machines. That suits the people it was made for. This fork keeps the task board, focused on one machine.
+Herdr Wingman is a fork of [Shepherdr](https://github.com/eliasstravik/shepherdr) by Elias Stravik, and like it is MIT licensed. In late October 2026 Shepherdr replaced the project this fork starts from, and grew into a Herdr app with a web app, voice calls, Autopilot, add-ons and sync between machines. That suits the people it was made for. This fork keeps the task board, focused on one machine.
 
 - **One job, done well.** One list of tasks on one machine, each task an agent in its own worktree, a check and a review before anything merges, and your yes. The web board, voice calls and remote-machine support are removed.
 - **Linux and Windows.** The Shepherdr README names macOS and Linux as its platforms. This fork runs on Linux and Windows, and its checks run on both. macOS is not supported here because there is no Mac to build and test on.

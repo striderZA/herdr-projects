@@ -8,7 +8,7 @@ commands, instead of `gh`. Every other repo stays on gh, as before. The choice i
 herdr-wingman set repo.cli bb --repo <name>      # your entry for the repo
 ```
 
-or in the repo's own `.herdr-projects.json`, so that everyone who works on it gets the same:
+or in the repo's own `.herdr-wingman.json`, so that everyone who works on it gets the same:
 
 ```json
 { "repo": { "cli": "bb" } }

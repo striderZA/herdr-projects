@@ -97,7 +97,7 @@ belongs to the folder it was added in, so it has that folder's key too (`HOME-3`
 
 **Made from the name, at once.** The moment the board first sees a repo or folder (a task is added there, the board is
 opened there, the Coordinator files a task there), it makes a key from its name and saves it as your entry for that repo,
-in `~/.herdr-projects/settings/config.json`:
+in `~/.herdr-wingman/settings/config.json`:
 
 ```json
 { "repos": { "gtm-skills": { "repo": { "key": "SKL" } } } }
@@ -114,12 +114,12 @@ in `~/.herdr-projects/settings/config.json`:
 - **Never a key another repo on this machine has, or once had.** When the best key is taken, the next way of writing the
   name is tried (`PRO` for a second `proj`), then the best one with a number (`PRJ2`, `PRJ3`, …). The same names always
   give the same keys.
-- **Kept.** A key you set, or one the repo's own `.herdr-projects.json` says, is never overwritten: the board only gives a
+- **Kept.** A key you set, or one the repo's own `.herdr-wingman.json` says, is never overwritten: the board only gives a
   key to a repo that has none.
 - **Stand-ins.** Where two repos already say the same key (two entries written by hand, or two repos' files), the repo
   the board knew first keeps it, and the other goes by a **stand-in** the board makes. So does a repo whose own file (or
   your entry) says a key another repo once went by: that key stays the other repo's. The stand-in is kept in
-  `~/.herdr-projects/data/repo-keys.json`, never in your settings: what you wrote stays as you wrote it. `show --repo`
+  `~/.herdr-wingman/data/repo-keys.json`, never in your settings: what you wrote stays as you wrote it. `show --repo`
   says so (`not used: another repo has or had the same key; its tasks go by BETA`), and so does the board's note on
   upgrade (`BETA for beta (its own KEEP is proj's too)`). Set another key for that repo and the stand-in goes.
 - **On upgrade.** The first time this version runs, every repo the board already knew without a key gets one, once, and
@@ -139,7 +139,7 @@ herdr-wingman unset repo.key --repo herdr-wingman       back to the repo's file'
 herdr-wingman show --repo herdr-wingman                 what it is and where it comes from
 ```
 
-Or, to let it travel with the repo, in the repo's own `.herdr-projects.json` (it counts where your entry says none):
+Or, to let it travel with the repo, in the repo's own `.herdr-wingman.json` (it counts where your entry says none):
 
 ```json
 { "repo": { "key": "HSW" } }
@@ -170,7 +170,7 @@ The Coordinator sets or changes a key when you ask, with the same command.
 The id keeps working and stays the task's real id: nothing is stored under a key. Changing a key breaks nothing: the id
 still names the task, and so does the old key (`HS-134` after `HS` became `HSW`), however the key changed: by `set`, by
 hand in your settings, or in the repo's own file. The board puts every key a repo goes by on record, in
-`~/.herdr-projects/data/repo-keys.json`, as that repo's for good: no other repo may take it, by `set` or by its file.
+`~/.herdr-wingman/data/repo-keys.json`, as that repo's for good: no other repo may take it, by `set` or by its file.
 
 ## Finding a task
 

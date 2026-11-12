@@ -19,7 +19,7 @@ The tests are in `tests/`, one file per area, with what they share in `tests/com
 ## One command
 
 Everything that runs tests uses the same command: you, an agent at work, the reviewer, and the board's own check (`check`
-in [`.herdr-projects.json`](../.herdr-projects.json)).
+in [`.herdr-wingman.json`](../.herdr-wingman.json)).
 
 - `npm test` is the same command. Both run `scripts/check.sh`; nothing of Node is used but the name.
 - `.herdr-superwork.json` says the same, for the board that works on this repo until its machines run herdr-wingman (this
@@ -59,7 +59,7 @@ A run that passed is remembered for the exact code it passed on: the git tree of
 changes and new files included), the compiler's full version (`rustc -V`), and the names it was given. Asked again for
 the same, it answers at once (`The check already passed for this exact code.`) and runs nothing.
 
-- The results are kept outside the worktrees (`~/.cache/herdr-projects-check`), so every worktree shares them: the
+- The results are kept outside the worktrees (`~/.cache/herdr-wingman-check`), so every worktree shares them: the
   reviewer and the board's check, on the worker's commit, reuse the worker's passing run.
 - Committing changes no file, so it changes nothing here. Any edit does.
 - A failed run is never remembered.
@@ -70,7 +70,7 @@ the same, it answers at once (`The check already passed for this exact code.`) a
 
 On a later round of a task (a review or a failed check sent it back), the board runs
 `npm run check -- --since <commit>` instead of the whole check, where GitHub's checks still guard the merge:
-`check.again` in [`.herdr-projects.json`](../.herdr-projects.json), and when the board does so in
+`check.again` in [`.herdr-wingman.json`](../.herdr-wingman.json), and when the board does so in
 [shorter checks on fix rounds](shorter-checks.md). The commit is the one the whole check last passed on.
 
 It builds, writes the made tables and checks the rules as the whole check does. Then it runs every test beside the code
@@ -127,7 +127,7 @@ world's folder is named by the process), and the turns are only within it.
 
 **How many:** twice its share of the cores when the tests start ([below](#its-share-of-the-cores)), since a process whose
 tests take turns uses about half a core. A lone check on 16 cores runs 32 processes a test program: its tests take 15 to
-20 seconds, against 44 to 56 on the 2 cores of the old fixed share. `HERDR_PROJECTS_TEST_PROCS` sets another number (1:
+20 seconds, against 44 to 56 on the 2 cores of the old fixed share. `HERDR_WINGMAN_TEST_PROCS` sets another number (1:
 everything in one process, as before).
 
 ### Builds take turns
@@ -141,16 +141,16 @@ other turns and no slots: one run is one build and one run of the tests.
 The libraries the program uses are the same in every worktree, so they are compiled once per machine and kept in one
 cache: [sccache](https://github.com/mozilla/sccache), one pinned version checked against its published sha256.
 
-- The workspace setup (`scripts/setup.sh`, `workspace.setup` in `.herdr-projects.json`) installs it with
+- The workspace setup (`scripts/setup.sh`, `workspace.setup` in `.herdr-wingman.json`) installs it with
   `scripts/build-cache.sh` and builds through it. The check compiles through it when it is there.
-- It lives in `~/.cache/herdr-projects` with its cache (2 GB at most, oldest dropped first) and one server for every
+- It lives in `~/.cache/herdr-wingman` with its cache (2 GB at most, oldest dropped first) and one server for every
   worktree (a socket there, so another sccache of yours is left alone). The check starts the server only when none
   answers, one start at a time: `sccache --start-server` starts another beside a running one and takes the socket from
   it, which had given every check a server of its own. That is outside every worktree, so removing a worktree
   (`workspace.cleanup`) frees that worktree's `target/` and nothing shared.
 - Where it is not installed (CI, which keeps its own cache; another platform; no network), builds go on as before, each
   worktree alone.
-- `HERDR_PROJECTS_NO_CACHE=1` turns it off. A `RUSTC_WRAPPER` of your own wins.
+- `HERDR_WINGMAN_NO_CACHE=1` turns it off. A `RUSTC_WRAPPER` of your own wins.
 - **Is it hit?** `sh scripts/build-cache.sh --stats`: the counts of its server since it started (it stops after ten idle
   minutes, and its counts with it). Each build compiles in its own process (`SCCACHE_CLIENT_SIDE`), so `Compile
   requests` stays 0 however much is hit: read `Cache hits (Rust)` against `Cache misses (Rust)`. A fresh build of the
@@ -181,7 +181,7 @@ line (`target/quick`), and only what changed since is built again.
 - **Measured** on a 16-core machine with ten agents at once (two cores a build): a fresh worktree's setup took 37
   seconds before, a little over one now. The first worktree after the main line moved on builds the program again from
   the compiler's notes, about 15 seconds, and keeps that build for the ones after it.
-- **Where:** `~/.cache/herdr-projects/warm/<repo>/`, one folder each, with `current` naming the newest. A new one is made
+- **Where:** `~/.cache/herdr-wingman/warm/<repo>/`, one folder each, with `current` naming the newest. A new one is made
   beside the old and then named, so worktrees set up at the same moment each copy a whole build. An old one goes 30
   minutes after it stopped being current.
 - **The copy** is a clone where the file system can (Btrfs, XFS: no extra space), a plain copy elsewhere (ext4:
@@ -196,7 +196,7 @@ line (`target/quick`), and only what changed since is built again.
   that code from the crate's folder: a crate none of whose files changed since the kept build is taken as built whole.
 - **Not copied:** a build by another compiler, or one grown past 2 GB (cargo never removes the libraries of older
   versions). That worktree builds from nothing, and its build is kept instead.
-- `HERDR_PROJECTS_NO_WARM=1` turns it off.
+- `HERDR_WINGMAN_NO_WARM=1` turns it off.
 
 ### Its share of the cores
 
@@ -205,7 +205,7 @@ all of them, two take half each (rounded up), and none takes fewer than one. The
 too. It used to be the cores divided by `board.agents`, however many ran: two cores on a 16-core machine with ten
 agents, also for a check that ran alone.
 
-- **Who is running:** each running check (and setup) writes a file in `~/.cache/herdr-projects/running/`, named by its
+- **Who is running:** each running check (and setup) writes a file in `~/.cache/herdr-wingman/running/`, named by its
   process and holding when that process started, and removes it when it ends. One that was killed leaves its file
   behind: a file whose process is gone, or whose number now belongs to a process that started at another time, is not
   counted and is removed by the next check that looks.
@@ -217,7 +217,7 @@ agents, also for a check that ran alone.
   keys on that), the tests as `RUST_TEST_THREADS` and twice that many processes
   ([above](#several-processes-at-once)).
 - **Yours wins:** `CARGO_BUILD_JOBS` or `RUST_TEST_THREADS` set yourself is used instead of the share (cargo still gets
-  it as `-j`). `HERDR_PROJECTS_TEST_PROCS` sets the number of test processes.
+  it as `-j`). `HERDR_WINGMAN_TEST_PROCS` sets the number of test processes.
 - **Measured** on vm-str (16 cores, other agents working beside it, no other check running), three runs each, the old
   share of 2 cores against all 16:
 
@@ -236,7 +236,7 @@ see the share it gives cargo and the tests.
 
 ### It tells the board where it is
 
-When the board runs the check, it names a file in `HERDR_PROJECTS_PROGRESS`, and the command writes its progress there:
+When the board runs the check, it names a file in `HERDR_WINGMAN_PROGRESS`, and the command writes its progress there:
 which of its three steps it has done (`1/3 steps`), or that the answer was known at once. The board shows that on the
 task: [the check's progress](check-progress.md).
 
@@ -259,7 +259,7 @@ What makes a test slow is starting programs and waiting. A new test does neither
   clock is `sw::clock`: `set` stands it at a moment and `advance` moves it on, on the test's thread only. A moment in the
   past or the future is written into the data, not waited for. Nothing compares against a duration it measured.
 - **The board's background jobs run when the test says.** What would be a detached runner (delegating, the finish line, a
-  merge) is put in a list instead (`HERDR_PROJECTS_INLINE`). `settle(id)` runs that list, then lets the hook look at the
+  merge) is put in a list instead (`HERDR_WINGMAN_INLINE`). `settle(id)` runs that list, then lets the hook look at the
   agent's pane, round after round until nothing moves. `settle_all(id)` does the same for a task done several times at
   once.
 - **It shares set-up inside one test**, rather than building a new world for every small assertion: a world is a git repo
@@ -270,8 +270,8 @@ A world sets the process's environment, so the tests that make a world take turn
 `tests/common/mod.rs`); the others run beside them. The check runs several processes at once to get past that (above).
 
 **A wait the board has to make is a number a test can make short.** The board's own waits are zero in a world, and a test
-of a real program gives it the short one it needs (`HERDR_PROJECTS_STAMP_MS`: how often an open board looks for a new
-version of itself; `HERDR_PROJECTS_TICK_MS`: how often a running check is looked at). Never wait a fixed time for
+of a real program gives it the short one it needs (`HERDR_WINGMAN_STAMP_MS`: how often an open board looks for a new
+version of itself; `HERDR_WINGMAN_TICK_MS`: how often a running check is looked at). Never wait a fixed time for
 something that says when it is done: a real terminal is read until its frame is drawn.
 
 ### The stand-ins
@@ -307,20 +307,20 @@ something that says when it is done: a real terminal is read until its frame is 
   exactly as it was.
 
 **A test never reads or writes your real board.** `world()` gives it a home folder of its own (`HOME`,
-`HERDR_PROJECTS_HOME`), takes Herdr's own variables (a pane's id, its socket), `TMUX` and `NO_COLOR` out of the
+`HERDR_WINGMAN_HOME`), takes Herdr's own variables (a pane's id, its socket), `TMUX` and `NO_COLOR` out of the
 environment, and points Herdr at a socket of its own. A test that makes no world still has a scratch board:
-`scripts/run-tests.sh` sets `HERDR_PROJECTS_HOME` to a folder of the run's own and takes `HERDR_PROJECTS_DATA_DIR`,
-`HERDR_PROJECTS_CONFIG_DIR` and `HERDR_PROJECTS_REPORTS_DIR` out. And it sets `HERDR_PROJECTS_TESTING`: under it the
-store refuses the real `~/.herdr-projects` (found from the system's list of users, whatever `HOME` says; through a
+`scripts/run-tests.sh` sets `HERDR_WINGMAN_HOME` to a folder of the run's own and takes `HERDR_WINGMAN_DATA_DIR`,
+`HERDR_WINGMAN_CONFIG_DIR` and `HERDR_WINGMAN_REPORTS_DIR` out. And it sets `HERDR_WINGMAN_TESTING`: under it the
+store refuses the real `~/.herdr-wingman` (found from the system's list of users, whatever `HOME` says; through a
 link too) and stops the test there, before anything is read or written in it, with a message that says what to do
 instead (`crates/core/src/store/never_real.rs`).
 
 When you run the program by hand while working on it, or a program of your own built on its code, set
-`HERDR_PROJECTS_HOME` to a scratch folder first: a new version may convert what it finds in the real one. That one
+`HERDR_WINGMAN_HOME` to a scratch folder first: a new version may convert what it finds in the real one. That one
 variable is enough, also in a tab the board opened: the board hands what it starts its home folder, not the folders
 in it (only one kept elsewhere: [the home folder](home-folder.md)). Never write into the real board's folder yourself: a reviewer's probe once
 left a fake task (`probe/12`) on the human's board, because a variable it inherited named the real data folder past
-its scratch `HERDR_PROJECTS_HOME`.
+its scratch `HERDR_WINGMAN_HOME`.
 
 **A real program is started only where the program itself is what is tested.** Those tests say so in their name
 (`real_programs_…`): the command line (`tests/cli.rs`), the real terminal (`tests/real_terminal.rs`) and the repo's own scripts (`tests/check_script.rs`, `tests/warm_start.rs`). They run the program cargo built for the tests, inside the test's world, with no Herdr to
