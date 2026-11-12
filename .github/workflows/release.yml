@@ -83,7 +83,7 @@ jobs:
         if: matrix.runs
         env:
           HERDR_PROJECTS_INLINE: "1"
-          HERDR_PROJECTS_HOME: ${{ runner.temp }}/sw
+          HERDR_PROJECTS_HOME: ${{ runner.temp }}/herdr-wingman
         run: |
           out=$(dist/${{ matrix.file }} version)
           echo "$out"
