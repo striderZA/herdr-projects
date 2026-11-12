@@ -52,10 +52,10 @@ fn a_login_shell_that_does_not_end_is_given_up_on() {
     std::fs::write(&sl, "#!/bin/sh\nsleep 30\n").unwrap();
     sw::sys::set_mode(&sl, 0o755).unwrap();
     struct Back;
-    impl Drop for Back { fn drop(&mut self) { unsafe { std::env::remove_var("SHELL"); std::env::remove_var("HERDR_PROJECTS_LOGIN_SHELL_MS"); } } }
+    impl Drop for Back { fn drop(&mut self) { unsafe { std::env::remove_var("SHELL"); std::env::remove_var("HERDR_WINGMAN_LOGIN_SHELL_MS"); } } }
     let _back = Back;
     unsafe { std::env::set_var("SHELL", &sl) };
-    unsafe { std::env::set_var("HERDR_PROJECTS_LOGIN_SHELL_MS", "100") };
+    unsafe { std::env::set_var("HERDR_WINGMAN_LOGIN_SHELL_MS", "100") };
     let t = std::time::Instant::now();
     assert_eq!(sw::login_env::login_shell(), None, "given up on, not waited for");
     assert!(t.elapsed() < std::time::Duration::from_secs(10), "it stopped");

@@ -37,7 +37,7 @@ fn the_closing_note_and_the_review_s_files_are_in_the_task_s_own_folder_the_fold
     assert_eq!(t.at("ownNote"), &json!(true));
     assert_eq!((note_file(&t), review_dir(&t)), (dir.join("closing-note.md"), dir.join("review")));
     assert!(note_file(&t).starts_with(sw::store::files::data_dir()));
-    assert!(!w.root.join(".herdr-projects").exists());
+    assert!(!w.root.join(".herdr-wingman").exists());
     // both are told the full path, and neither is told to write into the folder it is in
     let ch = sw::store::settings::lookup::work(Some(&t));
     let brief = sw::finish::review_brief::review_brief(&t, &sw::finish::review_brief::Brief { text: "Did it.", change: Some(&json!({ "head": "abc1234" })), to_land: true, ch: &ch, earlier: None, check: "" });
@@ -46,7 +46,7 @@ fn the_closing_note_and_the_review_s_files_are_in_the_task_s_own_folder_the_fold
     let said = said.join("\n");
     assert!(said.contains(&note_file(&t).display().to_string()));
     assert!(said.contains(&format!("{}/verdict.json", review_dir(&t).display())));
-    assert!(!regex::Regex::new(r#"(?m)(^|[\s"'`(])\.herdr-projects/"#).unwrap().is_match(&said), "{said}");
+    assert!(!regex::Regex::new(r#"(?m)(^|[\s"'`(])\.herdr-wingman/"#).unwrap().is_match(&said), "{said}");
     // a task this version started is never looked for in the folder it works in
     let old = w.root.join(OLD_RULE_DIR);
     let evidence = old.join(format!("review-{}", t.t("n"))).join("evidence.txt");

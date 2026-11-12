@@ -27,12 +27,12 @@ const NAME: &str = "herdr-wingman";
 /// Each installed agent program's own user-level skills folder (a folder per skill holding SKILL.md). The plugin owns
 /// one folder there, named for itself, and records every path it wrote.
 fn skill_targets() -> Vec<PathBuf> {
-    if let Ok(dirs) = std::env::var("HERDR_PROJECTS_SKILL_DIRS") { return dirs.split(':').filter(|d| !d.is_empty()).map(|d| Path::new(d).join(NAME)).collect(); }
+    if let Ok(dirs) = std::env::var("HERDR_WINGMAN_SKILL_DIRS") { return dirs.split(':').filter(|d| !d.is_empty()).map(|d| Path::new(d).join(NAME)).collect(); }
     KIND_NAMES.iter().filter_map(|k| skill_dir(k).filter(|_| installed(k))).map(|d| d.join(NAME)).collect() // only a program whose skills folder the board knows
 }
 pub fn sync_skill() -> Vec<String> { with_lock_wait("extras", 15000, || Ok(sync_skill0())).unwrap_or_default() }
 fn sync_skill0() -> Vec<String> {
-    if inline() && std::env::var("HERDR_PROJECTS_SKILL_DIRS").is_err() { return vec![]; } // tests never write into real agent folders
+    if inline() && std::env::var("HERDR_WINGMAN_SKILL_DIRS").is_err() { return vec![]; } // tests never write into real agent folders
     if extras().b("skillOff") { remove_skill0(); return vec![]; } // taken out with remove-extras: not written back
     let mut wrote: Vec<String> = strings(extras().at("skillPaths"));
     let text = skill_text::skill_text(&data_dir().join("bin").join(NAME).display().to_string());

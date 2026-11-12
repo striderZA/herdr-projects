@@ -96,7 +96,7 @@ fn a_review_cut_off_again_and_again_gives_up_with_the_real_error_and_retry_revie
 #[test]
 fn the_report_of_a_try_that_was_cut_off_does_not_end_the_next_try() {
     let w = cut_world("30", json!({ "review.timeout": "2s" })); // the second reviewer works on and runs into the time limit
-    unsafe { std::env::set_var("HERDR_PROJECTS_ENDED_MS", "60000") }; // only reports count here: the first try's file is seconds old
+    unsafe { std::env::set_var("HERDR_WINGMAN_ENDED_MS", "60000") }; // only reports count here: the first try's file is seconds old
     w.script(json!({ "worker": [work()], "reviewer": [{ "ends": "codex-at-capacity", "hook": true }, { "status": "working" }] }));
     let id = w.add("Second try is slow");
     delegate(&id);

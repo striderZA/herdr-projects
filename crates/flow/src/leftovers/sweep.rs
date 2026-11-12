@@ -86,7 +86,7 @@ pub fn say(r: &Value) -> String {
     lines.join("\n")
 }
 /// A test world sweeps only when it asks to.
-fn allowed() -> bool { std::env::var("HERDR_PROJECTS_NO_SWEEP").map(|v| v.is_empty()).unwrap_or(true) }
+fn allowed() -> bool { std::env::var("HERDR_WINGMAN_NO_SWEEP").map(|v| v.is_empty()).unwrap_or(true) }
 fn start() { if crate::runner::inline() { crate::runner::JOBS.with(|j| j.borrow_mut().push(("sweep".into(), "-".into(), vec![]))); } else { crate::housekeeping::spawn_loose(&["run", "sweep", "-"]); } }
 /// The board opening: a sweep, when the last one is over an hour old.
 pub fn at_start() { if allowed() && due("sweep", HOUR_MS) { start(); } }

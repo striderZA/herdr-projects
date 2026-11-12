@@ -9,8 +9,8 @@ use crate::store::files::{absolute, data_dir};
 use crate::store::keys::{repo_keys, say_id};
 use std::path::PathBuf;
 
-/// The temporary folder of this machine as the board uses it (`HERDR_PROJECTS_TMP` names another, for a test).
-pub fn root() -> PathBuf { std::env::var("HERDR_PROJECTS_TMP").ok().filter(|v| !v.is_empty()).map(PathBuf::from).unwrap_or_else(std::env::temp_dir) }
+/// The temporary folder of this machine as the board uses it (`HERDR_WINGMAN_TMP` names another, for a test).
+pub fn root() -> PathBuf { std::env::var("HERDR_WINGMAN_TMP").ok().filter(|v| !v.is_empty()).map(PathBuf::from).unwrap_or_else(std::env::temp_dir) }
 /// The folder of this board's task folders: one per user and per board (several boards on one machine:
 /// docs/several-boards.md), named after the board's data folder.
 pub fn board_base() -> PathBuf {
@@ -31,8 +31,8 @@ pub fn made(t: &Obj) -> PathBuf {
 /// The names a program reads its temporary folder from.
 const NAMES: [&str; 4] = ["TMPDIR", "TMP", "TEMP", "CLAUDE_CODE_TMPDIR"];
 /// The names that say which task it works on: the task's id (the name the hooks have it by) and the task's own folder
-/// among the board's reports (not `HERDR_PROJECTS_REPORTS_DIR`, the folder of them all, which the board reads).
-const TASK: [&str; 2] = ["HERDR_PROJECTS_ID", "HERDR_PROJECTS_TASK_REPORTS"];
+/// among the board's reports (not `HERDR_WINGMAN_REPORTS_DIR`, the folder of them all, which the board reads).
+const TASK: [&str; 2] = ["HERDR_WINGMAN_ID", "HERDR_WINGMAN_TASK_REPORTS"];
 /// Is this a task's temporary folder, or inside one?
 pub fn in_task_folder(p: &std::path::Path) -> bool { let own = format!("hp-{}", uid()); p.components().any(|c| c.as_os_str() == own.as_str()) }
 /// The board's own run, started by a task's agent (a `report`, an `add`): it does not keep that task's temporary

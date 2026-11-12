@@ -18,7 +18,7 @@ const LOOKS: u32 = 8;
 pub fn not_at_prompt(e: &HerdrError) -> bool { e.message.contains("canonical mode") || no_shell_yet(e) }
 /// herdr sees no shell in the pane: one still starting, or a program that runs there.
 fn no_shell_yet(e: &HerdrError) -> bool { e.code == "agent_pane_busy" || e.message.contains("not an available shell") }
-fn step_ms() -> u64 { std::env::var("HERDR_PROJECTS_READY_STEP_MS").ok().and_then(|v| v.parse().ok()).unwrap_or(500) }
+fn step_ms() -> u64 { std::env::var("HERDR_WINGMAN_READY_STEP_MS").ok().and_then(|v| v.parse().ok()).unwrap_or(500) }
 
 impl Herdr {
     /// `start` types a line into `pane`'s shell. While herdr answers that the shell is not at its prompt, wait for the

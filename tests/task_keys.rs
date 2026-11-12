@@ -137,14 +137,14 @@ fn a_repos_short_key_set_for_the_repo_or_in_its_own_file_kept_in_capitals_checke
     // `show`: with the repo's settings, never among yours.
     assert!(has(&run(&w, &["show", "--repo", "proj"]), r"\n\* repo\.key +AB1 +your entry for proj\n")); assert!(!run(&w, &["show"]).contains("repo.key"));
     // The repo's own file can carry it: your entry wins, and without one the file's counts.
-    std::fs::write(w.root.join(".herdr-projects.json"), json!({ "repo": { "key": "fil" }, "check": { "command": "true" } }).to_string()).unwrap();
+    std::fs::write(w.root.join(".herdr-wingman.json"), json!({ "repo": { "key": "fil" }, "check": { "command": "true" } }).to_string()).unwrap();
     assert_eq!(key_of("proj"), json!("AB1"));
     assert_eq!(unset_value("repo.key", &Scope::repo("proj")).unwrap().value, json!("FIL")); assert_eq!(lookup("repo.key", &Scope::repo("proj"), &yours()).unwrap().from, "the repo's file"); assert_eq!(keys(), json!({ "proj": "FIL", "other": "OTH" }));
     assert!(sw::store::settings::places::repo_file(&w.root, None).1.is_empty());
     // A file can still bring a key another repo has. Your entry wins over a file; said in two files, it is the one of the
     // repo the board knew first. The other's file is left as it is: it goes by a stand-in the board gives it, and
     // nothing is written for it in your settings.
-    std::fs::write(other.join(".herdr-projects.json"), json!({ "repo": { "key": "FIL" } }).to_string()).unwrap(); unset_value("repo.key", &Scope::repo("other")).unwrap();
+    std::fs::write(other.join(".herdr-wingman.json"), json!({ "repo": { "key": "FIL" } }).to_string()).unwrap(); unset_value("repo.key", &Scope::repo("other")).unwrap();
     assert_eq!(keys(), json!({ "proj": "FIL", "other": "OTH" })); assert_eq!(find("fil-1").unwrap().s("id"), "proj/1"); // so a key never names tasks of two repos
     let config = sw::store::files::config_dir().join("config.json");
     let saved: serde_json::Value = serde_json::from_str(&read(&config)).unwrap(); assert!(saved.at("repos").at("other").is_null(), "{saved}");

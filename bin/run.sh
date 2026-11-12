@@ -11,7 +11,7 @@
 #      download is tried again ten minutes later, not on every command.
 # When there is none it says on stderr what to do and exits 1: it never waits long, so it never holds herdr up.
 # `run.sh --fetch` only gets the program (the plugin's build step), building it from source when it cannot download.
-# HERDR_PROJECTS_RELEASES names another place for the releases (a mirror, a folder as file:///…). Without it they are the
+# HERDR_WINGMAN_RELEASES names another place for the releases (a mirror, a folder as file:///…). Without it they are the
 # releases of the repo this checkout was cloned from (its git origin; the fork's repo when there is none).
 here=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 root=$(dirname -- "$here")
@@ -29,10 +29,10 @@ case "$(uname -s)" in Linux) os=linux ;; *) os="" ;; esac
 case "$(uname -m)" in x86_64 | amd64) arch=x86_64 ;; aarch64 | arm64) arch=aarch64 ;; *) arch="" ;; esac
 name="herdr-wingman-$os-$arch"
 prog="$here/$name"
-# The releases: HERDR_PROJECTS_RELEASES, else those of the repo this checkout was cloned from (its git origin).
+# The releases: HERDR_WINGMAN_RELEASES, else those of the repo this checkout was cloned from (its git origin).
 repo=$(git -C "$root" remote get-url origin 2>/dev/null | sed -n -E 's#^.*[/@]github\.com[:/]([^/]+/[^/]+)$#\1#p' | sed 's#\.git$##')
 [ -n "$repo" ] || repo=striderZA/herdr-wingman
-base="${HERDR_PROJECTS_RELEASES:-https://github.com/$repo/releases}"; base="${base%/}"
+base="${HERDR_WINGMAN_RELEASES:-https://github.com/$repo/releases}"; base="${base%/}"
 
 # at_least A B: A is B or newer, part by part as numbers (0.10.0 is newer than 0.9.1).
 at_least() {

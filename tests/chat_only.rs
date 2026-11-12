@@ -112,7 +112,7 @@ fn one_setting_looked_up_like_every_other_its_label_from_the_setting_and_chat_wi
     assert!(!is_chat(&row(&id)));
     unset_value(NAME, &Scope::task(&task(&id))).unwrap(); unset_value(NAME, &Scope::repo("proj")).unwrap(); unset_value(NAME, &Scope::you()).unwrap();
     assert_eq!(at(&id), (json!(true), "the repo's file".into()));
-    std::fs::remove_file(w.root.join(".herdr-projects.json")).unwrap();
+    std::fs::remove_file(w.root.join(".herdr-wingman.json")).unwrap();
     assert_eq!(at(&id), (json!(false), "built in".into()));
     // The short forms, on add and on delegate, write the one setting on the task.
     assert_eq!(run(&w, &["add", "Consult", "me", "--chat"]), "proj/2: added as chat only");

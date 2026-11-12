@@ -30,7 +30,7 @@ fn delegate_makes_a_worktree_space_with_the_agent_in_its_root_pane_and_the_rules
     let rules = read(std::path::Path::new(&args[args.iter().position(|x| x == "--append-system-prompt-file").unwrap() + 1]));
     assert!(rules.contains("closing-note.md") && rules.contains("report proj/1 --state blocked") && rules.contains("Do not push"), "{rules}");
     let exclude = read(&w.root.join(".git/info/exclude"));
-    assert!(exclude.contains(".herdr-projects/\n"), "the board's files stay out of git: {exclude}");
+    assert!(exclude.contains(".herdr-wingman/\n"), "the board's files stay out of git: {exclude}");
     let trusted: serde_json::Value = serde_json::from_str(&read(&w.base.join("claude.json"))).unwrap();
     assert_eq!(trusted.at("projects").at(&w.root_str()).at("hasTrustDialogAccepted"), &json!(true));
     assert_eq!(row(&id).s("state"), "working");
@@ -42,10 +42,10 @@ fn delegate_makes_a_worktree_space_with_the_agent_in_its_root_pane_and_the_rules
 fn a_repo_left_out_of_git_by_an_older_version_keeps_what_was_there() {
     let w = world();
     let exclude = w.root.join(".git/info/exclude");
-    std::fs::write(&exclude, "mine/\n.herdr-projects/\n.other-tool/").unwrap();
+    std::fs::write(&exclude, "mine/\n.herdr-wingman/\n.other-tool/").unwrap();
     sw::delegate::worktree::exclude_rule_dir(&w.root);
     sw::delegate::worktree::exclude_rule_dir(&w.root);
-    assert_eq!(read(&exclude), "mine/\n.herdr-projects/\n.other-tool/", "what was there is kept, and nothing is added twice");
+    assert_eq!(read(&exclude), "mine/\n.herdr-wingman/\n.other-tool/", "what was there is kept, and nothing is added twice");
 }
 
 #[test]

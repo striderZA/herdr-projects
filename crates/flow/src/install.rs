@@ -18,10 +18,10 @@ pub fn platform() -> Option<(&'static str, &'static str)> { platform_of(std::env
 /// `herdr-wingman-linux-x86_64`: the release file, and the downloaded program's name in the plugin's bin/ folder.
 /// Windows programs end in `.exe`: `herdr-wingman-windows-x86_64.exe`.
 pub fn asset_name((os, arch): (&str, &str)) -> String { let ext = if os == "windows" { ".exe" } else { "" }; format!("herdr-wingman-{os}-{arch}{ext}") }
-/// Where the releases are: HERDR_PROJECTS_RELEASES (a fork, a mirror, a folder as file:///…), else GitHub's releases of
+/// Where the releases are: HERDR_WINGMAN_RELEASES (a fork, a mirror, a folder as file:///…), else GitHub's releases of
 /// the repo the plugin was cloned from (see repo_of).
 pub fn releases(exe: &Path) -> String {
-    std::env::var("HERDR_PROJECTS_RELEASES").ok().filter(|v| !v.is_empty()).map(|v| v.trim_end_matches('/').to_string()).unwrap_or_else(|| format!("https://github.com/{}/releases", repo_of(exe)))
+    std::env::var("HERDR_WINGMAN_RELEASES").ok().filter(|v| !v.is_empty()).map(|v| v.trim_end_matches('/').to_string()).unwrap_or_else(|| format!("https://github.com/{}/releases", repo_of(exe)))
 }
 
 /// The repo the releases are of: the one the plugin checkout that holds this program was cloned from (its git origin;
@@ -122,7 +122,7 @@ pub fn sha256(file: &Path) -> Option<String> {
 }
 /// What a program says its version is, run with nothing of the board's done at its start.
 fn version_of(prog: &Path) -> Option<String> {
-    let o = std::process::Command::new(prog).arg("version").env("HERDR_PROJECTS_INLINE", "1").stdin(std::process::Stdio::null()).output().ok()?;
+    let o = std::process::Command::new(prog).arg("version").env("HERDR_WINGMAN_INLINE", "1").stdin(std::process::Stdio::null()).output().ok()?;
     version_said(String::from_utf8_lossy(&o.stdout).trim())
 }
 

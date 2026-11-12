@@ -1,10 +1,10 @@
-//! The tests never touch the user's real board: under them the store refuses the real ~/.herdr-projects, loudly.
-//! HERDR_PROJECTS_TESTING says the tests run (scripts/run-tests.sh sets it, with a scratch HERDR_PROJECTS_HOME). A
+//! The tests never touch the user's real board: under them the store refuses the real ~/.herdr-wingman, loudly.
+//! HERDR_WINGMAN_TESTING says the tests run (scripts/run-tests.sh sets it, with a scratch HERDR_WINGMAN_HOME). A
 //! board folder that is in the real one then stops the run there, before anything is read or written in it: a fake
 //! task in your board (`probe/12`, HP-172) came from a run that believed it had a folder of its own (docs/testing.md).
 use std::path::{Path, PathBuf};
 
-pub const TESTING: &str = "HERDR_PROJECTS_TESTING";
+pub const TESTING: &str = "HERDR_WINGMAN_TESTING";
 pub fn testing() -> bool { std::env::var_os(TESTING).is_some_and(|v| !v.is_empty()) }
 /// The user's own home folder, from the system's list of users: what HOME says can be a test's.
 pub fn real_home() -> Option<PathBuf> { crate::sys::passwd_home().filter(|d| !d.is_empty()).map(PathBuf::from) }
@@ -15,7 +15,7 @@ pub fn guard(p: PathBuf) -> PathBuf {
     if !testing() { return p; }
     let Some(real) = real_board() else { return p };
     if inside(&p, &real) {
-        panic!("Under the tests the board's folder may not be the real one: {} is in {}. A test keeps its board in a temporary folder: world() in tests/common, or HERDR_PROJECTS_HOME set to a scratch folder (and HERDR_PROJECTS_DATA_DIR, HERDR_PROJECTS_CONFIG_DIR and HERDR_PROJECTS_REPORTS_DIR unset or scratch too). {TESTING} is set, by scripts/run-tests.sh.", p.display(), real.display());
+        panic!("Under the tests the board's folder may not be the real one: {} is in {}. A test keeps its board in a temporary folder: world() in tests/common, or HERDR_WINGMAN_HOME set to a scratch folder (and HERDR_WINGMAN_DATA_DIR, HERDR_WINGMAN_CONFIG_DIR and HERDR_WINGMAN_REPORTS_DIR unset or scratch too). {TESTING} is set, by scripts/run-tests.sh.", p.display(), real.display());
     }
     p
 }

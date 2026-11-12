@@ -8,7 +8,7 @@ use sw::install::*;
 
 static N: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
 fn set(k: &str, v: &str) { unsafe { std::env::set_var(k, v) } }
-/// A scratch home of its own: HOME and HERDR_PROJECTS_HOME point into it.
+/// A scratch home of its own: HOME and HERDR_WINGMAN_HOME point into it.
 fn scratch() -> (PathBuf, MutexGuard<'static, ()>) {
     let one = common::one_at_a_time(); // the environment is the whole test program's
     let base = std::env::temp_dir().join(format!("sw-run-sh-{}-{}", std::process::id(), N.fetch_add(1, std::sync::atomic::Ordering::SeqCst)));
@@ -16,8 +16,8 @@ fn scratch() -> (PathBuf, MutexGuard<'static, ()>) {
     std::fs::create_dir_all(base.join("home")).unwrap();
     let base = sw::sys::canonicalize(&base).unwrap();
     set("HOME", &base.join("home").display().to_string());
-    set("HERDR_PROJECTS_HOME", &base.join("sw").display().to_string());
-    for k in ["HERDR_PROJECTS_DATA_DIR", "HERDR_PROJECTS_CONFIG_DIR", "HERDR_PROJECTS_RELEASES"] { unsafe { std::env::remove_var(k) } }
+    set("HERDR_WINGMAN_HOME", &base.join("sw").display().to_string());
+    for k in ["HERDR_WINGMAN_DATA_DIR", "HERDR_WINGMAN_CONFIG_DIR", "HERDR_WINGMAN_RELEASES"] { unsafe { std::env::remove_var(k) } }
     (base, one)
 }
 fn write(p: &Path, text: &str) { std::fs::create_dir_all(p.parent().unwrap()).unwrap(); std::fs::write(p, text).unwrap(); }
@@ -40,7 +40,7 @@ fn publish(b: &Path, version: &str, says: &str) {
     write(&PathBuf::from(format!("{}.sha256", f.display())), &format!("{}  {}\n", sha256(&f).unwrap(), asset_name(here())));
 }
 fn run_sh(b: &Path, args: &[&str]) -> (i32, String, String) {
-    let o = std::process::Command::new("sh").arg(b.join("plugin/bin/run.sh")).args(args).env("HERDR_PROJECTS_RELEASES", format!("file://{}/rel", b.display())).env("PATH", "/usr/bin:/bin").output().unwrap();
+    let o = std::process::Command::new("sh").arg(b.join("plugin/bin/run.sh")).args(args).env("HERDR_WINGMAN_RELEASES", format!("file://{}/rel", b.display())).env("PATH", "/usr/bin:/bin").output().unwrap();
     (o.status.code().unwrap_or(-1), String::from_utf8_lossy(&o.stdout).into_owned(), String::from_utf8_lossy(&o.stderr).into_owned())
 }
 /// A PATH string of these folders, joined the way this platform's PATH is (`:` on Unix, `;` on Windows).

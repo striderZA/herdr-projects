@@ -11,7 +11,7 @@ use std::path::PathBuf;
 pub fn note_file(t: &Obj) -> PathBuf { dir_of(if t.b("as") { t.s("as") } else { t.s("id") }).join("closing-note.md") }
 pub fn review_dir(t: &Obj) -> PathBuf { dir_of(t.s("id")).join("review") }
 /// The board's folder in the folder an agent works in: only the files sent with words go there.
-pub const RULE_DIR: &str = ".herdr-projects";
+pub const RULE_DIR: &str = ".herdr-wingman";
 /// Where older versions told agents to write: `<working folder>/.herdr-superwork/closing-<n>.md`, by that version's
 /// name. A task first started by this version (`ownNote`) is never looked for there. Nothing is written there any more.
 pub const OLD_RULE_DIR: &str = ".herdr-superwork";

@@ -8,4 +8,3 @@ docs/where-things-live.md
 /examples/
 # The program bin/run.sh downloads for this platform, with its version and its download lock.
 /bin/herdr-wingman-*
-/bin/.herdr-projects-*

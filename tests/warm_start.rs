@@ -62,7 +62,7 @@ impl Bench {
         let script = Path::new(env!("CARGO_MANIFEST_DIR")).join("scripts/warm-start.sh");
         let built = if build { format!("mkdir -p target/quick && echo 'built in {wt}' > target/quick/herdr-wingman") } else { ":".into() };
         let o = Command::new("/bin/sh").arg("-c").arg(format!("set -e; . '{}'; ws_seed; {built}; ws_keep", script.display()))
-            .current_dir(self.dir(wt)).env("XDG_CACHE_HOME", self.base.join("cache")).env_remove("HERDR_PROJECTS_NO_WARM")
+            .current_dir(self.dir(wt)).env("XDG_CACHE_HOME", self.base.join("cache")).env_remove("HERDR_WINGMAN_NO_WARM")
             .env("PATH", format!("{}:{}", self.base.join("bin").display(), std::env::var("PATH").unwrap_or_default()))
             .env_remove("CARGO_TARGET_DIR").env("GIT_CONFIG_GLOBAL", "/dev/null").env("GIT_CONFIG_NOSYSTEM", "1").output().unwrap();
         assert!(o.status.success(), "the setup's steps failed: {}", String::from_utf8_lossy(&o.stderr));
@@ -70,7 +70,7 @@ impl Bench {
     }
     /// The commit the kept build was built from, if one is kept.
     fn kept(&self) -> Option<String> {
-        let warm = std::fs::read_dir(self.base.join("cache/herdr-projects/warm")).ok()?.next()?.ok()?.path();
+        let warm = std::fs::read_dir(self.base.join("cache/herdr-wingman/warm")).ok()?.next()?.ok()?.path();
         let name = std::fs::read_to_string(warm.join("current")).ok()?;
         std::fs::read_to_string(warm.join(name.trim()).join("commit")).ok().map(|c| c.trim().to_string())
     }
@@ -119,7 +119,7 @@ fn real_programs_what_was_built_with_the_other_folders_path_in_it_is_built_again
     b.setup("one", true);
     b.build("one");
     // kept again by hand as the setup would have, with the stand-in build's files in it
-    let warm = std::fs::read_dir(b.base.join("cache/herdr-projects/warm")).unwrap().next().unwrap().unwrap().path();
+    let warm = std::fs::read_dir(b.base.join("cache/herdr-wingman/warm")).unwrap().next().unwrap().unwrap().path();
     let name = std::fs::read_to_string(warm.join("current")).unwrap();
     let kept = warm.join(name.trim()).join("target");
     std::fs::remove_dir_all(&kept).unwrap();

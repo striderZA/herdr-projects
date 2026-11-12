@@ -15,7 +15,7 @@ pub mod outside;
 
 pub use crate::login_env::user_env;
 /// Tests run jobs in their own process: the jobs that would have been detached are kept here instead.
-pub fn inline() -> bool { std::env::var("HERDR_PROJECTS_INLINE").as_deref() == Ok("1") }
+pub fn inline() -> bool { std::env::var("HERDR_WINGMAN_INLINE").as_deref() == Ok("1") }
 thread_local! { pub static JOBS: RefCell<Vec<(String, String, Vec<String>)>> = const { RefCell::new(vec![]) }; }
 /// What a detached process must not inherit: it is not a plugin command, nor an agent's pane.
 const DROP_ENV: [&str; 8] = ["HERDR_PLUGIN_EVENT", "HERDR_PLUGIN_EVENT_JSON", "HERDR_PLUGIN_CONTEXT_JSON", "HERDR_PLUGIN_ENTRYPOINT_ID", "HERDR_PLUGIN_ACTION_ID", "HERDR_PANE_ID", "HERDR_TAB_ID", "HERDR_WORKSPACE_ID"];
@@ -216,8 +216,8 @@ pub fn sh(cmd: &str, cwd: &std::path::Path, env: &[(String, String)], timeout_mi
     let kill = || { crate::sys::kill_group(pid, crate::sys::KILL_SIGNAL); };
     let until = std::time::Instant::now() + std::time::Duration::from_secs_f64(timeout_min * 60.0);
     let mut last_poll = std::time::Instant::now();
-    // The command is looked at every second (HERDR_PROJECTS_TICK_MS: a test of what a long check shows looks sooner).
-    let every = std::time::Duration::from_millis(std::env::var("HERDR_PROJECTS_TICK_MS").ok().and_then(|v| v.parse().ok()).unwrap_or(1000));
+    // The command is looked at every second (HERDR_WINGMAN_TICK_MS: a test of what a long check shows looks sooner).
+    let every = std::time::Duration::from_millis(std::env::var("HERDR_WINGMAN_TICK_MS").ok().and_then(|v| v.parse().ok()).unwrap_or(1000));
     let mut tick = tick;
     let (ok, why) = loop {
         match child.try_wait() {

@@ -25,7 +25,7 @@ impl Bench {
     fn install_mold(&self) {
         let script = std::fs::read_to_string(root().join("scripts/linker.sh")).unwrap();
         let version = script.lines().find_map(|l| l.strip_prefix("ln_version=")).unwrap();
-        self.linker(&self.base.join(format!("cache/herdr-projects/mold-{version}/bin/mold")), "mold");
+        self.linker(&self.base.join(format!("cache/herdr-wingman/mold-{version}/bin/mold")), "mold");
     }
     /// The linker as the C compiler runs it: which linker it ended in, and with what.
     fn link(&self, args: &[&str], env: &[(&str, &str)]) -> Vec<String> {
@@ -74,7 +74,7 @@ fn real_programs_a_release_build_and_a_build_with_mold_turned_off_link_as_before
     b.install_mold();
     let release = ["main.o", "-o", "/w/target/x86_64-unknown-linux-gnu/release/deps/herdr_wingman-1"];
     assert_eq!(b.link(&release, &[]), as_rust(&release));
-    assert_eq!(b.link(LINK, &[("HERDR_PROJECTS_NO_MOLD", "1")]), as_rust(LINK));
+    assert_eq!(b.link(LINK, &[("HERDR_WINGMAN_NO_MOLD", "1")]), as_rust(LINK));
 }
 
 #[test]

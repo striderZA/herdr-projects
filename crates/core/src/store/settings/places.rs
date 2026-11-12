@@ -10,7 +10,7 @@ use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
-pub const REPO_FILE: &str = ".herdr-projects.json";
+pub const REPO_FILE: &str = ".herdr-wingman.json";
 /// The name herdr-superwork gave that file: still read, in a repo that has only that one.
 pub const OLD_REPO_FILE: &str = ".herdr-superwork.json";
 pub fn config_file() -> PathBuf { config_dir().join("config.json") }

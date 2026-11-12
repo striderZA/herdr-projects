@@ -99,7 +99,7 @@ fn claude_s_names_follow_its_own_rule_and_a_program_without_a_list_is_not_checke
     // Codex on a provider of its own: its catalog says nothing of that provider's names.
     lists(json!({ "codex": { "taken": ["gpt-6.1-sol"], "shown": ["gpt-6.1-sol"] } }));
     refused("worker.agent", "codex/llama3", r"codex has no model");
-    std::fs::write(std::env::var("HERDR_PROJECTS_CODEX_TOML").unwrap(), "model_provider = \"ollama\"\n\n[model_providers.ollama]\nname = \"Ollama\"\n").unwrap();
+    std::fs::write(std::env::var("HERDR_WINGMAN_CODEX_TOML").unwrap(), "model_provider = \"ollama\"\n\n[model_providers.ollama]\nname = \"Ollama\"\n").unwrap();
     taken("worker.agent", "codex/llama3");
 }
 
@@ -133,7 +133,7 @@ fn real_programs_the_list_is_asked_of_the_program_and_kept() {
     std::fs::write(bin.join("codex"), format!("#!/bin/sh\necho \"$1\" >> {}\nif [ \"$1\" = app-server ]; then\n  while read l; do case \"$l\" in *'\"model/list\"'*) printf '%s\\n' '{page}';; *'\"account/read\"'*) printf '%s\\n' '{account}';; esac; done\n  exit 0\nfi\nprintf '%s' '{CODEX}'\n", count.display())).unwrap();
         sw::sys::set_mode(&bin.join("codex"), 0o755).unwrap();
     let run = |args: &[&str]| { let o = std::process::Command::new(env!("CARGO_BIN_EXE_herdr-wingman")).args(args).current_dir(&w.root)
-        .env("PATH", format!("{}:/usr/bin:/bin", bin.display())).env_remove("HERDR_PROJECTS_NO_MODEL_LIST").env("HERDR_SOCKET_PATH", "/nonexistent").env("HERDR_BIN_PATH", "/bin/false").output().unwrap();
+        .env("PATH", format!("{}:/usr/bin:/bin", bin.display())).env_remove("HERDR_WINGMAN_NO_MODEL_LIST").env("HERDR_SOCKET_PATH", "/nonexistent").env("HERDR_BIN_PATH", "/bin/false").output().unwrap();
         (o.status.code().unwrap_or(-1), String::from_utf8_lossy(&o.stdout).into_owned(), String::from_utf8_lossy(&o.stderr).into_owned()) };
     let asked = || std::fs::read_to_string(&count).unwrap_or_default().lines().count();
     let (code, _, err) = run(&["set", "worker.agent", "codex/gpt-5.5"]);

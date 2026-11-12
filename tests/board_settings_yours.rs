@@ -21,7 +21,7 @@ fn whose(b: &Board) -> Option<Whose> { b.s.editing.as_ref().map(|e| e.whose.clon
 /// A board of this machine: its task in `proj`, with a coordinator that can run here.
 fn every_machine() -> (World, Board, String) {
     let w = world_with(Opts { repo: true, settings: json!({ "coordinator.agent": "claude" }), ..Default::default() });
-    let home = w.base.join("home-coord"); std::fs::create_dir_all(&home).unwrap(); unsafe { std::env::set_var("HERDR_PROJECTS_COORDINATOR_DIR", &home) };
+    let home = w.base.join("home-coord"); std::fs::create_dir_all(&home).unwrap(); unsafe { std::env::set_var("HERDR_WINGMAN_COORDINATOR_DIR", &home) };
     let id = w.add("Mine");
     let mut b = open(&w.root, 120); b.s.side = false;
     (w, b, id)

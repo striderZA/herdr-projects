@@ -100,7 +100,7 @@ fn said(a: &Kind, ask: Ask) -> Option<Said> {
     let had = all.get(a.name).filter(|h| h.at("levels").is_array()).map(said_of);
     let age = all.get(a.name).map(|h| now() - h.i("at")).unwrap_or(i64::MAX);
     // The tests never run a real program: they write efforts.json themselves.
-    let no_run = ask == Ask::Kept || crate::util::env_set("HERDR_PROJECTS_NO_MODEL_LIST");
+    let no_run = ask == Ask::Kept || crate::util::env_set("HERDR_WINGMAN_NO_MODEL_LIST");
     if had.is_some() && (no_run || (age < KEPT && !(ask == Ask::Again && age >= AGAIN))) { return had; }
     if no_run { return None; }
     let args: Vec<&str> = if a.efforts_read == EffortsRead::Catalog { a.models.list.to_vec() } else { vec!["--help"] };

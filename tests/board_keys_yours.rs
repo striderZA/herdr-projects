@@ -84,7 +84,7 @@ fn it_is_yours_only_a_hand_written_mistake_is_left_out_and_the_page_keeps_the_bu
     assert!(j.to_string().contains("ctrl+l is yes's key already"));
     let e = settings_command("set", &["set".into(), "board.keys".into()], &Where { task: None, repo: Some("proj".into()), automation: None, coord: None }, Some(json!("side=alt+y"))).unwrap_err().msg;
     assert!(e.contains("board.keys is a board setting: it is yours only"), "{e}");
-    std::fs::write(w.root.join(".herdr-projects.json"), r#"{ "board.keys": "side=alt+y" }"#).unwrap();
+    std::fs::write(w.root.join(".herdr-wingman.json"), r#"{ "board.keys": "side=alt+y" }"#).unwrap();
     let (_, said) = sw::store::settings::places::repo_file(&w.root, None);
     assert!(said.iter().any(|p| p.contains("board.keys is refused")), "{said:?}");
 }

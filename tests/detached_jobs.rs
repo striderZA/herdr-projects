@@ -18,11 +18,11 @@ fn until(done: impl Fn() -> bool) -> bool { let end = Instant::now() + Duration:
 #[test]
 fn real_programs_a_detached_job_that_ended_is_reaped_and_its_marker_reads_as_gone() {
     let _w = world();
-    unsafe { std::env::remove_var("HERDR_PROJECTS_INLINE") }
+    unsafe { std::env::remove_var("HERDR_WINGMAN_INLINE") }
     // A user's notify command, and a job of no task's (this test program, asked for a test no test is named).
     let sh = sw::runner::detached_sh("exit 0", &[]);
     let loose = sw::housekeeping::spawn_loose(&["--list", "no_test_has_this_name"]);
-    unsafe { std::env::set_var("HERDR_PROJECTS_INLINE", "1") }
+    unsafe { std::env::set_var("HERDR_WINGMAN_INLINE", "1") }
     for pid in [sh, loose] {
         assert!(pid > 0, "it did not start");
         assert!(until(|| gone(pid)), "{pid} is still there");

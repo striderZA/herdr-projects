@@ -3,7 +3,7 @@
 # that makes a world sets the process's environment, so in one process those tests take turns, and the only way to run
 # them side by side is more processes. `sh scripts/run-tests.sh [names]`: no name runs every test; a name that is an
 # area (`board-panel`: tests/board_panel.rs and tests/board_panel_*.rs) runs those files, any other name the tests whose
-# own names hold it. How many processes: HERDR_PROJECTS_TEST_PROCS, else twice its share of the cores, counted when the
+# own names hold it. How many processes: HERDR_WINGMAN_TEST_PROCS, else twice its share of the cores, counted when the
 # tests start among the checks running then (scripts/share-cores.sh), as a process that takes turns uses about half a
 # core. For the shorter check of a fix round (scripts/check.sh --since): `=name` runs exactly that file's tests, and `--units` every test outside tests/ (those in
 # src/ and the doc tests). docs/testing.md.
@@ -30,11 +30,11 @@ sc_cargo test --profile quick --quiet --no-run --message-format=json-render-diag
 bins=$(grep '"profile":{[^}]*"test":true' "$tmp/built" | sed -n 's/.*"executable":"\([^"]*\)".*/\1/p')
 [ -n "$bins" ] || { echo "cargo built no test program." >&2; exit 101; }
 # The tests never reach your real board: a test that makes no world of its own keeps its board in this run's scratch
-# folder too, and the store refuses the real ~/.herdr-projects under them, loudly (crates/core/src/store/never_real.rs).
-HERDR_PROJECTS_TESTING=1; HERDR_PROJECTS_HOME="$tmp/board"; export HERDR_PROJECTS_TESTING HERDR_PROJECTS_HOME
-unset HERDR_PROJECTS_DATA_DIR HERDR_PROJECTS_CONFIG_DIR HERDR_PROJECTS_REPORTS_DIR
+# folder too, and the store refuses the real ~/.herdr-wingman under them, loudly (crates/core/src/store/never_real.rs).
+HERDR_WINGMAN_TESTING=1; HERDR_WINGMAN_HOME="$tmp/board"; export HERDR_WINGMAN_TESTING HERDR_WINGMAN_HOME
+unset HERDR_WINGMAN_DATA_DIR HERDR_WINGMAN_CONFIG_DIR HERDR_WINGMAN_REPORTS_DIR
 sc_share
-procs="${HERDR_PROJECTS_TEST_PROCS:-$((sc_threads * 2))}"
+procs="${HERDR_WINGMAN_TEST_PROCS:-$((sc_threads * 2))}"
 case "$procs" in ''|0*|*[!0-9]*) procs=1 ;; esac
 # The tests each program is to run, by their exact names: an area's files (in the one test program, tests/main.rs),
 # the tests whose names hold a word, or all. `settings::` as a filter would also run `board_settings::`: areas are

@@ -32,7 +32,7 @@ fn agy_works_and_reviews_a_task_from_start_to_approval() {
 #[test]
 fn a_reviewer_the_board_cannot_read_that_stops_without_a_verdict_ends_its_round_when_herdr_sees_it_stop() {
     let w = world_with(Opts { repo: true, settings: json!({ "worker.agent": "claude", "reviewer.agent": "qwen", "review.when": "always" }), ..Default::default() });
-    unsafe { std::env::set_var("HERDR_PROJECTS_ENDED_MS", "0"); std::env::set_var("HERDR_PROJECTS_QUIET_MS", "0"); }
+    unsafe { std::env::set_var("HERDR_WINGMAN_ENDED_MS", "0"); std::env::set_var("HERDR_WINGMAN_QUIET_MS", "0"); }
     w.script(json!({ "worker": [work()], "reviewer": [{}, {}] }));
     let id = w.add("No verdict");
     delegate(&id);
@@ -41,7 +41,7 @@ fn a_reviewer_the_board_cannot_read_that_stops_without_a_verdict_ends_its_round_
     let said = format!("{} {} {:?}", t.s("msg"), t.at("failure"), reviews);
     assert!(said.contains("the reviewer finished without a verdict"), "{said}");
     assert!(!said.contains("timed out"), "{said}");
-    unsafe { std::env::remove_var("HERDR_PROJECTS_ENDED_MS"); std::env::remove_var("HERDR_PROJECTS_QUIET_MS"); }
+    unsafe { std::env::remove_var("HERDR_WINGMAN_ENDED_MS"); std::env::remove_var("HERDR_WINGMAN_QUIET_MS"); }
 }
 
 #[test]

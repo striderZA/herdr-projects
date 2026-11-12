@@ -12,7 +12,7 @@ fn coord_world() -> World {
     let w = world_with(Opts { repo: true, settings: json!({ "coordinator.agent": "claude", "review.when": "never" }), ..Default::default() });
     let home = w.base.join("home-coord");
     std::fs::create_dir_all(&home).unwrap();
-    unsafe { std::env::set_var("HERDR_PROJECTS_COORDINATOR_DIR", &home) };
+    unsafe { std::env::set_var("HERDR_WINGMAN_COORDINATOR_DIR", &home) };
     w
 }
 fn jobs(fx: Vec<sw::board::update::Effect>) -> String { fx.iter().filter_map(|e| match e { sw::board::update::Effect::Run(j) => Some(format!("{j:?}")), _ => None }).collect::<Vec<_>>().join(" | ") }

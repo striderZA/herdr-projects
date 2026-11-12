@@ -13,7 +13,7 @@ fn coord_world() -> World {
     let w = world_with(Opts { repo: true, settings: json!({ "coordinator.agent": "claude", "review.when": "never" }), ..Default::default() });
     let home = w.base.join("home-coord");
     std::fs::create_dir_all(&home).unwrap();
-    unsafe { std::env::set_var("HERDR_PROJECTS_COORDINATOR_DIR", &home) };
+    unsafe { std::env::set_var("HERDR_WINGMAN_COORDINATOR_DIR", &home) };
     sw::store::repos::repo_of(&w.root).unwrap(); // the board knows the repo
     w
 }

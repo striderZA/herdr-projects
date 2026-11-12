@@ -17,7 +17,7 @@ use std::path::{Path, PathBuf};
 /// in. Found when it runs, never written into the program when it is built: a new worktree starts from a copy of
 /// another's build (scripts/warm-start.sh), which would then read and write the other worktree's pages.
 pub fn root() -> PathBuf {
-    if let Ok(r) = std::env::var("HERDR_PROJECTS_REPO") { return PathBuf::from(r); }
+    if let Ok(r) = std::env::var("HERDR_WINGMAN_REPO") { return PathBuf::from(r); }
     let ours = |d: &Path| std::fs::read_to_string(d.join("Cargo.toml")).is_ok_and(|t| t.contains("name = \"herdr-wingman\""));
     let exe = std::env::current_exe().ok().and_then(|e| e.canonicalize().ok());
     exe.as_deref().and_then(|e| e.ancestors().skip(1).find(|d| ours(d))).map(Path::to_path_buf).unwrap_or_else(|| PathBuf::from("."))

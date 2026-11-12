@@ -83,7 +83,7 @@ pub fn world_with(o: Opts) -> World {
     // Without the verbatim prefix Windows adds (\\?\), which git refuses as a path.
     let base = sw::sys::plain_path(sw::sys::canonicalize(&base).unwrap());
     let b = |p: &str| base.join(p).display().to_string();
-    for k in ["HERDR_PANE_ID", "HERDR_TAB_ID", "HERDR_WORKSPACE_ID", "HERDR_PLUGIN_ID", "HERDR_PLUGIN_CONTEXT_JSON", "HERDR_ENV", "HERDR_SESSION", "TMUX", "NO_COLOR", "XDG_DATA_HOME", "HERDR_PROJECTS_DATA_DIR", "HERDR_PROJECTS_CONFIG_DIR", "HERDR_PROJECTS_REPORTS_DIR", "HERDR_PROJECTS_PROGRESS", "HERDR_PROJECTS_SANDBOX", "HERDR_PROJECTS_BOXED", "HERDR_PROJECTS_RETRY_MS", "HERDR_PROJECTS_ENDED_MS", "HERDR_PROJECTS_QUIET_MS", "HERDR_PROJECTS_READY_MS", "HERDR_PROJECTS_SUBMIT_MS", "HERDR_PROJECTS_TICK_MS", "CLAUDE_CODE_TMPDIR", "HERDR_PROJECTS_SIZE"] { unsafe { std::env::remove_var(k) } }
+    for k in ["HERDR_PANE_ID", "HERDR_TAB_ID", "HERDR_WORKSPACE_ID", "HERDR_PLUGIN_ID", "HERDR_PLUGIN_CONTEXT_JSON", "HERDR_ENV", "HERDR_SESSION", "TMUX", "NO_COLOR", "XDG_DATA_HOME", "HERDR_WINGMAN_DATA_DIR", "HERDR_WINGMAN_CONFIG_DIR", "HERDR_WINGMAN_REPORTS_DIR", "HERDR_WINGMAN_PROGRESS", "HERDR_WINGMAN_SANDBOX", "HERDR_WINGMAN_BOXED", "HERDR_WINGMAN_RETRY_MS", "HERDR_WINGMAN_ENDED_MS", "HERDR_WINGMAN_QUIET_MS", "HERDR_WINGMAN_READY_MS", "HERDR_WINGMAN_SUBMIT_MS", "HERDR_WINGMAN_TICK_MS", "CLAUDE_CODE_TMPDIR", "HERDR_WINGMAN_SIZE"] { unsafe { std::env::remove_var(k) } }
     let socket = b("herdr.sock");
     // herdr's socket is there (the fake answers for herdr itself): what looks for a running herdr finds one.
     let listen = bind_socket(&socket);
@@ -91,10 +91,10 @@ pub fn world_with(o: Opts) -> World {
     // Agent-home variables the user may have set (HERMES_HOME points at a real Hermes folder on Windows): unset, so each
     // program finds its own folder under the test home.
     for k in ["HERMES_HOME", "HERMES_BUNDLES_DIR", "GROK_HOME", "COPILOT_HOME", "OPENCODE_CONFIG_DIR", "OMP_PROFILE", "PI_CONFIG_DIR", "PI_PROFILE", "CLAUDE_CODE_TMPDIR"] { unsafe { std::env::remove_var(k) } }
-    for (k, v) in [("HOME", b("home")), ("HERDR_PROJECTS_TMP", b("tmp")), ("HERDR_PROJECTS_HOME", b("sw")), ("HERDR_SOCKET_PATH", socket.clone()), ("XDG_CONFIG_HOME", b("home/.config")), ("XDG_STATE_HOME", b("home/.state")), ("XDG_DATA_HOME", b("home/.local/share")),
-        ("CLAUDE_CONFIG_DIR", b("claude")), ("CODEX_HOME", b("codex")), ("PI_CODING_AGENT_DIR", b("pi")), ("HERDR_PROJECTS_CLAUDE_JSON", b("claude.json")), ("HERDR_PROJECTS_CODEX_TOML", b("codex.toml"))] { set(k, &v); }
-    for (k, v) in [("HERDR_PROJECTS_INLINE", "1"), ("HERDR_PROJECTS_SETTLE_MS", "0"), ("HERDR_PROJECTS_PR_LAG_MS", "0"), ("HERDR_PROJECTS_FETCH_PAUSE_MS", "0"), ("HERDR_PROJECTS_READY_STEP_MS", "0"), ("HERDR_PROJECTS_POLL_MS", "20"),
-        ("HERDR_PROJECTS_NO_KEEPER", "1"), ("HERDR_PROJECTS_NO_SWEEP", "1"), ("HERDR_PROJECTS_FREE", "1000000000000"), ("HERDR_PROJECTS_NO_HOOK", "1"), ("HERDR_PROJECTS_NO_MODEL_LIST", "1"), ("HERDR_PROJECTS_READ_MS", "0"),
+    for (k, v) in [("HOME", b("home")), ("HERDR_WINGMAN_TMP", b("tmp")), ("HERDR_WINGMAN_HOME", b("sw")), ("HERDR_SOCKET_PATH", socket.clone()), ("XDG_CONFIG_HOME", b("home/.config")), ("XDG_STATE_HOME", b("home/.state")), ("XDG_DATA_HOME", b("home/.local/share")),
+        ("CLAUDE_CONFIG_DIR", b("claude")), ("CODEX_HOME", b("codex")), ("PI_CODING_AGENT_DIR", b("pi")), ("HERDR_WINGMAN_CLAUDE_JSON", b("claude.json")), ("HERDR_WINGMAN_CODEX_TOML", b("codex.toml"))] { set(k, &v); }
+    for (k, v) in [("HERDR_WINGMAN_INLINE", "1"), ("HERDR_WINGMAN_SETTLE_MS", "0"), ("HERDR_WINGMAN_PR_LAG_MS", "0"), ("HERDR_WINGMAN_FETCH_PAUSE_MS", "0"), ("HERDR_WINGMAN_READY_STEP_MS", "0"), ("HERDR_WINGMAN_POLL_MS", "20"),
+        ("HERDR_WINGMAN_NO_KEEPER", "1"), ("HERDR_WINGMAN_NO_SWEEP", "1"), ("HERDR_WINGMAN_FREE", "1000000000000"), ("HERDR_WINGMAN_NO_HOOK", "1"), ("HERDR_WINGMAN_NO_MODEL_LIST", "1"), ("HERDR_WINGMAN_READ_MS", "0"),
         ("HERDR_BIN_PATH", "/bin/false"), ("GIT_AUTHOR_NAME", "tester"), ("GIT_AUTHOR_EMAIL", "t@test"), ("GIT_COMMITTER_NAME", "tester"), ("GIT_COMMITTER_EMAIL", "t@test"), ("GIT_CONFIG_GLOBAL", "/dev/null"), ("GIT_CONFIG_NOSYSTEM", "1")] { set(k, v); }
     // Windows finds the user's folders through these, not HOME: the test's own, as HOME is.
     #[cfg(windows)]
@@ -114,7 +114,7 @@ pub fn world_with(o: Opts) -> World {
     if o.repo {
         git(&root, &["init", "-q", "-b", "main"]);
         std::fs::write(root.join("a.txt"), "one\n").unwrap();
-        if let Some(rs) = &o.repo_settings { std::fs::write(root.join(".herdr-projects.json"), rs.to_string()).unwrap(); }
+        if let Some(rs) = &o.repo_settings { std::fs::write(root.join(".herdr-wingman.json"), rs.to_string()).unwrap(); }
         git(&root, &["add", "-A"]); git(&root, &["commit", "-qm", "init"]);
         // The origin is a GitHub URL (ORIGIN_URL), reached at the bare repo by insteadOf: gh is asked for o/r, as for the real one.
         if o.origin { let bare = base.join("origin.git"); git(&base, &["init", "-q", "--bare", "-b", "main", &bare.display().to_string()]); git(&root, &["remote", "add", "origin", ORIGIN_URL]); reach(&root, &bare.display().to_string()); git(&root, &["push", "-q", "-u", "origin", "main"]); }
@@ -220,7 +220,7 @@ pub fn delegate_with(id: &str, asked: Value) -> Obj { sw::actions::start::delega
 /// of their own that the board can end.
 pub fn cut_world(waits: &str, settings: Value) -> World {
     let w = world_with(Opts { repo: true, settings, ..Default::default() });
-    for (k, v) in [("HERDR_PROJECTS_RETRY_MS", waits), ("HERDR_PROJECTS_ENDED_MS", "0"), ("HERDR_PROJECTS_QUIET_MS", "60")] { set(k, v); }
+    for (k, v) in [("HERDR_WINGMAN_RETRY_MS", waits), ("HERDR_WINGMAN_ENDED_MS", "0"), ("HERDR_WINGMAN_QUIET_MS", "60")] { set(k, v); }
     w.patch(|s| s["pids"] = json!(true));
     w
 }

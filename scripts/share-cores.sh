@@ -4,7 +4,7 @@
 # scripts/check.sh, scripts/setup.sh and scripts/run-tests.sh; docs/testing.md. Sourced under `set -e`: no step here may
 # fail, so a machine without a cache folder (CI, a fresh clone) still gets its share and goes on.
 #
-# A running check or setup has a file in ~/.cache/herdr-projects/running (`sc_join`, removed by `sc_leave`): named by
+# A running check or setup has a file in ~/.cache/herdr-wingman/running (`sc_join`, removed by `sc_leave`): named by
 # its process, holding when that process started, so one that died without removing it (killed) is not counted, and a
 # number used again by another process is not taken for it. `sc_share` counts them anew before each build and test run:
 # a check that starts while another runs takes half, and takes all again when the other is done.
@@ -14,14 +14,14 @@
 # every time. CARGO_BUILD_JOBS or RUST_TEST_THREADS set by you wins over the share.
 sc_cores=$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 1)
 case "$sc_cores" in ''|0*|*[!0-9]*) sc_cores=1 ;; esac
-sc_dir="${XDG_CACHE_HOME:-$HOME/.cache}/herdr-projects/running"
+sc_dir="${XDG_CACHE_HOME:-$HOME/.cache}/herdr-wingman/running"
 sc_mine=""
 sc_started() { LC_ALL=C ps -o lstart= -p "$1" 2>/dev/null || true; }
-# One already counted for the check that started this script (HERDR_PROJECTS_RUNNING, its file) is not counted again.
+# One already counted for the check that started this script (HERDR_WINGMAN_RUNNING, its file) is not counted again.
 sc_join() {
-  [ -z "$sc_mine" ] && { [ -z "$HERDR_PROJECTS_RUNNING" ] || [ ! -f "$HERDR_PROJECTS_RUNNING" ]; } || return 0
+  [ -z "$sc_mine" ] && { [ -z "$HERDR_WINGMAN_RUNNING" ] || [ ! -f "$HERDR_WINGMAN_RUNNING" ]; } || return 0
   { mkdir -p "$sc_dir" && sc_started $$ > "$sc_dir/.$$" && mv "$sc_dir/.$$" "$sc_dir/$$" && sc_mine="$sc_dir/$$"; } 2>/dev/null || true
-  [ -z "$sc_mine" ] || { HERDR_PROJECTS_RUNNING=$sc_mine; export HERDR_PROJECTS_RUNNING; }
+  [ -z "$sc_mine" ] || { HERDR_WINGMAN_RUNNING=$sc_mine; export HERDR_WINGMAN_RUNNING; }
 }
 sc_leave() { [ -z "$sc_mine" ] || rm -f "$sc_mine" 2>/dev/null || true; sc_mine=""; }
 # The share now: sc_jobs for cargo, sc_threads for the tests.

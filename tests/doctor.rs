@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 use sw::doctor::{agents, disk, plugin, program, problems, say, Found};
 
 fn program_file(p: &Path) { std::fs::create_dir_all(p.parent().unwrap()).unwrap(); std::fs::write(p, "#!/bin/sh\n").unwrap(); sw::sys::set_mode(p, 0o755).unwrap(); }
-fn launcher_for(p: &Path) -> String { format!("#!/bin/sh\nexport HERDR_PROJECTS_DATA_DIR='/d'\nexec {} \"$@\"\n", sw::util::shell_word(&p.display().to_string(), sw::util::Shell::Posix)) }
+fn launcher_for(p: &Path) -> String { format!("#!/bin/sh\nexport HERDR_WINGMAN_DATA_DIR='/d'\nexec {} \"$@\"\n", sw::util::shell_word(&p.display().to_string(), sw::util::Shell::Posix)) }
 /// A plugin folder with its downloaded program, the launcher beside the data, and a PATH folder.
 struct Setup { root: PathBuf, prog: PathBuf, launcher: PathBuf, path: PathBuf }
 fn setup(w: &World) -> Setup {
