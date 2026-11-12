@@ -1,6 +1,6 @@
 id = "herdr-wingman"
 name = "Wingman"
-version = "2.0.0"
+version = "2.0.1"
 # The oldest herdr this plugin runs on: herdr refuses the plugin on an older one, on every platform. Windows also needs
 # herdr 0.9.4, which the doctor checks on Windows alone. Verified: Linux on 0.9.3.
 min_herdr_version = "0.9.3"
