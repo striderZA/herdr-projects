@@ -1,0 +1,21 @@
+#!/bin/sh
+# Keeps Superpowers plans and specs out of commits: a plan or a spec is a report, and a report is kept outside the
+# repo, in the task's folder among the board's reports (~/.herdr-projects/reports/<repo>/<task>/). .gitignore keeps
+# them out of `git status`; this is the second gate, for a file added with `git add --force` or one already tracked.
+# Everything it takes out stays on disk: only the commit is rid of it. Installed by scripts/setup.sh (core.hooksPath).
+set -e
+staged=$(git diff --cached --name-only --diff-filter=ACMR -- docs/superpowers .superpowers)
+tracked=""
+if git rev-parse --verify -q HEAD >/dev/null; then
+    tracked=$(git ls-tree -r --name-only HEAD -- docs/superpowers .superpowers)
+fi
+list=$(printf '%s\n%s\n' "$staged" "$tracked" | sed '/^$/d' | sort -u)
+[ -n "$list" ] || exit 0
+printf '%s\n' "$list" | while IFS= read -r f; do
+    # Out of the index, still in the folder: a new file, or one already tracked (the commit takes it out of the repo).
+    git rm --cached --quiet --ignore-unmatch -- "$f"
+done
+printf 'herdr-wingman: kept Superpowers plans/specs out of this commit (a plan or spec is a report, kept outside the\n' >&2
+printf '               repo, in ~/.herdr-projects/reports/<repo>/<task>/). They stay on disk:\n' >&2
+printf '%s\n' "$list" | sed 's/^/  /' >&2
+exit 0

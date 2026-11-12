@@ -28,6 +28,10 @@ The board adds one block to the worker's standing rules. It says:
 - the board's reviewer is the final whole-branch review, so the worker does not run `requesting-code-review` or the SDD
   final review, and never runs `finishing-a-development-branch`.
 
+Plans and specs stay out of git even when a tool writes them into the checkout: `docs/superpowers/` and `.superpowers/`
+are ignored, and a pre-commit hook takes them out of a commit (`.githooks/pre-commit`, installed by the workspace
+setup). They stay on disk; a report belongs in the task's folder among the board's reports ([research](research.md)).
+
 The reviewer is told that the worker's per-task reviews are internal and that its own review is the final one. A plan
 reviewer is told to check that the plan's tasks cover the task and each has a test or verification step.
 

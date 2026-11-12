@@ -1,5 +1,9 @@
 # The map of which file holds what: made in your own folder (herdr-wingman docs), never committed.
 docs/where-things-live.md
+# Superpowers plans and specs are reports: they stay outside the repo (docs/superpowers.md). The hook in .githooks
+# keeps them out of a commit too; .superpowers/ is SDD's own workspace.
+/docs/superpowers/
+/.superpowers/
 /target/
 /examples/
 # The program bin/run.sh downloads for this platform, with its version and its download lock.

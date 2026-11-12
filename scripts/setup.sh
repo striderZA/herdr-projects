@@ -6,6 +6,8 @@
 # that build warm for the next worktree, and writes the made pages, the map among them.
 set -e
 cd "$(dirname -- "$0")/.."
+# The repo's own hooks: a Superpowers plan or spec never goes into a commit (.githooks/pre-commit).
+git config core.hooksPath .githooks
 sh scripts/build-cache.sh
 sh scripts/linker.sh --install
 . scripts/build-cache.sh
