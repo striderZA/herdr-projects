@@ -21,8 +21,8 @@ fn start(w: &World, exe: &Path) -> std::process::Child {
     std::fs::write(&herdr, "#!/bin/sh\necho '{\"workspaces\":[]}'\n").unwrap();
     sw::sys::set_mode(&herdr, 0o755).unwrap();
     std::process::Command::new(exe).arg("keeper").current_dir(&w.root)
-        .env_remove("HERDR_PROJECTS_NO_KEEPER").env_remove("HERDR_PROJECTS_INLINE")
-        .env("HERDR_BIN_PATH", &herdr).env("HERDR_PROJECTS_STAMP_MS", "100")
+        .env_remove("HERDR_WINGMAN_NO_KEEPER").env_remove("HERDR_WINGMAN_INLINE")
+        .env("HERDR_BIN_PATH", &herdr).env("HERDR_WINGMAN_STAMP_MS", "100")
         .stdin(std::process::Stdio::null()).stdout(std::process::Stdio::null()).stderr(std::process::Stdio::null())
         .spawn().unwrap()
 }

@@ -70,7 +70,7 @@ fn a_key_you_or_the_repos_file_gave_is_kept_and_unset_goes_back_to_the_made_one(
     let id = w.add("First"); assert_eq!(short(&id), "MINE-1"); assert_eq!(entry("proj"), json!("MINE"));
     // The repo's own file: kept, and nothing is written for it.
     let crm = folder(&w, "open-crm"); git(&crm, &["init", "-q", "-b", "main"]);
-    std::fs::write(crm.join(".herdr-projects.json"), json!({ "repo": { "key": "OC" } }).to_string()).unwrap();
+    std::fs::write(crm.join(".herdr-wingman.json"), json!({ "repo": { "key": "OC" } }).to_string()).unwrap();
     let t = add_in(&crm, "Theirs"); assert_eq!(short(&t), "OC-1"); assert!(entry("open-crm").is_null());
     // Taken away: back to the repo's file's, or to the made one; never none.
     unset_value("repo.key", &Scope::repo("proj")).unwrap(); assert_eq!(entry("proj"), json!("PRJ")); assert_eq!(find("mine-1").unwrap().s("id"), id);
@@ -146,7 +146,7 @@ fn upgrade_never_changes_a_key_you_saved_even_one_two_repos_share_and_the_top_li
 #[test]
 fn a_key_a_repo_ever_went_by_names_its_tasks_for_good_however_it_changed_and_no_other_repos_file_takes_it() {
     let w = world();
-    let file = |dir: &std::path::Path, key: &str| std::fs::write(dir.join(".herdr-projects.json"), json!({ "repo": { "key": key } }).to_string()).unwrap();
+    let file = |dir: &std::path::Path, key: &str| std::fs::write(dir.join(".herdr-wingman.json"), json!({ "repo": { "key": key } }).to_string()).unwrap();
     let repo = |name: &str| { let d = folder(&w, name); git(&d, &["init", "-q", "-b", "main"]); d };
     // The repo's own file changes its key: the old one still names its task.
     let gamma = repo("gamma"); file(&gamma, "GG");
@@ -168,7 +168,7 @@ fn a_key_a_repo_ever_went_by_names_its_tasks_for_good_however_it_changed_and_no_
     let beta = repo("beta"); file(&beta, "AA");
     let b = add_in(&beta, "Beta task");
     assert_eq!(find("aa-1").unwrap().s("id"), a, "an old name never comes to name another repo's task");
-    assert_eq!(short(&b), "BETA-1"); assert_eq!(read(&beta.join(".herdr-projects.json")), json!({ "repo": { "key": "AA" } }).to_string());
+    assert_eq!(short(&b), "BETA-1"); assert_eq!(read(&beta.join(".herdr-wingman.json")), json!({ "repo": { "key": "AA" } }).to_string());
     assert!(entry("beta").is_null(), "nothing is written for it in your settings");
     let shown = sw::actions::settings::settings_command("show", &["show".into()], &sw::actions::settings::Where { task: None, repo: Some("beta".into()), automation: None, coord: None }, None).unwrap().1;
     assert!(has(&shown, r"\n {2}repo\.key +AA +not used: another repo has or had the same key; its tasks go by BETA(\n|$)"), "{shown}");

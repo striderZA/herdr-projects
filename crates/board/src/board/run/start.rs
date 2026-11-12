@@ -35,7 +35,7 @@ pub fn prepare(folder: &std::path::Path) -> (State, Theme, Option<(String, Strin
     crate::flow::send::shim(); // the launcher in the data folder, there from the first time the board opens
     crate::leftovers::sweep::at_start(); // what ended tasks left behind (docs/disk-space.md)
     let _ = crate::extras::sync_skill(); crate::extras::remove_popups(); crate::extras::refresh_sidebar();
-    let reloads: i64 = env("HERDR_PROJECTS_RELOADS").parse().unwrap_or(0);
+    let reloads: i64 = env("HERDR_WINGMAN_RELOADS").parse().unwrap_or(0);
     let named = place::name_board_tab(&place::board_pane());
     let popup = place::in_popup();
     let ctx = Ctx { cwd: folder.display().to_string(), popup, from: place::context().0, pane: if env("HERDR_ENV") == "1" && env("TMUX").is_empty() { env("HERDR_PANE_ID") } else { String::new() },
@@ -115,8 +115,8 @@ pub fn threads(tx: &Sender<Msg>, wants: &Arc<Mutex<Wants>>, load: &Arc<(Mutex<bo
     std::thread::spawn(move || {
         let exe = crate::store::files::bin();
         let first = crate::keeper::code_stamp(&exe);
-        // Every five seconds (HERDR_PROJECTS_STAMP_MS: the tests that load a new version look sooner).
-        let every = env("HERDR_PROJECTS_STAMP_MS").parse().unwrap_or(5000u64);
+        // Every five seconds (HERDR_WINGMAN_STAMP_MS: the tests that load a new version look sooner).
+        let every = env("HERDR_WINGMAN_STAMP_MS").parse().unwrap_or(5000u64);
         loop {
             std::thread::sleep(std::time::Duration::from_millis(every));
             let now = crate::keeper::code_stamp(&exe);
@@ -148,8 +148,8 @@ pub fn watch_tab(socket: Option<String>, tab: &str, gone: impl Fn() + Send + Syn
 /// The program changed under the open board: the same command starts again on the new program, in this terminal,
 /// over the old frame. Returns only when that could not be done.
 pub fn reload() {
-    let reloads: i64 = env("HERDR_PROJECTS_RELOADS").parse().unwrap_or(0);
+    let reloads: i64 = env("HERDR_WINGMAN_RELOADS").parse().unwrap_or(0);
     let exe = crate::store::files::bin();
-    let err = crate::sys::exec_replace(std::process::Command::new(exe).args(std::env::args_os().skip(1)).env(term::KEPT, "1").env("HERDR_PROJECTS_RELOADS", (reloads + 1).to_string()));
+    let err = crate::sys::exec_replace(std::process::Command::new(exe).args(std::env::args_os().skip(1)).env(term::KEPT, "1").env("HERDR_WINGMAN_RELOADS", (reloads + 1).to_string()));
     eprintln!("herdr-wingman could not start its new version: {err}");
 }

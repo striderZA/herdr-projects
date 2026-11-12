@@ -9,7 +9,7 @@ Coordinator, but they all share the one list.
 | several herdr sessions | one list, shared: every session's board shows every task. A task's agent runs in the session it was started in; a board in another session shows that task as `In session <name>` with what was last known, and asks you to open the board there to act on it. The keeper looks after the tasks of every session |
 | several Coordinators | one top-level Coordinator per herdr session, never two in one session: it works on every repo, and each message carries the repo you were in. Each repo also has its own project coordinator ([the Coordinator](coordinator.md), [project coordinators](project-coordinators.md)) |
 | to open the board twice | the board key never opens a second board: it goes to the one that runs ([the board](board.md)). A popup and a board in a tab can run side by side, and a board you start yourself with `herdr-wingman` in a pane works too: they all show the same tasks, each with its own selection and filter |
-| two separate lists (say, work and personal) | there is no built-in way. Keep one board and use the repo groups (`Alt+S`) or find (`Ctrl+F`). `HERDR_PROJECTS_HOME` moves the board's folder ([the home folder](home-folder.md)); it is not made for running a second board beside the first: herdr's board key and its events use the folder herdr itself was started with |
+| two separate lists (say, work and personal) | there is no built-in way. Keep one board and use the repo groups (`Alt+S`) or find (`Ctrl+F`). `HERDR_WINGMAN_HOME` moves the board's folder ([the home folder](home-folder.md)); it is not made for running a second board beside the first: herdr's board key and its events use the folder herdr itself was started with |
 
 ## Sending new tasks to another repo
 

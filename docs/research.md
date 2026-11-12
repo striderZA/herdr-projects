@@ -16,11 +16,11 @@ herdr-wingman add "Why is the build slow?" --research
 Every agent the board starts is told the same, in every repo:
 
 - **It writes the report into the task's own folder among the board's reports**:
-  `~/.herdr-projects/reports/<repo>/<number>/` ([the home folder](home-folder.md)), as `index.html` (one page that
+  `~/.herdr-wingman/reports/<repo>/<number>/` ([the home folder](home-folder.md)), as `index.html` (one page that
   stands by itself) or `report.md`. That folder is outside every repo, so the report cannot be committed by mistake, and
   it stays when the task's worktree goes.
-- **The folder is in its environment too**, as `HERDR_PROJECTS_TASK_REPORTS`, beside the task's id as
-  `HERDR_PROJECTS_ID` (the name `workspace.setup` has it by): the agent, its reviewers and the picker of
+- **The folder is in its environment too**, as `HERDR_WINGMAN_TASK_REPORTS`, beside the task's id as
+  `HERDR_WINGMAN_ID` (the name `workspace.setup` has it by): the agent, its reviewers and the picker of
   [attempts](attempts.md) all have both.
 - **When the agent finishes, the board gives the report a link**: its path in the task's folder. The link opens
   `index.html` when there is one, else `report.html`, `report.md`, `README.md`, else the folder's first file.
@@ -47,7 +47,7 @@ every setting is, nearest answer first: **the task → your entry for that repo 
 |---|---|
 | one task, when it is added | `herdr-wingman add "<title>" --research` (short for `--research.only true`) |
 | one task, later | `herdr-wingman delegate <id> --research` (`--no-research` turns it off), `herdr-wingman set research.only true --task <id>`, or its row on the task's settings page (`Research only`): on the terminal board. All write the same one setting on the task |
-| a whole repo, or everything of yours | `herdr-wingman set research.only true --repo <name>`, or without `--repo`. Every new task there is research only unless the task says otherwise (`--no-research`, or `set research.only false --task <id>`). The repo's own `.herdr-projects.json` may say it too: `{ "research": { "only": true } }` |
+| a whole repo, or everything of yours | `herdr-wingman set research.only true --repo <name>`, or without `--repo`. Every new task there is research only unless the task says otherwise (`--no-research`, or `set research.only false --task <id>`). The repo's own `.herdr-wingman.json` may say it too: `{ "research": { "only": true } }` |
 | an [automation](automations.md) | `--research` when it is made, or `set research.only true --automation <name>`. Each task it makes has it as its own |
 
 - **The Coordinator does it by itself** when you plainly ask for research, a review or a report with nothing to change

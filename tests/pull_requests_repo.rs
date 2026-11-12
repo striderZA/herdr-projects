@@ -127,8 +127,8 @@ fn a_clone_whose_origin_is_on_another_host_is_asked_by_host_and_name() {
 fn an_ssh_alias_is_asked_by_the_host_it_resolves_to_and_the_repo_by_name() {
     let w = pr_world();
     // ssh -G answers an alias it does not know with the alias itself, so the host is kept; an alias its config maps is asked by that host.
-    git(&w.root, &["remote", "set-url", "origin", "git@no-such-host.herdr-projects.invalid:striderZA/herdr-wingman.git"]);
-    assert_eq!(gh_repo_of(&gh_command(&["pr", "view", "7"], &w.root).unwrap()).as_deref(), Some("no-such-host.herdr-projects.invalid/striderZA/herdr-wingman"));
+    git(&w.root, &["remote", "set-url", "origin", "git@no-such-host.herdr-wingman.invalid:striderZA/herdr-wingman.git"]);
+    assert_eq!(gh_repo_of(&gh_command(&["pr", "view", "7"], &w.root).unwrap()).as_deref(), Some("no-such-host.herdr-wingman.invalid/striderZA/herdr-wingman"));
 }
 
 #[test]
@@ -150,8 +150,8 @@ fn hostname_is_the_host_an_ssh_alias_resolves_to() {
 
 /// Commits the repo's own file naming where its pull requests go: a task starts from this commit, and the board reads it there.
 fn commit_merge_repo(w: &World, repo: &str) {
-    std::fs::write(w.root.join(".herdr-projects.json"), format!("{{\"merge\": {{\"repo\": \"{repo}\"}}}}\n")).unwrap();
-    git(&w.root, &["add", ".herdr-projects.json"]);
+    std::fs::write(w.root.join(".herdr-wingman.json"), format!("{{\"merge\": {{\"repo\": \"{repo}\"}}}}\n")).unwrap();
+    git(&w.root, &["add", ".herdr-wingman.json"]);
     git(&w.root, &["-c", "user.email=h@test", "-c", "user.name=h", "commit", "-q", "-m", "merge.repo: the pull requests go to the fork"]);
     git(&w.root, &["push", "-q", "origin", "main"]); // a task starts from origin's main: the file must be there
 }

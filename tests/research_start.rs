@@ -18,7 +18,7 @@ fn started(id: &str) -> String { read(&sw::store::files::dir_of(id).join("rules.
 fn research_only_is_decided_when_the_agent_starts_and_the_repos_file_is_the_one_of_its_commit() {
     let w = world_with(Opts { repo: true, repo_settings: Some(json!({ "research": { "only": true } })), settings: json!({ "board.agents": 1 }), ..Default::default() });
     // The checkout's own copy of the file says nothing (not committed): main still says research only.
-    std::fs::write(w.root.join(".herdr-projects.json"), "{}").unwrap();
+    std::fs::write(w.root.join(".herdr-wingman.json"), "{}").unwrap();
     w.script(json!({ "worker": vec![json!({ "status": "working" }); 3] }));
     let first = w.add("From the commit");
     let second = sw::actions::filing::add(&w.root, "Changed while it waits", sw::actions::filing::AddOpts { research: Some(false), ..Default::default() }).unwrap().t("id");

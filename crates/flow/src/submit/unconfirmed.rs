@@ -11,7 +11,7 @@ use crate::json::*;
 use crate::store::tasks::{update_wait, Change, Task};
 
 /// How long a move of the counters alone waits for a proof that the agent took the text: 3 minutes.
-fn bound_ms() -> i64 { super::ms("HERDR_PROJECTS_CONFIRM_MS", 180_000) }
+fn bound_ms() -> i64 { super::ms("HERDR_WINGMAN_CONFIRM_MS", 180_000) }
 /// Only herdr's counters moved since the text was typed: no work seen, nothing read.
 pub fn only_moved(m: &Value, a: &Value) -> bool { !working(a) && took(m, Some(a), None) == Some(true) }
 /// What was typed is taken: `sent` goes. Taken on the counters' word alone, a light mark stays, to be confirmed.

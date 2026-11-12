@@ -38,7 +38,7 @@ impl Bench {
     }
     fn home(&self) -> PathBuf { self.base.join("home") }
     fn saw_file(&self) -> PathBuf { self.base.join("cargo-saw") }
-    fn running(&self) -> PathBuf { self.home().join(".cache/herdr-projects/running") }
+    fn running(&self) -> PathBuf { self.home().join(".cache/herdr-wingman/running") }
     /// `sh <script> <args>` with nothing but this home, a plain PATH and `env`: its exit code, stderr, and what the
     /// stand-in cargo was given, a line a call (empty when the check never got to it).
     fn sh(&self, args: &[&str], env: &[(&str, &str)]) -> (i32, String, String) {

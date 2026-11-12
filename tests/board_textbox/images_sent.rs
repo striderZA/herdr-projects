@@ -18,7 +18,7 @@ fn every_picture_in_sent_words_is_its_chip_numbered_per_message() {
     // What Claude Code wrote for the first, the path of the second: one count.
     assert_eq!(labelled(&format!("[Image #39] and {}", herdr(1))), "[Image 1] and [Image 2]");
     // A dropped file, escaped or in quotes, on another machine (no file here), and one under ~/.
-    assert_eq!(labelled("see /home/you/Pictures/a\\ picture.PNG, '/tmp/a b.jpg' ~/.herdr-projects/inbox/x.webp"), "see [Image 1], [Image 2] [Image 3]");
+    assert_eq!(labelled("see /home/you/Pictures/a\\ picture.PNG, '/tmp/a b.jpg' ~/.herdr-wingman/inbox/x.webp"), "see [Image 1], [Image 2] [Image 3]");
     // As a chat box sends one.
     assert_eq!(labelled("@/home/you/x.png what is this"), "[Image 1] what is this");
     // No picture: as it was.

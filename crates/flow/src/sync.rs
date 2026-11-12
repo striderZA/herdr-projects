@@ -144,7 +144,7 @@ fn look(t: &Task, tree: &str, test: bool) -> Synced {
     })().ok();
     Synced { status: "merged", before, head, overlap, ..r }
 }
-fn retry_ms() -> i64 { std::env::var("HERDR_PROJECTS_SYNC_RETRY_MS").ok().and_then(|v| v.parse().ok()).unwrap_or(60000) }
+fn retry_ms() -> i64 { std::env::var("HERDR_WINGMAN_SYNC_RETRY_MS").ok().and_then(|v| v.parse().ok()).unwrap_or(60000) }
 pub fn skip_why(r: &Synced) -> String { format!("your checkout is on {}, not on {}, the branch this task lands on", r.onto.as_deref().filter(|s| !s.is_empty()).unwrap_or("no branch"), r.want) }
 /// Why work that was checked is not up to date with where it lands, so it cannot be approved yet: empty when it is.
 /// Main that could not be fetched is said in plain words; the board tries again by itself.

@@ -25,7 +25,7 @@ fn allowed(name: &str, scope: &Scope) -> Res<&'static Entry> {
         return refuse(format!("{name} is a board setting: it is yours only and cannot be set {}. Set it for yourself: herdr-wingman set {name} <value>", if task.is_some() { "on a task" } else { "for a repo" }));
     }
     if e.kind == Kind::Repo && repo.is_empty() {
-        return refuse(format!("{name} is one repo's own: it cannot be set {}. Set it for the repo: herdr-wingman set {name} <value> --repo <name>, or in the repo's own .herdr-projects.json.", if task.is_some() { "on a task" } else { "for every repo at once" }));
+        return refuse(format!("{name} is one repo's own: it cannot be set {}. Set it for the repo: herdr-wingman set {name} <value> --repo <name>, or in the repo's own .herdr-wingman.json.", if task.is_some() { "on a task" } else { "for every repo at once" }));
     }
     if e.task && task.is_none() {
         return refuse(format!("{name} is one task's own: it cannot be set {}. Set it on the task: herdr-wingman set {name} <value> --task <id>, or when it is added: herdr-wingman add \"<title>\" --{name} <value>", if repo.is_empty() { "for every task" } else { "for a repo" }));

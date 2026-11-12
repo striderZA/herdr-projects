@@ -49,7 +49,7 @@ pub fn login_shell() -> Option<String> {
     let reader = std::thread::spawn(move || { let mut b = vec![]; let _ = stdout.read_to_end(&mut b); b });
     // A start-up file that waits (a password prompt, a network mount) is no reason to hang every job: five seconds, unless
     // a test says otherwise.
-    let ms = crate::util::env_val("HERDR_PROJECTS_LOGIN_SHELL_MS").and_then(|v| v.parse::<i64>().ok()).unwrap_or(5000).max(1);
+    let ms = crate::util::env_val("HERDR_WINGMAN_LOGIN_SHELL_MS").and_then(|v| v.parse::<i64>().ok()).unwrap_or(5000).max(1);
     let until = std::time::Instant::now() + std::time::Duration::from_millis(ms as u64);
     let ok = loop {
         match child.try_wait() { Ok(Some(st)) => break st.success(), Ok(None) => {}, Err(_) => break false }
@@ -64,7 +64,7 @@ pub fn login_shell() -> Option<String> {
 /// gh's login and the SSH agent are never written down: where the login shell has one (the names are remembered) and
 /// this process has none, the shell is asked for it, and this process and all it starts take it in.
 pub fn user_env() {
-    if cfg!(windows) || env_set("HERDR_PROJECTS_ENV_OK") || !env_set("HERDR_PLUGIN_ID") { return; } // Windows: no login shell, and its PATH is ';'-separated
+    if cfg!(windows) || env_set("HERDR_WINGMAN_ENV_OK") || !env_set("HERDR_PLUGIN_ID") { return; } // Windows: no login shell, and its PATH is ';'-separated
     let file = data_dir().join("env.json");
     let mut cached = read_obj(&file);
     let stale = cached.as_ref().map(|c| now() - c.i("at") > 600000 || !c.b("PATH") || !c.has("gh") || !c.has("ssh")).unwrap_or(true);
@@ -84,6 +84,6 @@ pub fn user_env() {
     unsafe {
         std::env::set_var("PATH", all.join(":"));
         for (k, v) in login { std::env::set_var(k, v); }
-        std::env::set_var("HERDR_PROJECTS_ENV_OK", "1");
+        std::env::set_var("HERDR_WINGMAN_ENV_OK", "1");
     }
 }

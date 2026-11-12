@@ -16,9 +16,9 @@ const TRIES: i64 = 3;
 /// How long a fetch waits for the one another task of the same repo is making: three of them, tried in full.
 const WAIT_MS: i64 = 200000;
 
-/// The pause before the next try, growing: 2 seconds, then 4 (`HERDR_PROJECTS_FETCH_PAUSE_MS` sets the step).
+/// The pause before the next try, growing: 2 seconds, then 4 (`HERDR_WINGMAN_FETCH_PAUSE_MS` sets the step).
 fn pause(n: i64) {
-    let step = std::env::var("HERDR_PROJECTS_FETCH_PAUSE_MS").ok().and_then(|v| v.parse::<u64>().ok()).unwrap_or(2000);
+    let step = std::env::var("HERDR_WINGMAN_FETCH_PAUSE_MS").ok().and_then(|v| v.parse::<u64>().ok()).unwrap_or(2000);
     if step > 0 { crate::clock::sleep_ms(step * n as u64); }
 }
 fn key(dir: &Path, b: &str) -> String { format!("{}|{b}", primary_root(dir).display()) }

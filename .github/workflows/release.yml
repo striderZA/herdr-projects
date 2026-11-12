@@ -82,8 +82,8 @@ jobs:
       - name: Check it runs and says the release's version
         if: matrix.runs
         env:
-          HERDR_PROJECTS_INLINE: "1"
-          HERDR_PROJECTS_HOME: ${{ runner.temp }}/herdr-wingman
+          HERDR_WINGMAN_INLINE: "1"
+          HERDR_WINGMAN_HOME: ${{ runner.temp }}/herdr-wingman
         run: |
           out=$(dist/${{ matrix.file }} version)
           echo "$out"

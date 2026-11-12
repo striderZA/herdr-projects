@@ -39,12 +39,12 @@ fn the_key_opens_a_done_research_tasks_report_and_the_panel_the_hint_line_and_th
     assert!(b.text().contains("open its report in the browser"), "{}", b.text());
     // A report no page server serves is a file: the key opens it all the same, and there is no click to hint at.
     b.press(&["esc"]);
-    put(&id, "report", json!({ "file": "report.md", "link": "/home/me/.herdr-projects/reports/proj/1/report.md" }));
+    put(&id, "report", json!({ "file": "report.md", "link": "/home/me/.herdr-wingman/reports/proj/1/report.md" }));
     b.load();
     let text = b.screen(120).join("\n");
     assert!(text.contains(&format!("  {key} opens it")) && !text.contains("+click"), "{text}");
     b.press(&["ctrl+d"]);
-    assert_eq!(w.opener.opened.borrow().last().map(String::as_str), Some("/home/me/.herdr-projects/reports/proj/1/report.md"));
+    assert_eq!(w.opener.opened.borrow().last().map(String::as_str), Some("/home/me/.herdr-wingman/reports/proj/1/report.md"));
 }
 
 #[test]

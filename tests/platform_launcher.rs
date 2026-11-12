@@ -1,4 +1,4 @@
-//! The Windows launcher (bin/run.ps1) against a fake release folder, named by HERDR_PROJECTS_RELEASES as a file:/// URL:
+//! The Windows launcher (bin/run.ps1) against a fake release folder, named by HERDR_WINGMAN_RELEASES as a file:/// URL:
 //! the asset is downloaded, checked against its checksum and run with its arguments; a download that does not match is
 //! not used, and a second start within ten minutes does not try again. Windows only: the launcher is PowerShell.
 #![cfg(windows)]
@@ -46,7 +46,7 @@ fn launch(plugin: &Path, rel: &Path, args: &[&str]) -> Output {
         .args(["-NoProfile", "-ExecutionPolicy", "Bypass", "-File"])
         .arg(plugin.join("bin").join("run.ps1"))
         .args(args)
-        .env("HERDR_PROJECTS_RELEASES", format!("file:///{}", rel.display().to_string().replace('\\', "/")))
+        .env("HERDR_WINGMAN_RELEASES", format!("file:///{}", rel.display().to_string().replace('\\', "/")))
         .output()
         .unwrap()
 }

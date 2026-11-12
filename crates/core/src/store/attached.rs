@@ -20,11 +20,11 @@ fn own_name(name: &str) -> (String, String) {
     (if base.is_empty() { "file".into() } else { base.into() }, end)
 }
 /// Written once, readable only by you, under a name no other file has. The folder's own `.gitignore` keeps it out of
-/// git, also in a repo that does not leave `.herdr-projects/` alone. Files kept there more than a month ago go.
+/// git, also in a repo that does not leave `.herdr-wingman/` alone. Files kept there more than a month ago go.
 pub fn keep(dir: &Path, name: &str, kind: &str, bytes: &[u8]) -> std::io::Result<PathBuf> {
     use std::io::Write;
     std::fs::create_dir_all(dir)?;
-    // A link in the folder's place (`.herdr-projects` or `files` in a working folder an agent writes in) would send
+    // A link in the folder's place (`.herdr-wingman` or `files` in a working folder an agent writes in) would send
     // the file somewhere else: refused, and the `.gitignore` is never written through one.
     for d in [dir, dir.parent().unwrap_or(dir)] { if std::fs::symlink_metadata(d)?.file_type().is_symlink() { return Err(std::io::Error::other("its folder is a link")); } }
     let mut o = std::fs::OpenOptions::new();

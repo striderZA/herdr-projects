@@ -81,7 +81,7 @@ whole conversation, its dialogs, slash commands and menus, **go into it** in Her
 ## What it is
 
 - An ordinary Herdr agent, in a tab named `Coordinator`, in your home space (`~`).
-- It runs in a folder of its own inside the board's data folder. `HERDR_PROJECTS_COORDINATOR_DIR` names another; use
+- It runs in a folder of its own inside the board's data folder. `HERDR_WINGMAN_COORDINATOR_DIR` names another; use
   that folder for nothing else, since the board writes the Coordinator's rules there.
 - It starts with the same arguments as any working agent: all its tools, nothing held back.
 - Your first message starts it, and it stays. If its program exited or Herdr restarted, your next message starts it
@@ -96,7 +96,7 @@ whole conversation, its dialogs, slash commands and menus, **go into it** in Her
 ## Its standing rules are a file
 
 The rules (what the Coordinator is, how it uses the board) are written as `AGENTS.md` in the folder it starts in
-(`~/.herdr-projects/data/coordinator/<session>/chat`, see [the home folder](home-folder.md)). The program reads that file
+(`~/.herdr-wingman/data/coordinator/<session>/chat`, see [the home folder](home-folder.md)). The program reads that file
 by itself at the start of every conversation. So it still knows its rules after its own `/new` or `/clear`, after
 `coordinator restart` and `coordinator new`, after `coordinator new --agent <another kind>` (the next program reads the
 same file), and when you start the program in that folder by hand.

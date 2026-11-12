@@ -68,7 +68,7 @@ fn a_repos_coordinator_lists_the_skills_of_its_repo_and_the_coordinator_not() {
     let w = world_with(Opts { repo: true, settings: json!({ "review.when": "never", "coordinator.agent": "claude" }), ..Default::default() });
     let home = w.base.join("home-coord");
     std::fs::create_dir_all(&home).unwrap();
-    unsafe { std::env::set_var("HERDR_PROJECTS_COORDINATOR_DIR", &home) };
+    unsafe { std::env::set_var("HERDR_WINGMAN_COORDINATOR_DIR", &home) };
     skill(&w.root.join(".claude/skills"), "triage", "Sort the open issues");
     w.add("Fix the login");
     let mut s = open(&w.root, 34);
@@ -98,7 +98,7 @@ fn a_codex_coordinator_lists_its_dollar_skills_with_those_of_its_plugins() {
     let w = world_with(Opts { repo: true, settings: json!({ "review.when": "never", "coordinator.agent": "codex" }), ..Default::default() });
     let home = w.base.join("home-coord");
     std::fs::create_dir_all(&home).unwrap();
-    unsafe { std::env::set_var("HERDR_PROJECTS_COORDINATOR_DIR", &home) };
+    unsafe { std::env::set_var("HERDR_WINGMAN_COORDINATOR_DIR", &home) };
     let codex = w.base.join("codex");
     skill(&codex.join("skills"), "local-check", "Check here");
     skill(&codex.join("plugins/cache/demo/tools/1.0.0/skills"), "plugin-check", "Check from a plugin");

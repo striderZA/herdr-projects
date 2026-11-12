@@ -13,7 +13,7 @@ herdr-wingman add "Talk the pricing model through" --chat
 - It is a conversation with you, not work to deliver.
 - Change nothing in the repo: add, edit and delete no file, commit nothing ([like research only](research.md)).
 - Talk, read, look things up, answer. It may write notes or a report into the task's own folder among the board's
-  reports (`~/.herdr-projects/reports/<repo>/<number>/`) when that helps. It never has to.
+  reports (`~/.herdr-wingman/reports/<repo>/<number>/`) when that helps. It never has to.
 - Work that should follow from the conversation it suggests in words, in its answer. It adds no task for it.
 - Every stop of its own waits for you. It needs the report command only for a permission or a login, never to say
   that it waits.
@@ -54,7 +54,7 @@ setting is, nearest answer first: **the task → your entry for that repo → yo
 |---|---|
 | one task, when it is added | `herdr-wingman add "<title>" --chat` (short for `--chat.only true`) |
 | one task, later | `herdr-wingman delegate <id> --chat` (`--no-chat` turns it off), `herdr-wingman set chat.only true --task <id>`, or its row on the task's settings page (`Chat only`): on the terminal board |
-| a whole repo, or everything of yours | `herdr-wingman set chat.only true --repo <name>`, or without `--repo`. The repo's own `.herdr-projects.json` may say it too: `{ "chat": { "only": true } }` |
+| a whole repo, or everything of yours | `herdr-wingman set chat.only true --repo <name>`, or without `--repo`. The repo's own `.herdr-wingman.json` may say it too: `{ "chat": { "only": true } }` |
 | an [automation](automations.md) | `--chat` when it is made or changed (`--no-chat` turns it off), or `set chat.only true --automation <name>`. Each task it makes has it as its own |
 
 - **The Coordinator does it by itself** when you plainly ask for a discussion or a consulting session with nothing to

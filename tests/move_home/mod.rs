@@ -33,7 +33,7 @@ pub fn nothing(r: &Moved) -> bool { r.moved.is_empty() && r.line.is_empty() && r
 pub struct Old { pub home: PathBuf, pub data: PathBuf, pub settings: PathBuf, pub reports: PathBuf, pub to: PathBuf }
 static N: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
 /// A home folder as an older version left it, with the stray file a task in the home folder itself wrote into
-/// ~/.herdr-projects (that name is every repo's rule folder). `named`: the program the old launcher names (this one's).
+/// ~/.herdr-wingman (that name is every repo's rule folder). `named`: the program the old launcher names (this one's).
 pub fn old_home(base: &Path, named: Option<&str>) -> Old {
     let home = base.join(format!("old-home-{}", N.fetch_add(1, std::sync::atomic::Ordering::SeqCst)));
     std::fs::create_dir_all(&home).unwrap();
@@ -47,8 +47,8 @@ pub fn old_home(base: &Path, named: Option<&str>) -> Old {
     put(&data.join("bin").join(OLD_NAME), &format!("#!/bin/sh\nexport HERDR_SUPERWORK_DATA_DIR='{}'\nexec '{named}' \"$@\"\n", data.display()), None);
     put(&settings.join("config.json"), r#"{"max":7}"#, None);
     put(&reports.join("109/index.html"), "<p>report</p>", None);
-    put(&home.join(".herdr-projects/closing-1.md"), "a home task's closing note", None);
-    let to = home.join(".herdr-projects");
+    put(&home.join(".herdr-wingman/closing-1.md"), "a home task's closing note", None);
+    let to = home.join(".herdr-wingman");
     Old { home, data, settings, reports, to }
 }
 impl Old {

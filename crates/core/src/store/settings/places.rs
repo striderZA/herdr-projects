@@ -10,9 +10,11 @@ use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
-pub const REPO_FILE: &str = ".herdr-projects.json";
+pub const REPO_FILE: &str = ".herdr-wingman.json";
 /// The name herdr-superwork gave that file: still read, in a repo that has only that one.
 pub const OLD_REPO_FILE: &str = ".herdr-superwork.json";
+/// The name this file had before herdr-wingman: still read, in a repo that has only that one.
+pub const RENAMED_REPO_FILE: &str = ".herdr-projects.json";
 pub fn config_file() -> PathBuf { config_dir().join("config.json") }
 
 #[derive(Clone, Debug)]
@@ -133,6 +135,7 @@ pub fn repo_file(root: &Path, reference: Option<&str>) -> (Obj, Vec<String>) {
         None => read_text(&root.join(name)).unwrap_or_default(),
     };
     let mut text = text_of(REPO_FILE);
+    if text.trim().is_empty() { text = text_of(RENAMED_REPO_FILE); }
     if text.trim().is_empty() { text = text_of(OLD_REPO_FILE); }
     if text.trim().is_empty() { return (Obj::new(), vec![]); }
     let Ok(j) = serde_json::from_str::<Value>(&text) else { return (Obj::new(), vec![format!("{REPO_FILE} is not valid JSON: nothing in it counts")]) };

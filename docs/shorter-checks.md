@@ -3,7 +3,7 @@
 **A repo can name a shorter check for fix rounds**: `check.again`, beside `check.command`.
 
 ```json
-{ "check": { "command": "npm run check -- --all", "again": "npm run check -- --since $HERDR_PROJECTS_CHECKED" } }
+{ "check": { "command": "npm run check -- --all", "again": "npm run check -- --since $HERDR_WINGMAN_CHECKED" } }
 ```
 
 The board runs the repo's check every time an agent finishes: the first time, and again on every fix round (when a
@@ -29,7 +29,7 @@ check runs instead **only when both of these hold**. Otherwise, or when the boar
 
 ## What the shorter check is told
 
-`HERDR_PROJECTS_CHECKED` holds the commit the full check last passed on, so the shorter check can run only what the
+`HERDR_WINGMAN_CHECKED` holds the commit the full check last passed on, so the shorter check can run only what the
 change since then reaches.
 
 - A shorter check that passes does not move that commit. So each round covers the whole change since the last full

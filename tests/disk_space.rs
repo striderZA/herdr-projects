@@ -22,7 +22,7 @@ fn fill(p: &Path, mb: usize) { std::fs::create_dir_all(p.parent().unwrap()).unwr
 fn claude_files(w: &World, tree: &str) -> PathBuf { w.base.join("tmp").join(format!("claude-{}", uid())).join(sw::agents::scratch::slug(Path::new(tree))) }
 /// Every disk has `free` bytes free of `size` in all.
 const GB: u64 = 1_000_000_000;
-fn disk_is(free: u64, size: u64) { unsafe { std::env::set_var("HERDR_PROJECTS_FREE", free.to_string()); std::env::set_var("HERDR_PROJECTS_SIZE", size.to_string()) } }
+fn disk_is(free: u64, size: u64) { unsafe { std::env::set_var("HERDR_WINGMAN_FREE", free.to_string()); std::env::set_var("HERDR_WINGMAN_SIZE", size.to_string()) } }
 
 #[test]
 // The pane's env line is POSIX (export NAME=...); Windows panes run PowerShell, whose env line is not tested here.
@@ -42,12 +42,12 @@ fn the_agent_and_the_reviewer_start_with_the_task_s_own_temporary_folder_and_are
     // the task's id and its own folder among the reports
     let all = calls(&w);
     let reports = sw::research::report_folder(&t);
-    let export = all.iter().position(|c| c.starts_with("pane run") && c.contains(&format!("export TMPDIR={0} TMP={0} TEMP={0} CLAUDE_CODE_TMPDIR={0} HERDR_PROJECTS_ID=proj/1 HERDR_PROJECTS_TASK_REPORTS={1}", tmp.display(), reports.display()))).expect("the export");
+    let export = all.iter().position(|c| c.starts_with("pane run") && c.contains(&format!("export TMPDIR={0} TMP={0} TEMP={0} CLAUDE_CODE_TMPDIR={0} HERDR_WINGMAN_ID=proj/1 HERDR_WINGMAN_TASK_REPORTS={1}", tmp.display(), reports.display()))).expect("the export");
     let start = all.iter().position(|c| c.starts_with("agent start sw-proj-1 ")).unwrap();
     assert!(export < start, "{all:?}");
     // the reviewer's tab has it from the start
     let reviewer = all.iter().find(|c| c.starts_with("tab create") && c.contains(&format!("--env TMPDIR={}", tmp.display()))).unwrap_or_else(|| panic!("{all:?}"));
-    assert!(reviewer.contains("--env HERDR_PROJECTS_ID=proj/1") && reviewer.contains(&format!("--env HERDR_PROJECTS_TASK_REPORTS={}", reports.display())), "{reviewer}");
+    assert!(reviewer.contains("--env HERDR_WINGMAN_ID=proj/1") && reviewer.contains(&format!("--env HERDR_WINGMAN_TASK_REPORTS={}", reports.display())), "{reviewer}");
     let rules = sw::delegate::rules::rules(&t);
     assert!(rules.contains(&format!("in your own temporary folder, {} (your $TMPDIR), never loose in /tmp or in a home folder", tmp.display())), "{rules}");
     assert!(rules.contains("stop the servers and background processes you started, unless the human asked you to keep one running"), "{rules}");
@@ -135,7 +135,7 @@ fn a_working_task_keeps_its_temporary_files_and_nothing_the_environment_points_i
 #[test]
 fn on_a_nearly_full_disk_a_start_sweeps_then_waits_in_the_queue_with_a_plain_line_and_starts_once_there_is_room() {
     let w = world();
-    unsafe { std::env::set_var("HERDR_PROJECTS_FREE", "3100000000") };
+    unsafe { std::env::set_var("HERDR_WINGMAN_FREE", "3100000000") };
     w.script(json!({ "worker": [{ "status": "working" }] }));
     let id = w.add("Big build");
     delegate(&id);
@@ -149,14 +149,14 @@ fn on_a_nearly_full_disk_a_start_sweeps_then_waits_in_the_queue_with_a_plain_lin
     // still no room: the queue starts no runner for it
     assert!(sw::actions::start::start_queued(&w.socket).is_empty());
     // room again: it starts by itself
-    unsafe { std::env::set_var("HERDR_PROJECTS_FREE", "1000000000000") };
+    unsafe { std::env::set_var("HERDR_WINGMAN_FREE", "1000000000000") };
     assert_eq!(sw::actions::start::start_queued(&w.socket), vec![id.clone()]);
     let t = settle(&id);
     assert_eq!(t.s("stage"), "working");
     assert!(!t.b("diskWait"));
     // 0: never waits
     sw::store::settings::change::set_value("board.diskFree", &json!(0), &sw::store::settings::lookup::Scope::you()).unwrap();
-    unsafe { std::env::set_var("HERDR_PROJECTS_FREE", "1") };
+    unsafe { std::env::set_var("HERDR_WINGMAN_FREE", "1") };
     assert!(sw::leftovers::room::low(&t).is_none());
 }
 
@@ -165,7 +165,7 @@ fn a_board_command_a_task_s_agent_runs_leaves_that_task_s_temporary_folder_behin
     let w = world();
     let id = w.add("Agent's own");
     let tmp = sw::temp::made(&task(&id));
-    let names = ["TMPDIR", "TMP", "TEMP", "CLAUDE_CODE_TMPDIR", "HERDR_PROJECTS_ID", "HERDR_PROJECTS_TASK_REPORTS"];
+    let names = ["TMPDIR", "TMP", "TEMP", "CLAUDE_CODE_TMPDIR", "HERDR_WINGMAN_ID", "HERDR_WINGMAN_TASK_REPORTS"];
     let had: Vec<_> = names.iter().map(|k| std::env::var_os(k)).collect();
     let env = sw::temp::env(&task(&id));
     assert_eq!(env.iter().map(|(k, _)| k.as_str()).collect::<Vec<_>>(), names);

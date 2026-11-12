@@ -95,7 +95,7 @@ fn old_build_output_goes_from_a_kept_worktree_of_a_done_task_after_board_old_bui
 #[test]
 fn the_board_sweeps_when_it_opens_after_an_hour_and_from_the_housekeeping_pass_once_a_day() {
     let _w = world();
-    unsafe { std::env::remove_var("HERDR_PROJECTS_NO_SWEEP") };
+    unsafe { std::env::remove_var("HERDR_WINGMAN_NO_SWEEP") };
     let sweeps = || sw::runner::JOBS.with(|j| { let n = j.borrow().iter().filter(|(job, _, _)| job == "sweep").count(); j.borrow_mut().clear(); n });
     sw::leftovers::sweep::at_start();
     assert_eq!(sweeps(), 1);
@@ -111,7 +111,7 @@ fn the_board_sweeps_when_it_opens_after_an_hour_and_from_the_housekeeping_pass_o
     assert_eq!(sweeps(), 1);
     assert_eq!(sw::jobs::run_job("sweep", "-", &[]), 0);
     assert!(sw::store::files::data_dir().join("sweep.json").exists());
-    unsafe { std::env::set_var("HERDR_PROJECTS_NO_SWEEP", "1") };
+    unsafe { std::env::set_var("HERDR_WINGMAN_NO_SWEEP", "1") };
 }
 
 #[test]

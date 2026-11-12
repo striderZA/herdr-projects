@@ -58,7 +58,7 @@ what it removed (`herdr-wingman sweep --dry` only says what would go). What stil
 - the board's task folders whose task was removed;
 - the build output (`target/`, `node_modules/`, `.next/`, and only what git ignores) of a worktree a done or archived
   task kept, once nothing changed on the task for `board.oldBuilds` days (7; `0`: never);
-- old warm builds in `~/.cache/herdr-projects` that nothing uses.
+- old warm builds in `~/.cache/herdr-wingman` that nothing uses.
 
 **What it never touches:** a task at work, its worktree and its folders; your repos and your home folder; a loose folder
 in `/tmp` the board did not make; a folder that changed in the last hour; a folder your environment points into (a `PATH` entry in an old scratchpad keeps that one); and anything
@@ -67,7 +67,7 @@ caches or the worktree folder it is in, is a real folder. A link in a temporary 
 what it points to, and what runs there, stays. An agent's
 folder for a worktree counts as the board's only when its name is a known worktree folder followed by a name as the
 task branches start (`feat-`, `fix-`, …), no folder of that name is there, and no other folder beside it starts so. What the
-last sweep removed is kept in `~/.herdr-projects/data/sweep.json`.
+last sweep removed is kept in `~/.herdr-wingman/data/sweep.json`.
 
 ## A nearly full disk
 

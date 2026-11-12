@@ -1,5 +1,5 @@
 //! The copy of the data an older (Node) version wrote: the first run of this version keeps the data folder as it was,
-//! beside it (`~/.herdr-projects/data-0.2.0`), before anything in it is changed. The data's form is the same, so
+//! beside it (`~/.herdr-wingman/data-0.2.0`), before anything in it is changed. The data's form is the same, so
 //! nothing is converted; the copy is only there to go back with. Made once: skipped when it is there. Its one line is
 //! said as the move's is (store/move_home.rs): on the terminal, or on the board when the first run was a hook.
 use super::files::*;
@@ -66,7 +66,7 @@ const QUIET: [&str; 7] = ["board", "hook", "turn-ended", "keeper", "keeper-work"
 /// At the start of every run, after the move into the home folder: the copy, and its one line, added to the move's
 /// own line so that the board shows it too when the first run was a hook.
 pub fn copy_at_start(cmd: &str) {
-    if std::env::var("HERDR_PROJECTS_INLINE").as_deref() == Ok("1") { return; }
+    if std::env::var("HERDR_WINGMAN_INLINE").as_deref() == Ok("1") { return; }
     let (home, env) = (user_home(), env_now());
     let line = match keep_old_copy(&data_dir()) { Ok(Some(l)) => l, Ok(None) => String::new(), Err(e) => e };
     if !line.is_empty() {

@@ -1,13 +1,13 @@
 //! The program installs and updates itself (crates/flow/src/install.rs), and bin/run.sh finds or downloads the program
 //! herdr runs: platform names, release URLs, versions, checksums, the update put in place, the launcher, and run.sh in
-//! a scratch plugin folder with a release folder of its own (file://). No network, never the real ~/.herdr-projects.
+//! a scratch plugin folder with a release folder of its own (file://). No network, never the real ~/.herdr-wingman.
 use std::path::{Path, PathBuf};
 use std::sync::MutexGuard;
 use sw::install::*;
 
 static N: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
 fn set(k: &str, v: &str) { unsafe { std::env::set_var(k, v) } }
-/// A scratch home of its own: HOME and HERDR_PROJECTS_HOME point into it.
+/// A scratch home of its own: HOME and HERDR_WINGMAN_HOME point into it.
 fn scratch() -> (PathBuf, MutexGuard<'static, ()>) {
     let one = crate::common::one_at_a_time(); // the environment is the whole test program's
     let base = std::env::temp_dir().join(format!("sw-install-{}-{}", std::process::id(), N.fetch_add(1, std::sync::atomic::Ordering::SeqCst)));
@@ -15,8 +15,8 @@ fn scratch() -> (PathBuf, MutexGuard<'static, ()>) {
     std::fs::create_dir_all(base.join("home")).unwrap();
     let base = sw::sys::canonicalize(&base).unwrap();
     set("HOME", &base.join("home").display().to_string());
-    set("HERDR_PROJECTS_HOME", &base.join("sw").display().to_string());
-    for k in ["HERDR_PROJECTS_DATA_DIR", "HERDR_PROJECTS_CONFIG_DIR", "HERDR_PROJECTS_RELEASES"] { unsafe { std::env::remove_var(k) } }
+    set("HERDR_WINGMAN_HOME", &base.join("sw").display().to_string());
+    for k in ["HERDR_WINGMAN_DATA_DIR", "HERDR_WINGMAN_CONFIG_DIR", "HERDR_WINGMAN_RELEASES"] { unsafe { std::env::remove_var(k) } }
     (base, one)
 }
 fn write(p: &Path, text: &str) { std::fs::create_dir_all(p.parent().unwrap()).unwrap(); std::fs::write(p, text).unwrap(); }
@@ -81,7 +81,7 @@ fn releases_are_the_repo_the_plugin_was_cloned_from() {
     git(&b.join("plugin"), &["init", "-q"]);
     git(&b.join("plugin"), &["remote", "add", "origin", "https://github.com/striderZA/herdr-wingman"]);
     assert_eq!(releases(&exe), "https://github.com/striderZA/herdr-wingman/releases", "the checkout's origin");
-    set("HERDR_PROJECTS_RELEASES", "file:///mirror/releases/");
+    set("HERDR_WINGMAN_RELEASES", "file:///mirror/releases/");
     assert_eq!(releases(&exe), "file:///mirror/releases", "named, it is used as it is");
 }
 

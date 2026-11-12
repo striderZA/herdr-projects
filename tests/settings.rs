@@ -60,19 +60,19 @@ fn the_repos_own_file_holds_its_facts_and_no_more_read_from_the_commit_the_workt
     assert_eq!(Value::Object(facts), json!({ "workspace.setup": "true", "workspace.include": [".env"], "workspace.teardown": "down", "check.command": "npm test", "check.timeout": "5m" }));
     assert_eq!(sw::store::settings_list::repo_facts(), vec!["research.only", "chat.only", "workspace.setup", "workspace.include", "workspace.teardown", "check.command", "check.again", "check.timeout", "merge.pushTimeout", "merge.repo", "repo.key", "repo.cli"]);
     assert_eq!(refused_.len(), 4);
-    for name in ["merge.by", "review.when", "worker.access"] { assert!(refused_.iter().any(|r| r.starts_with(&format!(".herdr-projects.json: {name} is refused: the repo's file may only hold"))), "{name}"); }
-    assert!(refused_.contains(&".herdr-projects.json: unknown setting \"setup\" (did you mean workspace.setup?)".to_string()), "{refused_:?}");
+    for name in ["merge.by", "review.when", "worker.access"] { assert!(refused_.iter().any(|r| r.starts_with(&format!(".herdr-wingman.json: {name} is refused: the repo's file may only hold"))), "{name}"); }
+    assert!(refused_.contains(&".herdr-wingman.json: unknown setting \"setup\" (did you mean workspace.setup?)".to_string()), "{refused_:?}");
     // so code written by agents cannot loosen a guard: the task still waits for you and is still reviewed
     let id = w.add("One"); started(&w, &id);
     assert_eq!(setting("merge.by", Some(&task(&id))), json!("you")); assert_eq!(setting("review.when", Some(&task(&id))), json!("repos"));
     assert_eq!(problems(Some(&task(&id))), refused_); // and the task says what was refused
     // a branch that changes the file changes nothing for a task already started
-    std::fs::write(w.root.join(".herdr-projects.json"), json!({ "check": { "command": "true" } }).to_string()).unwrap();
+    std::fs::write(w.root.join(".herdr-wingman.json"), json!({ "check": { "command": "true" } }).to_string()).unwrap();
     assert_eq!(repo_file(&w.root, Some("HEAD")).0.s("check.command"), "npm test"); assert_eq!(setting("check.command", Some(&task(&id))), json!("npm test"));
     assert_eq!(Value::Object(repo_file(&w.root, None).0), json!({ "check.command": "true" }));
-    std::fs::write(w.root.join(".herdr-projects.json"), "{ not json").unwrap();
+    std::fs::write(w.root.join(".herdr-wingman.json"), "{ not json").unwrap();
     let (f, r) = repo_file(&w.root, None);
-    assert!(f.is_empty()); assert_eq!(r, vec![".herdr-projects.json is not valid JSON: nothing in it counts"]);
+    assert!(f.is_empty()); assert_eq!(r, vec![".herdr-wingman.json is not valid JSON: nothing in it counts"]);
 }
 
 #[test]

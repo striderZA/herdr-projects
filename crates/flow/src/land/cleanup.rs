@@ -29,8 +29,8 @@ use std::path::Path;
 pub struct Cleanup { pub kept: Vec<String>, pub ends: Ended, pub in_use: Vec<String>, pub retry: bool, pub turn: bool, pub comp: Value, pub tip: String, pub still: Value, pub event_seq: i64 }
 pub struct Opts<'a> { pub delete_branch: &'a str, pub keep_unmerged: bool, pub still: Option<&'a dyn Fn() -> bool>, pub since: Option<Value>, pub first: Option<String> }
 pub fn cleanup(t: &Task, delete_branch: &str) -> Cleanup { cleanup_with(t, Opts { delete_branch, keep_unmerged: false, still: None, since: None, first: None }) }
-fn still_ms() -> i64 { std::env::var("HERDR_PROJECTS_STILL_MS").ok().and_then(|v| v.parse().ok()).unwrap_or(120000) }
-fn settle_ms() -> i64 { std::env::var("HERDR_PROJECTS_SETTLE_MS").ok().and_then(|v| v.parse().ok()).unwrap_or(5000) }
+fn still_ms() -> i64 { std::env::var("HERDR_WINGMAN_STILL_MS").ok().and_then(|v| v.parse().ok()).unwrap_or(120000) }
+fn settle_ms() -> i64 { std::env::var("HERDR_WINGMAN_SETTLE_MS").ok().and_then(|v| v.parse().ok()).unwrap_or(5000) }
 #[derive(Clone, Copy)]
 struct AgentNow { busy: bool, unknown: bool, why: Why }
 pub fn cleanup_with(t: &Task, o: Opts) -> Cleanup {
@@ -143,7 +143,7 @@ pub fn cleanup_with(t: &Task, o: Opts) -> Cleanup {
         if o.keep_unmerged && t.b("branch") && !spent { return keep(format!("{wt_short} (unmerged work on {})", t.s("branch"))); }
         let teardown = command_of(&setting("workspace.teardown", Some(t)));
         if !teardown.is_empty() {
-            let env = vec![("HERDR_PROJECTS_ID".to_string(), t.t("id")), ("HERDR_PROJECTS_WORKTREE".into(), wt.into()), ("HERDR_PROJECTS_REPO".into(), root.display().to_string())];
+            let env = vec![("HERDR_WINGMAN_ID".to_string(), t.t("id")), ("HERDR_WINGMAN_WORKTREE".into(), wt.into()), ("HERDR_WINGMAN_REPO".into(), root.display().to_string())];
             sh(&teardown, Path::new(wt), &env, 5.0, None, None);
         }
         if in_use() { return used(); }

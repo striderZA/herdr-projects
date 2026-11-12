@@ -89,9 +89,9 @@ on the message is delivered: the turn's end, however much later, is the answer t
 
 | Variable | Default | What |
 |---|---|---|
-| `HERDR_PROJECTS_READY_MS` | 60000 | the longest the board waits for a started program to draw its screen; 0 types at once |
-| `HERDR_PROJECTS_SUBMIT_MS` | 5000 | the wait before the first extra enter; each later wait is twice the one before |
-| `HERDR_PROJECTS_CONFIRM_MS` | 180000 | how long counters that moved without a sign of work wait for a proof that the agent took the text |
+| `HERDR_WINGMAN_READY_MS` | 60000 | the longest the board waits for a started program to draw its screen; 0 types at once |
+| `HERDR_WINGMAN_SUBMIT_MS` | 5000 | the wait before the first extra enter; each later wait is twice the one before |
+| `HERDR_WINGMAN_CONFIRM_MS` | 180000 | how long counters that moved without a sign of work wait for a proof that the agent took the text |
 
 Very long text is handed over in a file instead: [when an agent could not start](could-not-start.md#long-rules-and-long-messages).
 

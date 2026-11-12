@@ -57,7 +57,7 @@ pub fn listed(k: &str, fresh: bool) -> Listing {
     let age = now() - had.i("at");
     if had.at("taken").is_array() && age < KEPT && !(fresh && age >= 60_000) { return kept(had); }
     // The tests never run a real program: they write models.json themselves.
-    if crate::util::env_set("HERDR_PROJECTS_NO_MODEL_LIST") { return kept(had); }
+    if crate::util::env_set("HERDR_WINGMAN_NO_MODEL_LIST") { return kept(had); }
     // Its app-server first: the names of the account it is signed in with. Its list command when that cannot be asked.
     let served = if a.models.server.is_empty() { Err(String::new()) } else { super::server::ask(program(k), a.models.server) };
     let names = match served {

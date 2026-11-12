@@ -88,18 +88,18 @@ fn real_programs_a_link_in_a_temporary_folder_s_place_is_never_followed() {
 #[test]
 fn the_build_an_approved_plan_starts_waits_for_room_on_a_nearly_full_disk() {
     let w = world_with(Opts { repo: true, settings: json!({ "plan.approve": "you", "worker.agent": "codex" }), ..Default::default() });
-    unsafe { std::env::set_var("HERDR_PROJECTS_SANDBOX", "bwrap") };
+    unsafe { std::env::set_var("HERDR_WINGMAN_SANDBOX", "bwrap") };
     w.patch(|s| s["pids"] = json!(true));
     w.script(json!({ "worker": [{ "plan": "# Plan\n\n1. Add f.txt.\n", "note": "The plan is written." }, { "status": "working" }] }));
     let id = w.add("Planned");
     delegate(&id);
     assert_eq!(settle(&id).s("stage"), "plan");
-    unsafe { std::env::set_var("HERDR_PROJECTS_FREE", "2000000000") };
+    unsafe { std::env::set_var("HERDR_WINGMAN_FREE", "2000000000") };
     sw::actions::plan::approve_plan(&id).unwrap();
     let t = settle(&id);
     assert_eq!(t.s("stage"), "queued", "{}", t.at("failure"));
     assert!(t.s("msg").starts_with("Disk nearly full on ") && t.at("plan").b("approvedAt") && !t.at("plan").b("built"), "{}", t.s("msg"));
-    unsafe { std::env::set_var("HERDR_PROJECTS_FREE", "1000000000000") };
+    unsafe { std::env::set_var("HERDR_WINGMAN_FREE", "1000000000000") };
     assert_eq!(sw::actions::start::start_queued(&w.socket), vec![id.clone()]);
     let t = settle(&id);
     assert_eq!(t.s("stage"), "working", "{}", t.at("failure"));

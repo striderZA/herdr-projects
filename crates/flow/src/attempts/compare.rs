@@ -116,7 +116,7 @@ fn compare(id: &str, g: &mut Guard, t: &Task) -> Res<Obj> {
     };
     if let Err(e) = start_with(x.hook.clone()) { if x.hook.is_empty() { return Err(e); } start_with(vec![])?; }
     let until = crate::finish::shared::review_until(&ch);
-    let every = ms("HERDR_PROJECTS_POLL_MS", 3000);
+    let every = ms("HERDR_WINGMAN_POLL_MS", 3000);
     let (mut sent, mut comp_at_send, mut quiet_since) = (false, Value::Null, 0i64);
     let reads = crate::agents::kinds::kind(&k).map(|a| a.reads_turn).unwrap_or(false);
     let mut waited: Vec<i64> = vec![]; // its own turn-end reports while helpers it started were still at work
@@ -151,7 +151,7 @@ fn compare(id: &str, g: &mut Guard, t: &Task) -> Res<Obj> {
             // A program whose conversation the board does not read: herdr saw it finish a turn since the brief, and
             // still no answer 15 seconds later.
             let done = at_rest && a.as_ref().map(|a| !a.at("completion_seq").is_null() && *a.at("completion_seq") != comp_at_send).unwrap_or(false);
-            if !done { quiet_since = 0; } else if quiet_since == 0 { quiet_since = now(); } else if now() - quiet_since > ms("HERDR_PROJECTS_QUIET_MS", 15000) && !file.exists() { return err("the reviewer finished without naming an attempt"); }
+            if !done { quiet_since = 0; } else if quiet_since == 0 { quiet_since = now(); } else if now() - quiet_since > ms("HERDR_WINGMAN_QUIET_MS", 15000) && !file.exists() { return err("the reviewer finished without naming an attempt"); }
         }
         sleep(every);
     }

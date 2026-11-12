@@ -1,5 +1,5 @@
 //! The one-time move into the one home folder: what an older version kept in ~/.local/state, ~/.config and
-//! ~/.local/share is moved into ~/.herdr-projects by the first run of this code, by itself, and each old place becomes
+//! ~/.local/share is moved into ~/.herdr-wingman by the first run of this code, by itself, and each old place becomes
 //! a link to the new one, so whatever still runs from the old paths carries on with the same files.
 //! docs/home-folder.md has the whole story. Every step is whole or not done, so a run that is cut off is finished by
 //! the next one; no step leaves an old path missing, not for a moment; no data is deleted or written over.
@@ -24,13 +24,13 @@ pub fn env_now() -> Env { std::env::vars().collect() }
 /// What is moved, from where to where. The old places followed the XDG_* variables, which is all those still do.
 pub fn move_plan(home: &Path, env: &Env) -> Plan {
     let get = |k: &str| env.get(k).filter(|v| !v.is_empty()).cloned();
-    let to = get("HERDR_PROJECTS_HOME").map(PathBuf::from).unwrap_or_else(|| home.join(HOME_NAME));
+    let to = get("HERDR_WINGMAN_HOME").map(PathBuf::from).unwrap_or_else(|| home.join(HOME_NAME));
     let old = |xdg: &str, rest: &[&str]| { let base = get(xdg).map(PathBuf::from).unwrap_or_else(|| rest.iter().fold(home.to_path_buf(), |p, r| p.join(r))); base.join(OLD_NAME) };
     let reports = PathBuf::from(format!("{}-reports", old("XDG_DATA_HOME", &[".local", "share"]).display()));
     Plan { file: to.join("moved.json"), aside: to.join("set-aside"), parts: vec![
-        Part { what: "data", from: old("XDG_STATE_HOME", &[".local", "state"]), to: to.join("data"), key: "HERDR_PROJECTS_DATA_DIR" },
-        Part { what: "settings", from: old("XDG_CONFIG_HOME", &[".config"]), to: to.join("settings"), key: "HERDR_PROJECTS_CONFIG_DIR" },
-        Part { what: "reports", from: reports, to: to.join("reports"), key: "HERDR_PROJECTS_REPORTS_DIR" },
+        Part { what: "data", from: old("XDG_STATE_HOME", &[".local", "state"]), to: to.join("data"), key: "HERDR_WINGMAN_DATA_DIR" },
+        Part { what: "settings", from: old("XDG_CONFIG_HOME", &[".config"]), to: to.join("settings"), key: "HERDR_WINGMAN_CONFIG_DIR" },
+        Part { what: "reports", from: reports, to: to.join("reports"), key: "HERDR_WINGMAN_REPORTS_DIR" },
     ], home: to }
 }
 /// This copy of the program runs from a linked git worktree (a task's agent works on this very code): only the copy
@@ -238,20 +238,27 @@ pub fn moved_from(dir: &Path) -> Option<PathBuf> {
 }
 /// Commands that are run with nobody reading their error output.
 const QUIET: [&str; 6] = ["board", "hook", "turn-ended", "keeper", "keeper-work", "run"];
-/// At the start of every run of the program: the move, and its one line said where a human reads it.
+/// At the start of every run of the program: the rename of the home folder, the move, and the one line said where a
+/// human reads it.
 pub fn home_at_start(cmd: &str) {
-    if std::env::var("HERDR_PROJECTS_INLINE").as_deref() == Ok("1") { return; }
-    // Windows: no move is made, and nothing is read or written for one (the folders stay where they are). Said once,
-    // on a terminal, as the move's own line is on Unix. Refused before the plan, the record and the due checks.
+    if std::env::var("HERDR_WINGMAN_INLINE").as_deref() == Ok("1") { return; }
+    super::rename_home::at_start(&user_home());
+    // Windows: the move of an older version's folders is not made (nothing is read or written for it).
     if cfg!(windows) {
-        if !QUIET.contains(&cmd) && std::io::IsTerminal::is_terminal(&std::io::stderr()) { eprintln!("Moving the home folder is not on Windows yet."); }
+        if !QUIET.contains(&cmd) && std::io::IsTerminal::is_terminal(&std::io::stderr()) { eprintln!("Moving an older version's folders is not on Windows yet."); }
+        say_note(cmd);
         return;
     }
     let (home, env) = (user_home(), env_now());
     let r = move_home(&home, &env, &bin(), None, 3000, &swap_now);
     // Not moved: this run works on those folders where they are, as it did before.
     for x in &r.stay { unsafe { std::env::set_var(x.key, &x.from); } }
+    say_note(cmd);
+}
+/// The one line for the human, said once: on a terminal, and never for the commands nobody reads (a hook's).
+fn say_note(cmd: &str) {
     if QUIET.contains(&cmd) || !std::io::IsTerminal::is_terminal(&std::io::stderr()) { return; }
+    let (home, env) = (user_home(), env_now());
     let line = move_note(&home, &env);
     if !line.is_empty() { eprintln!("{line}"); move_told(&home, &env); }
 }
