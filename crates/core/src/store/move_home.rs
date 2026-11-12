@@ -238,20 +238,27 @@ pub fn moved_from(dir: &Path) -> Option<PathBuf> {
 }
 /// Commands that are run with nobody reading their error output.
 const QUIET: [&str; 6] = ["board", "hook", "turn-ended", "keeper", "keeper-work", "run"];
-/// At the start of every run of the program: the move, and its one line said where a human reads it.
+/// At the start of every run of the program: the rename of the home folder, the move, and the one line said where a
+/// human reads it.
 pub fn home_at_start(cmd: &str) {
     if std::env::var("HERDR_WINGMAN_INLINE").as_deref() == Ok("1") { return; }
-    // Windows: no move is made, and nothing is read or written for one (the folders stay where they are). Said once,
-    // on a terminal, as the move's own line is on Unix. Refused before the plan, the record and the due checks.
+    super::rename_home::at_start(&user_home());
+    // Windows: the move of an older version's folders is not made (nothing is read or written for it).
     if cfg!(windows) {
-        if !QUIET.contains(&cmd) && std::io::IsTerminal::is_terminal(&std::io::stderr()) { eprintln!("Moving the home folder is not on Windows yet."); }
+        if !QUIET.contains(&cmd) && std::io::IsTerminal::is_terminal(&std::io::stderr()) { eprintln!("Moving an older version's folders is not on Windows yet."); }
+        say_note(cmd);
         return;
     }
     let (home, env) = (user_home(), env_now());
     let r = move_home(&home, &env, &bin(), None, 3000, &swap_now);
     // Not moved: this run works on those folders where they are, as it did before.
     for x in &r.stay { unsafe { std::env::set_var(x.key, &x.from); } }
+    say_note(cmd);
+}
+/// The one line for the human, said once: on a terminal, and never for the commands nobody reads (a hook's).
+fn say_note(cmd: &str) {
     if QUIET.contains(&cmd) || !std::io::IsTerminal::is_terminal(&std::io::stderr()) { return; }
+    let (home, env) = (user_home(), env_now());
     let line = move_note(&home, &env);
     if !line.is_empty() { eprintln!("{line}"); move_told(&home, &env); }
 }
