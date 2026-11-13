@@ -29,6 +29,7 @@ the same `--json` field names, the same states (`OPEN`, `MERGED`, `CLOSED`).
 | It merges, on your yes | `bb pr ready <link>`, then `bb pr merge <link> --squash` (or `--merge`, `--rebase`, as `merge.method` says) `--match-head-commit <the reviewed commit>` |
 | The review is posted on it | `bb pr comment <link> --body <text>` |
 | Its body gets a `Closes #N` line for each issue of `merge.closes` (and the lines of an issue no longer named go) | `bb pr edit <link> --body <text>` |
+| A closed pull request is reopened (its merge was awaited, it was closed) | `bb pr reopen <link>` (a declined one only; one already open succeeds, a merged one is refused) |
 | The repo is archived? | `bb repo view PROJ/repo --json isArchived --jq .isArchived` (an error counts as not archived) |
 
 The repo is named as Bitbucket names it: `PROJ/repo` from `ssh://git@host:7999/PROJ/repo.git`, and from an https
@@ -53,7 +54,8 @@ for bb.
 - **A pull request link of another repo is not acted on.** A link the board would pass to bb must be of the origin's
   repo (`…/projects/PROJ/repos/repo/pull-requests/42`), as with gh.
 - **What the board tells the agent or you to run names bb**: `bb pr checks`, `bb pr view --comments`,
-  `bb pr edit <number> --base …`, `bb pr create:` and `bb pr merge:` above what bb said.
+  `bb pr edit <number> --base …`, `bb pr close <number>`, `bb pr reopen <number>`, `bb pr create:` and
+  `bb pr merge:` above what bb said.
 - The row's `PR#42` is read from the link's number, also from a Bitbucket link ending in `/overview`.
 
 ## When something fails
